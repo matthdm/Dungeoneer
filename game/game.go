@@ -2,6 +2,7 @@ package game
 
 import (
 	"dungeoneer/constants"
+	"dungeoneer/entities"
 	"dungeoneer/leveleditor"
 	"dungeoneer/levels"
 	"dungeoneer/sprites"
@@ -29,6 +30,7 @@ type Game struct {
 	spriteSheet            *sprites.SpriteSheet
 	highlightImage         *ebiten.Image
 	editor                 *leveleditor.Editor
+	player                 *entities.Player
 }
 
 // NewGame returns a new isometric demo Game.
@@ -43,7 +45,7 @@ func NewGame() (*Game, error) {
 	}
 	editor := leveleditor.NewEditor()
 	editor.SetSelectedSprite(ss.Floor) // or any tile to begin with
-
+	plr := entities.NewPlayer(ss)
 	g := &Game{
 		currentLevel:   levels.NewLevel1(),
 		camScale:       1,
@@ -53,6 +55,7 @@ func NewGame() (*Game, error) {
 		spriteSheet:    ss,
 		highlightImage: ss.Cursor,
 		editor:         editor,
+		player:         plr,
 	}
 	return g, nil
 }
@@ -93,16 +96,16 @@ func (g *Game) Update() error {
 
 	// Pan camera via keyboard.
 	pan := 7.0 / g.camScale
-	if ebiten.IsKeyPressed(ebiten.KeyLeft) || ebiten.IsKeyPressed(ebiten.KeyA) {
+	if ebiten.IsKeyPressed(ebiten.KeyLeft) { //|| ebiten.IsKeyPressed(ebiten.KeyA) {
 		g.camX -= pan
 	}
-	if ebiten.IsKeyPressed(ebiten.KeyRight) || ebiten.IsKeyPressed(ebiten.KeyD) {
+	if ebiten.IsKeyPressed(ebiten.KeyRight) { //|| ebiten.IsKeyPressed(ebiten.KeyD) {
 		g.camX += pan
 	}
-	if ebiten.IsKeyPressed(ebiten.KeyDown) || ebiten.IsKeyPressed(ebiten.KeyS) {
+	if ebiten.IsKeyPressed(ebiten.KeyDown) { //|| ebiten.IsKeyPressed(ebiten.KeyS) {
 		g.camY -= pan
 	}
-	if ebiten.IsKeyPressed(ebiten.KeyUp) || ebiten.IsKeyPressed(ebiten.KeyW) {
+	if ebiten.IsKeyPressed(ebiten.KeyUp) { //|| ebiten.IsKeyPressed(ebiten.KeyW) {
 		g.camY += pan
 	}
 
@@ -172,6 +175,28 @@ func (g *Game) Update() error {
 	g.DebugLevelEditor()
 	//	g.DungeonLevelEditor()
 	//	g.ForestLevelEditor()
+
+	if inpututil.IsKeyJustPressed(ebiten.KeyA) {
+		g.player.TileX -= 1
+		g.player.LeftFacing = true
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyD) {
+		g.player.TileX += 1
+		g.player.LeftFacing = false
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyW) {
+		g.player.TileY -= 1
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyS) {
+		g.player.TileY += 1
+	}
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+		tx, ty := g.hoverTileX, g.hoverTileY
+		if g.player.CanMoveTo(tx, ty, g.currentLevel) {
+			g.player.Path = entities.BuildPath(g.player.TileX, g.player.TileY, tx, ty)
+		}
+	}
+	g.player.Update(g.currentLevel)
 
 	return nil
 }
@@ -285,5 +310,10 @@ func (g *Game) renderLevel(screen *ebiten.Image) {
 		op.GeoM.Translate(cx, cy)
 
 		target.DrawImage(g.highlightImage, op)
+	}
+	if g.player != nil {
+		g.player.Draw(target, g.currentLevel.TileSize, func(x, y int) (float64, float64) {
+			return g.cartesianToIso(float64(x), float64(y))
+		}, g.camX, g.camY, scale, cx, cy)
 	}
 }
