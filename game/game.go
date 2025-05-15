@@ -8,6 +8,7 @@ import (
 	"dungeoneer/pathing"
 	"dungeoneer/sprites"
 	"fmt"
+	"image"
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -15,15 +16,12 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
-// Game is an isometric demo game.
 type Game struct {
 	w, h         int
 	currentLevel *levels.Level
 
-	camX, camY float64
-	camScale   float64
-	camScaleTo float64
-
+	camX, camY           float64
+	camScale, camScaleTo float64
 	mousePanX, mousePanY int
 
 	offscreen              *ebiten.Image
@@ -32,11 +30,9 @@ type Game struct {
 	highlightImage         *ebiten.Image
 	editor                 *leveleditor.Editor
 	player                 *entities.Player
-
-	Monsters []*entities.Monster
+	Monsters               []*entities.Monster
 }
 
-// NewGame returns a new isometric demo Game.
 func NewGame() (*Game, error) {
 	l, err := levels.NewDungeonLevel()
 	if err != nil {
@@ -44,13 +40,10 @@ func NewGame() (*Game, error) {
 	}
 	ss, err := sprites.LoadSpriteSheet(l.TileSize)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create load sprite sheet: %s", err)
+		return nil, fmt.Errorf("failed to load sprite sheet: %s", err)
 	}
-	editor := leveleditor.NewEditor()
-	editor.SetSelectedSprite(ss.Floor) // or any tile to begin with
-	plr := entities.NewPlayer(ss)
-	mons := entities.NewMonster(ss)
-	g := &Game{
+
+	return &Game{
 		currentLevel:   levels.NewLevel1(),
 		camScale:       1,
 		camScaleTo:     1,
@@ -58,165 +51,10 @@ func NewGame() (*Game, error) {
 		mousePanY:      math.MinInt32,
 		spriteSheet:    ss,
 		highlightImage: ss.Cursor,
-		editor:         editor,
-		player:         plr,
-		Monsters:       mons,
-	}
-	return g, nil
-}
-
-// Update reads current user input and updates the Game state.
-func (g *Game) Update() error {
-
-	// Update target zoom level.
-	var scrollY float64
-	if ebiten.IsKeyPressed(ebiten.KeyC) || ebiten.IsKeyPressed(ebiten.KeyPageDown) {
-		scrollY = -0.25
-	} else if ebiten.IsKeyPressed(ebiten.KeyE) || ebiten.IsKeyPressed(ebiten.KeyPageUp) {
-		scrollY = .25
-	} else {
-		_, scrollY = ebiten.Wheel()
-		if scrollY < -1 {
-			scrollY = -1
-		} else if scrollY > 1 {
-			scrollY = 1
-		}
-	}
-	g.camScaleTo += scrollY * (g.camScaleTo / 7)
-
-	// Clamp target zoom level.
-	if g.camScaleTo < 0.01 {
-		g.camScaleTo = 0.01
-	} else if g.camScaleTo > 100 {
-		g.camScaleTo = 100
-	}
-
-	// Smooth zoom transition.
-	div := 10.0
-	if g.camScaleTo > g.camScale {
-		g.camScale += (g.camScaleTo - g.camScale) / div
-	} else if g.camScaleTo < g.camScale {
-		g.camScale -= (g.camScale - g.camScaleTo) / div
-	}
-
-	// Pan camera via keyboard.
-	pan := 7.0 / g.camScale
-	if ebiten.IsKeyPressed(ebiten.KeyLeft) { //|| ebiten.IsKeyPressed(ebiten.KeyA) {
-		g.camX -= pan
-	}
-	if ebiten.IsKeyPressed(ebiten.KeyRight) { //|| ebiten.IsKeyPressed(ebiten.KeyD) {
-		g.camX += pan
-	}
-	if ebiten.IsKeyPressed(ebiten.KeyDown) { //|| ebiten.IsKeyPressed(ebiten.KeyS) {
-		g.camY -= pan
-	}
-	if ebiten.IsKeyPressed(ebiten.KeyUp) { //|| ebiten.IsKeyPressed(ebiten.KeyW) {
-		g.camY += pan
-	}
-
-	// Pan camera via mouse.
-	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonRight) {
-		if g.mousePanX == math.MinInt32 && g.mousePanY == math.MinInt32 {
-			g.mousePanX, g.mousePanY = ebiten.CursorPosition()
-		} else {
-			x, y := ebiten.CursorPosition()
-			dx, dy := float64(g.mousePanX-x)*(pan/100), float64(g.mousePanY-y)*(pan/100)
-			g.camX, g.camY = g.camX-dx, g.camY+dy
-		}
-	} else if g.mousePanX != math.MinInt32 || g.mousePanY != math.MinInt32 {
-		g.mousePanX, g.mousePanY = math.MinInt32, math.MinInt32
-	}
-
-	// Clamp camera position.
-	worldWidth := float64(g.currentLevel.W * g.currentLevel.TileSize / 2)
-	worldHeight := float64(g.currentLevel.H * g.currentLevel.TileSize / 2)
-	if g.camX < -worldWidth {
-		g.camX = -worldWidth
-	} else if g.camX > worldWidth {
-		g.camX = worldWidth
-	}
-	if g.camY < -worldHeight {
-		g.camY = -worldHeight
-	} else if g.camY > 0 {
-		g.camY = 0
-	}
-
-	// Randomize level.
-	if inpututil.IsKeyJustPressed(ebiten.KeyR) {
-		l, err := levels.NewDungeonLevel()
-		if err != nil {
-			return fmt.Errorf("failed to create new level: %s", err)
-		}
-
-		g.currentLevel = l
-	}
-
-	// Randomize level.
-	if inpututil.IsKeyJustPressed(ebiten.KeyQ) {
-		l, err := levels.NewForestLevel()
-		if err != nil {
-			return fmt.Errorf("failed to create new level: %s", err)
-		}
-
-		g.currentLevel = l
-	}
-
-	if inpututil.IsKeyJustPressed(ebiten.KeyT) {
-		g.currentLevel = levels.NewLevel1()
-	}
-
-	// Get mouse position in screen coordinates
-	mx, my := ebiten.CursorPosition()
-
-	// Convert to world coordinates
-	cx := (float64(mx)-float64(g.w/2))/g.camScale + g.camX
-	cy := (float64(my)-float64(g.h/2))/g.camScale - g.camY
-
-	// Convert to tile indices
-	tx, ty := g.isoToCartesian(cx, cy)
-	g.hoverTileX = int(math.Floor(tx - 1.5))
-	g.hoverTileY = int(math.Floor(ty - .5))
-
-	//PLayer PAthing
-	if g.player != nil {
-		path := pathing.AStar(g.currentLevel, g.player.TileX, g.player.TileY, g.hoverTileX, g.hoverTileY)
-		// Optional: limit to walkable tiles
-		if len(path) > 0 {
-			g.player.PathPreview = path
-		} else {
-			g.player.PathPreview = nil
-		}
-	}
-	for _, m := range g.Monsters {
-		m.Update(g.player.TileX, g.player.TileY, g.currentLevel)
-	}
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-		tx, ty := g.hoverTileX, g.hoverTileY
-		if g.player.CanMoveTo(tx, ty, g.currentLevel) {
-			g.player.Path = pathing.AStar(g.currentLevel, g.player.TileX, g.player.TileY, g.hoverTileX, g.hoverTileY)
-			g.player.PathPreview = nil
-		}
-	}
-	g.player.Update(g.currentLevel)
-	g.DebugLevelEditor()
-	//	g.DungeonLevelEditor()
-	//	g.ForestLevelEditor()
-	return nil
-}
-
-// Draw draws the Game on the screen.
-func (g *Game) Draw(screen *ebiten.Image) {
-	// Render level.
-	g.renderLevel(screen)
-
-	// Print game info.
-	ebitenutil.DebugPrint(screen, fmt.Sprintf(constants.DEBUG_TEMPLATE, ebiten.ActualFPS(), ebiten.ActualTPS(), g.camScale, g.camX, g.camY))
-}
-
-// Layout is called when the Game's layout changes.
-func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
-	g.w, g.h = outsideWidth, outsideHeight
-	return g.w, g.h
+		editor:         leveleditor.NewEditor(),
+		player:         entities.NewPlayer(ss),
+		Monsters:       entities.NewMonster(ss),
+	}, nil
 }
 
 // cartesianToIso transforms cartesian coordinates into isometric coordinates.
@@ -237,123 +75,328 @@ func (g *Game) isoToCartesian(x, y float64) (float64, float64) {
 	return cx, cy
 }
 
-// renderLevel draws the current Level on the screen.
-func (g *Game) renderLevel(screen *ebiten.Image) {
-	op := &ebiten.DrawImageOptions{}
-	padding := float64(g.currentLevel.TileSize) * g.camScale
+func (g *Game) Update() error {
+	g.handleZoom()
+	g.handlePan()
+	g.updateHoverTile()
+
+	// Level switching
+	if inpututil.IsKeyJustPressed(ebiten.KeyR) {
+		l, err := levels.NewDungeonLevel()
+		if err != nil {
+			return err
+		}
+		g.currentLevel = l
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyQ) {
+		l, err := levels.NewForestLevel()
+		if err != nil {
+			return err
+		}
+		g.currentLevel = l
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyT) {
+		g.currentLevel = levels.NewLevel1()
+	}
+
+	// Handle player movement (right-click)
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
+		tx, ty := g.hoverTileX, g.hoverTileY
+		if g.player.CanMoveTo(tx, ty, g.currentLevel) {
+			path := pathing.AStar(g.currentLevel, g.player.TileX, g.player.TileY, tx, ty)
+			if len(path) > 0 {
+				g.player.Path = path
+				g.player.PathPreview = nil
+			}
+		}
+	}
+
+	// Handle player attacking monster
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+		mx, my := ebiten.CursorPosition()
+		worldX := (float64(mx)-float64(g.w/2))/g.camScale + g.camX
+		worldY := (float64(my)-float64(g.h/2))/g.camScale - g.camY
+
+		fx, fy := g.isoToCartesian(worldX, worldY)
+		tx := int(math.Floor(fx - 1.5))
+		ty := int(math.Floor(fy - 0.5))
+
+		for _, m := range g.Monsters {
+			if !m.IsDead && m.TileX == tx && m.TileY == ty &&
+				entities.IsAdjacent(g.player.TileX, g.player.TileY, tx, ty) &&
+				g.player.CanAttack() {
+
+				m.TakeDamage(g.player.Damage)
+				g.player.AttackTick = 0
+			}
+		}
+	}
+
+	// Player path preview
+	if g.player != nil {
+		path := pathing.AStar(g.currentLevel, g.player.TileX, g.player.TileY, g.hoverTileX, g.hoverTileY)
+		g.player.PathPreview = path
+	}
+
+	// Update game objects
+	g.player.Update(g.currentLevel)
+	for _, m := range g.Monsters {
+		m.Update(g.player, g.currentLevel)
+	}
+
+	// Optional: Level editor
+	g.DebugLevelEditor()
+	return nil
+}
+
+func (g *Game) handleZoom() {
+	var scrollY float64
+	if ebiten.IsKeyPressed(ebiten.KeyC) || ebiten.IsKeyPressed(ebiten.KeyPageDown) {
+		scrollY = -0.25
+	} else if ebiten.IsKeyPressed(ebiten.KeyE) || ebiten.IsKeyPressed(ebiten.KeyPageUp) {
+		scrollY = 0.25
+	} else {
+		_, scrollY = ebiten.Wheel()
+		scrollY = math.Max(-1, math.Min(1, scrollY))
+	}
+	g.camScaleTo += scrollY * (g.camScaleTo / 7)
+	g.camScaleTo = math.Max(0.01, math.Min(100, g.camScaleTo))
+
+	div := 10.0
+	if g.camScaleTo > g.camScale {
+		g.camScale += (g.camScaleTo - g.camScale) / div
+	} else {
+		g.camScale -= (g.camScale - g.camScaleTo) / div
+	}
+}
+
+func (g *Game) handlePan() {
+	pan := 7.0 / g.camScale
+	if ebiten.IsKeyPressed(ebiten.KeyLeft) {
+		g.camX -= pan
+	}
+	if ebiten.IsKeyPressed(ebiten.KeyRight) {
+		g.camX += pan
+	}
+	if ebiten.IsKeyPressed(ebiten.KeyDown) {
+		g.camY -= pan
+	}
+	if ebiten.IsKeyPressed(ebiten.KeyUp) {
+		g.camY += pan
+	}
+
+	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonRight) {
+		if g.mousePanX == math.MinInt32 {
+			g.mousePanX, g.mousePanY = ebiten.CursorPosition()
+		} else {
+			x, y := ebiten.CursorPosition()
+			dx := float64(g.mousePanX - x)
+			dy := float64(g.mousePanY - y)
+			g.camX -= dx * (pan / 100)
+			g.camY += dy * (pan / 100)
+		}
+	} else {
+		g.mousePanX, g.mousePanY = math.MinInt32, math.MinInt32
+	}
+
+	// Clamp camera
+	worldWidth := float64(g.currentLevel.W * g.currentLevel.TileSize / 2)
+	worldHeight := float64(g.currentLevel.H * g.currentLevel.TileSize / 2)
+	g.camX = math.Max(-worldWidth, math.Min(worldWidth, g.camX))
+	g.camY = math.Max(-worldHeight, math.Min(0, g.camY))
+}
+
+func (g *Game) updateHoverTile() {
+	mx, my := ebiten.CursorPosition()
+	cx := (float64(mx)-float64(g.w/2))/g.camScale + g.camX
+	cy := (float64(my)-float64(g.h/2))/g.camScale - g.camY
+	tx, ty := g.isoToCartesian(cx, cy)
+	g.hoverTileX = int(math.Floor(tx - 1.5))
+	g.hoverTileY = int(math.Floor(ty - 0.5))
+
+	// Update path preview
+	if g.player != nil {
+		path := pathing.AStar(g.currentLevel, g.player.TileX, g.player.TileY, g.hoverTileX, g.hoverTileY)
+		if len(path) > 0 {
+			g.player.PathPreview = path
+		} else {
+			g.player.PathPreview = nil
+		}
+	}
+}
+
+func (g *Game) handleLevelHotkeys() {
+	if inpututil.IsKeyJustPressed(ebiten.KeyR) {
+		if l, err := levels.NewDungeonLevel(); err == nil {
+			g.currentLevel = l
+		}
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyQ) {
+		if l, err := levels.NewForestLevel(); err == nil {
+			g.currentLevel = l
+		}
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyT) {
+		g.currentLevel = levels.NewLevel1()
+	}
+}
+
+func (g *Game) handleClicks() {
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+		// Movement
+		tx, ty := g.hoverTileX, g.hoverTileY
+		if g.player.CanMoveTo(tx, ty, g.currentLevel) {
+			g.player.Path = pathing.AStar(g.currentLevel, g.player.TileX, g.player.TileY, tx, ty)
+			g.player.PathPreview = nil
+		}
+
+		// Combat
+		mx, my := ebiten.CursorPosition()
+		worldX := (float64(mx)-float64(g.w/2))/g.camScale + g.camX
+		worldY := (float64(my)-float64(g.h/2))/g.camScale - g.camY
+		fx, fy := g.isoToCartesian(worldX, worldY)
+		cx := int(math.Floor(fx - 1.5))
+		cy := int(math.Floor(fy - 0.5))
+
+		for _, m := range g.Monsters {
+			if !m.IsDead && m.TileX == cx && m.TileY == cy &&
+				entities.IsAdjacent(g.player.TileX, g.player.TileY, m.TileX, m.TileY) &&
+				g.player.CanAttack() {
+				m.TakeDamage(g.player.Damage)
+				g.player.AttackTick = 0
+			}
+		}
+	}
+}
+
+func (g *Game) Draw(screen *ebiten.Image) {
 	cx, cy := float64(g.w/2), float64(g.h/2)
 
+	// Decide target surface and scale mode
 	scaleLater := g.camScale > 1
 	target := screen
 	scale := g.camScale
 
-	// When zooming in, tiles can have slight bleeding edges.
-	// To avoid them, render the result on an offscreen first and then scale it later.
 	if scaleLater {
-		if g.offscreen != nil {
-			if g.offscreen.Bounds().Size() != screen.Bounds().Size() {
-				g.offscreen.Deallocate()
-				g.offscreen = nil
-			}
-		}
-		if g.offscreen == nil {
-			s := screen.Bounds().Size()
-			g.offscreen = ebiten.NewImage(s.X, s.Y)
-		}
-		target = g.offscreen
+		target = g.getOrCreateOffscreen(screen.Bounds().Size())
 		target.Clear()
 		scale = 1
 	}
 
+	g.drawTiles(target, scale, cx, cy)
+	g.drawHoverTile(target, scale, cx, cy)
+	g.drawPathPreview(target, scale, cx, cy)
+	g.drawEntities(target, scale, cx, cy)
+
+	// Draw offscreen buffer if used
+	if scaleLater {
+		op := &ebiten.DrawImageOptions{}
+		op.GeoM.Translate(-cx, -cy)
+		op.GeoM.Scale(g.camScale, g.camScale)
+		op.GeoM.Translate(cx, cy)
+		screen.DrawImage(target, op)
+	}
+
+	// Debug info
+	ebitenutil.DebugPrint(screen, fmt.Sprintf(constants.DEBUG_TEMPLATE, ebiten.ActualFPS(), ebiten.ActualTPS(), g.camScale, g.camX, g.camY))
+}
+
+func (g *Game) getOrCreateOffscreen(size image.Point) *ebiten.Image {
+	if g.offscreen != nil && g.offscreen.Bounds().Size() == size {
+		return g.offscreen
+	}
+	if g.offscreen != nil {
+		g.offscreen.Deallocate()
+	}
+	g.offscreen = ebiten.NewImage(size.X, size.Y)
+	return g.offscreen
+}
+
+func (g *Game) drawTiles(target *ebiten.Image, scale, cx, cy float64) {
+	op := &ebiten.DrawImageOptions{}
+	padding := float64(g.currentLevel.TileSize) * scale
+
 	for y := 0; y < g.currentLevel.H; y++ {
 		for x := 0; x < g.currentLevel.W; x++ {
-			xi, yi := g.cartesianToIso(float64(x), float64(y))
+			tile := g.currentLevel.Tiles[y][x]
+			if tile == nil {
+				continue
+			}
 
-			// Skip drawing tiles that are out of the screen.
-			drawX, drawY := ((xi-g.camX)*g.camScale)+cx, ((yi+g.camY)*g.camScale)+cy
+			xi, yi := g.cartesianToIso(float64(x), float64(y))
+			drawX := ((xi - g.camX) * scale) + cx
+			drawY := ((yi + g.camY) * scale) + cy
+
 			if drawX+padding < 0 || drawY+padding < 0 || drawX > float64(g.w) || drawY > float64(g.h) {
 				continue
 			}
 
-			t := g.currentLevel.Tiles[y][x]
-			if t == nil {
-				continue // No tile at this position.
-			}
-
 			op.GeoM.Reset()
-			// Move to current isometric position.
 			op.GeoM.Translate(xi, yi)
-			// Translate camera position.
 			op.GeoM.Translate(-g.camX, g.camY)
-			// Zoom.
 			op.GeoM.Scale(scale, scale)
-			// Center.
 			op.GeoM.Translate(cx, cy)
 
-			t.Draw(target, op)
+			tile.Draw(target, op)
 		}
 	}
+}
 
-	// Clamp hover coordinates
-	if g.hoverTileY >= 0 && g.hoverTileY < g.currentLevel.H &&
-		g.hoverTileX >= 0 && g.hoverTileX < g.currentLevel.W {
-		xi, yi := g.cartesianToIso(float64(g.hoverTileX), float64(g.hoverTileY))
+func (g *Game) drawHoverTile(target *ebiten.Image, scale, cx, cy float64) {
+	if g.hoverTileX < 0 || g.hoverTileY < 0 ||
+		g.hoverTileX >= g.currentLevel.W || g.hoverTileY >= g.currentLevel.H {
+		return
+	}
 
+	xi, yi := g.cartesianToIso(float64(g.hoverTileX), float64(g.hoverTileY))
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(xi, yi)
+	op.GeoM.Translate(-g.camX, g.camY)
+	op.GeoM.Scale(scale, scale)
+	op.GeoM.Translate(cx, cy)
+
+	target.DrawImage(g.highlightImage, op)
+}
+
+func (g *Game) drawPathPreview(target *ebiten.Image, scale, cx, cy float64) {
+	if g.player == nil {
+		return
+	}
+
+	for _, step := range g.player.PathPreview {
+		if step.X < 0 || step.Y < 0 || step.X >= g.currentLevel.W || step.Y >= g.currentLevel.H {
+			continue
+		}
+		xi, yi := g.cartesianToIso(float64(step.X), float64(step.Y))
 		op := &ebiten.DrawImageOptions{}
 		op.GeoM.Translate(xi, yi)
 		op.GeoM.Translate(-g.camX, g.camY)
 		op.GeoM.Scale(scale, scale)
 		op.GeoM.Translate(cx, cy)
 
-		target.DrawImage(g.highlightImage, op)
+		op.ColorScale.Scale(1, 1, 1, 0.4) // semi-transparent
+		target.DrawImage(g.spriteSheet.Cursor, op)
 	}
+}
+
+func (g *Game) drawEntities(target *ebiten.Image, scale, cx, cy float64) {
+	tileSize := g.currentLevel.TileSize
 
 	if g.player != nil {
-		for _, step := range g.player.PathPreview {
-			//Skip out of bounds tiles
-			if step.X < 0 || step.Y < 0 || step.X >= g.currentLevel.W || step.Y >= g.currentLevel.H {
-				continue
-			}
-			xi, yi := g.cartesianToIso(float64(step.X), float64(step.Y))
-
-			op := &ebiten.DrawImageOptions{}
-			op.GeoM.Translate(xi, yi)
-			op.GeoM.Translate(-g.camX, g.camY)
-			op.GeoM.Scale(scale, scale)
-			op.GeoM.Translate(cx, cy)
-
-			// Use a semi-transparent cursor or footprint
-			img := g.spriteSheet.Cursor // or a custom preview tile
-
-			op.ColorScale.Scale(1, 1, 1, 0.4)
-			target.DrawImage(img, op)
-		}
-	}
-
-	if g.player != nil {
-		g.player.Draw(target, g.currentLevel.TileSize, func(x, y int) (float64, float64) {
+		g.player.Draw(target, tileSize, func(x, y int) (float64, float64) {
 			return g.cartesianToIso(float64(x), float64(y))
 		}, g.camX, g.camY, scale, cx, cy)
 	}
-	if g.Monsters != nil {
-		for _, m := range g.Monsters {
-			m.Draw(
-				target,
-				g.currentLevel.TileSize,
-				func(x, y int) (float64, float64) {
-					return g.cartesianToIso(float64(x), float64(y))
-				},
-				g.camX, g.camY, scale, // use local `scale`, not g.camScale
-				cx, cy,
-			)
-		}
-	}
 
-	if scaleLater {
-		op := &ebiten.DrawImageOptions{}
-		op.GeoM.Translate(-cx, -cy)
-		op.GeoM.Scale(float64(g.camScale), float64(g.camScale))
-		op.GeoM.Translate(cx, cy)
-		screen.DrawImage(target, op)
+	for _, m := range g.Monsters {
+		m.Draw(target, tileSize, func(x, y int) (float64, float64) {
+			return g.cartesianToIso(float64(x), float64(y))
+		}, g.camX, g.camY, scale, cx, cy)
 	}
+}
+
+// Layout is called when the Game's layout changes.
+func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
+	g.w, g.h = outsideWidth, outsideHeight
+	return g.w, g.h
 }

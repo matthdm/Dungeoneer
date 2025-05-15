@@ -4,22 +4,41 @@ import (
 	"dungeoneer/levels"
 	"dungeoneer/pathing"
 	"dungeoneer/sprites"
+	"image/color"
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
 type Monster struct {
-	TileX, TileY     int
+	Name       string
+	Sprite     *ebiten.Image
+	LeftFacing bool
+	BobOffset  float64
+
+	// Grid position
+	TileX, TileY int
+
+	// Interpolation
 	InterpX, InterpY float64
-	recalcCooldown   int
-	Sprite           *ebiten.Image
-	Name             string
-	movementDuration int // how often it moves (e.g. 30 ticks)
-	TickCount        int
-	LeftFacing       bool
-	BobOffset        float64
+	StartX, StartY   float64
+	TargetX, TargetY float64
+	InterpTicks      int
+	Moving           bool
+
+	// Movement logic
 	Path             []pathing.PathNode
+	TickCount        int
+	MovementDuration int // ticks per tile
+	RecalcCooldown   int
+
+	// Combat
+	HP         int
+	MaxHP      int
+	Damage     int
+	AttackRate int
+	AttackTick int
+	IsDead     bool
 }
 
 func NewMonster(ss *sprites.SpriteSheet) []*Monster {
@@ -31,76 +50,97 @@ func NewMonster(ss *sprites.SpriteSheet) []*Monster {
 			InterpX:          5,
 			InterpY:          7,
 			Sprite:           ss.BlueMan, // swap in any sprite
-			movementDuration: 45,
+			MovementDuration: 45,
 			LeftFacing:       true,
+			HP:               10,
+			MaxHP:            10,
+			Damage:           1,
+			AttackRate:       30,
+			IsDead:           false,
 		},
 	}
 }
 
-func (m *Monster) Update(playerX, playerY int, level *levels.Level) {
+func (m *Monster) Update(player *Player, level *levels.Level) {
 	const bobAmplitude = 1.5
 	const bobFrequency = 0.15
+
 	m.TickCount++
 	m.BobOffset = math.Sin(float64(m.TickCount)*bobFrequency) * bobAmplitude
-	if m.recalcCooldown > 0 {
-		m.recalcCooldown--
-		return
-	}
 
-	if m.TickCount < m.movementDuration {
-		return
-	}
-	m.TickCount = 0
-
-	// If no path or path blocked or stuck, recalc path
-	needRecalc := false
-	if len(m.Path) == 0 {
-		needRecalc = true
-	} else {
-		next := m.Path[0]
-		if !level.IsWalkable(next.X, next.Y) {
-			needRecalc = true
+	// Smooth interpolation update
+	if m.Moving {
+		m.InterpTicks++
+		t := float64(m.InterpTicks) / float64(m.MovementDuration)
+		if t > 1 {
+			t = 1
 		}
+		m.InterpX = m.StartX + (m.TargetX-m.StartX)*t
+		m.InterpY = m.StartY + (m.TargetY-m.StartY)*t
+
+		if t >= 1 {
+			m.Moving = false
+			m.TileX = int(m.TargetX)
+			m.TileY = int(m.TargetY)
+			m.InterpX = m.TargetX
+			m.InterpY = m.TargetY
+		}
+		return
 	}
 
+	if m.RecalcCooldown > 0 {
+		m.RecalcCooldown--
+		return
+	}
+
+	// Check for path recompute
+	needRecalc := len(m.Path) == 0 || !level.IsWalkable(m.Path[0].X, m.Path[0].Y)
 	if needRecalc {
-		m.Path = pathing.AStar(level, m.TileX, m.TileY, playerX, playerY)
-		m.recalcCooldown = 30 // wait 30 ticks before recalculating again
-		// drop current pos from path
+		m.Path = pathing.AStar(level, m.TileX, m.TileY, player.TileX, player.TileY)
+		m.RecalcCooldown = 30
 		if len(m.Path) > 0 && m.Path[0].X == m.TileX && m.Path[0].Y == m.TileY {
 			m.Path = m.Path[1:]
 		}
 	}
 
-	// Try to move one step
 	if len(m.Path) > 0 {
 		next := m.Path[0]
-		if level.IsWalkable(next.X, next.Y) {
-			m.TileX = next.X
-			m.TileY = next.Y
-			m.Path = m.Path[1:]
-		} else {
-			// path blocked unexpectedly
+		if !level.IsWalkable(next.X, next.Y) {
 			m.Path = nil
+			return
 		}
+
+		if next.X > m.TileX {
+			m.LeftFacing = false
+		} else if next.X < m.TileX {
+			m.LeftFacing = true
+		}
+
+		m.StartX = m.InterpX
+		m.StartY = m.InterpY
+		m.TargetX = float64(next.X)
+		m.TargetY = float64(next.Y)
+		m.InterpTicks = 0
+		m.Moving = true
+		m.Path = m.Path[1:]
 	}
-
-	const interpSpeed = 1 // how fast to approach target tile
-
-	dx := float64(m.TileX) - m.InterpX
-	dy := float64(m.TileY) - m.InterpY
-
-	m.InterpX += dx * interpSpeed
-	m.InterpY += dy * interpSpeed
+	if !m.IsDead && IsAdjacent(m.TileX, m.TileY, player.TileX, player.TileY) {
+		m.AttackTick++
+		if m.AttackTick >= m.AttackRate {
+			player.TakeDamage(m.Damage)
+			m.AttackTick = 0
+		}
+	} else {
+		m.AttackTick = 0 // Reset if not in range
+	}
 }
-
 func (m *Monster) Draw(
 	screen *ebiten.Image,
 	tileSize int,
 	isoToScreen func(int, int) (float64, float64),
 	camX, camY, camScale, cx, cy float64,
 ) {
-	if m.Sprite == nil {
+	if m.Sprite == nil || m.IsDead {
 		return
 	}
 
@@ -112,9 +152,6 @@ func (m *Monster) Draw(
 	spriteH := float64(bounds.Dy())
 
 	const verticalOffset = 0.1
-
-	// Center the sprite
-	op.GeoM.Translate(-spriteW/2, -spriteH/2)
 
 	// Apply bob offset
 	op.GeoM.Translate(0, -verticalOffset+m.BobOffset)
@@ -132,6 +169,44 @@ func (m *Monster) Draw(
 	op.GeoM.Translate(-camX, camY)
 	op.GeoM.Scale(camScale, camScale)
 	op.GeoM.Translate(cx, cy)
-
+	//Monster
 	screen.DrawImage(m.Sprite, op)
+
+	// Health bar
+	if !m.IsDead && m.MaxHP > 0 {
+		hpPercent := float64(m.HP) / float64(m.MaxHP)
+		barW, barH := 32.0, 4.0
+
+		// Red bar background
+		hpBG := ebiten.NewImage(int(barW), int(barH))
+		hpBG.Fill(color.RGBA{100, 0, 0, 255})
+
+		// Green bar
+		hpFG := ebiten.NewImage(int(barW*hpPercent), int(barH))
+		hpFG.Fill(color.RGBA{0, 255, 0, 255})
+
+		// Position
+		hpOp := &ebiten.DrawImageOptions{}
+		hpOp.GeoM.Translate(x-barW/2, y-spriteH-1) // slightly above sprite
+		hpOp.GeoM.Translate(-camX, camY)
+		hpOp.GeoM.Scale(camScale, camScale)
+		hpOp.GeoM.Translate(cx, cy)
+
+		screen.DrawImage(hpBG, hpOp)
+
+		hpOp = &ebiten.DrawImageOptions{}
+		hpOp.GeoM.Translate(x-barW/2, y-spriteH-1)
+		hpOp.GeoM.Translate(-camX, camY)
+		hpOp.GeoM.Scale(camScale, camScale)
+		hpOp.GeoM.Translate(cx, cy)
+
+		screen.DrawImage(hpFG, hpOp)
+	}
+}
+
+func (m *Monster) TakeDamage(dmg int) {
+	m.HP -= dmg
+	if m.HP <= 0 {
+		m.IsDead = true
+	}
 }
