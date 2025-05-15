@@ -39,12 +39,6 @@ func NewPlayer(ss *sprites.SpriteSheet) *Player {
 	}
 }
 
-func isoToScreenFloat(x, y float64, tileSize int) (float64, float64) {
-	ix := (x - y) * float64(tileSize/2)
-	iy := (x + y) * float64(tileSize/4)
-	return ix, iy
-}
-
 func (p *Player) Draw(screen *ebiten.Image, tileSize int, isoToScreen func(int, int) (float64, float64), camX, camY, camScale, cx, cy float64) {
 	//x, y := isoToScreen(int(p.InterpX), int(p.InterpY))
 	// Optional: more accurate rendering
