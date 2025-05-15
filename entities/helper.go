@@ -13,3 +13,9 @@ func IsAdjacent(x1, y1, x2, y2 int) bool {
 	dy := math.Abs(float64(y1 - y2))
 	return (dx+dy == 1) // orthogonally adjacent
 }
+
+func IsAdjacentRanged(x1, y1, x2, y2 int, maxDist int) bool {
+	dx := math.Abs(float64(x1 - x2))
+	dy := math.Abs(float64(y1 - y2))
+	return dx+dy <= float64(maxDist)
+}

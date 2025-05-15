@@ -113,6 +113,7 @@ func (p *Player) Update(level *levels.Level) {
 	var bobFrequency = 0.3
 
 	p.TickCount++
+	p.AttackTick++
 	p.BobOffset = math.Sin(float64(p.TickCount)*bobFrequency) * bobAmplitude
 
 	if p.Moving {

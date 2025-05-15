@@ -66,6 +66,7 @@ func (m *Monster) Update(player *Player, level *levels.Level) {
 	const bobFrequency = 0.15
 
 	m.TickCount++
+	m.AttackTick++
 	m.BobOffset = math.Sin(float64(m.TickCount)*bobFrequency) * bobAmplitude
 
 	// Smooth interpolation update
@@ -96,7 +97,27 @@ func (m *Monster) Update(player *Player, level *levels.Level) {
 	// Check for path recompute, pathfinding
 	needRecalc := len(m.Path) == 0 || !level.IsWalkable(m.Path[0].X, m.Path[0].Y)
 	if needRecalc {
-		m.Path = pathing.AStar(level, m.TileX, m.TileY, player.TileX, player.TileY)
+		// Find a walkable adjacent tile near the player
+		adjTargets := []struct{ X, Y int }{
+			{player.TileX + 1, player.TileY},
+			{player.TileX - 1, player.TileY},
+			{player.TileX, player.TileY + 1},
+			{player.TileX, player.TileY - 1},
+		}
+
+		found := false
+		for _, target := range adjTargets {
+			if level.IsWalkable(target.X, target.Y) {
+				m.Path = pathing.AStar(level, m.TileX, m.TileY, target.X, target.Y)
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			// Nowhere to go
+			m.Path = nil
+		}
 		m.RecalcCooldown = 30
 		if len(m.Path) > 0 && m.Path[0].X == m.TileX && m.Path[0].Y == m.TileY {
 			m.Path = m.Path[1:]

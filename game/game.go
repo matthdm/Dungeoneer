@@ -126,7 +126,7 @@ func (g *Game) Update() error {
 				continue
 			}
 			if m.TileX == cx && m.TileY == cy &&
-				entities.IsAdjacent(g.player.TileX, g.player.TileY, m.TileX, m.TileY) &&
+				entities.IsAdjacentRanged(g.player.TileX, g.player.TileY, m.TileX, m.TileY, 2) &&
 				g.player.CanAttack() {
 				m.TakeDamage(g.player.Damage)
 				g.player.AttackTick = 0
@@ -185,20 +185,21 @@ func (g *Game) handlePan() {
 	if ebiten.IsKeyPressed(ebiten.KeyUp) {
 		g.camY += pan
 	}
-
-	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonRight) {
-		if g.mousePanX == math.MinInt32 {
-			g.mousePanX, g.mousePanY = ebiten.CursorPosition()
+	/*
+		if ebiten.IsMouseButtonPressed(ebiten.MouseButtonRight) {
+			if g.mousePanX == math.MinInt32 {
+				g.mousePanX, g.mousePanY = ebiten.CursorPosition()
+			} else {
+				x, y := ebiten.CursorPosition()
+				dx := float64(g.mousePanX - x)
+				dy := float64(g.mousePanY - y)
+				g.camX -= dx * (pan / 100)
+				g.camY += dy * (pan / 100)
+			}
 		} else {
-			x, y := ebiten.CursorPosition()
-			dx := float64(g.mousePanX - x)
-			dy := float64(g.mousePanY - y)
-			g.camX -= dx * (pan / 100)
-			g.camY += dy * (pan / 100)
+			g.mousePanX, g.mousePanY = math.MinInt32, math.MinInt32
 		}
-	} else {
-		g.mousePanX, g.mousePanY = math.MinInt32, math.MinInt32
-	}
+	*/
 
 	// Clamp camera
 	worldWidth := float64(g.currentLevel.W * g.currentLevel.TileSize / 2)
@@ -364,19 +365,34 @@ func (g *Game) drawPathPreview(target *ebiten.Image, scale, cx, cy float64) {
 		return
 	}
 
-	for _, step := range g.player.PathPreview {
+	preview := g.player.PathPreview
+	for i, step := range preview {
 		if step.X < 0 || step.Y < 0 || step.X >= g.currentLevel.W || step.Y >= g.currentLevel.H {
 			continue
 		}
 		xi, yi := g.cartesianToIso(float64(step.X), float64(step.Y))
+
 		op := &ebiten.DrawImageOptions{}
 		op.GeoM.Translate(xi, yi)
 		op.GeoM.Translate(-g.camX, g.camY)
 		op.GeoM.Scale(scale, scale)
 		op.GeoM.Translate(cx, cy)
 
-		op.ColorScale.Scale(1, 1, 1, 0.4) // semi-transparent
-		target.DrawImage(g.spriteSheet.Cursor, op)
+		// Default: translucent white cursor
+		op.ColorScale.Scale(1, 1, 1, 0.4)
+		img := g.spriteSheet.Cursor
+
+		// If this is the last tile in the path AND contains a living monster, draw red
+		if i == len(preview)-1 {
+			for _, m := range g.Monsters {
+				if !m.IsDead && m.TileX == step.X && m.TileY == step.Y {
+					op.ColorScale.Scale(1, 0, 0, 0.6) // red
+					break
+				}
+			}
+		}
+
+		target.DrawImage(img, op)
 	}
 }
 
