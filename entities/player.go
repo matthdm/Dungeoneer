@@ -14,8 +14,9 @@ type Player struct {
 	LeftFacing   bool
 	Sprite       *ebiten.Image
 
-	Path      []PathNode
-	TickCount int
+	Path        []PathNode
+	PathPreview []PathNode
+	TickCount   int
 
 	// Smooth movement
 	InterpX, InterpY float64
@@ -87,7 +88,7 @@ func (p *Player) CanMoveTo(x, y int, level *levels.Level) bool {
 	return x >= 0 && y >= 0 && x < level.W && y < level.H
 }
 
-func BuildPath(sx, sy, tx, ty int) []PathNode {
+func BuildPath(sx, sy, tx, ty int, level *levels.Level) []PathNode {
 	var path []PathNode
 	dx := tx - sx
 	dy := ty - sy
@@ -96,6 +97,11 @@ func BuildPath(sx, sy, tx, ty int) []PathNode {
 	for i := 1; i <= steps; i++ {
 		x := sx + i*dx/steps
 		y := sy + i*dy/steps
+
+		if !level.IsWalkable(x, y) {
+			break
+		}
+
 		path = append(path, PathNode{X: x, Y: y})
 	}
 	return path
@@ -125,7 +131,6 @@ func (p *Player) Update(level *levels.Level) {
 	const swayAmplitude = 1.5
 	const swayFrequency = 0.15
 
-	p.SwayOffset = math.Sin(float64(p.TickCount)*swayFrequency+math.Pi) * swayAmplitude
 	if p.Moving {
 		p.InterpTicks++
 		t := float64(p.InterpTicks) / float64(moveDuration)

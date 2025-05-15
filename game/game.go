@@ -172,6 +172,16 @@ func (g *Game) Update() error {
 	g.hoverTileX = int(math.Floor(tx - 1.5))
 	g.hoverTileY = int(math.Floor(ty - .5))
 
+	if g.player != nil {
+		path := entities.BuildPath(g.player.TileX, g.player.TileY, g.hoverTileX, g.hoverTileY, g.currentLevel)
+		// Optional: limit to walkable tiles
+		if len(path) > 0 {
+			g.player.PathPreview = path
+		} else {
+			g.player.PathPreview = nil
+		}
+	}
+
 	g.DebugLevelEditor()
 	//	g.DungeonLevelEditor()
 	//	g.ForestLevelEditor()
@@ -193,7 +203,8 @@ func (g *Game) Update() error {
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		tx, ty := g.hoverTileX, g.hoverTileY
 		if g.player.CanMoveTo(tx, ty, g.currentLevel) {
-			g.player.Path = entities.BuildPath(g.player.TileX, g.player.TileY, tx, ty)
+			g.player.Path = entities.BuildPath(g.player.TileX, g.player.TileY, tx, ty, g.currentLevel)
+			g.player.PathPreview = nil
 		}
 	}
 	g.player.Update(g.currentLevel)
@@ -291,13 +302,6 @@ func (g *Game) renderLevel(screen *ebiten.Image) {
 		}
 	}
 
-	if scaleLater {
-		op := &ebiten.DrawImageOptions{}
-		op.GeoM.Translate(-cx, -cy)
-		op.GeoM.Scale(float64(g.camScale), float64(g.camScale))
-		op.GeoM.Translate(cx, cy)
-		screen.DrawImage(target, op)
-	}
 	// Clamp hover coordinates
 	if g.hoverTileY >= 0 && g.hoverTileY < g.currentLevel.H &&
 		g.hoverTileX >= 0 && g.hoverTileX < g.currentLevel.W {
@@ -311,9 +315,40 @@ func (g *Game) renderLevel(screen *ebiten.Image) {
 
 		target.DrawImage(g.highlightImage, op)
 	}
+
+	if g.player != nil {
+		for _, step := range g.player.PathPreview {
+			//Skip out of bounds tiles
+			if step.X < 0 || step.Y < 0 || step.X >= g.currentLevel.W || step.Y >= g.currentLevel.H {
+				continue
+			}
+			xi, yi := g.cartesianToIso(float64(step.X), float64(step.Y))
+
+			op := &ebiten.DrawImageOptions{}
+			op.GeoM.Translate(xi, yi)
+			op.GeoM.Translate(-g.camX, g.camY)
+			op.GeoM.Scale(scale, scale)
+			op.GeoM.Translate(cx, cy)
+
+			// Use a semi-transparent cursor or footprint
+			img := g.spriteSheet.Cursor // or a custom preview tile
+
+			op.ColorScale.Scale(1, 1, 1, 0.4)
+			target.DrawImage(img, op)
+		}
+	}
+
 	if g.player != nil {
 		g.player.Draw(target, g.currentLevel.TileSize, func(x, y int) (float64, float64) {
 			return g.cartesianToIso(float64(x), float64(y))
 		}, g.camX, g.camY, scale, cx, cy)
+	}
+
+	if scaleLater {
+		op := &ebiten.DrawImageOptions{}
+		op.GeoM.Translate(-cx, -cy)
+		op.GeoM.Scale(float64(g.camScale), float64(g.camScale))
+		op.GeoM.Translate(cx, cy)
+		screen.DrawImage(target, op)
 	}
 }

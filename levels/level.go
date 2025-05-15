@@ -54,21 +54,29 @@ func NewDungeonLevel() (*Level, error) {
 			switch {
 			case isBorderSpace || val < 275:
 				t.AddSprite(ss.Wall)
+				t.IsWalkable = false
 			case val < 285:
 				t.AddSprite(ss.Statue)
+				t.IsWalkable = false
 			case val < 288:
 				t.AddSprite(ss.Crown)
+				t.IsWalkable = false
 			case val < 289:
 				t.AddSprite(ss.Floor)
 				t.AddSprite(ss.Tube)
+				t.IsWalkable = false
 			case val < 290:
 				t.AddSprite(ss.Portal)
+				t.IsWalkable = true
 			case val < 10:
 				t.AddSprite(ss.BlueMan)
+				t.IsWalkable = false
 			case val < 3:
 				t.AddSprite(ss.RedMan)
+				t.IsWalkable = false
 			default:
 				t.AddSprite(ss.Floor)
+				t.IsWalkable = true
 			}
 			l.Tiles[y][x] = t
 		}
@@ -106,21 +114,38 @@ func NewForestLevel() (*Level, error) {
 			switch {
 			case isBorderSpace || val < 275:
 				t.AddSprite(ss.OakChunk)
+				t.IsWalkable = false
 			case val < 285:
 				t.AddSprite(ss.OakChunkSlim)
+				t.IsWalkable = false
 			case val < 288:
 				t.AddSprite(ss.Crown)
+				t.IsWalkable = false
 			case val < 289:
 				t.AddSprite(ss.Floor)
 				t.AddSprite(ss.Tube)
+				t.IsWalkable = false
 			case val < 290:
 				t.AddSprite(ss.Portal)
+				t.IsWalkable = true
 			default:
 				t.AddSprite(ss.Floor)
+				t.IsWalkable = true
 			}
 			l.Tiles[y][x] = t
 		}
 	}
 
 	return l, nil
+}
+
+func (l Level) IsWalkable(x, y int) bool {
+	if x < 0 || y < 0 || x >= l.W || y >= l.H {
+		return false
+	}
+	t := l.Tiles[y][x]
+	if t == nil {
+		return false
+	}
+	return t.IsWalkable
 }

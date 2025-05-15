@@ -9,7 +9,8 @@ import (
 // Tile represents a space with an x,y coordinate within a Level. Any number of
 // sprites may be added to a Tile.
 type Tile struct {
-	Sprites []*ebiten.Image
+	Sprites    []*ebiten.Image
+	IsWalkable bool
 }
 
 // AddSprite adds a sprite to the Tile.
