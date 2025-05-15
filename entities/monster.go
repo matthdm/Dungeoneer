@@ -93,7 +93,7 @@ func (m *Monster) Update(player *Player, level *levels.Level) {
 		return
 	}
 
-	// Check for path recompute
+	// Check for path recompute, pathfinding
 	needRecalc := len(m.Path) == 0 || !level.IsWalkable(m.Path[0].X, m.Path[0].Y)
 	if needRecalc {
 		m.Path = pathing.AStar(level, m.TileX, m.TileY, player.TileX, player.TileY)
@@ -102,7 +102,7 @@ func (m *Monster) Update(player *Player, level *levels.Level) {
 			m.Path = m.Path[1:]
 		}
 	}
-
+	// Move to next tile
 	if len(m.Path) > 0 {
 		next := m.Path[0]
 		if !level.IsWalkable(next.X, next.Y) {
@@ -124,83 +124,65 @@ func (m *Monster) Update(player *Player, level *levels.Level) {
 		m.Moving = true
 		m.Path = m.Path[1:]
 	}
-	if !m.IsDead && IsAdjacent(m.TileX, m.TileY, player.TileX, player.TileY) {
+	// Combat check
+	if !m.IsDead && !player.IsDead &&
+		!m.Moving &&
+		IsAdjacent(m.TileX, m.TileY, player.TileX, player.TileY) {
 		m.AttackTick++
 		if m.AttackTick >= m.AttackRate {
 			player.TakeDamage(m.Damage)
 			m.AttackTick = 0
 		}
-	} else {
-		m.AttackTick = 0 // Reset if not in range
 	}
 }
-func (m *Monster) Draw(
-	screen *ebiten.Image,
-	tileSize int,
-	isoToScreen func(int, int) (float64, float64),
-	camX, camY, camScale, cx, cy float64,
-) {
+func (m *Monster) Draw(screen *ebiten.Image, tileSize int, camX, camY, camScale, cx, cy float64) {
 	if m.Sprite == nil || m.IsDead {
 		return
 	}
 
-	//x, y := isoToScreen(int(m.InterpX), int(m.InterpY))
-	x, y := isoToScreenFloat(m.InterpX, m.InterpY, 64)
+	x, y := isoToScreenFloat(m.InterpX, m.InterpY, tileSize)
+
 	op := &ebiten.DrawImageOptions{}
 	bounds := m.Sprite.Bounds()
 	spriteW := float64(bounds.Dx())
-	spriteH := float64(bounds.Dy())
 
-	const verticalOffset = 0.1
-
-	// Apply bob offset
+	// Then apply the bob
+	const verticalOffset = 1.0 // tweak until it feels good
 	op.GeoM.Translate(0, -verticalOffset+m.BobOffset)
 
-	// Flip horizontally if not facing left
+	// Flip for facing direction
 	if !m.LeftFacing {
 		op.GeoM.Scale(-1, 1)
 		op.GeoM.Translate(spriteW, 0)
 	}
 
-	// Move to tile screen position
+	// Move to screen space and apply camera
 	op.GeoM.Translate(x, y)
-
-	// Camera transform
 	op.GeoM.Translate(-camX, camY)
 	op.GeoM.Scale(camScale, camScale)
 	op.GeoM.Translate(cx, cy)
-	//Monster
+
 	screen.DrawImage(m.Sprite, op)
 
-	// Health bar
-	if !m.IsDead && m.MaxHP > 0 {
+	if !m.IsDead || m.MaxHP > 0 {
 		hpPercent := float64(m.HP) / float64(m.MaxHP)
-		barW, barH := 32.0, 4.0
+		barWidth := 32.0
+		barHeight := 4.0
 
-		// Red bar background
-		hpBG := ebiten.NewImage(int(barW), int(barH))
-		hpBG.Fill(color.RGBA{100, 0, 0, 255})
+		hpBar := ebiten.NewImage(int(barWidth), int(barHeight))
+		hpBar.Fill(color.RGBA{255, 0, 0, 255})
+		hpBarFilled := ebiten.NewImage(int(barWidth*hpPercent), int(barHeight))
+		hpBarFilled.Fill(color.RGBA{0, 255, 0, 255})
 
-		// Green bar
-		hpFG := ebiten.NewImage(int(barW*hpPercent), int(barH))
-		hpFG.Fill(color.RGBA{0, 255, 0, 255})
+		// Position HP bar
+		barOp := &ebiten.DrawImageOptions{}
+		barOp.GeoM.Translate(x-barWidth/2+35, y-10)
+		barOp.GeoM.Translate(-camX, camY)
+		barOp.GeoM.Scale(camScale, camScale)
+		barOp.GeoM.Translate(cx, cy)
 
-		// Position
-		hpOp := &ebiten.DrawImageOptions{}
-		hpOp.GeoM.Translate(x-barW/2, y-spriteH-1) // slightly above sprite
-		hpOp.GeoM.Translate(-camX, camY)
-		hpOp.GeoM.Scale(camScale, camScale)
-		hpOp.GeoM.Translate(cx, cy)
-
-		screen.DrawImage(hpBG, hpOp)
-
-		hpOp = &ebiten.DrawImageOptions{}
-		hpOp.GeoM.Translate(x-barW/2, y-spriteH-1)
-		hpOp.GeoM.Translate(-camX, camY)
-		hpOp.GeoM.Scale(camScale, camScale)
-		hpOp.GeoM.Translate(cx, cy)
-
-		screen.DrawImage(hpFG, hpOp)
+		screen.DrawImage(hpBar, barOp)
+		screen.DrawImage(hpBarFilled, barOp)
 	}
 }
 

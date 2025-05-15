@@ -116,22 +116,23 @@ func (g *Game) Update() error {
 		mx, my := ebiten.CursorPosition()
 		worldX := (float64(mx)-float64(g.w/2))/g.camScale + g.camX
 		worldY := (float64(my)-float64(g.h/2))/g.camScale - g.camY
+		tx, ty := g.isoToCartesian(worldX, worldY)
 
-		fx, fy := g.isoToCartesian(worldX, worldY)
-		tx := int(math.Floor(fx - 1.5))
-		ty := int(math.Floor(fy - 0.5))
+		cx := int(math.Floor(tx - 1.5))
+		cy := int(math.Floor(ty - 0.5))
 
 		for _, m := range g.Monsters {
-			if !m.IsDead && m.TileX == tx && m.TileY == ty &&
-				entities.IsAdjacent(g.player.TileX, g.player.TileY, tx, ty) &&
+			if m.IsDead {
+				continue
+			}
+			if m.TileX == cx && m.TileY == cy &&
+				entities.IsAdjacent(g.player.TileX, g.player.TileY, m.TileX, m.TileY) &&
 				g.player.CanAttack() {
-
 				m.TakeDamage(g.player.Damage)
 				g.player.AttackTick = 0
 			}
 		}
 	}
-
 	// Player path preview
 	if g.player != nil {
 		path := pathing.AStar(g.currentLevel, g.player.TileX, g.player.TileY, g.hoverTileX, g.hoverTileY)
@@ -389,9 +390,7 @@ func (g *Game) drawEntities(target *ebiten.Image, scale, cx, cy float64) {
 	}
 
 	for _, m := range g.Monsters {
-		m.Draw(target, tileSize, func(x, y int) (float64, float64) {
-			return g.cartesianToIso(float64(x), float64(y))
-		}, g.camX, g.camY, scale, cx, cy)
+		m.Draw(target, tileSize, g.camX, g.camY, scale, cx, cy)
 	}
 }
 

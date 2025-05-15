@@ -56,14 +56,13 @@ func NewPlayer(ss *sprites.SpriteSheet) *Player {
 func (p *Player) Draw(screen *ebiten.Image, tileSize int, isoToScreen func(int, int) (float64, float64), camX, camY, camScale, cx, cy float64) {
 	//x, y := isoToScreen(int(p.InterpX), int(p.InterpY))
 	// Optional: more accurate rendering
+	op := &ebiten.DrawImageOptions{}
 	x, y := isoToScreenFloat(p.InterpX, p.InterpY, 64)
 	bounds := p.Sprite.Bounds()
 	spriteW := float64(bounds.Dx())
-	spriteH := float64(bounds.Dy())
-	op := &ebiten.DrawImageOptions{}
-	const verticalOffset = 1.0 // tweak until it feels good
 
 	// Then apply the bob
+	const verticalOffset = 1.0 // tweak until it feels good
 	op.GeoM.Translate(0, -verticalOffset+p.BobOffset)
 
 	// 2. Flip horizontally if facing right
@@ -81,35 +80,27 @@ func (p *Player) Draw(screen *ebiten.Image, tileSize int, isoToScreen func(int, 
 	op.GeoM.Translate(cx, cy)
 	//Player Draw
 	screen.DrawImage(p.Sprite, op)
+
 	// Health bar
-	if !p.IsDead && p.MaxHP > 0 {
+	if p.MaxHP > 0 {
 		hpPercent := float64(p.HP) / float64(p.MaxHP)
-		barW, barH := 32.0, 4.0
+		barWidth := 32.0
+		barHeight := 4.0
 
-		// Red bar background
-		hpBG := ebiten.NewImage(int(barW), int(barH))
-		hpBG.Fill(color.RGBA{100, 0, 0, 255})
+		hpBar := ebiten.NewImage(int(barWidth), int(barHeight))
+		hpBar.Fill(color.RGBA{255, 0, 0, 255})
+		hpBarFilled := ebiten.NewImage(int(barWidth*hpPercent), int(barHeight))
+		hpBarFilled.Fill(color.RGBA{0, 255, 0, 255})
 
-		// Green bar
-		hpFG := ebiten.NewImage(int(barW*hpPercent), int(barH))
-		hpFG.Fill(color.RGBA{0, 255, 0, 255})
+		// Position HP bar
+		barOp := &ebiten.DrawImageOptions{}
+		barOp.GeoM.Translate(x-barWidth/2+30, y)
+		barOp.GeoM.Translate(-camX, camY)
+		barOp.GeoM.Scale(camScale, camScale)
+		barOp.GeoM.Translate(cx, cy)
 
-		// Position
-		hpOp := &ebiten.DrawImageOptions{}
-		hpOp.GeoM.Translate(x-barW/2, y-spriteH-1) // slightly above sprite
-		hpOp.GeoM.Translate(-camX, camY)
-		hpOp.GeoM.Scale(camScale, camScale)
-		hpOp.GeoM.Translate(cx, cy)
-
-		screen.DrawImage(hpBG, hpOp)
-
-		hpOp = &ebiten.DrawImageOptions{}
-		hpOp.GeoM.Translate(x-barW/2, y-spriteH-1)
-		hpOp.GeoM.Translate(-camX, camY)
-		hpOp.GeoM.Scale(camScale, camScale)
-		hpOp.GeoM.Translate(cx, cy)
-
-		screen.DrawImage(hpFG, hpOp)
+		screen.DrawImage(hpBar, barOp)
+		screen.DrawImage(hpBarFilled, barOp)
 	}
 }
 
