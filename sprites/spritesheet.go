@@ -68,7 +68,7 @@ func LoadSpriteSheet(tileSize int) (*SpriteSheet, error) {
 	s.Water = spriteAt(8, 4)
 	s.EnchantedWater = spriteAt(9, 4)
 	s.GreyKnight = spriteAt(4, 7)
-	//
+
 	//s.OakWall5 = spriteAt(8, 0)
 	//s.OakChunk2 = spriteAt(9, 0)
 	s.RedMan = spriteAt(0, 10)
