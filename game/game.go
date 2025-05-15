@@ -5,6 +5,7 @@ import (
 	"dungeoneer/entities"
 	"dungeoneer/leveleditor"
 	"dungeoneer/levels"
+	"dungeoneer/pathing"
 	"dungeoneer/sprites"
 	"fmt"
 	"math"
@@ -31,6 +32,8 @@ type Game struct {
 	highlightImage         *ebiten.Image
 	editor                 *leveleditor.Editor
 	player                 *entities.Player
+
+	Monsters []*entities.Monster
 }
 
 // NewGame returns a new isometric demo Game.
@@ -46,6 +49,7 @@ func NewGame() (*Game, error) {
 	editor := leveleditor.NewEditor()
 	editor.SetSelectedSprite(ss.Floor) // or any tile to begin with
 	plr := entities.NewPlayer(ss)
+	mons := entities.NewMonster(ss)
 	g := &Game{
 		currentLevel:   levels.NewLevel1(),
 		camScale:       1,
@@ -56,6 +60,7 @@ func NewGame() (*Game, error) {
 		highlightImage: ss.Cursor,
 		editor:         editor,
 		player:         plr,
+		Monsters:       mons,
 	}
 	return g, nil
 }
@@ -172,8 +177,9 @@ func (g *Game) Update() error {
 	g.hoverTileX = int(math.Floor(tx - 1.5))
 	g.hoverTileY = int(math.Floor(ty - .5))
 
+	//PLayer PAthing
 	if g.player != nil {
-		path := entities.BuildPath(g.player.TileX, g.player.TileY, g.hoverTileX, g.hoverTileY, g.currentLevel)
+		path := pathing.AStar(g.currentLevel, g.player.TileX, g.player.TileY, g.hoverTileX, g.hoverTileY)
 		// Optional: limit to walkable tiles
 		if len(path) > 0 {
 			g.player.PathPreview = path
@@ -181,34 +187,20 @@ func (g *Game) Update() error {
 			g.player.PathPreview = nil
 		}
 	}
-
-	g.DebugLevelEditor()
-	//	g.DungeonLevelEditor()
-	//	g.ForestLevelEditor()
-
-	if inpututil.IsKeyJustPressed(ebiten.KeyA) {
-		g.player.TileX -= 1
-		g.player.LeftFacing = true
-	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyD) {
-		g.player.TileX += 1
-		g.player.LeftFacing = false
-	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyW) {
-		g.player.TileY -= 1
-	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyS) {
-		g.player.TileY += 1
+	for _, m := range g.Monsters {
+		m.Update(g.player.TileX, g.player.TileY, g.currentLevel)
 	}
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		tx, ty := g.hoverTileX, g.hoverTileY
 		if g.player.CanMoveTo(tx, ty, g.currentLevel) {
-			g.player.Path = entities.BuildPath(g.player.TileX, g.player.TileY, tx, ty, g.currentLevel)
+			g.player.Path = pathing.AStar(g.currentLevel, g.player.TileX, g.player.TileY, g.hoverTileX, g.hoverTileY)
 			g.player.PathPreview = nil
 		}
 	}
 	g.player.Update(g.currentLevel)
-
+	g.DebugLevelEditor()
+	//	g.DungeonLevelEditor()
+	//	g.ForestLevelEditor()
 	return nil
 }
 
@@ -342,6 +334,19 @@ func (g *Game) renderLevel(screen *ebiten.Image) {
 		g.player.Draw(target, g.currentLevel.TileSize, func(x, y int) (float64, float64) {
 			return g.cartesianToIso(float64(x), float64(y))
 		}, g.camX, g.camY, scale, cx, cy)
+	}
+	if g.Monsters != nil {
+		for _, m := range g.Monsters {
+			m.Draw(
+				target,
+				g.currentLevel.TileSize,
+				func(x, y int) (float64, float64) {
+					return g.cartesianToIso(float64(x), float64(y))
+				},
+				g.camX, g.camY, scale, // use local `scale`, not g.camScale
+				cx, cy,
+			)
+		}
 	}
 
 	if scaleLater {

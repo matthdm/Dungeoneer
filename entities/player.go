@@ -2,21 +2,21 @@ package entities
 
 import (
 	"dungeoneer/levels"
+	"dungeoneer/pathing"
 	"dungeoneer/sprites"
-	"image/color"
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
 type Player struct {
-	TileX, TileY int // current grid position
-	LeftFacing   bool
-	Sprite       *ebiten.Image
-
-	Path        []PathNode
-	PathPreview []PathNode
-	TickCount   int
+	TileX, TileY     int // current grid position
+	LeftFacing       bool
+	Sprite           *ebiten.Image
+	movementDuration int // ticks per tile
+	Path             []pathing.PathNode
+	PathPreview      []pathing.PathNode
+	TickCount        int
 
 	// Smooth movement
 	InterpX, InterpY float64
@@ -27,27 +27,16 @@ type Player struct {
 	BobOffset        float64
 }
 
-type PathNode struct {
-	X, Y int
-}
-
 func NewPlayer(ss *sprites.SpriteSheet) *Player {
 	return &Player{
-		TileX:      3,
-		TileY:      3,
-		LeftFacing: true,
-		Sprite:     ss.GreyKnight,
-
-		InterpX: float64(3),
-		InterpY: float64(3),
+		TileX:            3,
+		TileY:            3,
+		LeftFacing:       true,
+		Sprite:           ss.GreyKnight,
+		movementDuration: 15,
+		InterpX:          float64(3),
+		InterpY:          float64(3),
 	}
-}
-
-func generateShadowImage(size int) *ebiten.Image {
-	img := ebiten.NewImage(size, size/4)
-	// dark gray ellipse
-	img.Fill(color.RGBA{0, 0, 0, 80})
-	return img
 }
 
 func isoToScreenFloat(x, y float64, tileSize int) (float64, float64) {
@@ -88,52 +77,16 @@ func (p *Player) CanMoveTo(x, y int, level *levels.Level) bool {
 	return x >= 0 && y >= 0 && x < level.W && y < level.H
 }
 
-func BuildPath(sx, sy, tx, ty int, level *levels.Level) []PathNode {
-	var path []PathNode
-	dx := tx - sx
-	dy := ty - sy
-
-	steps := max(abs(dx), abs(dy))
-	for i := 1; i <= steps; i++ {
-		x := sx + i*dx/steps
-		y := sy + i*dy/steps
-
-		if !level.IsWalkable(x, y) {
-			break
-		}
-
-		path = append(path, PathNode{X: x, Y: y})
-	}
-	return path
-}
-
-func abs(n int) int {
-	if n < 0 {
-		return -n
-	}
-	return n
-}
-
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
 func (p *Player) Update(level *levels.Level) {
-	const moveDuration = 15 // ticks per tile
+
 	var bobAmplitude = 1.5
 	var bobFrequency = 0.3 // radians per tick
 	p.TickCount++
 	p.BobOffset = math.Sin(float64(p.TickCount)*bobFrequency) * bobAmplitude
 
-	const swayAmplitude = 1.5
-	const swayFrequency = 0.15
-
 	if p.Moving {
 		p.InterpTicks++
-		t := float64(p.InterpTicks) / float64(moveDuration)
+		t := float64(p.InterpTicks) / float64(p.movementDuration)
 		if t > 1 {
 			t = 1
 		}
