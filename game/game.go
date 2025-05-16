@@ -9,11 +9,13 @@ import (
 	"dungeoneer/sprites"
 	"fmt"
 	"image"
+	"image/color"
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
 type Game struct {
@@ -31,6 +33,7 @@ type Game struct {
 	editor                 *leveleditor.Editor
 	player                 *entities.Player
 	Monsters               []*entities.Monster
+	HitMarkers             []entities.HitMarker
 }
 
 func NewGame() (*Game, error) {
@@ -79,60 +82,9 @@ func (g *Game) Update() error {
 	g.handleZoom()
 	g.handlePan()
 	g.updateHoverTile()
+	g.handleClicks()
+	g.handleLevelHotkeys()
 
-	// Level switching
-	if inpututil.IsKeyJustPressed(ebiten.KeyR) {
-		l, err := levels.NewDungeonLevel()
-		if err != nil {
-			return err
-		}
-		g.currentLevel = l
-	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyQ) {
-		l, err := levels.NewForestLevel()
-		if err != nil {
-			return err
-		}
-		g.currentLevel = l
-	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyT) {
-		g.currentLevel = levels.NewLevel1()
-	}
-
-	// Handle player movement (right-click)
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
-		tx, ty := g.hoverTileX, g.hoverTileY
-		if g.player.CanMoveTo(tx, ty, g.currentLevel) {
-			path := pathing.AStar(g.currentLevel, g.player.TileX, g.player.TileY, tx, ty)
-			if len(path) > 0 {
-				g.player.Path = path
-				g.player.PathPreview = nil
-			}
-		}
-	}
-
-	// Handle player attacking monster
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-		mx, my := ebiten.CursorPosition()
-		worldX := (float64(mx)-float64(g.w/2))/g.camScale + g.camX
-		worldY := (float64(my)-float64(g.h/2))/g.camScale - g.camY
-		tx, ty := g.isoToCartesian(worldX, worldY)
-
-		cx := int(math.Floor(tx - 1.5))
-		cy := int(math.Floor(ty - 0.5))
-
-		for _, m := range g.Monsters {
-			if m.IsDead {
-				continue
-			}
-			if m.TileX == cx && m.TileY == cy &&
-				entities.IsAdjacentRanged(g.player.TileX, g.player.TileY, m.TileX, m.TileY, 2) &&
-				g.player.CanAttack() {
-				m.TakeDamage(g.player.Damage)
-				g.player.AttackTick = 0
-			}
-		}
-	}
 	// Player path preview
 	if g.player != nil {
 		path := pathing.AStar(g.currentLevel, g.player.TileX, g.player.TileY, g.hoverTileX, g.hoverTileY)
@@ -141,13 +93,29 @@ func (g *Game) Update() error {
 
 	// Update game objects
 	g.player.Update(g.currentLevel)
+
+	//Update Monsters
 	for _, m := range g.Monsters {
 		m.Update(g.player, g.currentLevel)
 	}
 
 	// Optional: Level editor
 	g.DebugLevelEditor()
+
+	//Hit markers
+	g.handleHitMarkers()
 	return nil
+}
+
+func (g *Game) handleHitMarkers() {
+	var remaining []entities.HitMarker
+	for _, hm := range g.HitMarkers {
+		hm.Ticks++
+		if hm.Ticks < hm.MaxTicks {
+			remaining = append(remaining, hm)
+		}
+	}
+	g.HitMarkers = remaining
 }
 
 func (g *Game) handleZoom() {
@@ -173,33 +141,32 @@ func (g *Game) handleZoom() {
 
 func (g *Game) handlePan() {
 	pan := 7.0 / g.camScale
-	if ebiten.IsKeyPressed(ebiten.KeyLeft) {
+	if ebiten.IsKeyPressed(ebiten.KeyA) {
 		g.camX -= pan
 	}
-	if ebiten.IsKeyPressed(ebiten.KeyRight) {
+	if ebiten.IsKeyPressed(ebiten.KeyD) {
 		g.camX += pan
 	}
-	if ebiten.IsKeyPressed(ebiten.KeyDown) {
+	if ebiten.IsKeyPressed(ebiten.KeyS) {
 		g.camY -= pan
 	}
-	if ebiten.IsKeyPressed(ebiten.KeyUp) {
+	if ebiten.IsKeyPressed(ebiten.KeyW) {
 		g.camY += pan
 	}
-	/*
-		if ebiten.IsMouseButtonPressed(ebiten.MouseButtonRight) {
-			if g.mousePanX == math.MinInt32 {
-				g.mousePanX, g.mousePanY = ebiten.CursorPosition()
-			} else {
-				x, y := ebiten.CursorPosition()
-				dx := float64(g.mousePanX - x)
-				dy := float64(g.mousePanY - y)
-				g.camX -= dx * (pan / 100)
-				g.camY += dy * (pan / 100)
-			}
+
+	if ebiten.IsMouseButtonPressed(ebiten.MouseButton3) {
+		if g.mousePanX == math.MinInt32 {
+			g.mousePanX, g.mousePanY = ebiten.CursorPosition()
 		} else {
-			g.mousePanX, g.mousePanY = math.MinInt32, math.MinInt32
+			x, y := ebiten.CursorPosition()
+			dx := float64(g.mousePanX - x)
+			dy := float64(g.mousePanY - y)
+			g.camX -= dx * (pan / 100)
+			g.camY += dy * (pan / 100)
 		}
-	*/
+	} else {
+		g.mousePanX, g.mousePanY = math.MinInt32, math.MinInt32
+	}
 
 	// Clamp camera
 	worldWidth := float64(g.currentLevel.W * g.currentLevel.TileSize / 2)
@@ -244,27 +211,36 @@ func (g *Game) handleLevelHotkeys() {
 }
 
 func (g *Game) handleClicks() {
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-		// Movement
+	// Handle player movement (right-click)
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
 		tx, ty := g.hoverTileX, g.hoverTileY
 		if g.player.CanMoveTo(tx, ty, g.currentLevel) {
-			g.player.Path = pathing.AStar(g.currentLevel, g.player.TileX, g.player.TileY, tx, ty)
-			g.player.PathPreview = nil
+			path := pathing.AStar(g.currentLevel, g.player.TileX, g.player.TileY, tx, ty)
+			if len(path) > 0 {
+				g.player.Path = path
+				g.player.PathPreview = nil
+			}
 		}
+	}
 
-		// Combat
+	// Handle player attacking monster
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		mx, my := ebiten.CursorPosition()
 		worldX := (float64(mx)-float64(g.w/2))/g.camScale + g.camX
 		worldY := (float64(my)-float64(g.h/2))/g.camScale - g.camY
-		fx, fy := g.isoToCartesian(worldX, worldY)
-		cx := int(math.Floor(fx - 1.5))
-		cy := int(math.Floor(fy - 0.5))
+		tx, ty := g.isoToCartesian(worldX, worldY)
+
+		cx := int(math.Floor(tx - 1.5))
+		cy := int(math.Floor(ty - 0.5))
 
 		for _, m := range g.Monsters {
-			if !m.IsDead && m.TileX == cx && m.TileY == cy &&
-				entities.IsAdjacent(g.player.TileX, g.player.TileY, m.TileX, m.TileY) &&
+			if m.IsDead {
+				continue
+			}
+			if m.TileX == cx && m.TileY == cy &&
+				entities.IsAdjacentRanged(g.player.TileX, g.player.TileY, m.TileX, m.TileY, 2) &&
 				g.player.CanAttack() {
-				m.TakeDamage(g.player.Damage)
+				m.TakeDamage(g.player.Damage, &g.HitMarkers)
 				g.player.AttackTick = 0
 			}
 		}
@@ -341,6 +317,24 @@ func (g *Game) drawTiles(target *ebiten.Image, scale, cx, cy float64) {
 
 			tile.Draw(target, op)
 		}
+	}
+	for _, hm := range g.HitMarkers {
+		xi, yi := g.cartesianToIso(hm.X, hm.Y)
+
+		x := float32(xi-g.camX+35)*float32(scale) + float32(cx) // tweak +4 as needed
+		y := float32(yi+g.camY+15)*float32(scale) + float32(cy) // tweak -8 until centered
+
+		alpha := 1.0 - float64(hm.Ticks)/float64(hm.MaxTicks)
+		a := uint8(255 * alpha)
+		col := color.NRGBA{255, 0, 0, a}
+
+		size := float32(6) * float32(scale)
+
+		// Draw diagonal /
+		vector.StrokeLine(target, x-size, y-size, x+size, y+size, 2, col, true)
+
+		// Draw diagonal \
+		vector.StrokeLine(target, x+size, y-size, x-size, y+size, 2, col, true)
 	}
 }
 

@@ -44,12 +44,12 @@ type Monster struct {
 func NewMonster(ss *sprites.SpriteSheet) []*Monster {
 	return []*Monster{
 		{
-			Name:             "Skeleton",
+			Name:             "Statue",
 			TileX:            5,
 			TileY:            7,
 			InterpX:          5,
 			InterpY:          7,
-			Sprite:           ss.BlueMan, // swap in any sprite
+			Sprite:           ss.Statue, // swap in any sprite
 			MovementDuration: 45,
 			LeftFacing:       true,
 			HP:               10,
@@ -145,7 +145,9 @@ func (m *Monster) Update(player *Player, level *levels.Level) {
 		m.Moving = true
 		m.Path = m.Path[1:]
 	}
-	// Combat check
+	m.CombatCheck(player)
+}
+func (m *Monster) CombatCheck(player *Player) {
 	if !m.IsDead && !player.IsDead &&
 		!m.Moving &&
 		IsAdjacent(m.TileX, m.TileY, player.TileX, player.TileY) {
@@ -184,7 +186,10 @@ func (m *Monster) Draw(screen *ebiten.Image, tileSize int, camX, camY, camScale,
 	op.GeoM.Translate(cx, cy)
 
 	screen.DrawImage(m.Sprite, op)
+	m.UpdateHealthBar(screen, x, y, camX, camY, camScale, cx, cy)
+}
 
+func (m *Monster) UpdateHealthBar(screen *ebiten.Image, x, y float64, camX, camY, camScale, cx, cy float64) {
 	if !m.IsDead || m.MaxHP > 0 {
 		hpPercent := float64(m.HP) / float64(m.MaxHP)
 		barWidth := 32.0
@@ -207,9 +212,17 @@ func (m *Monster) Draw(screen *ebiten.Image, tileSize int, camX, camY, camScale,
 	}
 }
 
-func (m *Monster) TakeDamage(dmg int) {
+func (m *Monster) TakeDamage(dmg int, markers *[]HitMarker) {
 	m.HP -= dmg
 	if m.HP <= 0 {
 		m.IsDead = true
 	}
+
+	// Add red X marker on hit
+	*markers = append(*markers, HitMarker{
+		X:        m.InterpX,
+		Y:        m.InterpY,
+		Ticks:    0,
+		MaxTicks: 30, // 0.5 seconds at 60 TPS
+	})
 }

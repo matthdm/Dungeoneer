@@ -81,7 +81,9 @@ func (p *Player) Draw(screen *ebiten.Image, tileSize int, isoToScreen func(int, 
 	//Player Draw
 	screen.DrawImage(p.Sprite, op)
 
-	// Health bar
+	p.UpdateHealthBar(screen, x, y, camX, camY, camScale, cx, cy)
+}
+func (p *Player) UpdateHealthBar(screen *ebiten.Image, x, y float64, camX, camY, camScale, cx, cy float64) {
 	if p.MaxHP > 0 {
 		hpPercent := float64(p.HP) / float64(p.MaxHP)
 		barWidth := 32.0
