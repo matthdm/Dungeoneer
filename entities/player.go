@@ -47,7 +47,7 @@ func NewPlayer(ss *sprites.SpriteSheet) *Player {
 		InterpY:          float64(3),
 		HP:               10,
 		MaxHP:            10,
-		Damage:           1,
+		Damage:           2,
 		AttackRate:       60,
 		IsDead:           false,
 	}

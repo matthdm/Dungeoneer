@@ -33,12 +33,15 @@ type Monster struct {
 	RecalcCooldown   int
 
 	// Combat
-	HP         int
-	MaxHP      int
-	Damage     int
-	AttackRate int
-	AttackTick int
-	IsDead     bool
+	HP             int
+	MaxHP          int
+	Damage         int
+	AttackRate     int
+	AttackTick     int
+	IsDead         bool
+	FlashTick      int
+	FlashTicksLeft int // total ticks remaining for the flash effect
+
 }
 
 func NewMonster(ss *sprites.SpriteSheet) []*Monster {
@@ -62,6 +65,7 @@ func NewMonster(ss *sprites.SpriteSheet) []*Monster {
 }
 
 func (m *Monster) Update(player *Player, level *levels.Level) {
+	m.UpdateFlashStatus()
 	const bobAmplitude = 1.5
 	const bobFrequency = 0.15
 
@@ -146,6 +150,7 @@ func (m *Monster) Update(player *Player, level *levels.Level) {
 		m.Path = m.Path[1:]
 	}
 	m.CombatCheck(player)
+
 }
 func (m *Monster) CombatCheck(player *Player) {
 	if !m.IsDead && !player.IsDead &&
@@ -185,8 +190,13 @@ func (m *Monster) Draw(screen *ebiten.Image, tileSize int, camX, camY, camScale,
 	op.GeoM.Scale(camScale, camScale)
 	op.GeoM.Translate(cx, cy)
 
+	if m.FlashTicksLeft > 0 {
+		op.ColorScale.Scale(1, 1, 1, 0.7) // Brighter flash
+	}
+
 	screen.DrawImage(m.Sprite, op)
 	m.UpdateHealthBar(screen, x, y, camX, camY, camScale, cx, cy)
+
 }
 
 func (m *Monster) UpdateHealthBar(screen *ebiten.Image, x, y float64, camX, camY, camScale, cx, cy float64) {
@@ -212,10 +222,19 @@ func (m *Monster) UpdateHealthBar(screen *ebiten.Image, x, y float64, camX, camY
 	}
 }
 
+func (m *Monster) UpdateFlashStatus() {
+	// Flash logic
+	if m.FlashTicksLeft > 0 {
+		m.FlashTicksLeft--
+	}
+}
+
 func (m *Monster) TakeDamage(dmg int, markers *[]HitMarker, damageNumbers *[]DamageNumber) {
 	m.HP -= dmg
 	if m.HP <= 0 {
 		m.IsDead = true
+	} else {
+		m.FlashTicksLeft = 15 // e.g. 15 ticks = flicker for 0.25s at 60fps
 	}
 
 	// Add red X marker on hit
@@ -234,4 +253,5 @@ func (m *Monster) TakeDamage(dmg int, markers *[]HitMarker, damageNumbers *[]Dam
 		Ticks:    0,
 		MaxTicks: 30,
 	})
+
 }
