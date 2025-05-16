@@ -212,7 +212,7 @@ func (m *Monster) UpdateHealthBar(screen *ebiten.Image, x, y float64, camX, camY
 	}
 }
 
-func (m *Monster) TakeDamage(dmg int, markers *[]HitMarker) {
+func (m *Monster) TakeDamage(dmg int, markers *[]HitMarker, damageNumbers *[]DamageNumber) {
 	m.HP -= dmg
 	if m.HP <= 0 {
 		m.IsDead = true
@@ -224,5 +224,14 @@ func (m *Monster) TakeDamage(dmg int, markers *[]HitMarker) {
 		Y:        m.InterpY,
 		Ticks:    0,
 		MaxTicks: 30, // 0.5 seconds at 60 TPS
+	})
+
+	// Add damage number
+	*damageNumbers = append(*damageNumbers, DamageNumber{
+		X:        float64(m.TileX),
+		Y:        float64(m.TileY),
+		Value:    dmg,
+		Ticks:    0,
+		MaxTicks: 30,
 	})
 }
