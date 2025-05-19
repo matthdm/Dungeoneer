@@ -10,6 +10,15 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+type MonsterBehavior interface {
+	Update(m *Monster, player *Player, level *levels.Level)
+}
+
+//AggressiveBehavior
+//AmbushBehavior
+//PatrolBehavior
+//BossBehavior
+
 type Monster struct {
 	Name       string
 	Sprite     *ebiten.Image
@@ -33,6 +42,7 @@ type Monster struct {
 	RecalcCooldown   int
 
 	// Combat
+	Behavior       MonsterBehavior
 	HP             int
 	MaxHP          int
 	Damage         int
@@ -65,11 +75,18 @@ func NewMonster(ss *sprites.SpriteSheet) []*Monster {
 }
 
 func (m *Monster) Update(player *Player, level *levels.Level) {
+	if m.Behavior != nil {
+		m.Behavior.Update(m, player, level)
+	}
 	m.UpdateFlashStatus()
+	m.CombatCheck(player)
+}
+
+func (m *Monster) BasicChaseLogic(p *Player, level *levels.Level) {
 	const bobAmplitude = 1.5
 	const bobFrequency = 0.15
 
-	m.TickCount++
+	//m.TickCount++
 	m.AttackTick++
 	m.BobOffset = math.Sin(float64(m.TickCount)*bobFrequency) * bobAmplitude
 
@@ -103,10 +120,10 @@ func (m *Monster) Update(player *Player, level *levels.Level) {
 	if needRecalc {
 		// Find a walkable adjacent tile near the player
 		adjTargets := []struct{ X, Y int }{
-			{player.TileX + 1, player.TileY},
-			{player.TileX - 1, player.TileY},
-			{player.TileX, player.TileY + 1},
-			{player.TileX, player.TileY - 1},
+			{p.TileX + 1, p.TileY},
+			{p.TileX - 1, p.TileY},
+			{p.TileX, p.TileY + 1},
+			{p.TileX, p.TileY - 1},
 		}
 
 		found := false
@@ -149,9 +166,8 @@ func (m *Monster) Update(player *Player, level *levels.Level) {
 		m.Moving = true
 		m.Path = m.Path[1:]
 	}
-	m.CombatCheck(player)
-
 }
+
 func (m *Monster) CombatCheck(player *Player) {
 	if !m.IsDead && !player.IsDead &&
 		!m.Moving &&
@@ -163,6 +179,7 @@ func (m *Monster) CombatCheck(player *Player) {
 		}
 	}
 }
+
 func (m *Monster) Draw(screen *ebiten.Image, tileSize int, camX, camY, camScale, cx, cy float64) {
 	if m.Sprite == nil || m.IsDead {
 		return
