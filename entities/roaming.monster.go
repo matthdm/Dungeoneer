@@ -43,49 +43,42 @@ func NewRoamingMonster(ss *sprites.SpriteSheet) []*Monster {
 }
 
 func (r *RoamingWanderBehavior) Update(m *Monster, p *Player, level *levels.Level) {
-	//m.TickCount++
 	if m.IsDead || m.Moving {
 		return
 	}
 
-	r.Counter++
-	if r.Counter < r.MoveCooldown {
-		return
-	}
-	r.Counter = 0
-
-	// Try a random direction
-	directions := []struct{ X, Y int }{
-		{0, -1}, {0, 1}, {-1, 0}, {1, 0},
-	}
-	rand.Shuffle(len(directions), func(i, j int) {
-		directions[i], directions[j] = directions[j], directions[i]
-	})
-
-	for _, d := range directions {
-		newX := m.TileX + d.X
-		newY := m.TileY + d.Y
-		if level.IsWalkable(newX, newY) {
-			m.MoveTo(newX, newY)
-			break
-		}
-	}
-
 	if !r.Triggered {
-		// Check if player is close enough to activate
 		dx := m.TileX - p.TileX
 		dy := m.TileY - p.TileY
-		distSq := dx*dx + dy*dy
-		if distSq <= r.TriggerRadius*r.TriggerRadius {
+		if dx*dx+dy*dy <= r.TriggerRadius*r.TriggerRadius {
 			r.Triggered = true
-		} else {
-			return // stay dormant
+			return // wait 1 frame before chasing
 		}
+
+		// Roaming logic
+		r.Counter++
+		if r.Counter < r.MoveCooldown {
+			return
+		}
+		r.Counter = 0
+
+		directions := []struct{ X, Y int }{
+			{0, -1}, {0, 1}, {-1, 0}, {1, 0},
+		}
+		rand.Shuffle(len(directions), func(i, j int) {
+			directions[i], directions[j] = directions[j], directions[i]
+		})
+		for _, d := range directions {
+			newX := m.TileX + d.X
+			newY := m.TileY + d.Y
+			if level.IsWalkable(newX, newY) {
+				m.MoveTo(newX, newY)
+				break
+			}
+		}
+		return
 	}
 
-	// Once triggered, behave like an aggressive chaser
-	if r.Triggered {
-		m.BasicChaseLogic(p, level)
-	}
-
+	// Chase logic
+	m.BasicChaseLogic(p, level)
 }
