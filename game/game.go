@@ -54,7 +54,7 @@ func NewGame() (*Game, error) {
 		highlightImage: ss.Cursor,
 		editor:         leveleditor.NewEditor(),
 		player:         entities.NewPlayer(ss),
-		Monsters:       entities.NewStatueMonster(ss),
+		Monsters:       entities.NewRoamingMonster(ss),
 	}, nil
 }
 

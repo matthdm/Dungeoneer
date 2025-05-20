@@ -2,9 +2,7 @@ package entities
 
 import (
 	"dungeoneer/levels"
-	"dungeoneer/pathing"
 	"dungeoneer/sprites"
-	"math"
 )
 
 type AmbushBehavior struct {
@@ -18,6 +16,8 @@ func NewAmbushBehavior(radius int) *AmbushBehavior {
 		Triggered:     false,
 	}
 }
+
+
 
 func NewStatueMonster(ss *sprites.SpriteSheet) []*Monster {
 	return []*Monster{
@@ -59,4 +59,3 @@ func (b *AmbushBehavior) Update(m *Monster, p *Player, level *levels.Level) {
 	// Once triggered, behave like an aggressive chaser
 	m.BasicChaseLogic(p, level)
 }
-

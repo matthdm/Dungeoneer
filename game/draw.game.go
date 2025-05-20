@@ -44,16 +44,17 @@ func (g *Game) drawHoverTile(target *ebiten.Image, scale, cx, cy float64) {
 	op.GeoM.Translate(-g.camX, g.camY)
 	op.GeoM.Scale(scale, scale)
 	op.GeoM.Translate(cx, cy)
-	finalSpot := g.player.PathPreview[len(g.player.PathPreview)-1]
 	// If this is the last tile in the path AND contains a living monster, draw red
+	if len(g.player.PathPreview) > 0 {
+		finalSpot := g.player.PathPreview[len(g.player.PathPreview)-1]
 
-	for _, m := range g.Monsters {
-		if !m.IsDead && m.TileX == finalSpot.X && m.TileY == finalSpot.Y {
-			op.ColorScale.Scale(1, 0, 0, 0.8) // red
-			break
+		for _, m := range g.Monsters {
+			if !m.IsDead && m.TileX == finalSpot.X && m.TileY == finalSpot.Y {
+				op.ColorScale.Scale(1, 0, 0, 0.8) // red
+				break
+			}
 		}
 	}
-
 	target.DrawImage(g.highlightImage, op)
 }
 

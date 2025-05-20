@@ -75,6 +75,9 @@ func NewMonster(ss *sprites.SpriteSheet) []*Monster {
 }
 
 func (m *Monster) Update(player *Player, level *levels.Level) {
+	//m.TickCount++
+	// Smooth interpolation update
+	m.UpdateMovement()
 	if m.Behavior != nil {
 		m.Behavior.Update(m, player, level)
 	}
@@ -82,11 +85,31 @@ func (m *Monster) Update(player *Player, level *levels.Level) {
 	m.CombatCheck(player)
 }
 
+func (m *Monster) UpdateMovement() {
+	if m.Moving {
+		m.InterpTicks++
+		t := float64(m.InterpTicks) / float64(m.MovementDuration)
+		if t > 1 {
+			t = 1
+		}
+		m.InterpX = m.StartX + (m.TargetX-m.StartX)*t
+		m.InterpY = m.StartY + (m.TargetY-m.StartY)*t
+
+		if t >= 1 {
+			m.Moving = false
+			m.TileX = int(m.TargetX)
+			m.TileY = int(m.TargetY)
+			m.InterpX = m.TargetX
+			m.InterpY = m.TargetY
+		}
+	}
+}
+
 func (m *Monster) BasicChaseLogic(p *Player, level *levels.Level) {
 	const bobAmplitude = 1.5
 	const bobFrequency = 0.15
 
-	//m.TickCount++
+	m.TickCount++
 	m.AttackTick++
 	m.BobOffset = math.Sin(float64(m.TickCount)*bobFrequency) * bobAmplitude
 
@@ -147,24 +170,28 @@ func (m *Monster) BasicChaseLogic(p *Player, level *levels.Level) {
 	// Move to next tile
 	if len(m.Path) > 0 {
 		next := m.Path[0]
-		if !level.IsWalkable(next.X, next.Y) {
+		if level.IsWalkable(next.X, next.Y) {
+			m.MoveTo(next.X, next.Y)
+			m.Path = m.Path[1:]
+		} else {
 			m.Path = nil
-			return
 		}
+	}
+}
 
-		if next.X > m.TileX {
-			m.LeftFacing = false
-		} else if next.X < m.TileX {
-			m.LeftFacing = true
-		}
+func (m *Monster) MoveTo(x, y int) {
+	m.StartX = m.InterpX
+	m.StartY = m.InterpY
+	m.TargetX = float64(x)
+	m.TargetY = float64(y)
+	m.InterpTicks = 0
+	m.Moving = true
 
-		m.StartX = m.InterpX
-		m.StartY = m.InterpY
-		m.TargetX = float64(next.X)
-		m.TargetY = float64(next.Y)
-		m.InterpTicks = 0
-		m.Moving = true
-		m.Path = m.Path[1:]
+	// Update facing direction
+	if x > m.TileX {
+		m.LeftFacing = false
+	} else if x < m.TileX {
+		m.LeftFacing = true
 	}
 }
 
