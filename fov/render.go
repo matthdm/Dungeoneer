@@ -1,0 +1,83 @@
+package fov
+
+import (
+	"image/color"
+
+	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/vector"
+)
+
+var (
+	shadowImage   = ebiten.NewImage(640, 480)
+	triangleImage = ebiten.NewImage(640, 480) // solid white for masking
+)
+
+func ResizeShadowBuffer(w, h int) {
+	if shadowImage.Bounds().Dx() != w || shadowImage.Bounds().Dy() != h {
+		shadowImage = ebiten.NewImage(w, h)
+		triangleImage = ebiten.NewImage(w, h)
+		triangleImage.Fill(color.White)
+	}
+}
+
+func DrawShadows(screen *ebiten.Image, rays []Line, camX, camY, camScale float64, cx, cy float64, tileSize int) {
+	if len(rays) < 3 {
+		return
+	}
+
+	opt := &ebiten.DrawTrianglesOptions{}
+	//opt.Blend = ebiten.BlendSourceOver
+	opt.Blend = ebiten.BlendSourceOut
+	for i := range rays {
+		r1 := rays[i]
+		r2 := rays[(i+1)%len(rays)]
+		// Convert to screen space
+		x0, y0 := worldToScreen(r1.X1, r1.Y1, camX, camY, camScale, cx, cy, tileSize)
+		x1, y1 := worldToScreen(r1.X2, r1.Y2, camX, camY, camScale, cx, cy, tileSize)
+		x2, y2 := worldToScreen(r2.X2, r2.Y2, camX, camY, camScale, cx, cy, tileSize)
+
+		verts := []ebiten.Vertex{
+			{DstX: float32(x0), DstY: float32(y0), ColorA: 1},
+			{DstX: float32(x1), DstY: float32(y1), ColorA: 1},
+			{DstX: float32(x2), DstY: float32(y2), ColorA: 1},
+		}
+		screen.DrawTriangles(verts, []uint16{0, 1, 2}, triangleImage, opt)
+	}
+}
+
+func DebugDrawRays(screen *ebiten.Image, rays []Line, camX, camY, camScale float64, cx, cy float64, tileSize int) {
+	for _, r := range rays {
+		x1, y1 := worldToScreen(r.X1, r.Y1, camX, camY, camScale, cx, cy, tileSize)
+		x2, y2 := worldToScreen(r.X2, r.Y2, camX, camY, camScale, cx, cy, tileSize)
+
+		vector.StrokeLine(screen,
+			float32(x1), float32(y1),
+			float32(x2), float32(y2),
+			1, color.RGBA{255, 255, 0, 180}, true)
+	}
+
+}
+
+func DebugDrawWalls(screen *ebiten.Image, walls []Line, camX, camY, camScale, cx, cy float64, tileSize int) {
+	for _, wall := range walls {
+		// Transform world coords to screen coords using isometric logic
+		x1, y1 := worldToScreen(wall.X1, wall.Y1, camX, camY, camScale, cx, cy, tileSize)
+		x2, y2 := worldToScreen(wall.X2, wall.Y2, camX, camY, camScale, cx, cy, tileSize)
+
+		// Draw red line
+		vector.StrokeLine(
+			screen,
+			float32(x1), float32(y1),
+			float32(x2), float32(y2),
+			1, color.RGBA{255, 0, 0, 255}, true,
+		)
+	}
+}
+
+func triangleVertices(x1, y1, x2, y2, x3, y3 float64) []ebiten.Vertex {
+	return []ebiten.Vertex{
+		{DstX: float32(x1), DstY: float32(y1), ColorA: 1},
+		{DstX: float32(x2), DstY: float32(y2), ColorA: 1},
+		{DstX: float32(x3), DstY: float32(y3), ColorA: 1},
+	}
+}

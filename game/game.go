@@ -3,6 +3,7 @@ package game
 import (
 	"dungeoneer/constants"
 	"dungeoneer/entities"
+	"dungeoneer/fov"
 	"dungeoneer/leveleditor"
 	"dungeoneer/levels"
 	"dungeoneer/pathing"
@@ -32,6 +33,12 @@ type Game struct {
 	Monsters               []*entities.Monster
 	HitMarkers             []entities.HitMarker
 	DamageNumbers          []entities.DamageNumber
+
+	RaycastWalls             []fov.Line
+	ShowRays                 bool
+	lastPlayerX, lastPlayerY float64
+	cachedRays               []fov.Line
+	FullBright               bool
 }
 
 func NewGame() (*Game, error) {
@@ -54,7 +61,8 @@ func NewGame() (*Game, error) {
 		highlightImage: ss.Cursor,
 		editor:         leveleditor.NewEditor(),
 		player:         entities.NewPlayer(ss),
-		Monsters:       entities.NewRoamingMonster(ss),
+		Monsters:       entities.NewStatueMonster(ss),
+		RaycastWalls:   fov.LevelToWalls(levels.NewLevel1()),
 	}, nil
 }
 
@@ -83,6 +91,19 @@ func (g *Game) Update() error {
 	g.handleClicks()
 	g.handleLevelHotkeys()
 
+	//raycast update
+	g.RaycastWalls = fov.LevelToWalls(g.currentLevel)
+	// Raycast update — only when player moves
+	if g.player != nil && (g.player.InterpX != g.lastPlayerX || g.player.InterpY != g.lastPlayerY) {
+		// Use player world-space position directly
+		originX := g.player.InterpX
+		originY := g.player.InterpY
+
+		g.cachedRays = fov.RayCasting(originX, originY, g.RaycastWalls)
+		g.lastPlayerX = originX
+		g.lastPlayerY = originY
+	}
+
 	// Player path preview
 	if g.player != nil {
 		path := pathing.AStar(g.currentLevel, g.player.TileX, g.player.TileY, g.hoverTileX, g.hoverTileY)
@@ -109,23 +130,23 @@ func (g *Game) Update() error {
 func (g *Game) Draw(screen *ebiten.Image) {
 	cx, cy := float64(g.w/2), float64(g.h/2)
 
-	// Decide target surface and scale mode
+	// Prepare render target
 	scaleLater := g.camScale > 1
 	target := screen
 	scale := g.camScale
-
 	if scaleLater {
 		target = g.getOrCreateOffscreen(screen.Bounds().Size())
 		target.Clear()
 		scale = 1
 	}
 
+	// World drawing
 	g.drawTiles(target, scale, cx, cy)
 	g.drawPathPreview(target, scale, cx, cy)
 	g.drawEntities(target, scale, cx, cy)
 	g.drawHoverTile(target, scale, cx, cy)
 
-	// Draw offscreen buffer if used
+	// Draw to screen (if upscaled)
 	if scaleLater {
 		op := &ebiten.DrawImageOptions{}
 		op.GeoM.Translate(-cx, -cy)
@@ -134,7 +155,32 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		screen.DrawImage(target, op)
 	}
 
-	// Debug info
+	// === SHADOWS / FOV ===
+	if g.player != nil && len(g.cachedRays) > 0 && !g.FullBright {
+		fov.DrawShadows(
+			screen,
+			g.cachedRays,
+			g.camX, g.camY,
+			g.camScale,
+			cx, cy,
+			g.currentLevel.TileSize,
+		)
+	}
+
+	if g.ShowRays && len(g.cachedRays) > 0 {
+		fov.DebugDrawRays(
+			screen,
+			g.cachedRays,
+			g.camX, g.camY,
+			g.camScale,
+			cx, cy,
+			g.currentLevel.TileSize,
+		)
+	}
+
+	fov.DebugDrawWalls(screen, g.RaycastWalls, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
+
+	// Debug UI
 	ebitenutil.DebugPrint(screen, fmt.Sprintf(constants.DEBUG_TEMPLATE, ebiten.ActualFPS(), ebiten.ActualTPS(), g.camScale, g.camX, g.camY))
 }
 
@@ -152,5 +198,6 @@ func (g *Game) getOrCreateOffscreen(size image.Point) *ebiten.Image {
 // Layout is called when the Game's layout changes.
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	g.w, g.h = outsideWidth, outsideHeight
+	fov.ResizeShadowBuffer(g.w, g.h) // 🛠️ Ensures buffer is always the correct size
 	return g.w, g.h
 }

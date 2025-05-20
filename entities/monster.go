@@ -51,7 +51,6 @@ type Monster struct {
 	IsDead         bool
 	FlashTick      int
 	FlashTicksLeft int // total ticks remaining for the flash effect
-
 }
 
 func NewMonster(ss *sprites.SpriteSheet) []*Monster {
