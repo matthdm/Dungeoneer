@@ -54,6 +54,9 @@ func NewPlayer(ss *sprites.SpriteSheet) *Player {
 }
 
 func (p *Player) Draw(screen *ebiten.Image, tileSize int, isoToScreen func(int, int) (float64, float64), camX, camY, camScale, cx, cy float64) {
+	if p.IsDead {
+		return
+	}
 	//x, y := isoToScreen(int(p.InterpX), int(p.InterpY))
 	// Optional: more accurate rendering
 	op := &ebiten.DrawImageOptions{}
@@ -89,9 +92,15 @@ func (p *Player) UpdateHealthBar(screen *ebiten.Image, x, y float64, camX, camY,
 		barWidth := 32.0
 		barHeight := 4.0
 
+		// Ensure the width is always at least 1 to avoid panic
+		width := int(barWidth * hpPercent)
+		if width < 1 {
+			width = 1
+		}
+
 		hpBar := ebiten.NewImage(int(barWidth), int(barHeight))
 		hpBar.Fill(color.RGBA{255, 0, 0, 255})
-		hpBarFilled := ebiten.NewImage(int(barWidth*hpPercent), int(barHeight))
+		hpBarFilled := ebiten.NewImage(int(width), int(barHeight))
 		hpBarFilled.Fill(color.RGBA{0, 255, 0, 255})
 
 		// Position HP bar

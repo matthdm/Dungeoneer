@@ -19,6 +19,7 @@ import (
 type Game struct {
 	w, h         int
 	currentLevel *levels.Level
+	State        GameState
 
 	camX, camY           float64
 	camScale, camScaleTo float64
@@ -39,7 +40,17 @@ type Game struct {
 	lastPlayerX, lastPlayerY float64
 	cachedRays               []fov.Line
 	FullBright               bool
+
+	SeenTiles [][]bool
 }
+
+type GameState int
+
+const (
+	StatePlaying GameState = iota
+	StateGameOver
+	StateMenu
+)
 
 func NewGame() (*Game, error) {
 	l, err := levels.NewDungeonLevel()
@@ -50,9 +61,8 @@ func NewGame() (*Game, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to load sprite sheet: %s", err)
 	}
-
 	return &Game{
-		currentLevel:   levels.NewLevel1(),
+		currentLevel:   l, //levels.NewLevel1(),
 		camScale:       1,
 		camScaleTo:     1,
 		mousePanX:      math.MinInt32,
@@ -62,7 +72,7 @@ func NewGame() (*Game, error) {
 		editor:         leveleditor.NewEditor(),
 		player:         entities.NewPlayer(ss),
 		Monsters:       entities.NewStatueMonster(ss),
-		RaycastWalls:   fov.LevelToWalls(levels.NewLevel1()),
+		RaycastWalls:   fov.LevelToWalls(l), //levels.NewLevel1()),
 	}, nil
 }
 
@@ -72,6 +82,14 @@ func (g *Game) cartesianToIso(x, y float64) (float64, float64) {
 	ix := (x - y) * float64(tileSize/2)
 	iy := (x + y) * float64(tileSize/4)
 	return ix, iy
+}
+
+func (g *Game) UpdateSeenTiles(level levels.Level) {
+	seen := make([][]bool, level.H)
+	for y := range seen {
+		seen[y] = make([]bool, level.W)
+	}
+	g.SeenTiles = seen
 }
 
 //This function might be useful for those who want to modify this example.
@@ -85,6 +103,15 @@ func (g *Game) isoToCartesian(x, y float64) (float64, float64) {
 }
 
 func (g *Game) Update() error {
+	if g.player != nil && g.player.IsDead {
+		g.State = StateGameOver
+	}
+	if g.State == StateGameOver {
+		g.handleLevelHotkeys()
+		return nil // Skip updates while in game over
+	}
+
+	g.UpdateSeenTiles(*g.currentLevel)
 	g.handleZoom()
 	g.handlePan()
 	g.handleHoverTile()
@@ -99,13 +126,22 @@ func (g *Game) Update() error {
 		originX := g.player.InterpX
 		originY := g.player.InterpY
 
-		g.cachedRays = fov.RayCasting(originX, originY, g.RaycastWalls)
+		g.cachedRays = fov.RayCasting(originX, originY, g.RaycastWalls, g.currentLevel)
 		g.lastPlayerX = originX
 		g.lastPlayerY = originY
+
+		for _, ray := range g.cachedRays {
+			tx := int(ray.X2)
+			ty := int(ray.Y2)
+			if tx >= 0 && ty >= 0 && ty < len(g.SeenTiles) && tx < len(g.SeenTiles[0]) {
+				g.SeenTiles[ty][tx] = true
+			}
+		}
 	}
 
-	// Player path preview
+	//Player Movement
 	if g.player != nil {
+		// Prevent re-calculating paths while mid-movement
 		path := pathing.AStar(g.currentLevel, g.player.TileX, g.player.TileY, g.hoverTileX, g.hoverTileY)
 		g.player.PathPreview = path
 	}
@@ -179,6 +215,11 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 
 	fov.DebugDrawWalls(screen, g.RaycastWalls, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
+
+	if g.State == StateGameOver {
+		msg := "GAME OVER - Press V to Restart"
+		ebitenutil.DebugPrintAt(screen, msg, g.w/2-100, g.h/2)
+	}
 
 	// Debug UI
 	ebitenutil.DebugPrint(screen, fmt.Sprintf(constants.DEBUG_TEMPLATE, ebiten.ActualFPS(), ebiten.ActualTPS(), g.camScale, g.camX, g.camY))

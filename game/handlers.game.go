@@ -143,4 +143,8 @@ func (g *Game) handleLevelHotkeys() {
 	if inpututil.IsKeyJustPressed(ebiten.KeyY) {
 		g.FullBright = !g.FullBright
 	}
+	if g.State == StateGameOver && ebiten.IsKeyPressed(ebiten.KeyV) {
+		newGame, _ := NewGame()
+		*g = *newGame
+	}
 }
