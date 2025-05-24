@@ -10,6 +10,12 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
+func (g *Game) handlePauseToggle() {
+	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		g.isPaused = !g.isPaused
+	}
+}
+
 func (g *Game) handleZoom() {
 	var scrollY float64
 	if ebiten.IsKeyPressed(ebiten.KeyC) || ebiten.IsKeyPressed(ebiten.KeyPageDown) {
@@ -21,7 +27,7 @@ func (g *Game) handleZoom() {
 		scrollY = math.Max(-1, math.Min(1, scrollY))
 	}
 	g.camScaleTo += scrollY * (g.camScaleTo / 7)
-	g.camScaleTo = math.Max(0.01, math.Min(100, g.camScaleTo))
+	g.camScaleTo = math.Max(g.minCamScale, math.Min(100, g.camScaleTo))
 
 	div := 10.0
 	if g.camScaleTo > g.camScale {

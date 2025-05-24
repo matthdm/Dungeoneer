@@ -2,6 +2,7 @@ package images
 
 import (
 	_ "embed"
+	"fmt"
 	"image"
 	"os"
 
@@ -29,4 +30,14 @@ func LoadImage(path string) (*ebiten.Image, error) {
 	}
 
 	return ebiten.NewImageFromImage(img), nil
+}
+
+func SetDefaultWindowIcon() {
+	torchImage, err := LoadImage("images/torch.png")
+	if err != nil {
+		fmt.Printf("failed to load torch.png: %s", err)
+		return
+	}
+	iconImages := []image.Image{torchImage}
+	ebiten.SetWindowIcon(iconImages)
 }

@@ -20,8 +20,10 @@ type Game struct {
 	w, h         int
 	currentLevel *levels.Level
 	State        GameState
+	isPaused     bool
 
 	camX, camY           float64
+	minCamScale          float64
 	camScale, camScaleTo float64
 	mousePanX, mousePanY int
 
@@ -61,10 +63,13 @@ func NewGame() (*Game, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to load sprite sheet: %s", err)
 	}
+
 	return &Game{
 		currentLevel:   l, //levels.NewLevel1(),
+		isPaused:       false,
 		camScale:       1,
 		camScaleTo:     1,
+		minCamScale:    0.12,
 		mousePanX:      math.MinInt32,
 		mousePanY:      math.MinInt32,
 		spriteSheet:    ss,
@@ -103,6 +108,11 @@ func (g *Game) isoToCartesian(x, y float64) (float64, float64) {
 }
 
 func (g *Game) Update() error {
+	g.handlePauseToggle()
+
+	if g.isPaused {
+		return nil
+	}
 	if g.player != nil && g.player.IsDead {
 		g.State = StateGameOver
 	}
@@ -219,6 +229,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if g.State == StateGameOver {
 		msg := "GAME OVER - Press V to Restart"
 		ebitenutil.DebugPrintAt(screen, msg, g.w/2-100, g.h/2)
+	}
+	if g.isPaused {
+		ebitenutil.DebugPrintAt(target, "PAUSED", (g.w/2)-25, 0)
 	}
 
 	// Debug UI
