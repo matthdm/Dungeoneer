@@ -13,12 +13,16 @@ import (
 type PauseMenu struct {
 	selectedOption int
 	options        []string
+	width          int
+	height         int
 }
 
 func NewPauseMenu() *PauseMenu {
 	return &PauseMenu{
 		selectedOption: 0,
 		options:        []string{"Resume", "Settings", "Exit Game"},
+		width:          300,
+		height:         300,
 	}
 }
 
@@ -29,20 +33,18 @@ func (g *Game) drawPauseMenu(screen *ebiten.Image) {
 	screen.DrawImage(overlay, nil)
 
 	// Define menu dimensions
-	menuWidth := 300
-	menuHeight := 300
-	menuX := (g.w - menuWidth) / 2
-	menuY := (g.h - menuHeight) / 2
+	menuX := (g.w - g.pauseMenu.width) / 2
+	menuY := (g.h - g.pauseMenu.height) / 2
 
 	// Draw menu background
-	vector.DrawFilledRect(screen, float32(menuX), float32(menuY), float32(menuWidth), float32(menuHeight), color.RGBA{10, 10, 10, 255}, false)
+	vector.DrawFilledRect(screen, float32(menuX), float32(menuY), float32(g.pauseMenu.width), float32(g.pauseMenu.height), color.RGBA{10, 10, 10, 255}, false)
 
 	// Draw menu border
-	vector.StrokeRect(screen, float32(menuX), float32(menuY), float32(menuWidth), float32(menuHeight), 3, color.RGBA{150, 20, 15, 255}, false)
+	vector.StrokeRect(screen, float32(menuX), float32(menuY), float32(g.pauseMenu.width), float32(g.pauseMenu.height), 3, color.RGBA{150, 20, 15, 255}, false)
 
 	// Draw title
 	titleText := "DUNGEONEER - PAUSED"
-	titleX := menuX + (menuWidth-len(titleText)*8)/2 // Rough centering for debug font
+	titleX := menuX + (g.pauseMenu.width-len(titleText)*8)/2 // Rough centering for debug font
 	ebitenutil.DebugPrintAt(screen, titleText, titleX, menuY+20)
 
 	// Draw menu options
@@ -53,7 +55,7 @@ func (g *Game) drawPauseMenu(screen *ebiten.Image) {
 		// Highlight selected option
 		if i == g.pauseMenu.selectedOption {
 			// Draw selection background
-			vector.DrawFilledRect(screen, float32(x-10), float32(y-5), float32(menuWidth-20), 30, color.RGBA{80, 75, 70, 255}, false)
+			vector.DrawFilledRect(screen, float32(x-10), float32(y-5), float32(g.pauseMenu.width-20), 30, color.RGBA{80, 75, 70, 255}, false)
 			ebitenutil.DebugPrintAt(screen, "> "+option, x, y)
 		} else {
 			ebitenutil.DebugPrintAt(screen, "  "+option, x, y)
@@ -61,7 +63,7 @@ func (g *Game) drawPauseMenu(screen *ebiten.Image) {
 	}
 
 	// Draw instructions
-	instructionY := menuY + menuHeight - 55
+	instructionY := menuY + g.pauseMenu.height - 55
 	ebitenutil.DebugPrintAt(screen, "W/S Navigate", menuX+20, instructionY)
 	ebitenutil.DebugPrintAt(screen, "ENTER/SPACE Select", menuX+20, instructionY+15)
 	ebitenutil.DebugPrintAt(screen, "ESC Resume", menuX+20, instructionY+30)
@@ -93,16 +95,14 @@ func (g *Game) handlePauseMenu() {
 
 func (g *Game) handlePauseMenuMouse(mouseX, mouseY int) {
 	// Calculate menu dimensions (same as in drawPauseMenu)
-	menuWidth := 300
-	menuHeight := 300
-	menuStartX := (g.w - menuWidth) / 2
-	menuStartY := (g.h - menuHeight) / 2
+	menuStartX := (g.w - g.pauseMenu.width) / 2
+	menuStartY := (g.h - g.pauseMenu.height) / 2
 
 	// Check if mouse is over any menu option
 	for i := range g.pauseMenu.options {
 		optionY := menuStartY + 60 + i*35
 		optionX := menuStartX + 20
-		optionWidth := menuWidth - 40
+		optionWidth := g.pauseMenu.width - 40
 		optionHeight := 30
 
 		// Check if mouse is hovering over this option
