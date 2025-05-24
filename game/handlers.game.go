@@ -10,6 +10,12 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
+func (g *Game) handlePauseToggle() {
+	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		g.isPaused = !g.isPaused
+	}
+}
+
 func (g *Game) handleZoom() {
 	var scrollY float64
 	if ebiten.IsKeyPressed(ebiten.KeyC) || ebiten.IsKeyPressed(ebiten.KeyPageDown) {

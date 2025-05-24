@@ -20,6 +20,7 @@ type Game struct {
 	w, h         int
 	currentLevel *levels.Level
 	State        GameState
+	isPaused     bool
 
 	camX, camY           float64
 	minCamScale          float64
@@ -65,6 +66,7 @@ func NewGame() (*Game, error) {
 
 	return &Game{
 		currentLevel:   l, //levels.NewLevel1(),
+		isPaused:       false,
 		camScale:       1,
 		camScaleTo:     1,
 		minCamScale:    0.12,
@@ -106,6 +108,11 @@ func (g *Game) isoToCartesian(x, y float64) (float64, float64) {
 }
 
 func (g *Game) Update() error {
+	g.handlePauseToggle()
+
+	if g.isPaused {
+		return nil
+	}
 	if g.player != nil && g.player.IsDead {
 		g.State = StateGameOver
 	}
