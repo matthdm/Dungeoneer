@@ -62,7 +62,7 @@ func (g *Game) drawPauseMenu(screen *ebiten.Image) {
 
 	// Draw instructions
 	instructionY := menuY + menuHeight - 55
-	ebitenutil.DebugPrintAt(screen, "UP/DOWN ARROWS Navigate", menuX+20, instructionY)
+	ebitenutil.DebugPrintAt(screen, "W/S Navigate", menuX+20, instructionY)
 	ebitenutil.DebugPrintAt(screen, "ENTER/SPACE Select", menuX+20, instructionY+15)
 	ebitenutil.DebugPrintAt(screen, "ESC Resume", menuX+20, instructionY+30)
 }
@@ -72,13 +72,13 @@ func (g *Game) handlePauseMenu() {
 	mouseX, mouseY := ebiten.CursorPosition()
 	g.handlePauseMenuMouse(mouseX, mouseY)
 
-	if inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) {
+	if inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) || inpututil.IsKeyJustPressed(ebiten.KeyW) {
 		g.pauseMenu.selectedOption--
 		if g.pauseMenu.selectedOption < 0 {
 			g.pauseMenu.selectedOption = len(g.pauseMenu.options) - 1
 		}
 	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyArrowDown) {
+	if inpututil.IsKeyJustPressed(ebiten.KeyArrowDown) || inpututil.IsKeyJustPressed(ebiten.KeyS) {
 		g.pauseMenu.selectedOption++
 		if g.pauseMenu.selectedOption >= len(g.pauseMenu.options) {
 			g.pauseMenu.selectedOption = 0
