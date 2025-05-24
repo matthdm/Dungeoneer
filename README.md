@@ -2,7 +2,7 @@
 
 **Dungeoneer** is a 2D isometric dark fantasy game built using Go and the Ebiten engine. Set in a world of crumbling castles, haunted forests, and cursed ruins, the player must navigate procedurally generated dungeons filled with monsters, secrets, and mystery.
 
-This project is a technical and artistic love letter to games like *Diablo*, *Darkest Dungeon*, and *Stardew Valley’s* dungeon sections — with a focus on real-time combat, tile-based navigation, and rich pixel art.
+This project is a technical and artistic love letter to games like *Diablo* and *Stardew Valley’s* dungeon sections — with a focus on real-time combat, tile-based navigation, and rich pixel art.
 
 ---
 
@@ -29,7 +29,7 @@ _Current Feature Focus:_
 | Health bars, damage numbers, and hit markers         | ✅        |
 | Monster death animations                             | ✅        |
 | Field-of-view with raycasting                        | ✅        |
-| Fog of war memory system                             | ✅        |
+| Fog of war memory system                             | ❌        |
 | Click-to-move A* pathfinding                         | ✅        |
 | Corner-casting to eliminate visual blind spots       | ✅        |
 | Full-bright debug toggle                             | ✅        |
@@ -37,13 +37,13 @@ _Current Feature Focus:_
 | Procedural forest level generator                    | ✅ (Prototype) |
 | Procedural dungeon generator                         | ✅ (Prototype) |
 | Developer test level                                 | ✅        |
-| In-game monster spawning via hotkeys                 | ✅        |
+| In-game monster spawning via hotkeys                 | ❌        |
 | Particle and visual effects                          | ❌        |
 | Save/load system                                     | ❌        |
 | Audio engine (SFX + music)                           | ❌        |
 | Custom UI system                                     | ✅        |
 | Main menu with animated background                   | ✅        |
-| Parallax and animated layers                         | ✅        |
+| Parallax and animated layers                         | ❌        |
 | Game state handling (Game Over, Restart)             | ✅        |
 | Boss mechanics                                       | ❌        |
 | Ranged monsters and projectiles                      | ❌        |
@@ -51,7 +51,7 @@ _Current Feature Focus:_
 
 ---
 
-## 🐞 Known Issues
+## 🐞 Known Issues / Bug Bounties
 
 - [ ] **Bug #1**: Spamming right-click causes player to stutter in place or revert to earlier tiles.
 - [x] **Bug #2**: Crash when player character dies without proper state handling (fixed, needs retest). ***(Fixed)***
@@ -95,7 +95,7 @@ _Current Feature Focus:_
 | **ESC**              | (Future) Open pause menu                                               |
 | **Enter**            | (Menu) Select current menu item                                       |
 | **Arrow Keys / W/S** | (Menu) Navigate menu options                                          |
-| **Ctrl+R**           | Restart the game after death                                          |
+| **R**           | Restart the game after death                                          |
 
 ---
 
