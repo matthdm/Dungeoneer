@@ -230,6 +230,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		msg := "GAME OVER - Press V to Restart"
 		ebitenutil.DebugPrintAt(screen, msg, g.w/2-100, g.h/2)
 	}
+	if g.isPaused {
+		ebitenutil.DebugPrintAt(target, "PAUSED", (g.w/2)-25, 0)
+	}
 
 	// Debug UI
 	ebitenutil.DebugPrint(screen, fmt.Sprintf(constants.DEBUG_TEMPLATE, ebiten.ActualFPS(), ebiten.ActualTPS(), g.camScale, g.camX, g.camY))
