@@ -22,6 +22,7 @@ type Game struct {
 	State        GameState
 
 	camX, camY           float64
+	minCamScale          float64
 	camScale, camScaleTo float64
 	mousePanX, mousePanY int
 
@@ -65,6 +66,7 @@ func NewGame() (*Game, error) {
 		currentLevel:   l, //levels.NewLevel1(),
 		camScale:       1,
 		camScaleTo:     1,
+		minCamScale:    0.12,
 		mousePanX:      math.MinInt32,
 		mousePanY:      math.MinInt32,
 		spriteSheet:    ss,
