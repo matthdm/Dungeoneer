@@ -4,7 +4,6 @@ import (
 	"dungeoneer/constants"
 	"dungeoneer/entities"
 	"dungeoneer/fov"
-	"dungeoneer/images"
 	"dungeoneer/leveleditor"
 	"dungeoneer/levels"
 	"dungeoneer/pathing"
@@ -63,13 +62,6 @@ func NewGame() (*Game, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to load sprite sheet: %s", err)
 	}
-
-	torchImage, err := images.LoadImage("images/torch.png")
-	if err != nil {
-		return nil, fmt.Errorf("failed to load torch.png: %s", err)
-	}
-	iconImages := []image.Image{torchImage}
-	ebiten.SetWindowIcon(iconImages)
 
 	return &Game{
 		currentLevel:   l, //levels.NewLevel1(),
