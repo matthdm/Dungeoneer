@@ -21,6 +21,7 @@ type Game struct {
 	currentLevel *levels.Level
 	State        GameState
 	isPaused     bool
+	pauseMenu    *PauseMenu
 
 	camX, camY           float64
 	minCamScale          float64
@@ -67,6 +68,7 @@ func NewGame() (*Game, error) {
 	return &Game{
 		currentLevel:   l, //levels.NewLevel1(),
 		isPaused:       false,
+		pauseMenu:      NewPauseMenu(),
 		camScale:       1,
 		camScaleTo:     1,
 		minCamScale:    0.12,
@@ -111,6 +113,7 @@ func (g *Game) Update() error {
 	g.handlePauseToggle()
 
 	if g.isPaused {
+		g.handlePauseMenu()
 		return nil
 	}
 	if g.player != nil && g.player.IsDead {
@@ -231,7 +234,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		ebitenutil.DebugPrintAt(screen, msg, g.w/2-100, g.h/2)
 	}
 	if g.isPaused {
-		ebitenutil.DebugPrintAt(target, "PAUSED", (g.w/2)-25, 0)
+		g.drawPauseMenu(screen)
 	}
 
 	// Debug UI
