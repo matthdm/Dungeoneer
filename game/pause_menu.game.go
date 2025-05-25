@@ -29,7 +29,7 @@ func NewPauseMenu() *PauseMenu {
 	return &PauseMenu{
 		selectedOption: 0,
 		pauseMenuOptions: []MenuOption{
-			{Text: "Resume", Action: func(g *Game) { g.isPaused = false; g.showSettings = false }},
+			{Text: "Resume", Action: func(g *Game) { g.resumeGame() }},
 			{Text: "Settings", Action: func(g *Game) { g.showSettings = true }},
 			{Text: "Exit Game", Action: func(g *Game) { fmt.Println("Exit Game selected") /* TODO: Implement proper quit */ }},
 		},
