@@ -10,20 +10,26 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
-func (g *Game) handlePauseToggle() {
-	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
-		// Unpause completely from the Settings Menu
-		if g.showSettings {
-			g.resumeGame()
-		} else {
-		g.isPaused = !g.isPaused
+func (g *Game) handlePause() error {
+	if g.isPaused {
+		g.pauseMenu.Update()
+		return nil
+	} else {
+		// ESC was pressed to ENTER pause mode
+		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+			g.pauseMenu.Show()
+			return nil
+		}
 	}
-}
+	return nil
 }
 
 func (g *Game) resumeGame() {
 	g.isPaused = false
-	g.showSettings = false
+	if g.pauseMenu != nil { // Ensure pauseMenu exists
+		g.pauseMenu.mainMenu.Hide()
+		g.pauseMenu.settingsMenu.Hide()
+	}
 }
 
 func (g *Game) handleZoom() {

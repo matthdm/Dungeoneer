@@ -66,10 +66,9 @@ func NewGame() (*Game, error) {
 		return nil, fmt.Errorf("failed to load sprite sheet: %s", err)
 	}
 
-	return &Game{
+	g := &Game{
 		currentLevel:   l, //levels.NewLevel1(),
 		isPaused:       false,
-		pauseMenu:      NewPauseMenu(),
 		camScale:       1,
 		camScaleTo:     1,
 		minCamScale:    0.12,
@@ -81,7 +80,10 @@ func NewGame() (*Game, error) {
 		player:         entities.NewPlayer(ss),
 		Monsters:       entities.NewStatueMonster(ss),
 		RaycastWalls:   fov.LevelToWalls(l), //levels.NewLevel1()),
-	}, nil
+	}
+	g.pauseMenu = NewPauseMenu(g)
+
+	return g, nil
 }
 
 // cartesianToIso transforms cartesian coordinates into isometric coordinates.
@@ -111,12 +113,8 @@ func (g *Game) isoToCartesian(x, y float64) (float64, float64) {
 }
 
 func (g *Game) Update() error {
-	g.handlePauseToggle()
+	g.handlePause()
 
-	if g.isPaused {
-		g.handlePauseMenu()
-		return nil
-	}
 	if g.player != nil && g.player.IsDead {
 		g.State = StateGameOver
 	}
@@ -235,7 +233,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		ebitenutil.DebugPrintAt(screen, msg, g.w/2-100, g.h/2)
 	}
 	if g.isPaused {
-		g.drawPauseMenu(screen)
+		g.pauseMenu.Draw(screen)
 	}
 
 	// Debug UI
@@ -257,5 +255,22 @@ func (g *Game) getOrCreateOffscreen(size image.Point) *ebiten.Image {
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	g.w, g.h = outsideWidth, outsideHeight
 	fov.ResizeShadowBuffer(g.w, g.h) // 🛠️ Ensures buffer is always the correct size
+
+	// Update menu size to grow with screen size
+	if g.pauseMenu != nil {
+		menuWidth := max(300, g.w/2)
+		menuHeight := max(300, g.h/2)
+		menuX := (g.w - menuWidth) / 2
+		menuY := (g.h - menuHeight) / 2
+		newRect := image.Rect(menuX, menuY, menuX+menuWidth, menuY+menuHeight)
+
+		if g.pauseMenu.mainMenu != nil {
+			g.pauseMenu.mainMenu.SetRect(newRect)
+		}
+		if g.pauseMenu.settingsMenu != nil {
+			g.pauseMenu.settingsMenu.SetRect(newRect)
+		}
+	}
+
 	return g.w, g.h
 }
