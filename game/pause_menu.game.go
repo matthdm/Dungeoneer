@@ -1,142 +1,100 @@
 package game
 
 import (
+	"dungeoneer/ui"
 	"fmt"
-	"image/color"
+	"image"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
-	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
-type MenuOption struct {
-	Text   string
-	Action func(*Game)
-}
-
+// PauseMenu manages the game's pause state and owns the UI menus
 type PauseMenu struct {
-	selectedOption      int
-	pauseMenuOptions    []MenuOption
-	settingsMenuOptions []MenuOption
-	width               int
-	height              int
-	textPaddingY        int // Add a buffer for text spacing
-	lineHeight          int
+	game         *Game // Reference to the game instance for actions
+	mainMenu     *ui.Menu
+	settingsMenu *ui.Menu
 }
 
-func NewPauseMenu() *PauseMenu {
-	return &PauseMenu{
-		selectedOption: 0,
-		pauseMenuOptions: []MenuOption{
-			{Text: "Resume", Action: func(g *Game) { g.resumeGame() }},
-			{Text: "Settings", Action: func(g *Game) { g.showSettings = true }},
-			{Text: "Exit Game", Action: func(g *Game) { fmt.Println("Exit Game selected") /* TODO: Implement proper quit */ }},
-		},
-		settingsMenuOptions: []MenuOption{
-			{Text: "Back", Action: func(g *Game) { g.showSettings = false }},
-			//{Text: "Camera Pan Speed", Action: func(g *Game) { g.camPanSpeed = 7.0 }},
-		},
-		width:        300,
-		height:       300,
-		textPaddingY: 60,
-		lineHeight:   35,
+func NewPauseMenu(g *Game) *PauseMenu {
+	pm := &PauseMenu{game: g}
+
+	menuStyle := ui.DefaultMenuStyles() // Use default styles or customize
+
+	menuWidth := 300
+	menuHeight := 300 // Can be adjusted to fit instructions
+
+	menuX := (g.w - menuWidth) / 2
+	menuY := (g.h - menuHeight) / 2
+	menuRect := image.Rect(menuX, menuY, menuX+menuWidth, menuY+menuHeight)
+	menuInstructions := []string{"W/S/Arrows Navigate", "Enter/Space Select", "Esc Resume"}
+
+	// Main Pause Menu Options
+	mainOptions := []ui.MenuOption{
+		{Text: "Resume", Action: func() { pm.game.resumeGame() }},
+		{Text: "Settings", Action: func() { pm.game.showSettings = true; pm.switchToSettings() }},
+		{Text: "Exit Game", Action: func() { fmt.Println("Exit Game selected") /* Replace with actual quit */ }},
 	}
-}
+	pm.mainMenu = ui.NewMenu(menuRect, "PAUSED", mainOptions, menuStyle)
+	pm.mainMenu.SetInstructions(menuInstructions)
 
-// Calculates and returns menu dimensions and position.
-func (pm *PauseMenu) getMenuBounds(screenWidth, screenHeight int) (x, y, w, h float32) {
-	menuX := (screenWidth - pm.width) / 2
-	menuY := (screenHeight - pm.height) / 2
-	return float32(menuX), float32(menuY), float32(pm.width), float32(pm.height)
-}
-
-func (g *Game) drawPauseMenu(screen *ebiten.Image) {
-	// Draw semi-transparent overlay
-	overlay := ebiten.NewImage(g.w, g.h)
-	overlay.Fill(color.RGBA{0, 0, 0, 128}) // Black with 50% transparency
-	screen.DrawImage(overlay, nil)
-
-	menuX, menuY, menuW, menuH := g.pauseMenu.getMenuBounds(g.w, g.h)
-
-	// Draw menu background
-	vector.DrawFilledRect(screen, menuX, menuY, menuW, menuH, color.RGBA{10, 10, 10, 255}, false)
-	// Draw menu border
-	vector.StrokeRect(screen, menuX, menuY, menuW, menuH, 3, color.RGBA{150, 20, 15, 255}, false)
-
-	// Draw title
-	titleText := "PAUSED"
-	titleX := menuX + (menuW-float32(len(titleText)*8))/2
-	ebitenutil.DebugPrintAt(screen, titleText, int(titleX), int(menuY+20))
-
-	menuOptions := g.pauseMenu.pauseMenuOptions
-	if g.showSettings {
-		menuOptions = g.pauseMenu.settingsMenuOptions
+	// Settings Menu Options
+	settingsOptions := []ui.MenuOption{
+		{Text: "Back", Action: func() { pm.game.showSettings = false; pm.switchToMain() }},
 	}
+	pm.settingsMenu = ui.NewMenu(menuRect, "SETTINGS", settingsOptions, menuStyle)
+	pm.settingsMenu.SetInstructions(menuInstructions)
+	return pm
+}
 
-	// Draw menu options
-	for i, option := range menuOptions {
-		y := menuY + float32(g.pauseMenu.textPaddingY+(i*g.pauseMenu.lineHeight))
-		x := menuX + 20
-
-		// Highlight selected option
-		if i == g.pauseMenu.selectedOption {
-			// Draw selection background
-			vector.DrawFilledRect(screen, x-10, y-5, float32(g.pauseMenu.width-20), 30, color.RGBA{80, 75, 70, 255}, false)
-			ebitenutil.DebugPrintAt(screen, "> "+option.Text, int(x), int(y))
-		} else {
-			ebitenutil.DebugPrintAt(screen, "  "+option.Text, int(x), int(y))
+// Render the currently active menu
+func (pm *PauseMenu) Draw(screen *ebiten.Image) {
+	if pm.game.showSettings {
+		if pm.settingsMenu.IsVisible() {
+			pm.settingsMenu.Draw(screen)
+		}
+	} else {
+		if pm.mainMenu.IsVisible() {
+			pm.mainMenu.Draw(screen)
 		}
 	}
-
-	// Draw instructions
-	instructionY := menuY + menuH - 55
-	ebitenutil.DebugPrintAt(screen, "W/S Navigate", int(menuX+20), int(instructionY))
-	ebitenutil.DebugPrintAt(screen, "ENTER/SPACE Select", int(menuX+20), int(instructionY+15))
-	ebitenutil.DebugPrintAt(screen, "ESC Resume", int(menuX+20), int(instructionY+30))
 }
 
-func (g *Game) handlePauseMenu() {
-	// Handle mouse input
-	mouseX, mouseY := ebiten.CursorPosition()
-	menuX, menuY, menuW, _ := g.pauseMenu.getMenuBounds(g.w, g.h)
-
-	menuOptions := g.pauseMenu.pauseMenuOptions
-	if g.showSettings {
-		menuOptions = g.pauseMenu.settingsMenuOptions
+// Update handles input for the currently active menu and global pause actions
+func (pm *PauseMenu) Update() {
+	// Global ESC key behavior for the pause system
+	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		pm.game.resumeGame() // From main pause menu, ESC resumes game
+		return               // ESC action handled
 	}
 
-	// Check if mouse is over any menu option
-	for i := range menuOptions {
-		optionY := menuY + float32(60+i*35)
-		optionX := menuX + 20
-		optionWidth := menuW - 40
-		optionHeight := float32(g.pauseMenu.lineHeight) - 5
-
-		// Check if mouse is hovering over this option
-		if float32(mouseX) >= optionX-10 && float32(mouseX) <= optionX+optionWidth &&
-			float32(mouseY) >= optionY-5 && float32(mouseY) <= optionY+optionHeight {
-			// Update selection to hovered option
-			g.pauseMenu.selectedOption = i
-
-			// Check for click
-			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-				menuOptions[g.pauseMenu.selectedOption].Action(g)
-			}
-			break
+	// Update the currently active menu
+	if pm.game.showSettings {
+		if pm.settingsMenu.IsVisible() {
+			pm.settingsMenu.Update()
+		}
+	} else {
+		if pm.mainMenu.IsVisible() {
+			pm.mainMenu.Update()
 		}
 	}
+}
 
-	// Handle keyboard input
-	if inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) || inpututil.IsKeyJustPressed(ebiten.KeyW) {
-		g.pauseMenu.selectedOption = (g.pauseMenu.selectedOption - 1 + len(menuOptions)) % len(menuOptions)
-	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyArrowDown) || inpututil.IsKeyJustPressed(ebiten.KeyS) {
-		g.pauseMenu.selectedOption = (g.pauseMenu.selectedOption + 1) % len(menuOptions)
-	}
+// Show shows the main pause menu
+func (pm *PauseMenu) Show() {
+	pm.game.isPaused = true
+	pm.game.showSettings = false // Default to main pause menu
+	pm.switchToMain()
+}
 
-	// Handle menu selection with Enter/Space
-	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) || inpututil.IsKeyJustPressed(ebiten.KeySpace) {
-		menuOptions[g.pauseMenu.selectedOption].Action(g)
-	}
+func (pm *PauseMenu) switchToMain() {
+	pm.mainMenu.Show()
+	pm.mainMenu.SetSelectedIndex(0) // Reset selected menu option to 1st index
+	pm.settingsMenu.Hide()
+}
+
+func (pm *PauseMenu) switchToSettings() {
+	pm.settingsMenu.Show()
+	pm.settingsMenu.SetSelectedIndex(0) // Reset selected menu option to 1st index
+	pm.mainMenu.Hide()
 }
