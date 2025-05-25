@@ -22,6 +22,7 @@ type Game struct {
 	State        GameState
 	isPaused     bool
 	pauseMenu    *PauseMenu
+	showSettings bool
 
 	camX, camY           float64
 	minCamScale          float64

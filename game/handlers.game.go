@@ -12,8 +12,14 @@ import (
 
 func (g *Game) handlePauseToggle() {
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		// Unpause completely from the Settings Menu
+		if g.showSettings {
+			g.isPaused = false
+			g.showSettings = false
+		} else {
 		g.isPaused = !g.isPaused
 	}
+}
 }
 
 func (g *Game) handleZoom() {

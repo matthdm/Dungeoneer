@@ -10,27 +10,32 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
-type PauseMenuOption struct {
+type MenuOption struct {
 	Text   string
 	Action func(*Game)
 }
 
 type PauseMenu struct {
-	selectedOption int
-	options        []PauseMenuOption
-	width          int
-	height         int
-	textPaddingY   int // Add a buffer for text spacing
-	lineHeight     int
+	selectedOption      int
+	pauseMenuOptions    []MenuOption
+	settingsMenuOptions []MenuOption
+	width               int
+	height              int
+	textPaddingY        int // Add a buffer for text spacing
+	lineHeight          int
 }
 
 func NewPauseMenu() *PauseMenu {
 	return &PauseMenu{
 		selectedOption: 0,
-		options: []PauseMenuOption{
-			{Text: "Resume", Action: func(g *Game) { g.isPaused = false }},
-			{Text: "Settings", Action: func(g *Game) { fmt.Println("Settings selected") /* TODO: Implement settings menu */ }},
+		pauseMenuOptions: []MenuOption{
+			{Text: "Resume", Action: func(g *Game) { g.isPaused = false; g.showSettings = false }},
+			{Text: "Settings", Action: func(g *Game) { g.showSettings = true }},
 			{Text: "Exit Game", Action: func(g *Game) { fmt.Println("Exit Game selected") /* TODO: Implement proper quit */ }},
+		},
+		settingsMenuOptions: []MenuOption{
+			{Text: "Back", Action: func(g *Game) { g.showSettings = false }},
+			//{Text: "Camera Pan Speed", Action: func(g *Game) { g.camPanSpeed = 7.0 }},
 		},
 		width:        300,
 		height:       300,
@@ -64,8 +69,13 @@ func (g *Game) drawPauseMenu(screen *ebiten.Image) {
 	titleX := menuX + (menuW-float32(len(titleText)*8))/2
 	ebitenutil.DebugPrintAt(screen, titleText, int(titleX), int(menuY+20))
 
+	menuOptions := g.pauseMenu.pauseMenuOptions
+	if g.showSettings {
+		menuOptions = g.pauseMenu.settingsMenuOptions
+	}
+
 	// Draw menu options
-	for i, option := range g.pauseMenu.options {
+	for i, option := range menuOptions {
 		y := menuY + float32(g.pauseMenu.textPaddingY+(i*g.pauseMenu.lineHeight))
 		x := menuX + 20
 
@@ -91,8 +101,13 @@ func (g *Game) handlePauseMenu() {
 	mouseX, mouseY := ebiten.CursorPosition()
 	menuX, menuY, menuW, _ := g.pauseMenu.getMenuBounds(g.w, g.h)
 
+	menuOptions := g.pauseMenu.pauseMenuOptions
+	if g.showSettings {
+		menuOptions = g.pauseMenu.settingsMenuOptions
+	}
+
 	// Check if mouse is over any menu option
-	for i := range g.pauseMenu.options {
+	for i := range menuOptions {
 		optionY := menuY + float32(60+i*35)
 		optionX := menuX + 20
 		optionWidth := menuW - 40
@@ -106,7 +121,7 @@ func (g *Game) handlePauseMenu() {
 
 			// Check for click
 			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-				g.pauseMenu.options[g.pauseMenu.selectedOption].Action(g)
+				menuOptions[g.pauseMenu.selectedOption].Action(g)
 			}
 			break
 		}
@@ -114,14 +129,14 @@ func (g *Game) handlePauseMenu() {
 
 	// Handle keyboard input
 	if inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) || inpututil.IsKeyJustPressed(ebiten.KeyW) {
-		g.pauseMenu.selectedOption = (g.pauseMenu.selectedOption - 1 + len(g.pauseMenu.options)) % len(g.pauseMenu.options)
+		g.pauseMenu.selectedOption = (g.pauseMenu.selectedOption - 1 + len(menuOptions)) % len(menuOptions)
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyArrowDown) || inpututil.IsKeyJustPressed(ebiten.KeyS) {
-		g.pauseMenu.selectedOption = (g.pauseMenu.selectedOption + 1) % len(g.pauseMenu.options)
+		g.pauseMenu.selectedOption = (g.pauseMenu.selectedOption + 1) % len(menuOptions)
 	}
 
 	// Handle menu selection with Enter/Space
 	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) || inpututil.IsKeyJustPressed(ebiten.KeySpace) {
-		g.pauseMenu.options[g.pauseMenu.selectedOption].Action(g)
+		menuOptions[g.pauseMenu.selectedOption].Action(g)
 	}
 }
