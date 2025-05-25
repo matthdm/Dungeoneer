@@ -60,6 +60,30 @@ func NewMenu(rect image.Rectangle, title string, options []MenuOption, style Men
 	return m
 }
 
+func (m *Menu) Draw(screen *ebiten.Image) {
+	if !m.visible {
+		return
+	}
+
+	DrawMenuOverlay(screen, m.style.overlayColor)
+
+	menuX, menuY := float32(m.rect.Min.X), float32(m.rect.Min.Y)
+	menuW, menuH := float32(m.rect.Dx()), float32(m.rect.Dy())
+
+	DrawMenuWindow(screen, m, menuX, menuY, menuW, menuH)
+	DrawMenuTitleText(screen, m.title, menuX, menuY, menuW, menuH)
+	DrawMenuOptions(screen, m, menuX, menuY, menuW)
+
+	// Draw instructions
+	if len(m.instructions) > 0 {
+		instructionPosY := menuY + menuH - m.style.instructionTextHeight
+		instructionPosX := menuX + m.style.optionPaddingX
+		for i, line := range m.instructions {
+			ebitenutil.DebugPrintAt(screen, line, int(instructionPosX), int(instructionPosY+float32(i*15))) // 15px line spacing
+		}
+	}
+}
+
 // Update handles input for the menu (navigation, selection)
 func (m *Menu) Update() {
 	if !m.visible || len(m.options) == 0 {
@@ -109,30 +133,6 @@ func (m *Menu) Update() {
 		if m.selectedOptionIndex >= 0 && m.selectedOptionIndex < len(m.options) && m.options[m.selectedOptionIndex].Action != nil {
 			m.options[m.selectedOptionIndex].Action()
 			return // Action might hide menu or change state
-		}
-	}
-}
-
-func (m *Menu) Draw(screen *ebiten.Image) {
-	if !m.visible {
-		return
-	}
-
-	DrawMenuOverlay(screen, m.style.overlayColor)
-
-	menuX, menuY := float32(m.rect.Min.X), float32(m.rect.Min.Y)
-	menuW, menuH := float32(m.rect.Dx()), float32(m.rect.Dy())
-
-	DrawMenuWindow(screen, m, menuX, menuY, menuW, menuH)
-	DrawMenuTitleText(screen, m.title, menuX, menuY, menuW, menuH)
-	DrawMenuOptions(screen, m, menuX, menuY, menuW)
-
-	// Draw instructions
-	if len(m.instructions) > 0 {
-		instructionPosY := menuY + menuH - m.style.instructionTextHeight
-		instructionPosX := menuX + m.style.optionPaddingX
-		for i, line := range m.instructions {
-			ebitenutil.DebugPrintAt(screen, line, int(instructionPosX), int(instructionPosY+float32(i*15))) // 15px line spacing
 		}
 	}
 }
