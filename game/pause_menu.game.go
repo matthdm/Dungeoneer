@@ -89,8 +89,8 @@ func (g *Game) drawPauseMenu(screen *ebiten.Image) {
 func (g *Game) handlePauseMenu() {
 	// Handle mouse input
 	mouseX, mouseY := ebiten.CursorPosition()
-
 	menuX, menuY, menuW, _ := g.pauseMenu.getMenuBounds(g.w, g.h)
+
 	// Check if mouse is over any menu option
 	for i := range g.pauseMenu.options {
 		optionY := menuY + float32(60+i*35)
@@ -112,7 +112,7 @@ func (g *Game) handlePauseMenu() {
 		}
 	}
 
-	// Handle keyboard navigation
+	// Handle keyboard input
 	if inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) || inpututil.IsKeyJustPressed(ebiten.KeyW) {
 		g.pauseMenu.selectedOption = (g.pauseMenu.selectedOption - 1 + len(g.pauseMenu.options)) % len(g.pauseMenu.options)
 	}
