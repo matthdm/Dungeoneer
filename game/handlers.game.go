@@ -10,25 +10,28 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
-func (g *Game) handlePause() error {
-	if g.isPaused {
-		g.pauseMenu.Update()
-		return nil
-	} else {
-		// ESC was pressed to ENTER pause mode
-		if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+func (g *Game) handlePause() {
+	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		if g.isPaused {
+			// Only resume if on main pause menu
+			if !g.pauseMenu.ShowSettings {
+				g.resumeGame()
+			} else {
+				// go back to main pause menu instead
+				g.pauseMenu.SwitchToMain()
+			}
+		} else {
+			g.isPaused = true
 			g.pauseMenu.Show()
-			return nil
 		}
 	}
-	return nil
 }
 
 func (g *Game) resumeGame() {
 	g.isPaused = false
 	if g.pauseMenu != nil { // Ensure pauseMenu exists
-		g.pauseMenu.mainMenu.Hide()
-		g.pauseMenu.settingsMenu.Hide()
+		g.pauseMenu.MainMenu.Hide()
+		g.pauseMenu.SettingsMenu.Hide()
 	}
 }
 
