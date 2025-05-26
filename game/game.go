@@ -8,9 +8,11 @@ import (
 	"dungeoneer/levels"
 	"dungeoneer/pathing"
 	"dungeoneer/sprites"
+	"dungeoneer/ui"
 	"fmt"
 	"image"
 	"math"
+	"os"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -20,9 +22,9 @@ type Game struct {
 	w, h         int
 	currentLevel *levels.Level
 	State        GameState
-	isPaused     bool
-	pauseMenu    *PauseMenu
-	showSettings bool
+
+	isPaused  bool
+	pauseMenu *ui.PauseMenu
 
 	camX, camY           float64
 	minCamScale          float64
@@ -80,8 +82,11 @@ func NewGame() (*Game, error) {
 		player:         entities.NewPlayer(ss),
 		Monsters:       entities.NewStatueMonster(ss),
 		RaycastWalls:   fov.LevelToWalls(l), //levels.NewLevel1()),
+		//pauseMenu:      pm,
 	}
-	g.pauseMenu = NewPauseMenu(g)
+	// added callbacks to new game constructor
+	pm := ui.NewPauseMenu(l.W, l.H, func() { g.resumeGame() }, func() { os.Exit(0) })
+	g.pauseMenu = pm
 
 	return g, nil
 }
@@ -113,7 +118,6 @@ func (g *Game) isoToCartesian(x, y float64) (float64, float64) {
 }
 
 func (g *Game) Update() error {
-	g.handlePause()
 
 	if g.player != nil && g.player.IsDead {
 		g.State = StateGameOver
@@ -123,6 +127,12 @@ func (g *Game) Update() error {
 		return nil // Skip updates while in game over
 	}
 
+	g.handlePause()
+
+	if g.isPaused {
+		g.pauseMenu.Update()
+		return nil // ✅ Skip game logic while paused
+	}
 	g.UpdateSeenTiles(*g.currentLevel)
 	g.handleZoom()
 	g.handlePan()
@@ -235,7 +245,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if g.isPaused {
 		g.pauseMenu.Draw(screen)
 	}
-
 	// Debug UI
 	ebitenutil.DebugPrint(screen, fmt.Sprintf(constants.DEBUG_TEMPLATE, ebiten.ActualFPS(), ebiten.ActualTPS(), g.camScale, g.camX, g.camY))
 }
@@ -264,11 +273,11 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 		menuY := (g.h - menuHeight) / 2
 		newRect := image.Rect(menuX, menuY, menuX+menuWidth, menuY+menuHeight)
 
-		if g.pauseMenu.mainMenu != nil {
-			g.pauseMenu.mainMenu.SetRect(newRect)
+		if g.pauseMenu.MainMenu != nil {
+			g.pauseMenu.MainMenu.SetRect(newRect)
 		}
-		if g.pauseMenu.settingsMenu != nil {
-			g.pauseMenu.settingsMenu.SetRect(newRect)
+		if g.pauseMenu.SettingsMenu != nil {
+			g.pauseMenu.SettingsMenu.SetRect(newRect)
 		}
 	}
 
