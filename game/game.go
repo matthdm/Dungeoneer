@@ -22,6 +22,7 @@ type Game struct {
 	w, h         int
 	currentLevel *levels.Level
 	State        GameState
+	Menu         *ui.MainMenu
 
 	isPaused  bool
 	pauseMenu *ui.PauseMenu
@@ -53,9 +54,9 @@ type Game struct {
 type GameState int
 
 const (
-	StatePlaying GameState = iota
+	StateMainMenu GameState = iota
+	StatePlaying
 	StateGameOver
-	StateMenu
 )
 
 func NewGame() (*Game, error) {
@@ -82,7 +83,13 @@ func NewGame() (*Game, error) {
 		player:         entities.NewPlayer(ss),
 		Monsters:       entities.NewStatueMonster(ss),
 		RaycastWalls:   fov.LevelToWalls(l), //levels.NewLevel1()),
+		State:          StateMainMenu,
 	}
+	mm, err := ui.NewMainMenu()
+	if err != nil {
+		return nil, fmt.Errorf("failed create new main menu: %s", err)
+	}
+	g.Menu = mm
 	// added callbacks to new game constructor
 	pm := ui.NewPauseMenu(l.W, l.H, func() { g.resumeGame() }, func() { os.Exit(0) })
 	g.pauseMenu = pm
@@ -117,7 +124,11 @@ func (g *Game) isoToCartesian(x, y float64) (float64, float64) {
 }
 
 func (g *Game) Update() error {
-
+	if g.State == StateMainMenu {
+		g.Menu.Update()
+		g.handleMainMenuInput()
+		return nil
+	}
 	if g.player != nil && g.player.IsDead {
 		g.State = StateGameOver
 	}
@@ -126,11 +137,13 @@ func (g *Game) Update() error {
 		return nil // Skip updates while in game over
 	}
 
+	//Handle pause should be done prior to pause check
+	g.handlePause()
 	if g.isPaused {
 		g.pauseMenu.Update()
 		return nil //Skip game logic while paused
 	}
-	g.handlePause()
+
 	g.UpdateSeenTiles(*g.currentLevel)
 	g.handleZoom()
 	g.handlePan()
@@ -185,6 +198,12 @@ func (g *Game) Update() error {
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	cx, cy := float64(g.w/2), float64(g.h/2)
+	if g.State == StateMainMenu {
+		//g.drawMainMenuBackground(screen) // optional
+		g.drawMainMenuLabels(screen, cx, cy)
+		//g.drawMainMenuHighlight(screen, cx, cy) // optional
+		return
+	}
 
 	// Prepare render target
 	scaleLater := g.camScale > 1
@@ -261,7 +280,7 @@ func (g *Game) getOrCreateOffscreen(size image.Point) *ebiten.Image {
 // Layout is called when the Game's layout changes.
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	g.w, g.h = outsideWidth, outsideHeight
-	fov.ResizeShadowBuffer(g.w, g.h) // 🛠️ Ensures buffer is always the correct size
+	fov.ResizeShadowBuffer(g.w, g.h) // Ensures buffer is always the correct size
 
 	// Update menu size to grow with screen size
 	if g.pauseMenu != nil {
