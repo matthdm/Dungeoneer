@@ -15,6 +15,9 @@ type MainMenu struct {
 	NewGameLabel   *ebiten.Image
 	OptionsLabel   *ebiten.Image
 	ExitGameLabel  *ebiten.Image
+	Background     *ebiten.Image
+	FrameIndex     int
+	FrameTick      int
 }
 
 func NewMainMenu() (*MainMenu, error) {
@@ -30,11 +33,25 @@ func NewMainMenu() (*MainMenu, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	castleFG, err := images.LoadEmbeddedImage(images.Castle_FG_png)
+	if err != nil {
+		return nil, err
+	}
 	return &MainMenu{
 		Options:       []string{"New Game", "Options", "Exit Game"},
 		SelectedIndex: 0,
 		NewGameLabel:  newGameLabel,
 		OptionsLabel:  optionsLabel,
 		ExitGameLabel: exitGameLabel,
+		Background:    castleFG,
 	}, nil
+}
+
+func (m *MainMenu) Update() {
+	m.FrameTick++
+	if m.FrameTick >= 10 { // adjust speed
+		m.FrameTick = 0
+	}
+
 }

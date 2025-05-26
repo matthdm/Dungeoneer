@@ -16,6 +16,9 @@ var (
 	//go:embed spritesheet.png
 	Spritesheet_png []byte
 
+	//go:embed castle_fg.png
+	Castle_FG_png []byte
+
 	//go:embed new_game.png
 	New_Game_png []byte
 
