@@ -17,16 +17,16 @@ type MainMenu struct {
 	ExitGameLabel  *ebiten.Image
 }
 
-func NewMainMenu(highLightImgPath string) (*MainMenu, error) {
-	newGameLabel, err := images.LoadImage("images/new_game.png")
+func NewMainMenu() (*MainMenu, error) {
+	newGameLabel, err := images.LoadEmbeddedImage(images.New_Game_png)
 	if err != nil {
 		return nil, err
 	}
-	optionsLabel, err := images.LoadImage("images/options.png")
+	optionsLabel, err := images.LoadEmbeddedImage(images.Options_png)
 	if err != nil {
 		return nil, err
 	}
-	exitGameLabel, err := images.LoadImage("images/exit_game.png")
+	exitGameLabel, err := images.LoadEmbeddedImage(images.Exit_Game_png)
 	if err != nil {
 		return nil, err
 	}
