@@ -127,12 +127,11 @@ func (g *Game) Update() error {
 		return nil // Skip updates while in game over
 	}
 
-	g.handlePause()
-
 	if g.isPaused {
 		g.pauseMenu.Update()
-		return nil // ✅ Skip game logic while paused
+		return nil //Skip game logic while paused
 	}
+	g.handlePause()
 	g.UpdateSeenTiles(*g.currentLevel)
 	g.handleZoom()
 	g.handlePan()
