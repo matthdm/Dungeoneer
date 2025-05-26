@@ -82,7 +82,6 @@ func NewGame() (*Game, error) {
 		player:         entities.NewPlayer(ss),
 		Monsters:       entities.NewStatueMonster(ss),
 		RaycastWalls:   fov.LevelToWalls(l), //levels.NewLevel1()),
-		//pauseMenu:      pm,
 	}
 	// added callbacks to new game constructor
 	pm := ui.NewPauseMenu(l.W, l.H, func() { g.resumeGame() }, func() { os.Exit(0) })
