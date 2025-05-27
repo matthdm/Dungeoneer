@@ -1,7 +1,6 @@
 package game
 
 import (
-	"dungeoneer/constants"
 	"dungeoneer/entities"
 	"dungeoneer/fov"
 	"dungeoneer/leveleditor"
@@ -15,7 +14,6 @@ import (
 	"os"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
 type Game struct {
@@ -124,44 +122,52 @@ func (g *Game) isoToCartesian(x, y float64) (float64, float64) {
 }
 
 func (g *Game) Update() error {
-	if g.State == StateMainMenu {
-		g.Menu.Update()
-		g.handleMainMenuInput()
+	switch g.State {
+	case StateMainMenu:
+		return g.updateMainMenu()
+	case StateGameOver:
+		return g.updateGameOver()
+	case StatePlaying:
+		if g.player != nil && g.player.IsDead {
+			g.State = StateGameOver
+			return nil
+		}
+		return g.updatePlaying()
+	default:
 		return nil
 	}
-	if g.player != nil && g.player.IsDead {
-		g.State = StateGameOver
-	}
-	if g.State == StateGameOver {
-		g.handleLevelHotkeys()
-		return nil // Skip updates while in game over
-	}
+}
 
-	//Handle pause should be done prior to pause check
+func (g *Game) updateMainMenu() error {
+	g.Menu.Update()
+	g.handleMainMenuInput()
+	return nil
+}
+
+func (g *Game) updateGameOver() error {
+	g.handleLevelHotkeys()
+	return nil
+}
+
+func (g *Game) updatePlaying() error {
+	// Update pause state early
 	g.handlePause()
 	if g.isPaused {
 		g.pauseMenu.Update()
-		return nil //Skip game logic while paused
+		return nil
 	}
 
+	g.handleInput()
 	g.UpdateSeenTiles(*g.currentLevel)
-	g.handleZoom()
-	g.handlePan()
-	g.handleHoverTile()
-	g.handleClicks()
-	g.handleLevelHotkeys()
-
 	//raycast update
 	g.RaycastWalls = fov.LevelToWalls(g.currentLevel)
-	// Raycast update — only when player moves
+	// Raycasting only if player moved
 	if g.player != nil && (g.player.InterpX != g.lastPlayerX || g.player.InterpY != g.lastPlayerY) {
-		// Use player world-space position directly
 		originX := g.player.InterpX
 		originY := g.player.InterpY
 
 		g.cachedRays = fov.RayCasting(originX, originY, g.RaycastWalls, g.currentLevel)
-		g.lastPlayerX = originX
-		g.lastPlayerY = originY
+		g.lastPlayerX, g.lastPlayerY = originX, originY
 
 		for _, ray := range g.cachedRays {
 			tx := int(ray.X2)
@@ -172,98 +178,20 @@ func (g *Game) Update() error {
 		}
 	}
 
-	//Player Movement
 	if g.player != nil {
-		// Prevent re-calculating paths while mid-movement
 		path := pathing.AStar(g.currentLevel, g.player.TileX, g.player.TileY, g.hoverTileX, g.hoverTileY)
 		g.player.PathPreview = path
+		g.player.Update(g.currentLevel)
 	}
 
-	// Update game objects
-	g.player.Update(g.currentLevel)
-
-	//Update Monsters
 	for _, m := range g.Monsters {
 		m.Update(g.player, g.currentLevel)
 	}
 
-	// Optional: Level editor
 	g.DebugLevelEditor()
-
-	//Hit markers
 	g.handleHitMarkers()
 	g.handleDamageNumbers()
 	return nil
-}
-
-func (g *Game) Draw(screen *ebiten.Image) {
-	cx, cy := float64(g.w/2), float64(g.h/2)
-	if g.State == StateMainMenu {
-		//g.drawMainMenuBackground(screen) // optional
-		g.drawMainMenuLabels(screen, cx, cy)
-		//g.drawMainMenuHighlight(screen, cx, cy) // optional
-		return
-	}
-
-	// Prepare render target
-	scaleLater := g.camScale > 1
-	target := screen
-	scale := g.camScale
-	if scaleLater {
-		target = g.getOrCreateOffscreen(screen.Bounds().Size())
-		target.Clear()
-		scale = 1
-	}
-
-	// World drawing
-	g.drawTiles(target, scale, cx, cy)
-	g.drawPathPreview(target, scale, cx, cy)
-	g.drawEntities(target, scale, cx, cy)
-	g.drawHoverTile(target, scale, cx, cy)
-
-	// Draw to screen (if upscaled)
-	if scaleLater {
-		op := &ebiten.DrawImageOptions{}
-		op.GeoM.Translate(-cx, -cy)
-		op.GeoM.Scale(g.camScale, g.camScale)
-		op.GeoM.Translate(cx, cy)
-		screen.DrawImage(target, op)
-	}
-
-	// === SHADOWS / FOV ===
-	if g.player != nil && len(g.cachedRays) > 0 && !g.FullBright {
-		fov.DrawShadows(
-			screen,
-			g.cachedRays,
-			g.camX, g.camY,
-			g.camScale,
-			cx, cy,
-			g.currentLevel.TileSize,
-		)
-	}
-
-	if g.ShowRays && len(g.cachedRays) > 0 {
-		fov.DebugDrawRays(
-			screen,
-			g.cachedRays,
-			g.camX, g.camY,
-			g.camScale,
-			cx, cy,
-			g.currentLevel.TileSize,
-		)
-	}
-
-	fov.DebugDrawWalls(screen, g.RaycastWalls, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
-
-	if g.State == StateGameOver {
-		msg := "GAME OVER - Press V to Restart"
-		ebitenutil.DebugPrintAt(screen, msg, g.w/2-100, g.h/2)
-	}
-	if g.isPaused {
-		g.pauseMenu.Draw(screen)
-	}
-	// Debug UI
-	ebitenutil.DebugPrint(screen, fmt.Sprintf(constants.DEBUG_TEMPLATE, ebiten.ActualFPS(), ebiten.ActualTPS(), g.camScale, g.camX, g.camY))
 }
 
 func (g *Game) getOrCreateOffscreen(size image.Point) *ebiten.Image {

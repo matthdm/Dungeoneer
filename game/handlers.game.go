@@ -214,3 +214,61 @@ func (g *Game) handleLevelHotkeys() {
 		*g = *newGame
 	}
 }
+
+func (g *Game) handleInput() {
+	switch g.State {
+	case StateMainMenu:
+		g.handleInputMainMenu()
+	case StatePlaying:
+		g.handleInputPlaying()
+	case StateGameOver:
+		g.handleInputGameOver()
+	}
+}
+
+func (g *Game) handleInputMainMenu() {
+	if g.Menu == nil {
+		return
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyW) || inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) {
+		g.Menu.SelectedIndex--
+		if g.Menu.SelectedIndex < 0 {
+			g.Menu.SelectedIndex = len(g.Menu.Options) - 1
+		}
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyS) || inpututil.IsKeyJustPressed(ebiten.KeyArrowDown) {
+		g.Menu.SelectedIndex++
+		if g.Menu.SelectedIndex >= len(g.Menu.Options) {
+			g.Menu.SelectedIndex = 0
+		}
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) || inpututil.IsKeyJustPressed(ebiten.KeySpace) {
+		switch g.Menu.Options[g.Menu.SelectedIndex] {
+		case "New Game":
+			g.State = StatePlaying
+		case "Options":
+			// Future support
+		case "Exit Game":
+			os.Exit(0)
+		}
+	}
+}
+
+func (g *Game) handleInputPlaying() {
+	g.handlePause()
+	if g.isPaused {
+		// Pause menu navigation handled separately
+		g.pauseMenu.Update()
+		return
+	}
+
+	g.handleZoom()
+	g.handlePan()
+	g.handleHoverTile()
+	g.handleClicks()
+	g.handleLevelHotkeys()
+}
+
+func (g *Game) handleInputGameOver() {
+	g.handleLevelHotkeys()
+}
