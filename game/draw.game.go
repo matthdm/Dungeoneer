@@ -1,6 +1,13 @@
 package game
 
-import "github.com/hajimehoshi/ebiten/v2"
+import (
+	"math"
+	"time"
+
+	"github.com/hajimehoshi/ebiten/v2"
+)
+
+var menuStart = time.Now()
 
 func (g *Game) drawTiles(target *ebiten.Image, scale, cx, cy float64) {
 	op := &ebiten.DrawImageOptions{}
@@ -81,5 +88,49 @@ func (g *Game) drawPathPreview(target *ebiten.Image, scale, cx, cy float64) {
 		img := g.spriteSheet.Cursor
 
 		target.DrawImage(img, op)
+	}
+}
+
+func (g *Game) drawMainMenuLabels(screen *ebiten.Image, cx, cy float64) {
+	const magicNum = 195
+	var scale = 0.25
+	var spacing = magicNum*scale + 10
+
+	if g.Menu.Background != nil {
+		sw, sh := g.Menu.Background.Size()
+		scaleX := float64(g.w) / float64(sw)
+		scaleY := float64(g.h) / float64(sh)
+		bgOp := &ebiten.DrawImageOptions{}
+		bgOp.GeoM.Scale(scaleX, scaleY)
+		screen.DrawImage(g.Menu.Background, bgOp)
+	}
+	labels := []*ebiten.Image{
+		g.Menu.NewGameLabel,
+		g.Menu.OptionsLabel,
+		g.Menu.ExitGameLabel,
+	}
+
+	totalHeight := spacing * float64(len(labels)-1)
+	startY := cy - totalHeight/2
+
+	for i, img := range labels {
+		x := 35.0
+		y := startY + float64(i)*spacing
+
+		op := &ebiten.DrawImageOptions{}
+
+		op.GeoM.Scale(scale, scale)
+		op.GeoM.Translate(x, y)
+
+		// Only apply glow to the selected label
+		if i == g.Menu.SelectedIndex {
+			elapsed := time.Since(menuStart).Seconds()
+			pulse := 0.3 + 0.7*math.Abs(math.Sin(elapsed*math.Pi))
+
+			// Slight glow tint + pulse
+			op.ColorScale.Scale(1.2, 1.1, 1.3, float32(pulse))
+		}
+
+		screen.DrawImage(img, op)
 	}
 }

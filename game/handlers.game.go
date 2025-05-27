@@ -5,10 +5,51 @@ import (
 	"dungeoneer/levels"
 	"dungeoneer/pathing"
 	"math"
+	"os"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
+
+func (g *Game) handleMainMenuInput() {
+	if g.State != StateMainMenu || g.Menu == nil {
+		return
+	}
+
+	// Navigate up
+	if inpututil.IsKeyJustPressed(ebiten.KeyW) || inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) {
+		g.Menu.SelectedIndex--
+		if g.Menu.SelectedIndex < 0 {
+			g.Menu.SelectedIndex = len(g.Menu.Options) - 1
+		}
+	}
+
+	// Navigate down
+	if inpututil.IsKeyJustPressed(ebiten.KeyS) || inpututil.IsKeyJustPressed(ebiten.KeyArrowDown) {
+		g.Menu.SelectedIndex++
+		if g.Menu.SelectedIndex >= len(g.Menu.Options) {
+			g.Menu.SelectedIndex = 0
+		}
+	}
+
+	// Confirm selection
+	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) || inpututil.IsKeyJustPressed(ebiten.KeySpace) {
+		switch g.Menu.Options[g.Menu.SelectedIndex] {
+		case "New Game":
+			//newGame, _ := NewGame()
+			//*g = *newGame
+
+			//TODO to add character creation sequence?
+			//TODO to add intro cinematic
+			//Game object already created
+			g.State = StatePlaying
+		case "Options":
+			// Implement later
+		case "Exit Game":
+			os.Exit(2)
+		}
+	}
+}
 
 func (g *Game) handlePause() {
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
