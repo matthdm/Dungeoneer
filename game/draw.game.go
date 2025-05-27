@@ -32,6 +32,47 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	ebitenutil.DebugPrint(screen, fmt.Sprintf(constants.DEBUG_TEMPLATE, ebiten.ActualFPS(), ebiten.ActualTPS(), g.camScale, g.camX, g.camY))
 }
 
+func (g *Game) drawMainMenu(screen *ebiten.Image, cx, cy float64) {
+	g.drawMainMenuLabels(screen, cx, cy)
+}
+
+func (g *Game) drawGameOver(screen *ebiten.Image) {
+	msg := "GAME OVER - Press V to Restart"
+	ebitenutil.DebugPrintAt(screen, msg, g.w/2-100, g.h/2)
+}
+
+func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
+	scaleLater := g.camScale > 1
+	target := screen
+	scale := g.camScale
+	if scaleLater {
+		target = g.getOrCreateOffscreen(screen.Bounds().Size())
+		target.Clear()
+		scale = 1
+	}
+
+	g.drawTiles(target, scale, cx, cy)
+	g.drawPathPreview(target, scale, cx, cy)
+	g.drawEntities(target, scale, cx, cy)
+	g.drawHoverTile(target, scale, cx, cy)
+
+	if scaleLater {
+		op := &ebiten.DrawImageOptions{}
+		op.GeoM.Translate(-cx, -cy)
+		op.GeoM.Scale(g.camScale, g.camScale)
+		op.GeoM.Translate(cx, cy)
+		screen.DrawImage(target, op)
+	}
+
+	if g.player != nil && len(g.cachedRays) > 0 && !g.FullBright {
+		fov.DrawShadows(screen, g.cachedRays, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
+	}
+	if g.ShowRays && len(g.cachedRays) > 0 {
+		fov.DebugDrawRays(screen, g.cachedRays, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
+	}
+	fov.DebugDrawWalls(screen, g.RaycastWalls, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
+}
+
 func (g *Game) drawTiles(target *ebiten.Image, scale, cx, cy float64) {
 	padding := float64(g.currentLevel.TileSize) * scale
 
@@ -138,47 +179,6 @@ func (g *Game) drawMainMenuLabels(screen *ebiten.Image, cx, cy float64) {
 
 		screen.DrawImage(img, op)
 	}
-}
-
-func (g *Game) drawMainMenu(screen *ebiten.Image, cx, cy float64) {
-	g.drawMainMenuLabels(screen, cx, cy)
-}
-
-func (g *Game) drawGameOver(screen *ebiten.Image) {
-	msg := "GAME OVER - Press V to Restart"
-	ebitenutil.DebugPrintAt(screen, msg, g.w/2-100, g.h/2)
-}
-
-func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
-	scaleLater := g.camScale > 1
-	target := screen
-	scale := g.camScale
-	if scaleLater {
-		target = g.getOrCreateOffscreen(screen.Bounds().Size())
-		target.Clear()
-		scale = 1
-	}
-
-	g.drawTiles(target, scale, cx, cy)
-	g.drawPathPreview(target, scale, cx, cy)
-	g.drawEntities(target, scale, cx, cy)
-	g.drawHoverTile(target, scale, cx, cy)
-
-	if scaleLater {
-		op := &ebiten.DrawImageOptions{}
-		op.GeoM.Translate(-cx, -cy)
-		op.GeoM.Scale(g.camScale, g.camScale)
-		op.GeoM.Translate(cx, cy)
-		screen.DrawImage(target, op)
-	}
-
-	if g.player != nil && len(g.cachedRays) > 0 && !g.FullBright {
-		fov.DrawShadows(screen, g.cachedRays, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
-	}
-	if g.ShowRays && len(g.cachedRays) > 0 {
-		fov.DebugDrawRays(screen, g.cachedRays, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
-	}
-	fov.DebugDrawWalls(screen, g.RaycastWalls, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
 }
 
 // Converts world coordinates to screen-space DrawImageOptions.
