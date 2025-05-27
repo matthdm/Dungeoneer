@@ -76,27 +76,36 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 func (g *Game) drawTiles(target *ebiten.Image, scale, cx, cy float64) {
 	padding := float64(g.currentLevel.TileSize) * scale
 
+	// Precompute screen-space bounds
+	screenLeft := -padding
+	screenTop := -padding
+	screenRight := float64(g.w)
+	screenBottom := float64(g.h)
+
 	for y := 0; y < g.currentLevel.H; y++ {
 		for x := 0; x < g.currentLevel.W; x++ {
 			tile := g.currentLevel.Tiles[y][x]
 			if tile == nil {
 				continue
 			}
+
 			xi, yi := g.cartesianToIso(float64(x), float64(y))
 
+			// Compute screen-space draw position
 			drawX := ((xi - g.camX) * scale) + cx
 			drawY := ((yi + g.camY) * scale) + cy
 
-			if drawX+padding < 0 || drawY+padding < 0 || drawX > float64(g.w) || drawY > float64(g.h) {
+			// Skip tiles that fall outside the screen bounds
+			if drawX < screenLeft || drawY < screenTop || drawX > screenRight || drawY > screenBottom {
 				continue
 			}
 
+			// Draw tile
 			op := g.getDrawOp(xi, yi, scale, cx, cy)
 			tile.Draw(target, op)
 		}
 	}
 }
-
 func (g *Game) drawHoverTile(target *ebiten.Image, scale, cx, cy float64) {
 	if g.hoverTileX < 0 || g.hoverTileY < 0 ||
 		g.hoverTileX >= g.currentLevel.W || g.hoverTileY >= g.currentLevel.H {
