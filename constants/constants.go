@@ -30,4 +30,5 @@ const (
 const (
 	PathPreviewAlpha   = 0.4
 	HostileTargetAlpha = 0.8
+	ShadowAlpha        = 200
 )

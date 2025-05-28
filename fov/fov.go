@@ -7,6 +7,12 @@ import (
 
 type Line struct {
 	X1, Y1, X2, Y2 float64
+	Path           []Point // Add this
+}
+
+type Point struct {
+	X int
+	Y int
 }
 
 type RayCache struct {
@@ -69,7 +75,8 @@ func RayCasting(cx, cy float64, walls []Line, level *levels.Level) []Line {
 		}
 
 		if !math.IsInf(minDist, 1) {
-			rays = append(rays, Line{cx, cy, hitX, hitY})
+			path := TraceLineToTiles(cx, cy, hitX, hitY)
+			rays = append(rays, Line{X1: cx, Y1: cy, X2: hitX, Y2: hitY, Path: path})
 		}
 	}
 
@@ -84,4 +91,57 @@ func isWall(x, y int, level *levels.Level) bool {
 	}
 	t := level.Tiles[y][x]
 	return t == nil || !t.IsWalkable
+}
+
+// TraceLineToTiles returns a list of tile coordinates the ray crosses
+func TraceLineToTiles(x1, y1, x2, y2 float64) []Point {
+	var points []Point
+
+	// Convert float coordinates to tile grid
+	startX := int(math.Floor(x1))
+	startY := int(math.Floor(y1))
+	endX := int(math.Floor(x2))
+	endY := int(math.Floor(y2))
+
+	dx := math.Abs(float64(endX - startX))
+	dy := math.Abs(float64(endY - startY))
+
+	stepX := 1
+	if endX < startX {
+		stepX = -1
+	}
+	stepY := 1
+	if endY < startY {
+		stepY = -1
+	}
+
+	x := startX
+	y := startY
+	points = append(points, Point{X: x, Y: y})
+
+	if dx > dy {
+		err := dx / 2.0
+		for x != endX {
+			x += stepX
+			err -= dy
+			if err < 0 {
+				y += stepY
+				err += dx
+			}
+			points = append(points, Point{X: x, Y: y})
+		}
+	} else {
+		err := dy / 2.0
+		for y != endY {
+			y += stepY
+			err -= dx
+			if err < 0 {
+				x += stepX
+				err += dy
+			}
+			points = append(points, Point{X: x, Y: y})
+		}
+	}
+
+	return points
 }

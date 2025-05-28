@@ -46,7 +46,9 @@ type Game struct {
 	cachedRays               []fov.Line
 	FullBright               bool
 
-	SeenTiles [][]bool
+	// Visibility tracking
+	VisibleTiles [][]bool // true if currently visible
+	SeenTiles    [][]bool // true if ever seen
 }
 
 type GameState int
@@ -91,7 +93,12 @@ func NewGame() (*Game, error) {
 	// added callbacks to new game constructor
 	pm := ui.NewPauseMenu(l.W, l.H, func() { g.resumeGame() }, func() { os.Exit(0) })
 	g.pauseMenu = pm
-
+	g.VisibleTiles = make([][]bool, g.currentLevel.H)
+	g.SeenTiles = make([][]bool, g.currentLevel.H)
+	for y := range g.VisibleTiles {
+		g.VisibleTiles[y] = make([]bool, g.currentLevel.W)
+		g.SeenTiles[y] = make([]bool, g.currentLevel.W)
+	}
 	return g, nil
 }
 
@@ -150,44 +157,74 @@ func (g *Game) updateGameOver() error {
 }
 
 func (g *Game) updatePlaying() error {
-	// Update pause state early
+	// Pause handling first
 	g.handlePause()
 	if g.isPaused {
 		g.pauseMenu.Update()
 		return nil
 	}
 
+	// Handle controls (mouse, keys, etc.)
 	g.handleInput()
-	g.UpdateSeenTiles(*g.currentLevel)
-	//raycast update
+
+	// Update seen/visible memory arrays based on current level size
+	//g.UpdateSeenTiles(*g.currentLevel)
+
+	// Rebuild raycast walls (in case the level changed)
 	g.RaycastWalls = fov.LevelToWalls(g.currentLevel)
-	// Raycasting only if player moved
-	if g.player != nil && (g.player.InterpX != g.lastPlayerX || g.player.InterpY != g.lastPlayerY) {
+
+	// Determine if we should update rays:
+	shouldRecast := len(g.cachedRays) == 0 ||
+		g.player.InterpX != g.lastPlayerX ||
+		g.player.InterpY != g.lastPlayerY
+
+	if g.player != nil && shouldRecast {
 		originX := g.player.InterpX
 		originY := g.player.InterpY
 
 		g.cachedRays = fov.RayCasting(originX, originY, g.RaycastWalls, g.currentLevel)
-		g.lastPlayerX, g.lastPlayerY = originX, originY
+		g.lastPlayerX = originX
+		g.lastPlayerY = originY
 
+		// Clear visibility map
+		for y := range g.VisibleTiles {
+			for x := range g.VisibleTiles[y] {
+				g.VisibleTiles[y][x] = false
+			}
+		}
+
+		// Update visibility from ray paths
 		for _, ray := range g.cachedRays {
+			for _, pt := range ray.Path {
+				if g.isValidTile(pt.X, pt.Y) {
+					g.VisibleTiles[pt.Y][pt.X] = true
+					g.SeenTiles[pt.Y][pt.X] = true
+				}
+			}
+
+			// Final ray endpoint tile
 			tx := int(ray.X2)
 			ty := int(ray.Y2)
-			if tx >= 0 && ty >= 0 && ty < len(g.SeenTiles) && tx < len(g.SeenTiles[0]) {
+			if g.isValidTile(tx, ty) {
+				g.VisibleTiles[ty][tx] = true
 				g.SeenTiles[ty][tx] = true
 			}
 		}
 	}
 
+	// Path preview update (mouse hover A*)
 	if g.player != nil {
 		path := pathing.AStar(g.currentLevel, g.player.TileX, g.player.TileY, g.hoverTileX, g.hoverTileY)
 		g.player.PathPreview = path
 		g.player.Update(g.currentLevel)
 	}
 
+	// Monsters
 	for _, m := range g.Monsters {
 		m.Update(g.player, g.currentLevel)
 	}
 
+	// Debugging / editor / effects
 	g.DebugLevelEditor()
 	g.handleHitMarkers()
 	g.handleDamageNumbers()
@@ -227,4 +264,7 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	}
 
 	return g.w, g.h
+}
+func (g *Game) isValidTile(x, y int) bool {
+	return x >= 0 && x < g.currentLevel.W && y >= 0 && y < g.currentLevel.H
 }
