@@ -53,7 +53,10 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 
 	g.drawTiles(target, scale, cx, cy)
 	g.drawPathPreview(target, scale, cx, cy)
-	g.drawEntities(target, scale, cx, cy)
+	g.drawPlayer(target, scale, cx, cy)
+	g.drawMonsters(target, scale, cx, cy)
+	g.drawHitMarkers(target, scale, cx, cy)
+	g.drawDamageNumbers(target, scale, cx, cy)
 	g.drawHoverTile(target, scale, cx, cy)
 
 	if scaleLater {
@@ -120,7 +123,7 @@ func (g *Game) drawHoverTile(target *ebiten.Image, scale, cx, cy float64) {
 		finalSpot := g.player.PathPreview[len(g.player.PathPreview)-1]
 		for _, m := range g.Monsters {
 			if !m.IsDead && m.TileX == finalSpot.X && m.TileY == finalSpot.Y {
-				op.ColorScale.Scale(1, 0, 0, 0.8) // red
+				op.ColorScale.Scale(1, 0, 0, constants.HostileTargetAlpha) // red
 				break
 			}
 		}
@@ -141,15 +144,14 @@ func (g *Game) drawPathPreview(target *ebiten.Image, scale, cx, cy float64) {
 
 		xi, yi := g.cartesianToIso(float64(step.X), float64(step.Y))
 		op := g.getDrawOp(xi, yi, scale, cx, cy)
-		op.ColorScale.Scale(1, 1, 1, 0.4)
+		op.ColorScale.Scale(1, 1, 1, constants.PathPreviewAlpha)
 		target.DrawImage(g.spriteSheet.Cursor, op)
 	}
 }
 
 func (g *Game) drawMainMenuLabels(screen *ebiten.Image, cx, cy float64) {
-	const magicNum = 195
-	var scale = 0.25
-	var spacing = magicNum*scale + 10
+
+	var spacing = constants.MenuLabelHeightPixels*constants.MainMenuLabelScale + constants.MenuLabelVerticalPadding
 
 	if g.Menu.Background != nil {
 		sw, sh := g.Menu.Background.Size()
@@ -169,18 +171,18 @@ func (g *Game) drawMainMenuLabels(screen *ebiten.Image, cx, cy float64) {
 	startY := cy - totalHeight/2
 
 	for i, img := range labels {
-		x := 35.0
+		x := constants.MenuLabelOffsetX
 		y := startY + float64(i)*spacing
 
 		op := &ebiten.DrawImageOptions{}
 
-		op.GeoM.Scale(scale, scale)
+		op.GeoM.Scale(constants.MainMenuLabelScale, constants.MainMenuLabelScale)
 		op.GeoM.Translate(x, y)
 
 		// Only apply glow to the selected label
 		if i == g.Menu.SelectedIndex {
 			elapsed := time.Since(menuStart).Seconds()
-			pulse := 0.3 + 0.7*math.Abs(math.Sin(elapsed*math.Pi))
+			pulse := constants.GlowAlphaMin + constants.GlowAlphaRange*math.Abs(math.Sin(elapsed*math.Pi))
 
 			// Slight glow tint + pulse
 			op.ColorScale.Scale(1.2, 1.1, 1.3, float32(pulse))
