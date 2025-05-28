@@ -1,4 +1,4 @@
-name: Build and Upload Cross-Platform Go Binary
+name: Build and Upload Go Binary (Linux & Windows)
 
 on:
   workflow_dispatch:
@@ -6,7 +6,7 @@ on:
       build_name:
         description: 'Name of the build binary'
         required: true
-        default: 'Dungeoneer-v1.0.0'
+        default: 'myapp'
 
 jobs:
   build:
@@ -14,8 +14,8 @@ jobs:
 
     strategy:
       matrix:
-        goos: [linux, windows, darwin]
-        goarch: [amd64]  # Add more architectures like arm64 if needed
+        goos: [linux, windows]
+        goarch: [amd64]
 
     steps:
       - name: Checkout repository
@@ -43,5 +43,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.build_name }}-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: |
-            ${{ inputs.build_name }}-${{ matrix.goos }}-${{ matrix.goarch }}*
+          path: ${{ inputs.build_name }}-${{ matrix.goos }}-${{ matrix.goarch }}*
+          retention-days: 90
