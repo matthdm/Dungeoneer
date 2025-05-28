@@ -1,6 +1,7 @@
 package fov
 
 import (
+	"dungeoneer/constants"
 	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -26,18 +27,18 @@ func DrawShadows(screen *ebiten.Image, rays []Line, camX, camY, camScale float64
 		return
 	}
 
-	// Clear the shadowImage and start fully dark
+	// Fill entire screen with darkness first
 	shadowImage.Clear()
-	shadowImage.Fill(color.RGBA{0, 0, 0, 200}) // semi-transparent black
+	shadowImage.Fill(color.RGBA{0, 0, 0, constants.ShadowAlpha}) // semi-transparent black
 
-	// Prepare a light mask
+	// Create a white image used to carve light
 	lightMask := ebiten.NewImage(shadowImage.Bounds().Dx(), shadowImage.Bounds().Dy())
 	lightMask.Fill(color.White)
 
+	// Carve out triangles of light using source-out blend
 	opt := &ebiten.DrawTrianglesOptions{}
 	opt.Blend = ebiten.BlendSourceOut
 
-	// Fan of triangles from player to ray hits
 	for i := range rays {
 		r1 := rays[i]
 		r2 := rays[(i+1)%len(rays)]
@@ -51,14 +52,13 @@ func DrawShadows(screen *ebiten.Image, rays []Line, camX, camY, camScale float64
 			{DstX: float32(x1), DstY: float32(y1), ColorA: 1},
 			{DstX: float32(x2), DstY: float32(y2), ColorA: 1},
 		}
+
 		shadowImage.DrawTriangles(verts, []uint16{0, 1, 2}, lightMask, opt)
 	}
 
-	// Finally, overlay the shadowImage (dimmed) onto the screen
-	op := &ebiten.DrawImageOptions{}
-	screen.DrawImage(shadowImage, op)
+	// Composite shadow over the final screen
+	screen.DrawImage(shadowImage, nil)
 }
-
 func DebugDrawRays(screen *ebiten.Image, rays []Line, camX, camY, camScale float64, cx, cy float64, tileSize int) {
 	var offSetX float64 = 1
 	for _, r := range rays {

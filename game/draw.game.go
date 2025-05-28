@@ -93,8 +93,6 @@ func (g *Game) drawTiles(target *ebiten.Image, scale, cx, cy float64) {
 			}
 
 			xi, yi := g.cartesianToIso(float64(x), float64(y))
-
-			// Compute screen-space draw position
 			drawX := ((xi - g.camX) * scale) + cx
 			drawY := ((yi + g.camY) * scale) + cy
 
@@ -103,8 +101,26 @@ func (g *Game) drawTiles(target *ebiten.Image, scale, cx, cy float64) {
 				continue
 			}
 
-			// Draw tile
+			inFOV := g.isTileVisible(x, y)
+			wasSeen := g.SeenTiles[y][x]
+
+			// Fully hidden — skip
+			if !inFOV && !wasSeen {
+				continue
+			}
+
 			op := g.getDrawOp(xi, yi, scale, cx, cy)
+			if inFOV {
+				// Draw full bright
+				op := g.getDrawOp(xi, yi, scale, cx, cy)
+				tile.Draw(target, op)
+			} else if wasSeen {
+				// Draw dimmed
+				op := g.getDrawOp(xi, yi, scale, cx, cy)
+				op.ColorScale.Scale(0.4, 0.4, 0.4, 1.0) // tweak brightness as needed
+				tile.Draw(target, op)
+			}
+
 			tile.Draw(target, op)
 		}
 	}
@@ -200,4 +216,11 @@ func (g *Game) getDrawOp(worldX, worldY, scale, cx, cy float64) *ebiten.DrawImag
 	op.GeoM.Scale(scale, scale)
 	op.GeoM.Translate(cx, cy)
 	return op
+}
+
+func (g *Game) isTileVisible(x, y int) bool {
+	if y < 0 || y >= len(g.VisibleTiles) || x < 0 || x >= len(g.VisibleTiles[y]) {
+		return false
+	}
+	return g.FullBright || g.VisibleTiles[y][x]
 }

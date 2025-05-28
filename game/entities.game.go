@@ -16,6 +16,13 @@ func (g *Game) drawPlayer(target *ebiten.Image, scale, cx, cy float64) {
 func (g *Game) drawMonsters(target *ebiten.Image, scale, cx, cy float64) {
 	tileSize := g.currentLevel.TileSize
 	for _, m := range g.Monsters {
-		m.Draw(target, tileSize, g.camX, g.camY, scale, cx, cy)
+		if g.isTileVisible(m.TileX, m.TileY) {
+			m.Draw(target, tileSize, g.camX, g.camY, scale, cx, cy)
+		} else if g.SeenTiles[m.TileY][m.TileX] {
+			// optionally show faded sprite or placeholder
+		} else {
+			continue
+		}
+
 	}
 }
