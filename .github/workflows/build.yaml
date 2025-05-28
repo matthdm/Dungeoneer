@@ -1,4 +1,4 @@
-name: Build and Upload Go Binary (Linux & Windows)
+name: Build and Upload Go Binary (Windows Only)
 
 on:
   workflow_dispatch:
@@ -6,16 +6,15 @@ on:
       build_name:
         description: 'Name of the build binary'
         required: true
-        default: 'myapp'
+        default: 'Dungeoneer-Stable-v1'
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        goos: [linux, windows]
-        goarch: [amd64]
+    env:
+      GOOS: windows
+      GOARCH: amd64
 
     steps:
       - name: Checkout repository
@@ -26,22 +25,16 @@ jobs:
         with:
           go-version: '1.21'
 
-      - name: Build Go binary for ${{ matrix.goos }}-${{ matrix.goarch }}
+      - name: Build Windows binary
         run: |
-          export GOOS=${{ matrix.goos }}
-          export GOARCH=${{ matrix.goarch }}
-          BINARY_NAME="${{ inputs.build_name }}-${GOOS}-${GOARCH}"
-          if [ "$GOOS" = "windows" ]; then
-            BINARY_NAME="${BINARY_NAME}.exe"
-          fi
           go mod tidy
-          go build -o $BINARY_NAME .
-          echo "Built $BINARY_NAME"
+          OUTPUT_NAME="${{ inputs.build_name }}-${GOOS}-${GOARCH}.exe"
+          go build -o $OUTPUT_NAME .
+          echo "Built $OUTPUT_NAME"
         shell: bash
 
-      - name: Upload build artifact
+      - name: Upload Windows binary artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.build_name }}-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: ${{ inputs.build_name }}-${{ matrix.goos }}-${{ matrix.goarch }}*
-          retention-days: 90
+          name: ${{ inputs.build_name }}-${{ env.GOOS }}-${{ env.GOARCH }}
+          path: ${{ inputs.build_name }}-${{ env.GOOS }}-${{ env.GOARCH }}.exe
