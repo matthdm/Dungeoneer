@@ -26,17 +26,17 @@ func (g *Game) DebugLevelEditor() {
 	case inpututil.IsKeyJustPressed(ebiten.Key2):
 		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
 		t.IsWalkable = false
-		g.editor.SetSelectedSprite(g.spriteSheet.Wall)
+		g.editor.SetSelectedSprite(g.spriteSheet.DungeonWall)
 		g.editor.PlaceTile(t)
 	case inpututil.IsKeyJustPressed(ebiten.Key3):
 		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
 		t.IsWalkable = false
-		g.editor.SetSelectedSprite(g.spriteSheet.LockedDoorWest)
+		g.editor.SetSelectedSprite(g.spriteSheet.LockedDoorNW)
 		g.editor.PlaceTile(t)
 	case inpututil.IsKeyJustPressed(ebiten.Key4):
 		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
 		t.IsWalkable = false
-		g.editor.SetSelectedSprite(g.spriteSheet.LockedDoorEast)
+		g.editor.SetSelectedSprite(g.spriteSheet.LockedDoorNE)
 		g.editor.PlaceTile(t)
 	case inpututil.IsKeyJustPressed(ebiten.Key5):
 		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
@@ -61,7 +61,7 @@ func (g *Game) DebugLevelEditor() {
 	case inpututil.IsKeyJustPressed(ebiten.Key9):
 		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
 		t.IsWalkable = false
-		g.editor.SetSelectedSprite(g.spriteSheet.Wall)
+		g.editor.SetSelectedSprite(g.spriteSheet.Trinket)
 		g.editor.PlaceTile(t)
 	}
 }
@@ -79,15 +79,15 @@ func (g *Game) DungeonLevelEditor() {
 		g.editor.PlaceTile(t)
 	case inpututil.IsKeyJustPressed(ebiten.Key2):
 		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		g.editor.SetSelectedSprite(g.spriteSheet.Wall)
+		g.editor.SetSelectedSprite(g.spriteSheet.DungeonWall)
 		g.editor.PlaceTile(t)
 	case inpututil.IsKeyJustPressed(ebiten.Key3):
 		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		g.editor.SetSelectedSprite(g.spriteSheet.LockedDoorWest)
+		g.editor.SetSelectedSprite(g.spriteSheet.LockedDoorNW)
 		g.editor.PlaceTile(t)
 	case inpututil.IsKeyJustPressed(ebiten.Key4):
 		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		g.editor.SetSelectedSprite(g.spriteSheet.LockedDoorEast)
+		g.editor.SetSelectedSprite(g.spriteSheet.LockedDoorNE)
 		g.editor.PlaceTile(t)
 	case inpututil.IsKeyJustPressed(ebiten.Key5):
 		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
@@ -107,7 +107,7 @@ func (g *Game) DungeonLevelEditor() {
 		g.editor.PlaceTile(t)
 	case inpututil.IsKeyJustPressed(ebiten.Key9):
 		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		g.editor.SetSelectedSprite(g.spriteSheet.Wall)
+		g.editor.SetSelectedSprite(g.spriteSheet.DungeonWall)
 		g.editor.PlaceTile(t)
 	}
 }
@@ -125,19 +125,19 @@ func (g *Game) ForestLevelEditor() {
 		g.editor.PlaceTile(t)
 	case inpututil.IsKeyJustPressed(ebiten.Key2):
 		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		g.editor.SetSelectedSprite(g.spriteSheet.Wall)
+		g.editor.SetSelectedSprite(g.spriteSheet.OakBeam)
 		g.editor.PlaceTile(t)
 	case inpututil.IsKeyJustPressed(ebiten.Key3):
 		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		g.editor.SetSelectedSprite(g.spriteSheet.LockedDoorWest)
+		g.editor.SetSelectedSprite(g.spriteSheet.OakBeamNESW)
 		g.editor.PlaceTile(t)
 	case inpututil.IsKeyJustPressed(ebiten.Key4):
 		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		g.editor.SetSelectedSprite(g.spriteSheet.LockedDoorEast)
+		g.editor.SetSelectedSprite(g.spriteSheet.OakLogNWSE)
 		g.editor.PlaceTile(t)
 	case inpututil.IsKeyJustPressed(ebiten.Key5):
 		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		g.editor.SetSelectedSprite(g.spriteSheet.Water)
+		g.editor.SetSelectedSprite(g.spriteSheet.Campfire)
 		g.editor.PlaceTile(t)
 	case inpututil.IsKeyJustPressed(ebiten.Key6):
 		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
@@ -153,7 +153,7 @@ func (g *Game) ForestLevelEditor() {
 		g.editor.PlaceTile(t)
 	case inpututil.IsKeyJustPressed(ebiten.Key9):
 		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		g.editor.SetSelectedSprite(g.spriteSheet.Wall)
+		g.editor.SetSelectedSprite(g.spriteSheet.OakWall)
 		g.editor.PlaceTile(t)
 	}
 }

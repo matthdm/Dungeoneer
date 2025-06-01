@@ -53,26 +53,26 @@ func NewDungeonLevel() (*Level, error) {
 			val := rand.IntN(1000)
 			switch {
 			case isBorderSpace || val < 275:
-				t.AddSprite(ss.Wall)
+				t.AddSprite(ss.DungeonWall)
 				t.IsWalkable = false
 			case val < 285:
 				t.AddSprite(ss.Statue)
 				t.IsWalkable = false
 			case val < 288:
-				t.AddSprite(ss.Crown)
+				t.AddSprite(ss.Trinket)
 				t.IsWalkable = false
 			case val < 289:
 				t.AddSprite(ss.Floor)
-				t.AddSprite(ss.Tube)
+				t.AddSprite(ss.Well)
 				t.IsWalkable = false
 			case val < 290:
 				t.AddSprite(ss.Portal)
 				t.IsWalkable = true
 			case val < 10:
-				t.AddSprite(ss.BlueMan)
+				t.AddSprite(ss.DragonStatue)
 				t.IsWalkable = false
 			case val < 3:
-				t.AddSprite(ss.RedMan)
+				t.AddSprite(ss.Campfire)
 				t.IsWalkable = false
 			default:
 				t.AddSprite(ss.Floor)
@@ -116,14 +116,14 @@ func NewForestLevel() (*Level, error) {
 				t.AddSprite(ss.OakChunk)
 				t.IsWalkable = false
 			case val < 285:
-				t.AddSprite(ss.OakChunkSlim)
+				t.AddSprite(ss.OakLog)
 				t.IsWalkable = false
 			case val < 288:
-				t.AddSprite(ss.Crown)
+				t.AddSprite(ss.Trinket)
 				t.IsWalkable = false
 			case val < 289:
 				t.AddSprite(ss.Floor)
-				t.AddSprite(ss.Tube)
+				t.AddSprite(ss.Well)
 				t.IsWalkable = false
 			case val < 290:
 				t.AddSprite(ss.Portal)
