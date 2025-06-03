@@ -5,6 +5,7 @@ import (
 	"dungeoneer/fov"
 	"fmt"
 	"math"
+	"sort"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -12,6 +13,12 @@ import (
 )
 
 var menuStart = time.Now()
+
+type RenderItem struct {
+	Depth float64
+	Image *ebiten.Image
+	Opts  *ebiten.DrawImageOptions
+}
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	cx, cy := float64(g.w/2), float64(g.h/2)
@@ -42,19 +49,29 @@ func (g *Game) drawGameOver(screen *ebiten.Image) {
 }
 
 func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
-	scaleLater := g.camScale > 1
-	target := screen
+	var renderQueue []RenderItem
 	scale := g.camScale
+	target := screen
+	scaleLater := scale > 1
+
 	if scaleLater {
 		target = g.getOrCreateOffscreen(screen.Bounds().Size())
 		target.Clear()
 		scale = 1
 	}
 
-	g.drawTiles(target, scale, cx, cy)
+	renderQueue = append(renderQueue, g.collectTileDrawablesWithScale(cx, cy, scale)...)
+	renderQueue = append(renderQueue, g.collectEntityDrawablesWithScale(cx, cy, scale)...)
+	renderQueue = append(renderQueue, g.collectWallDrawablesWithScale(cx, cy, scale)...)
+	sort.Slice(renderQueue, func(i, j int) bool {
+		return renderQueue[i].Depth < renderQueue[j].Depth
+	})
+
+	for _, item := range renderQueue {
+		target.DrawImage(item.Image, item.Opts)
+	}
+
 	g.drawPathPreview(target, scale, cx, cy)
-	g.drawPlayer(target, scale, cx, cy)
-	g.drawMonsters(target, scale, cx, cy)
 	g.drawHitMarkers(target, scale, cx, cy)
 	g.drawDamageNumbers(target, scale, cx, cy)
 	g.drawHoverTile(target, scale, cx, cy)
@@ -125,6 +142,7 @@ func (g *Game) drawTiles(target *ebiten.Image, scale, cx, cy float64) {
 		}
 	}
 }
+
 func (g *Game) drawHoverTile(target *ebiten.Image, scale, cx, cy float64) {
 	if g.hoverTileX < 0 || g.hoverTileY < 0 ||
 		g.hoverTileX >= g.currentLevel.W || g.hoverTileY >= g.currentLevel.H {
@@ -223,4 +241,122 @@ func (g *Game) isTileVisible(x, y int) bool {
 		return false
 	}
 	return g.FullBright || g.VisibleTiles[y][x]
+}
+
+func (g *Game) collectTileDrawablesWithScale(cx, cy, scale float64) []RenderItem {
+	var items []RenderItem
+
+	for y := 0; y < g.currentLevel.H; y++ {
+		for x := 0; x < g.currentLevel.W; x++ {
+			tile := g.currentLevel.Tiles[y][x]
+			if tile == nil {
+				continue
+			}
+
+			inFOV := g.isTileVisible(x, y) || g.FullBright
+			wasSeen := g.SeenTiles[y][x]
+			if !inFOV && !wasSeen {
+				continue
+			}
+
+			xi, yi := g.cartesianToIso(float64(x), float64(y))
+			//depth := constants.DepthFloorBase + float64(y)*constants.DepthFloorOffset
+
+			if len(tile.Sprites) > 0 {
+				sprite := tile.Sprites[0] // assume floor at index 0
+				if sprite == nil {
+					continue
+				}
+
+				op := g.getDrawOp(xi, yi, scale, cx, cy)
+				if !inFOV {
+					op.ColorScale.Scale(0.4, 0.4, 0.4, 1.0)
+				}
+
+				items = append(items, RenderItem{
+					Depth: float64(y) - 0.1, // Ensure floor renders below entities on same tile
+					Image: sprite,
+					Opts:  op,
+				})
+
+			}
+		}
+	}
+
+	return items
+}
+
+func (g *Game) collectEntityDrawablesWithScale(cx, cy, scale float64) []RenderItem {
+	var items []RenderItem
+
+	if g.player != nil && !g.player.IsDead {
+		xi, yi := g.cartesianToIso(g.player.Motion.InterpX, g.player.Motion.InterpY)
+		depth := g.player.Motion.InterpY + 0.2
+		op := g.getDrawOp(xi, yi, scale, cx, cy)
+
+		items = append(items, RenderItem{
+			Depth: depth,
+			Image: g.player.Sprite,
+			Opts:  op,
+		})
+	}
+
+	for _, m := range g.Monsters {
+		if m.IsDead {
+			continue
+		}
+		xi, yi := g.cartesianToIso(m.InterpX, m.InterpY)
+		//depth := constants.DepthEntityBase + float64(g.player.Motion.TileY)*0.01
+		op := g.getDrawOp(xi, yi, scale, cx, cy)
+		img := m.Sprite
+
+		items = append(items, RenderItem{
+			Depth: m.InterpY + 0.2,
+			Image: img,
+			Opts:  op,
+		})
+	}
+
+	return items
+}
+
+func (g *Game) collectWallDrawablesWithScale(cx, cy, scale float64) []RenderItem {
+	var items []RenderItem
+
+	for y := 0; y < g.currentLevel.H; y++ {
+		for x := 0; x < g.currentLevel.W; x++ {
+			tile := g.currentLevel.Tiles[y][x]
+			if tile == nil || len(tile.Sprites) == 0 {
+				continue
+			}
+
+			inFOV := g.isTileVisible(x, y) || g.FullBright
+			wasSeen := g.SeenTiles[y][x]
+			if !inFOV && !wasSeen {
+				continue
+			}
+
+			// For now, assume "wall sprites" start at index 1 (e.g. [floor, wall])
+			for i := 1; i < len(tile.Sprites); i++ {
+				sprite := tile.Sprites[i]
+				if sprite == nil {
+					continue
+				}
+
+				xi, yi := g.cartesianToIso(float64(x), float64(y))
+				op := g.getDrawOp(xi, yi, scale, cx, cy)
+				if !inFOV {
+					op.ColorScale.Scale(0.4, 0.4, 0.4, 1.0)
+				}
+
+				items = append(items, RenderItem{
+					Depth: float64(y) + 0.1 + float64(i)*0.001,
+					Image: sprite,
+					Opts:  op,
+				})
+			}
+		}
+	}
+
+	return items
 }

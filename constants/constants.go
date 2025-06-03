@@ -32,3 +32,22 @@ const (
 	HostileTargetAlpha = 0.8
 	ShadowAlpha        = 200
 )
+
+const (
+	// Floor tiles (always bottom layer)
+	DepthFloorBase   = 0.0
+	DepthFloorOffset = 1.0
+
+	// Wall sprites (in between floors and entities)
+	DepthWallBase   = 10000.0
+	DepthWallOffset = 1.0
+
+	// Entities (always topmost among things at same y)
+	DepthEntityBase = 20000.0
+)
+
+const (
+	DepthTile  = 0.0
+	DepthWall  = 0.1
+	DepthActor = 0.2
+)

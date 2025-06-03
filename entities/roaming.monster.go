@@ -48,8 +48,8 @@ func (r *RoamingWanderBehavior) Update(m *Monster, p *Player, level *levels.Leve
 	}
 
 	if !r.Triggered {
-		dx := m.TileX - p.TileX
-		dy := m.TileY - p.TileY
+		dx := m.TileX - p.Motion.TileX
+		dy := m.TileY - p.Motion.TileY
 		if dx*dx+dy*dy <= r.TriggerRadius*r.TriggerRadius {
 			r.Triggered = true
 			return // wait 1 frame before chasing

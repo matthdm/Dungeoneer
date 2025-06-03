@@ -142,10 +142,10 @@ func (m *Monster) BasicChaseLogic(p *Player, level *levels.Level) {
 	if needRecalc {
 		// Find a walkable adjacent tile near the player
 		adjTargets := []struct{ X, Y int }{
-			{p.TileX + 1, p.TileY},
-			{p.TileX - 1, p.TileY},
-			{p.TileX, p.TileY + 1},
-			{p.TileX, p.TileY - 1},
+			{p.Motion.TileX + 1, p.Motion.TileY},
+			{p.Motion.TileX - 1, p.Motion.TileY},
+			{p.Motion.TileX, p.Motion.TileY + 1},
+			{p.Motion.TileX, p.Motion.TileY - 1},
 		}
 
 		found := false
@@ -197,7 +197,7 @@ func (m *Monster) MoveTo(x, y int) {
 func (m *Monster) CombatCheck(player *Player) {
 	if !m.IsDead && !player.IsDead &&
 		!m.Moving &&
-		IsAdjacent(m.TileX, m.TileY, player.TileX, player.TileY) {
+		IsAdjacent(m.TileX, m.TileY, player.Motion.TileX, player.Motion.TileY) {
 		m.AttackTick++
 		if m.AttackTick >= m.AttackRate {
 			player.TakeDamage(m.Damage)

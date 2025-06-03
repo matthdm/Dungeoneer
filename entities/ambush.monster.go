@@ -17,8 +17,6 @@ func NewAmbushBehavior(radius int) *AmbushBehavior {
 	}
 }
 
-
-
 func NewStatueMonster(ss *sprites.SpriteSheet) []*Monster {
 	return []*Monster{
 		{
@@ -46,8 +44,8 @@ func (b *AmbushBehavior) Update(m *Monster, p *Player, level *levels.Level) {
 
 	if !b.Triggered {
 		// Check if player is close enough to activate
-		dx := m.TileX - p.TileX
-		dy := m.TileY - p.TileY
+		dx := m.TileX - p.Motion.TileX
+		dy := m.TileY - p.Motion.TileY
 		distSq := dx*dx + dy*dy
 		if distSq <= b.TriggerRadius*b.TriggerRadius {
 			b.Triggered = true

@@ -118,8 +118,7 @@ func (g *Game) UpdateSeenTiles(level levels.Level) {
 	g.SeenTiles = seen
 }
 
-//This function might be useful for those who want to modify this example.
-
+// This function might be useful for those who want to modify this example.
 // isoToCartesian transforms isometric coordinates into cartesian coordinates.
 func (g *Game) isoToCartesian(x, y float64) (float64, float64) {
 	tileSize := g.currentLevel.TileSize
@@ -175,12 +174,12 @@ func (g *Game) updatePlaying() error {
 
 	// Determine if we should update rays:
 	shouldRecast := len(g.cachedRays) == 0 ||
-		g.player.InterpX != g.lastPlayerX ||
-		g.player.InterpY != g.lastPlayerY
+		g.player.Motion.InterpX != g.lastPlayerX ||
+		g.player.Motion.InterpY != g.lastPlayerY
 
 	if g.player != nil && shouldRecast {
-		originX := g.player.InterpX
-		originY := g.player.InterpY
+		originX := g.player.Motion.InterpX
+		originY := g.player.Motion.InterpY
 
 		g.cachedRays = fov.RayCasting(originX, originY, g.RaycastWalls, g.currentLevel)
 		g.lastPlayerX = originX
@@ -211,12 +210,12 @@ func (g *Game) updatePlaying() error {
 			}
 		}
 	}
-
+	delta := 1.0 / 60.0
 	// Path preview update (mouse hover A*)
 	if g.player != nil {
-		path := pathing.AStar(g.currentLevel, g.player.TileX, g.player.TileY, g.hoverTileX, g.hoverTileY)
+		path := pathing.AStar(g.currentLevel, g.player.Motion.TileX, g.player.Motion.TileY, g.hoverTileX, g.hoverTileY)
 		g.player.PathPreview = path
-		g.player.Update(g.currentLevel)
+		g.player.Update(g.currentLevel, delta)
 	}
 
 	// Monsters
@@ -267,4 +266,12 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 }
 func (g *Game) isValidTile(x, y int) bool {
 	return x >= 0 && x < g.currentLevel.W && y >= 0 && y < g.currentLevel.H
+}
+func (g *Game) IsWalkableAtFloat(x, y float64) bool {
+	tileX := int(math.Floor(x + 0.5))
+	tileY := int(math.Floor(y + 0.5))
+	if tileX < 0 || tileY < 0 || tileX >= g.currentLevel.W || tileY >= g.currentLevel.H {
+		return false
+	}
+	return g.currentLevel.IsWalkable(tileX, tileY)
 }

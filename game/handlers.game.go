@@ -138,7 +138,7 @@ func (g *Game) handleClicks() {
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
 		tx, ty := g.hoverTileX, g.hoverTileY
 		if g.player.CanMoveTo(tx, ty, g.currentLevel) {
-			path := pathing.AStar(g.currentLevel, g.player.TileX, g.player.TileY, tx, ty)
+			path := pathing.AStar(g.currentLevel, g.player.Motion.TileX, g.player.Motion.TileY, tx, ty)
 			if len(path) > 0 {
 				g.player.Path = path
 				g.player.PathPreview = nil
@@ -161,7 +161,7 @@ func (g *Game) handleClicks() {
 				continue
 			}
 			if m.TileX == cx && m.TileY == cy &&
-				entities.IsAdjacentRanged(g.player.TileX, g.player.TileY, m.TileX, m.TileY, 2) &&
+				entities.IsAdjacentRanged(g.player.Motion.TileX, g.player.Motion.TileY, m.TileX, m.TileY, 2) &&
 				g.player.CanAttack() {
 				m.TakeDamage(g.player.Damage, &g.HitMarkers, &g.DamageNumbers)
 				g.player.AttackTick = 0
@@ -180,7 +180,7 @@ func (g *Game) handleHoverTile() {
 
 	// Update path preview
 	if g.player != nil {
-		path := pathing.AStar(g.currentLevel, g.player.TileX, g.player.TileY, g.hoverTileX, g.hoverTileY)
+		path := pathing.AStar(g.currentLevel, g.player.Motion.TileX, g.player.Motion.TileY, g.hoverTileX, g.hoverTileY)
 		if len(path) > 0 {
 			g.player.PathPreview = path
 		} else {
