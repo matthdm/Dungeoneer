@@ -3,6 +3,7 @@ package game
 import (
 	"dungeoneer/entities"
 	"dungeoneer/levels"
+	"dungeoneer/movement"
 	"dungeoneer/pathing"
 	"math"
 	"os"
@@ -140,7 +141,7 @@ func (g *Game) handleClicks() {
 		if g.player.CanMoveTo(tx, ty, g.currentLevel) {
 			path := pathing.AStar(g.currentLevel, g.player.TileX, g.player.TileY, tx, ty)
 			if len(path) > 0 {
-				g.player.Path = path
+				g.player.MoveController.SetPath(path)
 				g.player.PathPreview = nil
 			}
 		}
@@ -264,9 +265,39 @@ func (g *Game) handleInputPlaying() {
 
 	g.handleZoom()
 	g.handlePan()
+	g.handlePlayerVelocity()
 	g.handleHoverTile()
 	g.handleClicks()
 	g.handleLevelHotkeys()
+}
+
+func (g *Game) handlePlayerVelocity() {
+	dx, dy := 0.0, 0.0
+	if ebiten.IsKeyPressed(ebiten.KeyArrowLeft) {
+		dx -= 1
+		g.player.LeftFacing = true
+	}
+	if ebiten.IsKeyPressed(ebiten.KeyArrowRight) {
+		dx += 1
+		g.player.LeftFacing = false
+	}
+	if ebiten.IsKeyPressed(ebiten.KeyArrowUp) {
+		dy -= 1
+		g.player.LeftFacing = false
+	}
+	if ebiten.IsKeyPressed(ebiten.KeyArrowDown) {
+		dy += 1
+		g.player.LeftFacing = true
+	}
+
+	// Only enable velocity mode if a direction is pressed
+	if dx != 0 || dy != 0 {
+		g.player.MoveController.SetVelocityFromInput(dx, dy)
+		g.player.MoveController.Mode = movement.VelocityMode
+	} else if g.player.MoveController.Mode == movement.VelocityMode {
+		// Stop smoothly when keys released
+		g.player.MoveController.Stop()
+	}
 }
 
 func (g *Game) handleInputGameOver() {

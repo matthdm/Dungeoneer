@@ -21,9 +21,9 @@ type Game struct {
 	currentLevel *levels.Level
 	State        GameState
 	Menu         *ui.MainMenu
-
-	isPaused  bool
-	pauseMenu *ui.PauseMenu
+	DeltaTime    float64
+	isPaused     bool
+	pauseMenu    *ui.PauseMenu
 
 	camX, camY           float64
 	minCamScale          float64
@@ -84,6 +84,7 @@ func NewGame() (*Game, error) {
 		Monsters:       entities.NewStatueMonster(ss),
 		RaycastWalls:   fov.LevelToWalls(l), //levels.NewLevel1()),
 		State:          StateMainMenu,
+		DeltaTime:      1.0 / 60.0,
 	}
 	mm, err := ui.NewMainMenu()
 	if err != nil {
@@ -175,12 +176,12 @@ func (g *Game) updatePlaying() error {
 
 	// Determine if we should update rays:
 	shouldRecast := len(g.cachedRays) == 0 ||
-		g.player.InterpX != g.lastPlayerX ||
-		g.player.InterpY != g.lastPlayerY
+		g.player.MoveController.InterpX != g.lastPlayerX ||
+		g.player.MoveController.InterpY != g.lastPlayerY
 
 	if g.player != nil && shouldRecast {
-		originX := g.player.InterpX
-		originY := g.player.InterpY
+		originX := g.player.MoveController.InterpX
+		originY := g.player.MoveController.InterpY
 
 		g.cachedRays = fov.RayCasting(originX, originY, g.RaycastWalls, g.currentLevel)
 		g.lastPlayerX = originX
@@ -216,7 +217,7 @@ func (g *Game) updatePlaying() error {
 	if g.player != nil {
 		path := pathing.AStar(g.currentLevel, g.player.TileX, g.player.TileY, g.hoverTileX, g.hoverTileY)
 		g.player.PathPreview = path
-		g.player.Update(g.currentLevel)
+		g.player.Update(g.currentLevel, g.DeltaTime)
 	}
 
 	// Monsters
