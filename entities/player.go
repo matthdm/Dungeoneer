@@ -2,6 +2,7 @@ package entities
 
 import (
 	"dungeoneer/levels"
+	"dungeoneer/movement"
 	"dungeoneer/pathing"
 	"dungeoneer/sprites"
 	"image/color"
@@ -11,21 +12,14 @@ import (
 )
 
 type Player struct {
-	TileX, TileY     int
-	InterpX, InterpY float64
-	StartX, StartY   float64
-	TargetX, TargetY float64
-	InterpTicks      int
-	Moving           bool
+	TileX, TileY int
 
-	Sprite      *ebiten.Image
-	LeftFacing  bool
-	Path        []pathing.PathNode
+	Sprite     *ebiten.Image
+	LeftFacing bool
+
 	PathPreview []pathing.PathNode
 	TickCount   int
 	BobOffset   float64
-
-	MovementDuration int // ticks per tile
 
 	// Combat
 	HP         int
@@ -34,23 +28,36 @@ type Player struct {
 	AttackRate int
 	AttackTick int
 	IsDead     bool
+
+	// New movement controller
+	MoveController *movement.MovementController
 }
 
 func NewPlayer(ss *sprites.SpriteSheet) *Player {
-	return &Player{
-		TileX:            3,
-		TileY:            3,
-		LeftFacing:       true,
-		Sprite:           ss.GreyKnight,
-		MovementDuration: 15,
-		InterpX:          float64(3),
-		InterpY:          float64(3),
-		HP:               10,
-		MaxHP:            10,
-		Damage:           2,
-		AttackRate:       60,
-		IsDead:           false,
+	mc := movement.NewMovementController(3)
+	mc.InterpX = 3
+	mc.InterpY = 3
+
+	p := &Player{
+		TileX:          3,
+		TileY:          3,
+		LeftFacing:     true,
+		Sprite:         ss.GreyKnight,
+		HP:             10,
+		MaxHP:          10,
+		Damage:         2,
+		AttackRate:     60,
+		IsDead:         false,
+		MoveController: mc,
 	}
+
+	// Sync TileX/TileY on every new tile start
+	mc.OnStep = func(x, y int) {
+		p.TileX = x
+		p.TileY = y
+	}
+
+	return p
 }
 
 func (p *Player) Draw(screen *ebiten.Image, tileSize int, isoToScreen func(int, int) (float64, float64), camX, camY, camScale, cx, cy float64) {
@@ -60,7 +67,7 @@ func (p *Player) Draw(screen *ebiten.Image, tileSize int, isoToScreen func(int, 
 	//x, y := isoToScreen(int(p.InterpX), int(p.InterpY))
 	// Optional: more accurate rendering
 	op := &ebiten.DrawImageOptions{}
-	x, y := isoToScreenFloat(p.InterpX, p.InterpY, 64)
+	x, y := isoToScreenFloat(p.MoveController.InterpX, p.MoveController.InterpY, 64)
 	bounds := p.Sprite.Bounds()
 	spriteW := float64(bounds.Dx())
 
@@ -119,7 +126,7 @@ func (p *Player) CanMoveTo(x, y int, level *levels.Level) bool {
 	return x >= 0 && y >= 0 && x < level.W && y < level.H
 }
 
-func (p *Player) Update(level *levels.Level) {
+func (p *Player) Update(level *levels.Level, dt float64) {
 	const bobAmplitude = 1.5
 	var bobFrequency = 0.3
 
@@ -127,49 +134,26 @@ func (p *Player) Update(level *levels.Level) {
 	p.AttackTick++
 	p.BobOffset = math.Sin(float64(p.TickCount)*bobFrequency) * bobAmplitude
 
-	if p.Moving {
-		p.InterpTicks++
-		t := float64(p.InterpTicks) / float64(p.MovementDuration)
-		if t > 1 {
-			t = 1
-		}
+	p.MoveController.Update(dt)
 
-		p.InterpX = p.StartX + (p.TargetX-p.StartX)*t
-		p.InterpY = p.StartY + (p.TargetY-p.StartY)*t
-		p.BobOffset = math.Sin(float64(p.InterpTicks)*bobFrequency) * bobAmplitude
-
-		if t >= 1 {
-			p.Moving = false
-			p.TileX = int(p.TargetX)
-			p.TileY = int(p.TargetY)
-			p.InterpX = p.TargetX
-			p.InterpY = p.TargetY
-		}
-		return
-	} else {
-		bobFrequency = 0.1
-		p.BobOffset = math.Sin(float64(p.TickCount)*bobFrequency) * bobAmplitude
-	}
-
-	if len(p.Path) > 0 {
-		next := p.Path[0]
-
+	if p.MoveController.Mode == movement.PathingMode && len(p.MoveController.Path) > 0 && !p.MoveController.Moving {
+		next := p.MoveController.Path[0]
 		if !p.CanMoveTo(next.X, next.Y, level) {
-			p.Path = nil
+			p.MoveController.Path = nil
 			return
 		}
 
 		p.LeftFacing = next.X < p.TileX
-
-		p.StartX = p.InterpX
-		p.StartY = p.InterpY
-		p.TargetX = float64(next.X)
-		p.TargetY = float64(next.Y)
-		p.InterpTicks = 0
-		p.Moving = true
-
-		p.Path = p.Path[1:]
 	}
+
+	if p.MoveController.Mode == movement.VelocityMode {
+		p.TileX = int(p.MoveController.InterpX)
+		p.TileY = int(p.MoveController.InterpY)
+	}
+}
+
+func (p *Player) SetPath(path []pathing.PathNode) {
+	p.MoveController.SetPath(path)
 }
 
 func (p *Player) CanAttack() bool {
