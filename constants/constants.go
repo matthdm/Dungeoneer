@@ -32,3 +32,7 @@ const (
 	HostileTargetAlpha = 0.8
 	ShadowAlpha        = 200
 )
+
+const (
+	DefaultTileSize = 64
+)

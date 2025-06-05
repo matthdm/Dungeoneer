@@ -8,9 +8,7 @@ func (g *Game) drawPlayer(target *ebiten.Image, scale, cx, cy float64) {
 	}
 
 	tileSize := g.currentLevel.TileSize
-	g.player.Draw(target, tileSize, func(x, y int) (float64, float64) {
-		return g.cartesianToIso(float64(x), float64(y))
-	}, g.camX, g.camY, scale, cx, cy)
+	g.player.Draw(target, tileSize, g.camX, g.camY, scale, cx, cy)
 }
 
 func (g *Game) drawMonsters(target *ebiten.Image, scale, cx, cy float64) {
