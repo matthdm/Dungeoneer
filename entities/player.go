@@ -6,7 +6,6 @@ import (
 	"dungeoneer/movement"
 	"dungeoneer/pathing"
 	"dungeoneer/sprites"
-	"fmt"
 	"image/color"
 	"math"
 
@@ -95,9 +94,6 @@ func (p *Player) Draw(screen *ebiten.Image, tileSize int, camX, camY, camScale, 
 
 	// Draw health bar above sprite
 	p.drawHealthBar(screen, sx, sy, camX, camY, camScale, cx, cy)
-
-	collision.DebugDrawAABB(screen, p.CollisionBox, camX, camY, camScale, cx, cy)
-
 }
 
 func (p *Player) drawHealthBar(screen *ebiten.Image, sx, sy, camX, camY, camScale, cx, cy float64) {
@@ -139,8 +135,10 @@ func (p *Player) Update(level *levels.Level, dt float64) {
 	p.AttackTick++
 	p.BobOffset = math.Sin(float64(p.TickCount)*bobFreq) * bobAmp
 
-	// Advance MoveController internally
-	p.MoveController.Update(dt)
+	// For pathing, let the controller interpolate positions
+	if p.MoveController.Mode == movement.PathingMode {
+		p.MoveController.Update(dt)
+	}
 
 	// If PathingMode, check validity of next node and flip sprite direction
 	if p.MoveController.Mode == movement.PathingMode && len(p.MoveController.Path) > 0 && !p.MoveController.Moving {
@@ -151,11 +149,7 @@ func (p *Player) Update(level *levels.Level, dt float64) {
 		}
 		p.LeftFacing = next.X < p.TileX
 	}
-	// If pure VelocityMode, sync tile coords
-	if p.MoveController.Mode == movement.VelocityMode {
-		p.TileX = int(p.MoveController.InterpX)
-		p.TileY = int(p.MoveController.InterpY)
-	}
+	// If pure VelocityMode we will update tile coords after resolving movement
 
 	// Update collision box so its center is at “feet” (InterpX,InterpY – half Height)
 	p.CollisionBox.X = p.MoveController.InterpX
@@ -166,7 +160,7 @@ func (p *Player) Update(level *levels.Level, dt float64) {
 		vx := p.MoveController.VelocityX * dt
 		vy := p.MoveController.VelocityY * dt
 
-		// Clamp to prevent moving too far in one frame
+		// Clamp displacement to avoid tunneling
 		maxStep := 0.25
 		if math.Abs(vx) > maxStep {
 			vx = math.Copysign(maxStep, vx)
@@ -175,31 +169,27 @@ func (p *Player) Update(level *levels.Level, dt float64) {
 			vy = math.Copysign(maxStep, vy)
 		}
 
-		// PredictAndClip sweeps the box in small steps along X/Y separately.
-		finalBox, collided := collision.PredictAndClip(level, p.CollisionBox, vx, vy)
-		fmt.Println("Collided: ", collided)
-		// If it detects a collision, it stops further movement along that axis.
-		if !collided {
-			p.MoveController.InterpX = finalBox.X
-			p.MoveController.InterpY = finalBox.Y + (p.CollisionBox.Height / 2)
+		// Sweep box and clip movement against the tile map
+		finalBox, hitX, hitY := collision.PredictAndClip(level, p.CollisionBox, vx, vy)
 
-			// Update box to match new pos
-			p.CollisionBox.X = finalBox.X
-			p.CollisionBox.Y = finalBox.Y
-		} else {
-			// Zero velocity if we collided to stop wall scraping
+		// Stop velocity on the axes we collided with to prevent wall clipping
+		if hitX {
 			p.MoveController.VelocityX = 0
+		}
+		if hitY {
 			p.MoveController.VelocityY = 0
 		}
 
-		// Apply final resolved position back to movement
+		// Apply resolved position back to movement controller
 		p.MoveController.InterpX = finalBox.X
 		p.MoveController.InterpY = finalBox.Y + (p.CollisionBox.Height / 2)
 
-		// Always sync collision box from InterpXY after move
-		p.CollisionBox.X = p.MoveController.InterpX
-		p.CollisionBox.Y = p.MoveController.InterpY - (p.CollisionBox.Height / 2)
+		// Sync collision box with new position
+		p.CollisionBox = finalBox
 
+		// Update tile coordinates from final position
+		p.TileX = int(p.MoveController.InterpX)
+		p.TileY = int(p.MoveController.InterpY)
 	}
 }
 

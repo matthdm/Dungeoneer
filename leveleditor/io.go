@@ -81,12 +81,10 @@ func FromLevel(level *levels.Level, reverseMap map[*ebiten.Image]string) *LevelJ
 			}
 			sdata := TileData{}
 			for _, sprite := range tile.Sprites {
-				fmt.Println("CHECK THIS ", sprite)
-				fmt.Println("reversesmap ", reverseMap)
 				if key, ok := reverseMap[sprite]; ok {
 					sdata.Sprites = append(sdata.Sprites, key)
 				} else {
-					fmt.Println("⚠️ Unknown sprite", sprite)
+					fmt.Println("Unknown sprite", sprite)
 				}
 			}
 			out.Tiles[y][x] = sdata

@@ -15,43 +15,45 @@ type Box struct {
 	Width, Height float64
 }
 
-func PredictAndClip(level *levels.Level, box Box, dx, dy float64) (Box, bool) {
-	const stepSize = 0.1 // tile units
-	steps := int(math.Ceil(math.Max(math.Abs(dx), math.Abs(dy)) / stepSize))
+// PredictAndClip moves the given Box by dx/dy while preventing it from entering
+// any unwalkable tile. Movement is stepped in small increments to avoid
+// tunneling. The returned Box is the final clipped position. The bools indicate
+// whether movement along each axis was blocked.
+func PredictAndClip(level *levels.Level, box Box, dx, dy float64) (Box, bool, bool) {
+	const stepSize = 0.05 // tile units per sweep
 
-	if steps == 0 {
-		steps = 1
+	moveX := dx
+	moveY := dy
+	collidedX := false
+	collidedY := false
+
+	// Resolve X axis first
+	for math.Abs(moveX) > 0 {
+		step := math.Copysign(math.Min(math.Abs(moveX), stepSize), moveX)
+		next := box
+		next.X += step
+		if CollidesWithMap(level, next) {
+			collidedX = true
+			break
+		}
+		box = next
+		moveX -= step
 	}
 
-	stepX := dx / float64(steps)
-	stepY := dy / float64(steps)
-
-	curBox := box
-	collided := false
-
-	for i := 0; i < steps; i++ {
-		nextBox := curBox
-		// Step X axis first
-		nextBox.X += stepX
-		if CollidesWithMap(level, nextBox) {
-			stepX = 0
-			collided = true
-		} else {
-			curBox.X = nextBox.X
+	// Then resolve Y axis
+	for math.Abs(moveY) > 0 {
+		step := math.Copysign(math.Min(math.Abs(moveY), stepSize), moveY)
+		next := box
+		next.Y += step
+		if CollidesWithMap(level, next) {
+			collidedY = true
+			break
 		}
-
-		// Step Y axis next
-		nextBox = curBox
-		nextBox.Y += stepY
-		if CollidesWithMap(level, nextBox) {
-			stepY = 0
-			collided = true
-		} else {
-			curBox.Y = nextBox.Y
-		}
+		box = next
+		moveY -= step
 	}
 
-	return curBox, collided
+	return box, collidedX, collidedY
 }
 
 // CollidesWithMap checks if the given box overlaps with unwalkable tiles.
