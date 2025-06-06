@@ -6,6 +6,7 @@ import (
 	"dungeoneer/movement"
 	"dungeoneer/pathing"
 	"dungeoneer/sprites"
+	"fmt"
 	"image/color"
 	"math"
 
@@ -33,12 +34,10 @@ type Player struct {
 	MoveController *movement.MovementController
 
 	CollisionBox collision.Box
-	Sweep        collision.SweepDebug
-	SweepTrail   []collision.SweepDebug
 }
 
 func NewPlayer(ss *sprites.SpriteSheet) *Player {
-	mc := movement.NewMovementController(3.0) // Speed = 3 tiles/sec
+	mc := movement.NewMovementController(2.0) // Speed = 3 tiles/sec
 	mc.InterpX = 3
 	mc.InterpY = 3
 
@@ -47,9 +46,9 @@ func NewPlayer(ss *sprites.SpriteSheet) *Player {
 		TileY:          3,
 		LeftFacing:     true,
 		Sprite:         ss.GreyKnight,
-		HP:             10,
-		MaxHP:          10,
-		Damage:         2,
+		HP:             100,
+		MaxHP:          100,
+		Damage:         8,
 		AttackRate:     60,
 		IsDead:         false,
 		MoveController: mc,
@@ -96,6 +95,8 @@ func (p *Player) Draw(screen *ebiten.Image, tileSize int, camX, camY, camScale, 
 
 	// Draw health bar above sprite
 	p.drawHealthBar(screen, sx, sy, camX, camY, camScale, cx, cy)
+
+	collision.DebugDrawAABB(screen, p.CollisionBox, camX, camY, camScale, cx, cy)
 
 }
 
@@ -165,19 +166,40 @@ func (p *Player) Update(level *levels.Level, dt float64) {
 		vx := p.MoveController.VelocityX * dt
 		vy := p.MoveController.VelocityY * dt
 
-		// We use 10 steps per sweep to avoid skipping over narrow gaps
-		finalBox, hit, sweep := collision.Resolve(level, p.CollisionBox, vx, vy, 10)
-		p.Sweep = sweep
-		if hit && debugMode {
-			if len(p.SweepTrail) > 30 {
-				p.SweepTrail = p.SweepTrail[1:]
-			}
-			p.SweepTrail = append(p.SweepTrail, sweep)
+		// Clamp to prevent moving too far in one frame
+		maxStep := 0.25
+		if math.Abs(vx) > maxStep {
+			vx = math.Copysign(maxStep, vx)
+		}
+		if math.Abs(vy) > maxStep {
+			vy = math.Copysign(maxStep, vy)
 		}
 
-		// Sync back to movement position
+		// PredictAndClip sweeps the box in small steps along X/Y separately.
+		finalBox, collided := collision.PredictAndClip(level, p.CollisionBox, vx, vy)
+		fmt.Println("Collided: ", collided)
+		// If it detects a collision, it stops further movement along that axis.
+		if !collided {
+			p.MoveController.InterpX = finalBox.X
+			p.MoveController.InterpY = finalBox.Y + (p.CollisionBox.Height / 2)
+
+			// Update box to match new pos
+			p.CollisionBox.X = finalBox.X
+			p.CollisionBox.Y = finalBox.Y
+		} else {
+			// Zero velocity if we collided to stop wall scraping
+			p.MoveController.VelocityX = 0
+			p.MoveController.VelocityY = 0
+		}
+
+		// Apply final resolved position back to movement
 		p.MoveController.InterpX = finalBox.X
 		p.MoveController.InterpY = finalBox.Y + (p.CollisionBox.Height / 2)
+
+		// Always sync collision box from InterpXY after move
+		p.CollisionBox.X = p.MoveController.InterpX
+		p.CollisionBox.Y = p.MoveController.InterpY - (p.CollisionBox.Height / 2)
+
 	}
 }
 

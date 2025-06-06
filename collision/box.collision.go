@@ -8,7 +8,6 @@ import (
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
 type Box struct {
@@ -16,49 +15,43 @@ type Box struct {
 	Width, Height float64
 }
 
-type SweepDebug struct {
-	Start         Box
-	End           Box
-	CollidedTiles [][2]int
-}
+func PredictAndClip(level *levels.Level, box Box, dx, dy float64) (Box, bool) {
+	const stepSize = 0.1 // tile units
+	steps := int(math.Ceil(math.Max(math.Abs(dx), math.Abs(dy)) / stepSize))
 
-// Resolve stops movement if any tile along the path is unwalkable
-func Resolve(level *levels.Level, box Box, dx, dy float64, maxDist float64) (Box, bool, SweepDebug) {
-	start := box
-	end := box
-	end.X += dx
-	end.Y += dy
+	if steps == 0 {
+		steps = 1
+	}
 
-	// Attempt move
-	testBox := end
-	if CollidesWithMap(level, testBox) {
-		// Attempt X only
-		testBox = start
-		testBox.X += dx
-		if !CollidesWithMap(level, testBox) {
-			end.X += dx
-			end.Y = start.Y // cancel Y move
+	stepX := dx / float64(steps)
+	stepY := dy / float64(steps)
+
+	curBox := box
+	collided := false
+
+	for i := 0; i < steps; i++ {
+		nextBox := curBox
+		// Step X axis first
+		nextBox.X += stepX
+		if CollidesWithMap(level, nextBox) {
+			stepX = 0
+			collided = true
 		} else {
-			// Try Y only
-			testBox = start
-			testBox.Y += dy
-			if !CollidesWithMap(level, testBox) {
-				end.X = start.X // cancel X move
-				end.Y += dy
-			} else {
-				// Fully blocked
-				end = start
-			}
+			curBox.X = nextBox.X
+		}
+
+		// Step Y axis next
+		nextBox = curBox
+		nextBox.Y += stepY
+		if CollidesWithMap(level, nextBox) {
+			stepY = 0
+			collided = true
+		} else {
+			curBox.Y = nextBox.Y
 		}
 	}
 
-	sweep := SweepDebug{
-		Start: start,
-		End:   end,
-	}
-	hit := (end.X != start.X || end.Y != start.Y) && CollidesWithMap(level, end)
-
-	return end, hit, sweep
+	return curBox, collided
 }
 
 // CollidesWithMap checks if the given box overlaps with unwalkable tiles.
@@ -103,36 +96,6 @@ func DebugDrawAABB(screen *ebiten.Image, box Box, camX, camY, camScale, cx, cy f
 	img := ebiten.NewImage(int(pixelW), int(pixelH))
 	img.Fill(color.RGBA{255, 0, 0, 128})
 	screen.DrawImage(img, op)
-}
-
-func DebugDrawSweep(screen *ebiten.Image, sweep SweepDebug, camX, camY, camScale, cx, cy float64) {
-	// Align sweep with bottom-center (feet)
-	startY := sweep.Start.Y - (sweep.Start.Height / 2)
-	endY := sweep.End.Y - (sweep.End.Height / 2)
-
-	x1, y1 := isoToScreenFloat(sweep.Start.X, startY, constants.DefaultTileSize)
-	x2, y2 := isoToScreenFloat(sweep.End.X, endY, constants.DefaultTileSize)
-
-	x1 = (x1-camX)*camScale + cx
-	y1 = (y1+camY)*camScale + cy
-	x2 = (x2-camX)*camScale + cx
-	y2 = (y2+camY)*camScale + cy
-
-	ebitenutil.DrawLine(screen, x1, y1, x2, y2, color.RGBA{255, 255, 0, 255})
-
-	for _, tile := range sweep.CollidedTiles {
-		tx, ty := isoToScreenFloat(float64(tile[0]), float64(tile[1]), constants.DefaultTileSize)
-		tx = (tx-camX)*camScale + cx
-		ty = (ty+camY)*camScale + cy
-
-		size := float64(constants.DefaultTileSize) * camScale
-		rect := ebiten.NewImage(int(size), int(size))
-		rect.Fill(color.RGBA{255, 0, 0, 128})
-
-		op := &ebiten.DrawImageOptions{}
-		op.GeoM.Translate(tx, ty)
-		screen.DrawImage(rect, op)
-	}
 }
 
 func isoToScreenFloat(x, y float64, tileSize int) (float64, float64) {
