@@ -2,12 +2,8 @@
 package collision
 
 import (
-	"dungeoneer/constants"
 	"dungeoneer/levels"
-	"image/color"
 	"math"
-
-	"github.com/hajimehoshi/ebiten/v2"
 )
 
 type Box struct {
@@ -82,10 +78,4 @@ func CollidesWithMap(level *levels.Level, box Box) bool {
 		}
 	}
 	return false
-}
-
-func isoToScreenFloat(x, y float64, tileSize int) (float64, float64) {
-	ix := (x - y) * float64(tileSize/2)
-	iy := (x + y) * float64(tileSize/4)
-	return ix, iy
 }

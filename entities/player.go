@@ -12,7 +12,6 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-const debugMode = false
 
 type Player struct {
 	TileX, TileY int
@@ -36,7 +35,7 @@ type Player struct {
 }
 
 func NewPlayer(ss *sprites.SpriteSheet) *Player {
-	mc := movement.NewMovementController(3) // Speed = 3 tiles/sec
+	mc := movement.NewMovementController(5) // Speed = 3 tiles/sec
 	mc.InterpX = 3
 	mc.InterpY = 3
 
