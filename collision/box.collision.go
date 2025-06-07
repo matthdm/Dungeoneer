@@ -57,11 +57,19 @@ func PredictAndClip(level *levels.Level, box Box, dx, dy float64) (Box, bool, bo
 }
 
 // CollidesWithMap checks if the given box overlaps with unwalkable tiles.
+const YWallVisualOffset = .8  // shift player's collision box
+const XWallVisualOffset = .15 // shift player's collision box
+
 func CollidesWithMap(level *levels.Level, box Box) bool {
-	tileLeft := int(math.Floor(box.X - box.Width/2))
-	tileTop := int(math.Floor(box.Y - box.Height/2))
-	tileRight := int(math.Floor(box.X + box.Width/2))
-	tileBottom := int(math.Floor(box.Y + box.Height/2))
+	// Apply Y-offset to collision check (helps align visual sprite base to tile logic)
+	offsetBox := box
+	offsetBox.Y += YWallVisualOffset
+	offsetBox.X += XWallVisualOffset
+
+	tileLeft := int(math.Floor(offsetBox.X - offsetBox.Width/2))
+	tileTop := int(math.Floor(offsetBox.Y - offsetBox.Height/2))
+	tileRight := int(math.Floor(offsetBox.X + offsetBox.Width/2))
+	tileBottom := int(math.Floor(offsetBox.Y + offsetBox.Height/2))
 
 	for y := tileTop; y <= tileBottom; y++ {
 		for x := tileLeft; x <= tileRight; x++ {

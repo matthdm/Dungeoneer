@@ -36,7 +36,7 @@ type Player struct {
 }
 
 func NewPlayer(ss *sprites.SpriteSheet) *Player {
-	mc := movement.NewMovementController(2.0) // Speed = 3 tiles/sec
+	mc := movement.NewMovementController(3) // Speed = 3 tiles/sec
 	mc.InterpX = 3
 	mc.InterpY = 3
 
