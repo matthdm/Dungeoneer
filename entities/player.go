@@ -12,7 +12,6 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-const debugMode = false
 
 type Player struct {
 	TileX, TileY int
