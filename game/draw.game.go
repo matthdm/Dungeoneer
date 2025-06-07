@@ -73,7 +73,7 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 	if g.ShowRays && len(g.cachedRays) > 0 {
 		fov.DebugDrawRays(screen, g.cachedRays, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
 	}
-	fov.DebugDrawWalls(screen, g.RaycastWalls, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
+	//fov.DebugDrawWalls(screen, g.RaycastWalls, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
 }
 
 func (g *Game) drawTiles(target *ebiten.Image, scale, cx, cy float64) {
