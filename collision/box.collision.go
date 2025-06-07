@@ -84,30 +84,6 @@ func CollidesWithMap(level *levels.Level, box Box) bool {
 	return false
 }
 
-func DebugDrawAABB(screen *ebiten.Image, box Box, camX, camY, camScale, cx, cy float64) {
-	if box.Width <= 0 || box.Height <= 0 {
-		return
-	}
-
-	// Convert box center to screen-space
-	centerX, centerY := isoToScreenFloat(box.X, box.Y, constants.DefaultTileSize)
-
-	// Convert size to pixels
-	pixelW := box.Width * float64(constants.DefaultTileSize)
-	pixelH := box.Height * float64(constants.DefaultTileSize)
-
-	// Draw box centered on InterpX/Y
-	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(centerX, centerY)
-	op.GeoM.Translate(-camX, camY)
-	op.GeoM.Scale(camScale, camScale)
-	op.GeoM.Translate(cx, cy)
-
-	img := ebiten.NewImage(int(pixelW), int(pixelH))
-	img.Fill(color.RGBA{255, 0, 0, 128})
-	screen.DrawImage(img, op)
-}
-
 func isoToScreenFloat(x, y float64, tileSize int) (float64, float64) {
 	ix := (x - y) * float64(tileSize/2)
 	iy := (x + y) * float64(tileSize/4)
