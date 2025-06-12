@@ -23,7 +23,8 @@ func (e *Editor) GetSelectedSprite() *ebiten.Image {
 }
 
 func (e *Editor) PlaceTile(t *tiles.Tile) {
-	if e.SelectedSprite != nil && t != nil {
-		t.AddSprite(e.SelectedSprite)
-	}
+	sprite := e.SelectedSprite
+	id := ReverseSpriteRegistry[sprite]
+	img := SpriteRegistry[id].Image
+	t.AddSpriteByID(id, img)
 }

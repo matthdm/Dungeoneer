@@ -3,6 +3,7 @@ package levels
 import (
 	"dungeoneer/sprites"
 	"dungeoneer/tiles"
+
 	"fmt"
 	"math/rand/v2"
 )
@@ -30,10 +31,10 @@ func (l *Level) Size() (width, height int) {
 
 // NewLevel returns a new randomly generated Level.
 func NewDungeonLevel() (*Level, error) {
-	// Create a 108x108 Level.
+	// Create a 64x64 Level.
 	l := &Level{
-		W:        64, //108,
-		H:        64, //108,
+		W:        64, //64,
+		H:        64, //64,
 		TileSize: 64, //64,
 	}
 
@@ -53,29 +54,29 @@ func NewDungeonLevel() (*Level, error) {
 			val := rand.IntN(1000)
 			switch {
 			case isBorderSpace || val < 275:
-				t.AddSprite(ss.DungeonWall)
+				t.AddSpriteByID("DungeonWall", ss.DungeonWall)
 				t.IsWalkable = false
 			case val < 285:
-				t.AddSprite(ss.Statue)
+				t.AddSpriteByID("Statue", ss.Statue)
 				t.IsWalkable = false
 			case val < 288:
-				t.AddSprite(ss.Trinket)
+				t.AddSpriteByID("Trinket", ss.Trinket)
 				t.IsWalkable = false
 			case val < 289:
-				t.AddSprite(ss.Floor)
-				t.AddSprite(ss.Well)
+				t.AddSpriteByID("Floor", ss.Floor)
+				t.AddSpriteByID("Well", ss.Well)
 				t.IsWalkable = false
 			case val < 290:
-				t.AddSprite(ss.Portal)
+				t.AddSpriteByID("Portal", ss.Portal)
 				t.IsWalkable = true
 			case val < 10:
-				t.AddSprite(ss.DragonStatue)
+				t.AddSpriteByID("DragonStatue", ss.DragonStatue)
 				t.IsWalkable = false
 			case val < 3:
-				t.AddSprite(ss.Campfire)
+				t.AddSpriteByID("Campfire", ss.Campfire)
 				t.IsWalkable = false
 			default:
-				t.AddSprite(ss.Floor)
+				t.AddSpriteByID("Floor", ss.Floor)
 				t.IsWalkable = true
 			}
 			l.Tiles[y][x] = t
@@ -85,15 +86,11 @@ func NewDungeonLevel() (*Level, error) {
 	return l, nil
 }
 
-func NewLevel1() *Level {
-	return LEVEL_ONE
-}
-
 func NewForestLevel() (*Level, error) {
-	// Create a 108x108 Level.
+	// Create a 64x64 Level.
 	l := &Level{
-		W:        64, //108,
-		H:        64, //108,
+		W:        64, //64,
+		H:        64, //64,
 		TileSize: 64, //64,
 	}
 
@@ -113,23 +110,23 @@ func NewForestLevel() (*Level, error) {
 			val := rand.IntN(1000)
 			switch {
 			case isBorderSpace || val < 275:
-				t.AddSprite(ss.OakChunk)
+				t.AddSpriteByID("OakChunk", ss.OakChunk)
 				t.IsWalkable = false
 			case val < 285:
-				t.AddSprite(ss.OakLog)
+				t.AddSpriteByID("OakLog", ss.OakLog)
 				t.IsWalkable = false
 			case val < 288:
-				t.AddSprite(ss.Trinket)
+				t.AddSpriteByID("Trinket", ss.Trinket)
 				t.IsWalkable = false
 			case val < 289:
-				t.AddSprite(ss.Floor)
-				t.AddSprite(ss.Well)
+				t.AddSpriteByID("Floor", ss.Floor)
+				t.AddSpriteByID("Well", ss.Well)
 				t.IsWalkable = false
 			case val < 290:
-				t.AddSprite(ss.Portal)
+				t.AddSpriteByID("Portal", ss.Portal)
 				t.IsWalkable = true
 			default:
-				t.AddSprite(ss.Floor)
+				t.AddSpriteByID("Floor", ss.Floor)
 				t.IsWalkable = true
 			}
 			l.Tiles[y][x] = t
