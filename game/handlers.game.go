@@ -202,7 +202,7 @@ func (g *Game) handleLevelHotkeys() {
 		}
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyT) {
-		g.currentLevel = levels.NewLevel1()
+		//g.currentLevel = levels.NewLevel1()
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyG) {
 		g.ShowRays = !g.ShowRays

@@ -1,7 +1,9 @@
 package game
 
 import (
+	"dungeoneer/leveleditor"
 	"dungeoneer/tiles"
+	"fmt"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -12,6 +14,24 @@ func notNil(t *tiles.Tile) bool {
 }
 
 func (g *Game) DebugLevelEditor() {
+	if inpututil.IsKeyJustPressed(ebiten.KeyF5) {
+		err := leveleditor.SaveLevelToFile(g.currentLevel, "test_level.json")
+		if err != nil {
+			fmt.Println("Save failed:", err)
+		} else {
+			fmt.Println("Level saved to test_level.json")
+		}
+	}
+
+	if inpututil.IsKeyJustPressed(ebiten.KeyF6) {
+		level, err := leveleditor.LoadLevelFromFile("test_level.json")
+		if err != nil {
+			fmt.Println("Load failed:", err)
+		} else {
+			g.currentLevel = level
+			fmt.Println("Level loaded from test_level.json")
+		}
+	}
 	switch {
 	case ebiten.IsMouseButtonPressed(ebiten.MouseButtonMiddle):
 		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)

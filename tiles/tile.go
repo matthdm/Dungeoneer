@@ -9,13 +9,18 @@ import (
 // Tile represents a space with an x,y coordinate within a Level. Any number of
 // sprites may be added to a Tile.
 type Tile struct {
-	Sprites    []*ebiten.Image
+	Sprites    []SpriteRef
 	IsWalkable bool
 }
 
+type SpriteRef struct {
+	ID    string
+	Image *ebiten.Image
+}
+
 // AddSprite adds a sprite to the Tile.
-func (t *Tile) AddSprite(s *ebiten.Image) {
-	t.Sprites = append(t.Sprites, s)
+func (t *Tile) AddSpriteByID(id string, img *ebiten.Image) {
+	t.Sprites = append(t.Sprites, SpriteRef{ID: id, Image: img})
 }
 
 func (t *Tile) RemoveSprite(s *ebiten.Image) {
@@ -42,13 +47,13 @@ func (t *Tile) RemoveLastSprite() {
 // RemoveSprites clears all sprites from the tile
 func (t *Tile) RemoveSprites() {
 	//t.Sprites = nil
-	t.Sprites = []*ebiten.Image{}
+	t.Sprites = []SpriteRef{}
 
 }
 
 // Draw draws the Tile on the screen using the provided options.
 func (t *Tile) Draw(screen *ebiten.Image, options *ebiten.DrawImageOptions) {
 	for _, s := range t.Sprites {
-		screen.DrawImage(s, options)
+		screen.DrawImage(s.Image, options)
 	}
 }

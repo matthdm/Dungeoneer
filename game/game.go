@@ -68,9 +68,11 @@ func NewGame() (*Game, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to load sprite sheet: %s", err)
 	}
+	//This is needed for save/loading levels
+	leveleditor.RegisterSprites(ss)
 
 	g := &Game{
-		currentLevel:   l, //levels.NewLevel1(),
+		currentLevel:   l,
 		isPaused:       false,
 		camScale:       1,
 		camScaleTo:     1,
@@ -82,7 +84,7 @@ func NewGame() (*Game, error) {
 		editor:         leveleditor.NewEditor(),
 		player:         entities.NewPlayer(ss),
 		Monsters:       entities.NewStatueMonster(ss),
-		RaycastWalls:   fov.LevelToWalls(l), //levels.NewLevel1()),
+		RaycastWalls:   fov.LevelToWalls(l),
 		State:          StateMainMenu,
 		DeltaTime:      1.0 / 60.0,
 	}
@@ -100,6 +102,7 @@ func NewGame() (*Game, error) {
 		g.VisibleTiles[y] = make([]bool, g.currentLevel.W)
 		g.SeenTiles[y] = make([]bool, g.currentLevel.W)
 	}
+
 	return g, nil
 }
 
