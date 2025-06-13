@@ -17,18 +17,21 @@ import (
 )
 
 type Game struct {
-	w, h         int
-	currentLevel *levels.Level
-	State        GameState
-	Menu         *ui.MainMenu
-	DeltaTime    float64
-	isPaused     bool
-	pauseMenu    *ui.PauseMenu
+	w, h          int
+	currentLevel  *levels.Level
+	State         GameState
+	Menu          *ui.MainMenu
+	PauseMenu     *ui.PauseMenu
+	LoadLevelMenu *ui.LoadLevelMenu
+	SaveLevelMenu *ui.SaveLevelMenu
+	SavePrompt    *ui.TextInputMenu
+	isPaused      bool
 
 	camX, camY           float64
 	minCamScale          float64
 	camScale, camScaleTo float64
 	mousePanX, mousePanY int
+	DeltaTime            float64
 
 	offscreen              *ebiten.Image
 	hoverTileX, hoverTileY int
@@ -92,10 +95,64 @@ func NewGame() (*Game, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed create new main menu: %s", err)
 	}
+	// Main Menu
 	g.Menu = mm
-	// added callbacks to new game constructor
-	pm := ui.NewPauseMenu(l.W, l.H, func() { g.resumeGame() }, func() { os.Exit(0) })
-	g.pauseMenu = pm
+	// Load Level Menu
+	g.LoadLevelMenu = ui.NewLoadLevelMenu(g.w, g.h,
+		func(loaded *levels.Level) {
+			g.currentLevel = loaded
+			g.isPaused = false
+			g.UpdateSeenTiles(*loaded)
+		},
+		func() {
+			g.LoadLevelMenu.Hide()
+			g.PauseMenu.Show() // <-- resume the previous menu
+		},
+	)
+	// Pause Menu
+	pm := ui.NewPauseMenu(l.W, l.H, ui.PauseMenuCallbacks{
+		OnResume:    func() { g.resumeGame() },
+		OnExit:      func() { os.Exit(0) },
+		OnLoadLevel: func() { g.LoadLevelMenu.Show() },
+		OnSaveLevel: func() {
+			menuRect := image.Rect(g.w/2-200, g.h/2-100, g.w/2+200, g.h/2+100)
+			g.SavePrompt = ui.NewTextInputMenu(
+				menuRect,
+				"Save Level",
+				"Enter filename (with .json):",
+				func(filename string) {
+					path := "levels/" + filename
+					err := leveleditor.SaveLevelToFile(g.currentLevel, path)
+					if err != nil {
+						fmt.Println("Error saving level:", err)
+					} else {
+						fmt.Println("Saved to:", path)
+						// Show confirmation popup for 2 seconds
+						g.SavePrompt = ui.NewTextInputMenu(
+							menuRect,
+							"Success",
+							"Saved level to: "+filename,
+							nil,
+							nil,
+						)
+						g.SavePrompt.Instructions = []string{"Press Esc to close"}
+						g.SavePrompt.Show()
+					}
+				},
+				func() {
+					fmt.Println("Canceled saving.")
+				},
+			)
+			g.SavePrompt.Show()
+		},
+		OnNewBlank: func() {
+			newLevel := levels.CreateNewBlankLevel(64, 64, g.currentLevel.TileSize, ss) // TODO: Prompt for dimensions later
+			g.currentLevel = newLevel
+			g.UpdateSeenTiles(*newLevel)
+		},
+	})
+	g.PauseMenu = pm
+
 	g.VisibleTiles = make([][]bool, g.currentLevel.H)
 	g.SeenTiles = make([][]bool, g.currentLevel.H)
 	for y := range g.VisibleTiles {
@@ -164,7 +221,13 @@ func (g *Game) updatePlaying() error {
 	// Pause handling first
 	g.handlePause()
 	if g.isPaused {
-		g.pauseMenu.Update()
+		if g.SavePrompt != nil && g.SavePrompt.IsVisible() {
+			g.SavePrompt.Update()
+		} else if g.LoadLevelMenu != nil && g.LoadLevelMenu.Menu.IsVisible() {
+			g.LoadLevelMenu.Update()
+		} else {
+			g.PauseMenu.Update()
+		}
 		return nil
 	}
 
@@ -250,21 +313,28 @@ func (g *Game) getOrCreateOffscreen(size image.Point) *ebiten.Image {
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	g.w, g.h = outsideWidth, outsideHeight
 	fov.ResizeShadowBuffer(g.w, g.h) // Ensures buffer is always the correct size
-
+	menuWidth := max(300, g.w/2)
+	menuHeight := max(300, g.h/2)
+	menuX := (g.w - menuWidth) / 2
+	menuY := (g.h - menuHeight) / 2
+	newRect := image.Rect(menuX, menuY, menuX+menuWidth, menuY+menuHeight)
 	// Update menu size to grow with screen size
-	if g.pauseMenu != nil {
-		menuWidth := max(300, g.w/2)
-		menuHeight := max(300, g.h/2)
-		menuX := (g.w - menuWidth) / 2
-		menuY := (g.h - menuHeight) / 2
-		newRect := image.Rect(menuX, menuY, menuX+menuWidth, menuY+menuHeight)
+	if g.PauseMenu != nil {
 
-		if g.pauseMenu.MainMenu != nil {
-			g.pauseMenu.MainMenu.SetRect(newRect)
+		if g.PauseMenu.MainMenu != nil {
+			g.PauseMenu.MainMenu.SetRect(newRect)
 		}
-		if g.pauseMenu.SettingsMenu != nil {
-			g.pauseMenu.SettingsMenu.SetRect(newRect)
+		if g.PauseMenu.SettingsMenu != nil {
+			g.PauseMenu.SettingsMenu.SetRect(newRect)
 		}
+	}
+
+	if g.LoadLevelMenu != nil {
+		g.LoadLevelMenu.SetRect(newRect)
+	}
+
+	if g.SaveLevelMenu != nil {
+		g.SaveLevelMenu.SetRect(newRect)
 	}
 
 	return g.w, g.h

@@ -7,40 +7,63 @@ import (
 )
 
 // PauseMenu manages the game's pause state and owns the UI menus
+
 type PauseMenu struct {
 	ShowSettings bool
 	MainMenu     *Menu
 	SettingsMenu *Menu
 }
 
-func NewPauseMenu(w, h int, onResume, onExit func()) *PauseMenu {
+type PauseMenuCallbacks struct {
+	OnResume           func()
+	OnLoadLevel        func()
+	OnSaveLevel        func()
+	OnNewBlank         func()
+	OnExit             func()
+	OnShowSettings     func()
+	OnBackFromSettings func()
+}
+
+func NewPauseMenu(w, h int, cb PauseMenuCallbacks) *PauseMenu {
 	pm := &PauseMenu{}
 
-	menuStyle := DefaultMenuStyles() // Use default styles or customize
-
+	menuStyle := DefaultMenuStyles()
 	menuWidth := 300
-	menuHeight := 300 // Can be adjusted to fit instructions
-
+	menuHeight := 400
 	menuX := (w - menuWidth) / 2
 	menuY := (h - menuHeight) / 2
 	menuRect := image.Rect(menuX, menuY, menuX+menuWidth, menuY+menuHeight)
 	menuInstructions := []string{"W/S/Arrows Navigate", "Enter/Space Select", "Esc Resume"}
 
-	// Main Pause Menu Options
 	mainOptions := []MenuOption{
-		{Text: "Resume", Action: onResume},
-		{Text: "Settings", Action: func() { pm.ShowSettings = true; pm.SwitchToSettings() }},
-		{Text: "Exit Game", Action: onExit},
+		{Text: "Resume", Action: cb.OnResume},
+		{Text: "Load Level", Action: cb.OnLoadLevel},
+		{Text: "Save Level", Action: cb.OnSaveLevel},
+		{Text: "New Blank Level", Action: cb.OnNewBlank},
+		{Text: "Settings", Action: func() {
+			pm.ShowSettings = true
+			pm.SwitchToSettings()
+			if cb.OnShowSettings != nil {
+				cb.OnShowSettings()
+			}
+		}},
+		{Text: "Exit Game", Action: cb.OnExit},
 	}
 	pm.MainMenu = NewMenu(menuRect, "PAUSED", mainOptions, menuStyle)
 	pm.MainMenu.SetInstructions(menuInstructions)
 
-	// Settings Menu Options
 	settingsOptions := []MenuOption{
-		{Text: "Back", Action: func() { pm.ShowSettings = false; pm.SwitchToMain() }},
+		{Text: "Back", Action: func() {
+			pm.ShowSettings = false
+			pm.SwitchToMain()
+			if cb.OnBackFromSettings != nil {
+				cb.OnBackFromSettings()
+			}
+		}},
 	}
 	pm.SettingsMenu = NewMenu(menuRect, "SETTINGS", settingsOptions, menuStyle)
 	pm.SettingsMenu.SetInstructions(menuInstructions)
+
 	return pm
 }
 

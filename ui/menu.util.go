@@ -53,10 +53,9 @@ func DrawMenuOverlay(screen *ebiten.Image, overlayColor color.Color) {
 }
 
 // Draws a basic window with a background and border
-func DrawMenuWindow(screen *ebiten.Image, m *Menu, menuX, menuY, menuW, menuH float32) {
-	vector.DrawFilledRect(screen, menuX, menuY, menuW, menuH, m.style.backgroundColor, false)
-	vector.StrokeRect(screen, menuX, menuY, menuW, menuH, m.style.borderThickness, m.style.borderColor, false)
-
+func DrawMenuWindow(screen *ebiten.Image, style *MenuStyle, menuX, menuY, menuW, menuH float32) {
+	vector.DrawFilledRect(screen, menuX, menuY, menuW, menuH, style.backgroundColor, false)
+	vector.StrokeRect(screen, menuX, menuY, menuW, menuH, style.borderThickness, style.borderColor, false)
 }
 
 // Draws the vertically-centered, top-anchored title text

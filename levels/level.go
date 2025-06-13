@@ -146,3 +146,27 @@ func (l Level) IsWalkable(x, y int) bool {
 	}
 	return t.IsWalkable
 }
+
+// CreateNewBlankLevel creates a new level filled with floor tiles
+func CreateNewBlankLevel(width, height, tileSize int, ss *sprites.SpriteSheet) *Level {
+	l := &Level{
+		W:        width,
+		H:        height,
+		TileSize: tileSize,
+		Tiles:    make([][]*tiles.Tile, height),
+	}
+
+	for y := 0; y < height; y++ {
+		row := make([]*tiles.Tile, width)
+		for x := 0; x < width; x++ {
+			t := &tiles.Tile{
+				IsWalkable: true,
+			}
+			t.AddSpriteByID("Floor", ss.Floor) // You can assign a real image from the sprite sheet later
+			row[x] = t
+		}
+		l.Tiles[y] = row
+	}
+
+	return l
+}

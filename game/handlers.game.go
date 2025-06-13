@@ -56,24 +56,24 @@ func (g *Game) handlePause() {
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		if g.isPaused {
 			// Only resume if on main pause menu
-			if !g.pauseMenu.ShowSettings {
+			if !g.PauseMenu.ShowSettings {
 				g.resumeGame()
 			} else {
 				// go back to main pause menu instead
-				g.pauseMenu.SwitchToMain()
+				g.PauseMenu.SwitchToMain()
 			}
 		} else {
 			g.isPaused = true
-			g.pauseMenu.Show()
+			g.PauseMenu.Show()
 		}
 	}
 }
 
 func (g *Game) resumeGame() {
 	g.isPaused = false
-	if g.pauseMenu != nil { // Ensure pauseMenu exists
-		g.pauseMenu.MainMenu.Hide()
-		g.pauseMenu.SettingsMenu.Hide()
+	if g.PauseMenu != nil { // Ensure pauseMenu exists
+		g.PauseMenu.MainMenu.Hide()
+		g.PauseMenu.SettingsMenu.Hide()
 	}
 }
 
@@ -259,7 +259,7 @@ func (g *Game) handleInputPlaying() {
 	g.handlePause()
 	if g.isPaused {
 		// Pause menu navigation handled separately
-		g.pauseMenu.Update()
+		g.PauseMenu.Update()
 		return
 	}
 
