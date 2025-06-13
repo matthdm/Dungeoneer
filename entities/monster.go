@@ -298,3 +298,7 @@ func (m *Monster) TakeDamage(dmg int, markers *[]HitMarker, damageNumbers *[]Dam
 	})
 
 }
+
+func (m *Monster) GetPosition() (float64, float64) {
+	return m.InterpX, m.InterpY
+}
