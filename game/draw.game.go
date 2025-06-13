@@ -36,6 +36,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 	}
 
+	if g.editor.Active && g.editor.PaletteOpen {
+		g.editor.Palette.Draw(screen)
+	}
 	ebitenutil.DebugPrint(screen, fmt.Sprintf(constants.DEBUG_TEMPLATE, ebiten.ActualFPS(), ebiten.ActualTPS(), g.camScale, g.camX, g.camY))
 }
 

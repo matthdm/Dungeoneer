@@ -7,7 +7,7 @@ import (
 
 type Line struct {
 	X1, Y1, X2, Y2 float64
-	Path           []Point // Add this
+	Path           []Point
 }
 
 type Point struct {

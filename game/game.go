@@ -1,6 +1,7 @@
 package game
 
 import (
+	"dungeoneer/constants"
 	"dungeoneer/entities"
 	"dungeoneer/fov"
 	"dungeoneer/leveleditor"
@@ -63,14 +64,14 @@ const (
 )
 
 func NewGame() (*Game, error) {
-	l, err := levels.NewDungeonLevel()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create new level: %s", err)
-	}
-	ss, err := sprites.LoadSpriteSheet(l.TileSize)
+	ss, err := sprites.LoadSpriteSheet(constants.DefaultTileSize)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load sprite sheet: %s", err)
 	}
+	l := levels.CreateNewBlankLevel(64, 64, 64, ss)
+	//if err != nil {
+	//	return nil, fmt.Errorf("failed to create new level: %s", err)
+	//}
 	//This is needed for save/loading levels
 	leveleditor.RegisterSprites(ss)
 
@@ -84,7 +85,8 @@ func NewGame() (*Game, error) {
 		mousePanY:      math.MinInt32,
 		spriteSheet:    ss,
 		highlightImage: ss.Cursor,
-		editor:         leveleditor.NewEditor(),
+		editor:         leveleditor.NewEditor(l, 640, 480),
+		FullBright:     true,
 		player:         entities.NewPlayer(ss),
 		Monsters:       entities.NewStatueMonster(ss),
 		RaycastWalls:   fov.LevelToWalls(l),
@@ -160,6 +162,8 @@ func NewGame() (*Game, error) {
 		g.SeenTiles[y] = make([]bool, g.currentLevel.W)
 	}
 
+	g.editor.Active = true // or toggle with key
+
 	return g, nil
 }
 
@@ -169,6 +173,15 @@ func (g *Game) cartesianToIso(x, y float64) (float64, float64) {
 	ix := (x - y) * float64(tileSize/2)
 	iy := (x + y) * float64(tileSize/4)
 	return ix, iy
+}
+
+func (g *Game) screenToTile() (int, int) {
+	cx, cy := ebiten.CursorPosition()
+	worldX := float64(cx)/g.camScale + g.camX
+	worldY := float64(cy)/g.camScale + g.camY
+	tileX := int(worldX) / g.currentLevel.TileSize
+	tileY := int(worldY) / g.currentLevel.TileSize
+	return tileX, tileY
 }
 
 func (g *Game) UpdateSeenTiles(level levels.Level) {
@@ -229,6 +242,10 @@ func (g *Game) updatePlaying() error {
 			g.PauseMenu.Update()
 		}
 		return nil
+	}
+
+	if g.editor.Active {
+		g.editor.Update(g.screenToTile)
 	}
 
 	// Handle controls (mouse, keys, etc.)
@@ -335,6 +352,10 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 
 	if g.SaveLevelMenu != nil {
 		g.SaveLevelMenu.SetRect(newRect)
+	}
+
+	if g.editor == nil {
+		g.editor = leveleditor.NewEditor(g.currentLevel, g.w, g.h)
 	}
 
 	return g.w, g.h
