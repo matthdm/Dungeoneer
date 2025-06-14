@@ -4,20 +4,16 @@ import (
 	"dungeoneer/images"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"golang.org/x/image/font"
 )
 
 type MainMenu struct {
-	Options        []string
-	SelectedIndex  int
-	HighlightImage *ebiten.Image
-	Font           font.Face // Or bitmap font if using a sprite sheet
-	NewGameLabel   *ebiten.Image
-	OptionsLabel   *ebiten.Image
-	ExitGameLabel  *ebiten.Image
-	Background     *ebiten.Image
-	FrameIndex     int
-	FrameTick      int
+	Options       []string
+	SelectedIndex int
+	NewGameLabel  *ebiten.Image
+	OptionsLabel  *ebiten.Image
+	ExitGameLabel *ebiten.Image
+	Background    *ebiten.Image
+	FrameTick     int
 }
 
 func NewMainMenu() (*MainMenu, error) {
