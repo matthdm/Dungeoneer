@@ -24,7 +24,7 @@ type Editor struct {
 
 func NewEditor(level *levels.Level, screenWidth, screenHeight int) *Editor {
 	editor := &Editor{
-		Active:      false,
+		Active:      true,
 		SelectedID:  "",
 		PaletteOpen: false,
 		level:       level,

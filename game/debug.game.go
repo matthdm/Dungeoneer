@@ -29,6 +29,7 @@ func (g *Game) DebugLevelEditor() {
 			fmt.Println("Load failed:", err)
 		} else {
 			g.currentLevel = level
+			g.UpdateSeenTiles(*level)
 			fmt.Println("Level loaded from test_level.json")
 		}
 	}

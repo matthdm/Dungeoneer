@@ -152,6 +152,7 @@ func NewGame() (*Game, error) {
 		OnNewBlank: func() {
 			newLevel := levels.CreateNewBlankLevel(64, 64, g.currentLevel.TileSize, ss) // TODO: Prompt for dimensions later
 			g.currentLevel = newLevel
+			g.editor = leveleditor.NewEditor(newLevel, g.w, g.h)
 			g.UpdateSeenTiles(*newLevel)
 		},
 	})
