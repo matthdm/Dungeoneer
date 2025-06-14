@@ -4,11 +4,13 @@ import (
 	"dungeoneer/constants"
 	"dungeoneer/fov"
 	"fmt"
+	"image/color"
 	"math"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
 var menuStart = time.Now()
@@ -83,7 +85,34 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 	if g.ShowRays && len(g.cachedRays) > 0 {
 		fov.DebugDrawRays(screen, g.cachedRays, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
 	}
+	g.drawDashUI(screen)
 	//fov.DebugDrawWalls(screen, g.RaycastWalls, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
+}
+
+func (g *Game) drawDashUI(screen *ebiten.Image) {
+	if g.player == nil {
+		return
+	}
+	size := float32(20)
+	padding := float32(5)
+	for i := 0; i < constants.MaxDashCharges; i++ {
+		x := padding + float32(i)*(size+padding)
+		y := padding
+		vector.StrokeRect(screen, x, y, size, size, 2, color.White, false)
+		fill := float32(0)
+		if g.player.DashCooldowns[i] <= 0 {
+			fill = size
+		} else {
+			ratio := float32(constants.DashRecharge-g.player.DashCooldowns[i]) / float32(constants.DashRecharge)
+			if ratio < 0 {
+				ratio = 0
+			}
+			fill = size * ratio
+		}
+		if fill > 0 {
+			vector.DrawFilledRect(screen, x, y+(size-fill), size, fill, color.RGBA{0, 200, 255, 255}, false)
+		}
+	}
 }
 
 func (g *Game) drawTiles(target *ebiten.Image, scale, cx, cy float64) {

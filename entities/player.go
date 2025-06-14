@@ -2,6 +2,7 @@ package entities
 
 import (
 	"dungeoneer/collision"
+	"dungeoneer/constants"
 	"dungeoneer/levels"
 	"dungeoneer/movement"
 	"dungeoneer/pathing"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
-
 
 type Player struct {
 	TileX, TileY int
@@ -32,6 +32,11 @@ type Player struct {
 	MoveController *movement.MovementController
 
 	CollisionBox collision.Box
+
+	DashCharges   int
+	DashCooldowns [constants.MaxDashCharges]float64
+	IsDashing     bool
+	DashTimer     float64
 }
 
 func NewPlayer(ss *sprites.SpriteSheet) *Player {
@@ -51,6 +56,7 @@ func NewPlayer(ss *sprites.SpriteSheet) *Player {
 		IsDead:         false,
 		MoveController: mc,
 		CollisionBox:   collision.Box{X: 3, Y: 3, Width: 0.55, Height: 0.8},
+		DashCharges:    constants.MaxDashCharges,
 	}
 
 	// Whenever InterpX/InterpY crosses into a new tile, update TileX/TileY
@@ -74,6 +80,9 @@ func (p *Player) Draw(screen *ebiten.Image, tileSize int, camX, camY, camScale, 
 	const verticalOffset = 1.0
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(0, -verticalOffset+p.BobOffset)
+	if p.IsDashing {
+		op.ColorScale.Scale(1.3, 1.3, 1.3, 1)
+	}
 
 	// 3) Flip if facing right
 	b := p.Sprite.Bounds()
@@ -134,6 +143,28 @@ func (p *Player) Update(level *levels.Level, dt float64) {
 	p.AttackTick++
 	p.BobOffset = math.Sin(float64(p.TickCount)*bobFreq) * bobAmp
 
+	// Recharge dash charges
+	for i := range p.DashCooldowns {
+		if p.DashCooldowns[i] > 0 {
+			p.DashCooldowns[i] -= dt
+			if p.DashCooldowns[i] <= 0 {
+				p.DashCooldowns[i] = 0
+				if p.DashCharges < constants.MaxDashCharges {
+					p.DashCharges++
+				}
+			}
+		}
+	}
+
+	// Handle active dash timer
+	if p.IsDashing {
+		p.DashTimer -= dt
+		if p.DashTimer <= 0 {
+			p.IsDashing = false
+			p.MoveController.Stop()
+		}
+	}
+
 	// For pathing, let the controller interpolate positions
 	if p.MoveController.Mode == movement.PathingMode {
 		p.MoveController.Update(dt)
@@ -189,6 +220,42 @@ func (p *Player) Update(level *levels.Level, dt float64) {
 		// Update tile coordinates from final position
 		p.TileX = int(p.MoveController.InterpX)
 		p.TileY = int(p.MoveController.InterpY)
+	}
+}
+
+func (p *Player) StartDash(dirX, dirY float64) {
+	if p.DashCharges <= 0 || p.IsDashing {
+		return
+	}
+
+	mag := math.Hypot(dirX, dirY)
+	if mag == 0 {
+		if p.LeftFacing {
+			dirX = -1
+			dirY = 0
+		} else {
+			dirX = 1
+			dirY = 0
+		}
+		mag = 1
+	}
+
+	dirX /= mag
+	dirY /= mag
+
+	p.IsDashing = true
+	p.DashTimer = constants.DashDuration
+	dashSpeed := p.MoveController.Speed * constants.DashSpeedMultiplier
+	p.MoveController.Mode = movement.VelocityMode
+	p.MoveController.VelocityX = dirX * dashSpeed
+	p.MoveController.VelocityY = dirY * dashSpeed
+
+	p.DashCharges--
+	for i := range p.DashCooldowns {
+		if p.DashCooldowns[i] == 0 {
+			p.DashCooldowns[i] = constants.DashRecharge
+			break
+		}
 	}
 }
 

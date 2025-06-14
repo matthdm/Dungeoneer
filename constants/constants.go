@@ -36,3 +36,11 @@ const (
 const (
 	DefaultTileSize = 64
 )
+
+// Player dash mechanics
+const (
+	MaxDashCharges      = 2
+	DashRecharge        = 5.0 // seconds per charge
+	DashDuration        = 0.2 // seconds of dash movement
+	DashSpeedMultiplier = 3.0 // multiple of normal move speed
+)
