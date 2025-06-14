@@ -11,19 +11,21 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-type TileData struct {
-	SpriteIDs  []string `json:"sprite_ids"`
-	IsWalkable bool     `json:"is_walkable"`
-}
 type SpriteMetadata struct {
 	Image      *ebiten.Image
 	IsWalkable bool
 }
+type TileData struct {
+	SpriteIndexes []int `json:"sprite_indexes"`
+	IsWalkable    bool  `json:"is_walkable"`
+}
+
 type LevelData struct {
-	Width    int          `json:"width"`
-	Height   int          `json:"height"`
-	TileSize int          `json:"tile_size"`
-	Tiles    [][]TileData `json:"tiles"`
+	Width         int          `json:"width"`
+	Height        int          `json:"height"`
+	TileSize      int          `json:"tile_size"`
+	Tiles         [][]TileData `json:"tiles"`
+	SpritePalette []string     `json:"sprite_palette"`
 }
 
 var SpriteRegistry = map[string]SpriteMetadata{}
@@ -771,29 +773,47 @@ func RegisterSprites(ss *sprites.SpriteSheet) {
 	}
 }
 func ConvertToLevelData(level *levels.Level) *LevelData {
+	palette := []string{}
+	paletteMap := map[string]int{} // string -> index
+
+	getIndex := func(spriteID string) int {
+		if idx, ok := paletteMap[spriteID]; ok {
+			return idx
+		}
+		idx := len(palette)
+		palette = append(palette, spriteID)
+		paletteMap[spriteID] = idx
+		return idx
+	}
+
 	data := &LevelData{
-		Width:    level.W,
-		Height:   level.H,
-		TileSize: level.TileSize,
-		Tiles:    make([][]TileData, level.H),
+		Width:         level.W,
+		Height:        level.H,
+		TileSize:      level.TileSize,
+		Tiles:         make([][]TileData, level.H),
+		SpritePalette: palette,
 	}
 
 	for y := 0; y < level.H; y++ {
 		data.Tiles[y] = make([]TileData, level.W)
 		for x := 0; x < level.W; x++ {
 			t := level.Tiles[y][x]
-			spriteIDs := []string{}
+			indexes := []int{}
 
 			for _, sprite := range t.Sprites {
-				spriteIDs = append(spriteIDs, sprite.ID)
+				index := getIndex(sprite.ID)
+				indexes = append(indexes, index)
 			}
 
 			data.Tiles[y][x] = TileData{
-				SpriteIDs:  spriteIDs,
-				IsWalkable: t.IsWalkable,
+				SpriteIndexes: indexes,
+				IsWalkable:    t.IsWalkable,
 			}
 		}
 	}
+
+	// now that palette was built in getIndex:
+	data.SpritePalette = palette
 	return data
 }
 
@@ -812,16 +832,20 @@ func ConvertToLevel(data *LevelData) *levels.Level {
 			t := &tiles.Tile{
 				IsWalkable: td.IsWalkable,
 			}
-			for _, id := range td.SpriteIDs {
-				if meta, ok := SpriteRegistry[id]; ok {
-					if !ok {
-						fmt.Printf("Warning: sprite ID '%s' not found in registry\n", id)
-						continue
-					}
-					t.AddSpriteByID(id, meta.Image)
-				}
 
+			for _, index := range td.SpriteIndexes {
+				if index < 0 || index >= len(data.SpritePalette) {
+					fmt.Printf("Warning: sprite index %d out of range\n", index)
+					continue
+				}
+				id := data.SpritePalette[index]
+				if meta, ok := SpriteRegistry[id]; ok {
+					t.AddSpriteByID(id, meta.Image)
+				} else {
+					fmt.Printf("Warning: sprite ID '%s' not found in registry\n", id)
+				}
 			}
+
 			level.Tiles[y][x] = t
 		}
 	}

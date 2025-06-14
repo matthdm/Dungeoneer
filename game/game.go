@@ -1,6 +1,7 @@
 package game
 
 import (
+	"dungeoneer/constants"
 	"dungeoneer/entities"
 	"dungeoneer/fov"
 	"dungeoneer/leveleditor"
@@ -17,18 +18,21 @@ import (
 )
 
 type Game struct {
-	w, h         int
-	currentLevel *levels.Level
-	State        GameState
-	Menu         *ui.MainMenu
-	DeltaTime    float64
-	isPaused     bool
-	pauseMenu    *ui.PauseMenu
+	w, h          int
+	currentLevel  *levels.Level
+	State         GameState
+	Menu          *ui.MainMenu
+	PauseMenu     *ui.PauseMenu
+	LoadLevelMenu *ui.LoadLevelMenu
+	SaveLevelMenu *ui.SaveLevelMenu
+	SavePrompt    *ui.TextInputMenu
+	isPaused      bool
 
 	camX, camY           float64
 	minCamScale          float64
 	camScale, camScaleTo float64
 	mousePanX, mousePanY int
+	DeltaTime            float64
 
 	offscreen              *ebiten.Image
 	hoverTileX, hoverTileY int
@@ -49,6 +53,7 @@ type Game struct {
 	// Visibility tracking
 	VisibleTiles [][]bool // true if currently visible
 	SeenTiles    [][]bool // true if ever seen
+	camSmooth    float64
 }
 
 type GameState int
@@ -60,14 +65,14 @@ const (
 )
 
 func NewGame() (*Game, error) {
-	l, err := levels.NewDungeonLevel()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create new level: %s", err)
-	}
-	ss, err := sprites.LoadSpriteSheet(l.TileSize)
+	ss, err := sprites.LoadSpriteSheet(constants.DefaultTileSize)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load sprite sheet: %s", err)
 	}
+	l := levels.CreateNewBlankLevel(64, 64, 64, ss)
+	//if err != nil {
+	//	return nil, fmt.Errorf("failed to create new level: %s", err)
+	//}
 	//This is needed for save/loading levels
 	leveleditor.RegisterSprites(ss)
 
@@ -81,27 +86,85 @@ func NewGame() (*Game, error) {
 		mousePanY:      math.MinInt32,
 		spriteSheet:    ss,
 		highlightImage: ss.Cursor,
-		editor:         leveleditor.NewEditor(),
+		editor:         leveleditor.NewEditor(l, 640, 480),
+		FullBright:     true,
 		player:         entities.NewPlayer(ss),
 		Monsters:       entities.NewStatueMonster(ss),
 		RaycastWalls:   fov.LevelToWalls(l),
 		State:          StateMainMenu,
 		DeltaTime:      1.0 / 60.0,
+		camSmooth:      0.1,
 	}
 	mm, err := ui.NewMainMenu()
 	if err != nil {
 		return nil, fmt.Errorf("failed create new main menu: %s", err)
 	}
+	// Main Menu
 	g.Menu = mm
-	// added callbacks to new game constructor
-	pm := ui.NewPauseMenu(l.W, l.H, func() { g.resumeGame() }, func() { os.Exit(0) })
-	g.pauseMenu = pm
+	// Load Level Menu
+	g.LoadLevelMenu = ui.NewLoadLevelMenu(g.w, g.h,
+		func(loaded *levels.Level) {
+			g.currentLevel = loaded
+			g.isPaused = false
+			g.UpdateSeenTiles(*loaded)
+		},
+		func() {
+			g.LoadLevelMenu.Hide()
+			g.PauseMenu.Show() // <-- resume the previous menu
+		},
+	)
+	// Pause Menu
+	pm := ui.NewPauseMenu(l.W, l.H, ui.PauseMenuCallbacks{
+		OnResume:    func() { g.resumeGame() },
+		OnExit:      func() { os.Exit(0) },
+		OnLoadLevel: func() { g.LoadLevelMenu.Show() },
+		OnSaveLevel: func() {
+			menuRect := image.Rect(g.w/2-200, g.h/2-100, g.w/2+200, g.h/2+100)
+			g.SavePrompt = ui.NewTextInputMenu(
+				menuRect,
+				"Save Level",
+				"Enter filename (with .json):",
+				func(filename string) {
+					path := "levels/" + filename
+					err := leveleditor.SaveLevelToFile(g.currentLevel, path)
+					if err != nil {
+						fmt.Println("Error saving level:", err)
+					} else {
+						fmt.Println("Saved to:", path)
+						// Show confirmation popup for 2 seconds
+						g.SavePrompt = ui.NewTextInputMenu(
+							menuRect,
+							"Success",
+							"Saved level to: "+filename,
+							nil,
+							nil,
+						)
+						g.SavePrompt.Instructions = []string{"Press Esc to close"}
+						g.SavePrompt.Show()
+					}
+				},
+				func() {
+					fmt.Println("Canceled saving.")
+				},
+			)
+			g.SavePrompt.Show()
+		},
+		OnNewBlank: func() {
+			newLevel := levels.CreateNewBlankLevel(64, 64, g.currentLevel.TileSize, ss) // TODO: Prompt for dimensions later
+			g.currentLevel = newLevel
+			g.UpdateSeenTiles(*newLevel)
+		},
+	})
+	g.PauseMenu = pm
+
 	g.VisibleTiles = make([][]bool, g.currentLevel.H)
 	g.SeenTiles = make([][]bool, g.currentLevel.H)
 	for y := range g.VisibleTiles {
 		g.VisibleTiles[y] = make([]bool, g.currentLevel.W)
 		g.SeenTiles[y] = make([]bool, g.currentLevel.W)
 	}
+
+	g.editor.Active = true // or toggle with key
 
 	return g, nil
 }
@@ -112,6 +175,15 @@ func (g *Game) cartesianToIso(x, y float64) (float64, float64) {
 	ix := (x - y) * float64(tileSize/2)
 	iy := (x + y) * float64(tileSize/4)
 	return ix, iy
+}
+
+func (g *Game) screenToTile() (int, int) {
+	cx, cy := ebiten.CursorPosition()
+	worldX := float64(cx)/g.camScale + g.camX
+	worldY := float64(cy)/g.camScale + g.camY
+	tileX := int(worldX) / g.currentLevel.TileSize
+	tileY := int(worldY) / g.currentLevel.TileSize
+	return tileX, tileY
 }
 
 func (g *Game) UpdateSeenTiles(level levels.Level) {
@@ -149,6 +221,40 @@ func (g *Game) Update() error {
 	}
 }
 
+// updateCameraFollow centers the camera on the player's interpolated position
+// while the player is moving. When the player stops, the camera stays put.
+func (g *Game) updateCameraFollow() {
+	if g.player == nil {
+		return
+	}
+	mc := g.player.MoveController
+	moving := mc.Moving || len(mc.Path) > 0 || mc.VelocityX != 0 || mc.VelocityY != 0
+	if !moving {
+		return
+	}
+
+	isoX, isoY := g.cartesianToIso(mc.InterpX, mc.InterpY)
+	targetX := isoX
+	targetY := -isoY
+
+	g.camX += (targetX - g.camX) * g.camSmooth
+	g.camY += (targetY - g.camY) * g.camSmooth
+
+	// Clamp camera within world bounds
+	worldWidth := float64(g.currentLevel.W*g.currentLevel.TileSize) / 2
+	worldHeight := float64(g.currentLevel.H*g.currentLevel.TileSize) / 2
+	if g.camX < -worldWidth {
+		g.camX = -worldWidth
+	} else if g.camX > worldWidth {
+		g.camX = worldWidth
+	}
+	if g.camY < -worldHeight {
+		g.camY = -worldHeight
+	} else if g.camY > 0 {
+		g.camY = 0
+	}
+}
+
 func (g *Game) updateMainMenu() error {
 	g.Menu.Update()
 	g.handleMainMenuInput()
@@ -164,8 +270,18 @@ func (g *Game) updatePlaying() error {
 	// Pause handling first
 	g.handlePause()
 	if g.isPaused {
-		g.pauseMenu.Update()
+		if g.SavePrompt != nil && g.SavePrompt.IsVisible() {
+			g.SavePrompt.Update()
+		} else if g.LoadLevelMenu != nil && g.LoadLevelMenu.Menu.IsVisible() {
+			g.LoadLevelMenu.Update()
+		} else {
+			g.PauseMenu.Update()
+		}
 		return nil
+	}
+
+	if g.editor.Active {
+		g.editor.Update(g.screenToTile)
 	}
 
 	// Handle controls (mouse, keys, etc.)
@@ -221,6 +337,7 @@ func (g *Game) updatePlaying() error {
 		path := pathing.AStar(g.currentLevel, g.player.TileX, g.player.TileY, g.hoverTileX, g.hoverTileY)
 		g.player.PathPreview = path
 		g.player.Update(g.currentLevel, g.DeltaTime)
+		g.updateCameraFollow()
 	}
 
 	// Monsters
@@ -250,21 +367,32 @@ func (g *Game) getOrCreateOffscreen(size image.Point) *ebiten.Image {
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	g.w, g.h = outsideWidth, outsideHeight
 	fov.ResizeShadowBuffer(g.w, g.h) // Ensures buffer is always the correct size
-
+	menuWidth := max(300, g.w/2)
+	menuHeight := max(300, g.h/2)
+	menuX := (g.w - menuWidth) / 2
+	menuY := (g.h - menuHeight) / 2
+	newRect := image.Rect(menuX, menuY, menuX+menuWidth, menuY+menuHeight)
 	// Update menu size to grow with screen size
-	if g.pauseMenu != nil {
-		menuWidth := max(300, g.w/2)
-		menuHeight := max(300, g.h/2)
-		menuX := (g.w - menuWidth) / 2
-		menuY := (g.h - menuHeight) / 2
-		newRect := image.Rect(menuX, menuY, menuX+menuWidth, menuY+menuHeight)
+	if g.PauseMenu != nil {
 
-		if g.pauseMenu.MainMenu != nil {
-			g.pauseMenu.MainMenu.SetRect(newRect)
+		if g.PauseMenu.MainMenu != nil {
+			g.PauseMenu.MainMenu.SetRect(newRect)
 		}
-		if g.pauseMenu.SettingsMenu != nil {
-			g.pauseMenu.SettingsMenu.SetRect(newRect)
+		if g.PauseMenu.SettingsMenu != nil {
+			g.PauseMenu.SettingsMenu.SetRect(newRect)
 		}
+	}
+
+	if g.LoadLevelMenu != nil {
+		g.LoadLevelMenu.SetRect(newRect)
+	}
+
+	if g.SaveLevelMenu != nil {
+		g.SaveLevelMenu.SetRect(newRect)
+	}
+
+	if g.editor == nil {
+		g.editor = leveleditor.NewEditor(g.currentLevel, g.w, g.h)
 	}
 
 	return g.w, g.h

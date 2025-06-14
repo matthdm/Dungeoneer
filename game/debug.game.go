@@ -32,148 +32,23 @@ func (g *Game) DebugLevelEditor() {
 			fmt.Println("Level loaded from test_level.json")
 		}
 	}
-	switch {
-	case ebiten.IsMouseButtonPressed(ebiten.MouseButtonMiddle):
-		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		if notNil(t) {
-			t.RemoveSprite(g.editor.GetSelectedSprite())
-		}
-	case inpututil.IsKeyJustPressed(ebiten.Key1):
-		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		t.IsWalkable = true
-		g.editor.SetSelectedSprite(g.spriteSheet.Floor)
-		g.editor.PlaceTile(t)
-	case inpututil.IsKeyJustPressed(ebiten.Key2):
-		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		t.IsWalkable = false
-		g.editor.SetSelectedSprite(g.spriteSheet.DungeonWall)
-		g.editor.PlaceTile(t)
-	case inpututil.IsKeyJustPressed(ebiten.Key3):
-		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		t.IsWalkable = false
-		g.editor.SetSelectedSprite(g.spriteSheet.LockedDoorNW)
-		g.editor.PlaceTile(t)
-	case inpututil.IsKeyJustPressed(ebiten.Key4):
-		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		t.IsWalkable = false
-		g.editor.SetSelectedSprite(g.spriteSheet.LockedDoorNE)
-		g.editor.PlaceTile(t)
-	case inpututil.IsKeyJustPressed(ebiten.Key5):
-		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		t.IsWalkable = false
-		g.editor.SetSelectedSprite(g.spriteSheet.Water)
-		g.editor.PlaceTile(t)
-	case inpututil.IsKeyJustPressed(ebiten.Key6):
-		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		t.IsWalkable = false
-		g.editor.SetSelectedSprite(g.spriteSheet.EnchantedWater)
-		g.editor.PlaceTile(t)
-	case inpututil.IsKeyJustPressed(ebiten.Key7):
-		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		t.IsWalkable = false
-		g.editor.SetSelectedSprite(g.spriteSheet.EnemyCursor)
-		g.editor.PlaceTile(t)
-	case inpututil.IsKeyJustPressed(ebiten.Key8):
-		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		t.IsWalkable = true
-		g.editor.SetSelectedSprite(g.spriteSheet.Portal)
-		g.editor.PlaceTile(t)
-	case inpututil.IsKeyJustPressed(ebiten.Key9):
-		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		t.IsWalkable = false
-		g.editor.SetSelectedSprite(g.spriteSheet.Trinket)
-		g.editor.PlaceTile(t)
-	}
-}
 
-func (g *Game) DungeonLevelEditor() {
-	switch {
-	case ebiten.IsMouseButtonPressed(ebiten.MouseButtonMiddle):
-		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		if notNil(t) {
-			t.RemoveSprite(g.editor.GetSelectedSprite())
-		}
-	case inpututil.IsKeyJustPressed(ebiten.Key1):
-		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		g.editor.SetSelectedSprite(g.spriteSheet.Floor)
-		g.editor.PlaceTile(t)
-	case inpututil.IsKeyJustPressed(ebiten.Key2):
-		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		g.editor.SetSelectedSprite(g.spriteSheet.DungeonWall)
-		g.editor.PlaceTile(t)
-	case inpututil.IsKeyJustPressed(ebiten.Key3):
-		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		g.editor.SetSelectedSprite(g.spriteSheet.LockedDoorNW)
-		g.editor.PlaceTile(t)
-	case inpututil.IsKeyJustPressed(ebiten.Key4):
-		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		g.editor.SetSelectedSprite(g.spriteSheet.LockedDoorNE)
-		g.editor.PlaceTile(t)
-	case inpututil.IsKeyJustPressed(ebiten.Key5):
-		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		g.editor.SetSelectedSprite(g.spriteSheet.Water)
-		g.editor.PlaceTile(t)
-	case inpututil.IsKeyJustPressed(ebiten.Key6):
-		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		g.editor.SetSelectedSprite(g.spriteSheet.EnchantedWater)
-		g.editor.PlaceTile(t)
-	case inpututil.IsKeyJustPressed(ebiten.Key7):
-		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		g.editor.SetSelectedSprite(g.spriteSheet.EnemyCursor)
-		g.editor.PlaceTile(t)
-	case inpututil.IsKeyJustPressed(ebiten.Key8):
-		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		g.editor.SetSelectedSprite(g.spriteSheet.Portal)
-		g.editor.PlaceTile(t)
-	case inpututil.IsKeyJustPressed(ebiten.Key9):
-		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		g.editor.SetSelectedSprite(g.spriteSheet.DungeonWall)
-		g.editor.PlaceTile(t)
+	// Tile painting
+	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) && !g.editor.JustSelectedSprite {
+		g.editor.PlaceSelectedSpriteAt(g.hoverTileX, g.hoverTileY)
 	}
-}
 
-func (g *Game) ForestLevelEditor() {
-	switch {
-	case ebiten.IsMouseButtonPressed(ebiten.MouseButtonMiddle):
-		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		if notNil(t) {
-			t.RemoveSprite(g.editor.GetSelectedSprite())
+	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonMiddle) {
+		tx, ty := g.hoverTileX, g.hoverTileY
+		if g.isValidTile(tx, ty) {
+			tile := g.currentLevel.Tile(tx, ty)
+			if tile != nil && len(tile.Sprites) > 1 {
+				tile.Sprites = tile.Sprites[:len(tile.Sprites)-1] // remove top
+				// Optionally: update walkable state
+				last := tile.Sprites[len(tile.Sprites)-1]
+				meta := leveleditor.SpriteRegistry[last.ID]
+				tile.IsWalkable = meta.IsWalkable
+			}
 		}
-	case inpututil.IsKeyJustPressed(ebiten.Key1):
-		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		g.editor.SetSelectedSprite(g.spriteSheet.Floor)
-		g.editor.PlaceTile(t)
-	case inpututil.IsKeyJustPressed(ebiten.Key2):
-		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		g.editor.SetSelectedSprite(g.spriteSheet.OakBeam)
-		g.editor.PlaceTile(t)
-	case inpututil.IsKeyJustPressed(ebiten.Key3):
-		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		g.editor.SetSelectedSprite(g.spriteSheet.OakBeamNESW)
-		g.editor.PlaceTile(t)
-	case inpututil.IsKeyJustPressed(ebiten.Key4):
-		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		g.editor.SetSelectedSprite(g.spriteSheet.OakLogNWSE)
-		g.editor.PlaceTile(t)
-	case inpututil.IsKeyJustPressed(ebiten.Key5):
-		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		g.editor.SetSelectedSprite(g.spriteSheet.Campfire)
-		g.editor.PlaceTile(t)
-	case inpututil.IsKeyJustPressed(ebiten.Key6):
-		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		g.editor.SetSelectedSprite(g.spriteSheet.EnchantedWater)
-		g.editor.PlaceTile(t)
-	case inpututil.IsKeyJustPressed(ebiten.Key7):
-		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		g.editor.SetSelectedSprite(g.spriteSheet.EnemyCursor)
-		g.editor.PlaceTile(t)
-	case inpututil.IsKeyJustPressed(ebiten.Key8):
-		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		g.editor.SetSelectedSprite(g.spriteSheet.Portal)
-		g.editor.PlaceTile(t)
-	case inpututil.IsKeyJustPressed(ebiten.Key9):
-		t := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
-		g.editor.SetSelectedSprite(g.spriteSheet.OakWall)
-		g.editor.PlaceTile(t)
 	}
 }

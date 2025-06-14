@@ -45,8 +45,7 @@ func (t *Tile) RemoveLastSprite() {
 }
 
 // RemoveSprites clears all sprites from the tile
-func (t *Tile) RemoveSprites() {
-	//t.Sprites = nil
+func (t *Tile) ClearSprites() {
 	t.Sprites = []SpriteRef{}
 
 }
@@ -56,4 +55,13 @@ func (t *Tile) Draw(screen *ebiten.Image, options *ebiten.DrawImageOptions) {
 	for _, s := range t.Sprites {
 		screen.DrawImage(s.Image, options)
 	}
+}
+
+func (t *Tile) HasSpriteID(id string) bool {
+	for _, s := range t.Sprites {
+		if s.ID == id {
+			return true
+		}
+	}
+	return false
 }

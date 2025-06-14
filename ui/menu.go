@@ -70,7 +70,7 @@ func (m *Menu) Draw(screen *ebiten.Image) {
 	menuX, menuY := float32(m.rect.Min.X), float32(m.rect.Min.Y)
 	menuW, menuH := float32(m.rect.Dx()), float32(m.rect.Dy())
 
-	DrawMenuWindow(screen, m, menuX, menuY, menuW, menuH)
+	DrawMenuWindow(screen, &m.style, menuX, menuY, menuW, menuH)
 	DrawMenuTitleText(screen, m.title, menuX, menuY, menuW, menuH)
 	DrawMenuOptions(screen, m, menuX, menuY, menuW)
 
