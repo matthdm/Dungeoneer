@@ -53,6 +53,7 @@ type Game struct {
 	// Visibility tracking
 	VisibleTiles [][]bool // true if currently visible
 	SeenTiles    [][]bool // true if ever seen
+	camSmooth    float64
 }
 
 type GameState int
@@ -92,6 +93,7 @@ func NewGame() (*Game, error) {
 		RaycastWalls:   fov.LevelToWalls(l),
 		State:          StateMainMenu,
 		DeltaTime:      1.0 / 60.0,
+		camSmooth:      0.1,
 	}
 	mm, err := ui.NewMainMenu()
 	if err != nil {
@@ -219,6 +221,40 @@ func (g *Game) Update() error {
 	}
 }
 
+// updateCameraFollow centers the camera on the player's interpolated position
+// while the player is moving. When the player stops, the camera stays put.
+func (g *Game) updateCameraFollow() {
+	if g.player == nil {
+		return
+	}
+	mc := g.player.MoveController
+	moving := mc.Moving || len(mc.Path) > 0 || mc.VelocityX != 0 || mc.VelocityY != 0
+	if !moving {
+		return
+	}
+
+	isoX, isoY := g.cartesianToIso(mc.InterpX, mc.InterpY)
+	targetX := isoX
+	targetY := -isoY
+
+	g.camX += (targetX - g.camX) * g.camSmooth
+	g.camY += (targetY - g.camY) * g.camSmooth
+
+	// Clamp camera within world bounds
+	worldWidth := float64(g.currentLevel.W*g.currentLevel.TileSize) / 2
+	worldHeight := float64(g.currentLevel.H*g.currentLevel.TileSize) / 2
+	if g.camX < -worldWidth {
+		g.camX = -worldWidth
+	} else if g.camX > worldWidth {
+		g.camX = worldWidth
+	}
+	if g.camY < -worldHeight {
+		g.camY = -worldHeight
+	} else if g.camY > 0 {
+		g.camY = 0
+	}
+}
+
 func (g *Game) updateMainMenu() error {
 	g.Menu.Update()
 	g.handleMainMenuInput()
@@ -301,6 +337,7 @@ func (g *Game) updatePlaying() error {
 		path := pathing.AStar(g.currentLevel, g.player.TileX, g.player.TileY, g.hoverTileX, g.hoverTileY)
 		g.player.PathPreview = path
 		g.player.Update(g.currentLevel, g.DeltaTime)
+		g.updateCameraFollow()
 	}
 
 	// Monsters
