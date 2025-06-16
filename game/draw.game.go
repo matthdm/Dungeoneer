@@ -69,6 +69,7 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 	g.drawMonsters(target, scale, cx, cy)
 	g.drawHitMarkers(target, scale, cx, cy)
 	g.drawDamageNumbers(target, scale, cx, cy)
+	g.drawGrapple(target, scale, cx, cy)
 	g.drawHoverTile(target, scale, cx, cy)
 
 	if scaleLater {
@@ -86,9 +87,22 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 		fov.DebugDrawRays(screen, g.cachedRays, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
 	}
 	g.drawDashUI(screen)
-	//fov.DebugDrawWalls(screen, g.RaycastWalls, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
+	fov.DebugDrawWalls(screen, g.RaycastWalls, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
 }
 
+func (g *Game) drawGrapple(target *ebiten.Image, scale, cx, cy float64) {
+	if g.player == nil || !g.player.Grapple.Active {
+		return
+	}
+	// Draw the rope from the player's current position so it follows them
+	startX, startY := g.cartesianToIso(g.player.MoveController.InterpX, g.player.MoveController.InterpY)
+	endX, endY := g.cartesianToIso(g.player.Grapple.HookPos.X, g.player.Grapple.HookPos.Y)
+	sx1 := (startX-g.camX)*scale + cx + 30
+	sy1 := (startY+g.camY)*scale + cy + 25
+	sx2 := (endX-g.camX)*scale + cx + 30
+	sy2 := (endY+g.camY)*scale + cy + 25
+	vector.StrokeLine(target, float32(sx1), float32(sy1), float32(sx2), float32(sy2), 2, color.White, false)
+}
 func (g *Game) drawDashUI(screen *ebiten.Image) {
 	if g.player == nil {
 		return

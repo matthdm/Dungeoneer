@@ -266,6 +266,7 @@ func (g *Game) handleInputPlaying() {
 	g.handleZoom()
 	g.handlePan()
 	g.handleDash()
+	g.handleGrapple()
 	g.handlePlayerVelocity()
 	g.handleHoverTile()
 	g.handleClicks()
@@ -273,7 +274,7 @@ func (g *Game) handleInputPlaying() {
 }
 
 func (g *Game) handlePlayerVelocity() {
-	if g.player.IsDashing {
+	if g.player.IsDashing || g.player.Grapple.Active {
 		return
 	}
 	dx, dy := 0.0, 0.0
@@ -313,8 +314,24 @@ func (g *Game) handlePlayerVelocity() {
 	}
 }
 
+func (g *Game) handleGrapple() {
+	if g.player == nil {
+		return
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyF) {
+		if g.player.Grapple.Active {
+			g.player.CancelGrapple()
+		} else {
+			g.player.StartGrapple(float64(g.hoverTileX), float64(g.hoverTileY))
+		}
+	}
+}
+
 func (g *Game) handleDash() {
 	if g.player == nil {
+		return
+	}
+	if g.player.Grapple.Active {
 		return
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyShift) {
