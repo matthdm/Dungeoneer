@@ -39,8 +39,16 @@ const (
 
 // Player dash mechanics
 const (
-	MaxDashCharges      = 2
+	MaxDashCharges      = 5
 	DashRecharge        = 5.0 // seconds per charge
 	DashDuration        = 0.2 // seconds of dash movement
 	DashSpeedMultiplier = 3.0 // multiple of normal move speed
+)
+
+// Grappling hook mechanics
+const (
+	GrappleMaxDistance = 12.0 // tiles
+	// Increased speed for a snappier hook shot and pull
+	GrappleSpeed = 30.0 // tiles per second for extension and pull
+	GrappleDelay = 0.1  // delay before pulling starts
 )
