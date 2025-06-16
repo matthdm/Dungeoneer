@@ -8,6 +8,16 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+// WallFlavors lists all available wall sprite sheet flavors. The names
+// correspond to the embedded PNG files as well as the cases handled in
+// getWallPaletteFlavor.
+var WallFlavors = []string{
+	"brick", "brick1", "brick2", "brick3", "brick4", "brick5", "brick6",
+	"catacomb", "cocutos", "crypt", "gallery", "gehena", "hive", "lair",
+	"lapis", "moss", "mucus", "normal", "pandem1", "pandem2", "pandem3",
+	"pandem4", "pandem6", "rock", "tunnel",
+}
+
 type WallSpriteSheet struct {
 	Flavor         string
 	Beam           *ebiten.Image // (0, 0)
@@ -104,7 +114,7 @@ func LoadWallSpriteSheet(flavor string) (*WallSpriteSheet, error) {
 	}
 
 	// Populate SpriteSheet.
-	wss := &WallSpriteSheet{}
+	wss := &WallSpriteSheet{Flavor: flavor}
 
 	wss.Beam = spriteAt(0, 0)
 	wss.BeamNW = spriteAt(1, 0)

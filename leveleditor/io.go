@@ -31,6 +31,40 @@ type LevelData struct {
 var SpriteRegistry = map[string]SpriteMetadata{}
 var ReverseSpriteRegistry = map[*ebiten.Image]string{}
 
+// RegisterWallSprites adds all sprites from the provided WallSpriteSheet using
+// a flavor-prefixed identifier. For example a flavor of "crypt" will register
+// IDs such as "crypt_wall" and "crypt_floor".
+func RegisterWallSprites(wss *sprites.WallSpriteSheet) {
+	flavor := wss.Flavor
+	add := func(name string, img *ebiten.Image, walkable bool) {
+		id := flavor + "_" + name
+		SpriteRegistry[id] = SpriteMetadata{Image: img, IsWalkable: walkable}
+		ReverseSpriteRegistry[img] = id
+	}
+
+	add("beam", wss.Beam, false)
+	add("beam_nw", wss.BeamNW, false)
+	add("beam_ne", wss.BeamNE, false)
+	add("log", wss.Log, false)
+	add("beam_sw", wss.BeamSW, false)
+	add("log_slim", wss.LogSlim, false)
+	add("beam_nesw", wss.BeamNESW, false)
+	add("log_ne", wss.LogNE, false)
+	add("beam_se", wss.BeamSE, false)
+	add("log_nwse", wss.LogNWSE, false)
+	add("log_slim2", wss.LogSlim2, false)
+	add("wall_nesw", wss.WallNESW, false)
+	add("wall", wss.Wall, false)
+	add("wall_nwse", wss.WallNWSE, false)
+	add("log_sw", wss.LogSW, false)
+	add("chunk", wss.Chunk, false)
+	add("door_locked_nw", wss.LockedDoorNW, false)
+	add("door_locked_ne", wss.LockedDoorNE, false)
+	add("door_unlocked_nw", wss.UnlockedDoorNW, false)
+	add("door_unlocked_ne", wss.UnlockedDoorNE, false)
+	add("floor", wss.Floor, true)
+}
+
 func RegisterSprites(ss *sprites.SpriteSheet) {
 	SpriteRegistry = map[string]SpriteMetadata{
 		"Void": {

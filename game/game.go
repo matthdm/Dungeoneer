@@ -75,6 +75,12 @@ func NewGame() (*Game, error) {
 	//}
 	//This is needed for save/loading levels
 	leveleditor.RegisterSprites(ss)
+	// Load wall sprite sheets for all available flavors
+	for _, fl := range sprites.WallFlavors {
+		if wss, err := sprites.LoadWallSpriteSheet(fl); err == nil {
+			leveleditor.RegisterWallSprites(wss)
+		}
+	}
 
 	g := &Game{
 		currentLevel:   l,
