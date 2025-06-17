@@ -2,6 +2,7 @@ package leveleditor
 
 import (
 	"dungeoneer/levels"
+	"fmt"
 	"image"
 	"image/color"
 
@@ -20,14 +21,16 @@ type Editor struct {
 	cursorScreen       image.Point
 	Palette            *SpritePalette
 	JustSelectedSprite bool
+	AutoTile           bool
 }
 
 func NewEditor(level *levels.Level, screenWidth, screenHeight int) *Editor {
 	editor := &Editor{
-		Active:      false,
+		Active:      true,
 		SelectedID:  "",
 		PaletteOpen: false,
 		level:       level,
+		AutoTile:    true,
 	}
 
 	// Create the palette with a callback to set the selected sprite
@@ -48,6 +51,15 @@ func (e *Editor) SetSelectedSprite(id string) {
 func (e *Editor) Update(screenToTile func() (int, int)) {
 	if !e.Active {
 		return
+	}
+
+	if inpututil.IsKeyJustPressed(ebiten.KeyO) {
+		e.AutoTile = !e.AutoTile
+		if e.AutoTile {
+			fmt.Println("Auto-tiling enabled")
+		} else {
+			fmt.Println("Auto-tiling disabled")
+		}
 	}
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyP) {
@@ -82,7 +94,9 @@ func (e *Editor) PlaceSelectedSpriteAt(tx, ty int) {
 	if e.SelectedID == "" {
 		return
 	}
-	meta, ok := SpriteRegistry[e.SelectedID]
+	id := e.SelectedID
+
+	meta, ok := SpriteRegistry[id]
 	if !ok {
 		return
 	}
@@ -101,6 +115,6 @@ func (e *Editor) PlaceSelectedSpriteAt(tx, ty int) {
 		return // already has base + 1
 	}
 
-	tile.AddSpriteByID(e.SelectedID, meta.Image)
+	tile.AddSpriteByID(id, meta.Image)
 	tile.IsWalkable = meta.IsWalkable
 }

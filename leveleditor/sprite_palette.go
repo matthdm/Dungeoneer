@@ -4,6 +4,7 @@ import (
 	"image"
 	"image/color"
 	"sort"
+	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -12,20 +13,25 @@ import (
 )
 
 type SpritePalette struct {
-	Visible        bool
-	Rect           image.Rectangle
-	Entries        []string
-	OnSelect       func(id string)
-	selectedID     string
-	columns        int
-	rows           int
-	spriteSize     int
-	padding        int
-	currentPage    int
-	spritesPerPage int
-	lastClickFrame int
-	prevButton     image.Rectangle
-	nextButton     image.Rectangle
+	Visible          bool
+	Rect             image.Rectangle
+	Entries          []string
+	OnSelect         func(id string)
+	selectedID       string
+	columns          int
+	rows             int
+	spriteSize       int
+	padding          int
+	currentPage      int
+	spritesPerPage   int
+	lastClickFrame   int
+	prevButton       image.Rectangle
+	nextButton       image.Rectangle
+	allEntries       []string
+	flavors          []string
+	currentFlavor    int
+	flavorPrevButton image.Rectangle
+	flavorNextButton image.Rectangle
 }
 
 func NewSpritePalette(w, h int, onSelect func(id string)) *SpritePalette {
@@ -35,13 +41,27 @@ func NewSpritePalette(w, h int, onSelect func(id string)) *SpritePalette {
 	}
 	sort.Strings(keys)
 
+	flavorsMap := map[string]bool{}
+	for _, k := range keys {
+		if idx := strings.Index(k, "_"); idx > 0 {
+			flavorsMap[k[:idx]] = true
+		}
+	}
+	flavors := []string{"All"}
+	for f := range flavorsMap {
+		flavors = append(flavors, f)
+	}
+	if len(flavors) > 1 {
+		sort.Strings(flavors[1:])
+	}
+
 	spriteSize := 64
-	padding := 10
+	padding := 5
 	columns := 4
 	rows := 3 // set rows per page
 	spritesPerPage := columns * rows
 
-	return &SpritePalette{
+	sp := &SpritePalette{
 		Visible:        false,
 		Entries:        keys,
 		Rect:           image.Rect(w/4, h/4, 3*w/4, 3*h/4),
@@ -51,7 +71,28 @@ func NewSpritePalette(w, h int, onSelect func(id string)) *SpritePalette {
 		rows:           rows,
 		padding:        padding,
 		spritesPerPage: spritesPerPage,
+		allEntries:     keys,
+		flavors:        flavors,
 	}
+	sp.applyFilter()
+	return sp
+}
+
+// applyFilter updates the palette entries based on the current flavor filter.
+func (sp *SpritePalette) applyFilter() {
+	if sp.currentFlavor == 0 { // "All"
+		sp.Entries = append([]string{}, sp.allEntries...)
+	} else {
+		fl := sp.flavors[sp.currentFlavor]
+		prefix := fl + "_"
+		sp.Entries = sp.Entries[:0]
+		for _, id := range sp.allEntries {
+			if strings.HasPrefix(id, prefix) {
+				sp.Entries = append(sp.Entries, id)
+			}
+		}
+	}
+	sp.currentPage = 0
 }
 
 func (sp *SpritePalette) Toggle() { sp.Visible = !sp.Visible }
@@ -64,6 +105,22 @@ func (sp *SpritePalette) Update() {
 	x, y := ebiten.CursorPosition()
 	clicked := inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft)
 	if !clicked {
+		return
+	}
+
+	// Flavor selection buttons
+	if PointInRect(x, y, sp.flavorPrevButton) {
+		if sp.currentFlavor > 0 {
+			sp.currentFlavor--
+			sp.applyFilter()
+		}
+		return
+	}
+	if PointInRect(x, y, sp.flavorNextButton) {
+		if sp.currentFlavor < len(sp.flavors)-1 {
+			sp.currentFlavor++
+			sp.applyFilter()
+		}
 		return
 	}
 
@@ -91,6 +148,13 @@ func (sp *SpritePalette) Update() {
 	// --- Handle Sprite Selection ---
 	ox := x - sp.Rect.Min.X
 	oy := y - sp.Rect.Min.Y
+
+	gridOffset := sp.padding*2 + 20
+	if oy < gridOffset {
+		return // click was in flavor UI
+	}
+
+	oy -= gridOffset
 
 	// Only consider clicks within the grid area (not buttons)
 	gridHeight := sp.rows*(sp.spriteSize+sp.padding) - sp.padding
@@ -131,7 +195,23 @@ func (sp *SpritePalette) Draw(screen *ebiten.Image) {
 		float32(sp.Rect.Dx()), float32(sp.Rect.Dy()), DefaultBackgroundColor, false)
 
 	xStart := sp.Rect.Min.X + sp.padding
-	yStart := sp.Rect.Min.Y + sp.padding
+	yStart := sp.Rect.Min.Y + sp.padding*2 + 20
+
+	// Draw flavor filter UI
+	flavorY := sp.Rect.Min.Y + sp.padding
+	arrowW := 20
+	arrowH := 20
+	prevF := image.Rect(xStart, flavorY, xStart+arrowW, flavorY+arrowH)
+	nextF := image.Rect(sp.Rect.Max.X-sp.padding-arrowW, flavorY, sp.Rect.Max.X-sp.padding, flavorY+arrowH)
+	vector.DrawFilledRect(screen, float32(prevF.Min.X), float32(prevF.Min.Y), float32(prevF.Dx()), float32(prevF.Dy()), color.RGBA{30, 30, 30, 200}, false)
+	vector.DrawFilledRect(screen, float32(nextF.Min.X), float32(nextF.Min.Y), float32(nextF.Dx()), float32(nextF.Dy()), color.RGBA{30, 30, 30, 200}, false)
+	ebitenutil.DebugPrintAt(screen, "<", prevF.Min.X+6, prevF.Min.Y+4)
+	ebitenutil.DebugPrintAt(screen, ">", nextF.Min.X+6, nextF.Min.Y+4)
+	label := sp.flavors[sp.currentFlavor]
+	ebitenutil.DebugPrintAt(screen, label, prevF.Max.X+5, flavorY+4)
+
+	sp.flavorPrevButton = prevF
+	sp.flavorNextButton = nextF
 
 	start := sp.currentPage * sp.spritesPerPage
 	end := min(start+sp.spritesPerPage, len(sp.Entries))
@@ -149,7 +229,7 @@ func (sp *SpritePalette) Draw(screen *ebiten.Image) {
 	}
 
 	// Place buttons *below* the grid
-	gridHeight := sp.rows*(sp.spriteSize+sp.padding) + sp.padding
+	gridHeight := sp.rows*(sp.spriteSize+sp.padding) + sp.padding*2 + 20
 	buttonY := sp.Rect.Min.Y + gridHeight + 10
 
 	// Center horizontally

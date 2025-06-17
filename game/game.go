@@ -75,6 +75,12 @@ func NewGame() (*Game, error) {
 	//}
 	//This is needed for save/loading levels
 	leveleditor.RegisterSprites(ss)
+	// Load wall sprite sheets for all available flavors
+	for _, fl := range sprites.WallFlavors {
+		if wss, err := sprites.LoadWallSpriteSheet(fl); err == nil {
+			leveleditor.RegisterWallSprites(wss)
+		}
+	}
 
 	g := &Game{
 		currentLevel:   l,
@@ -152,6 +158,7 @@ func NewGame() (*Game, error) {
 		OnNewBlank: func() {
 			newLevel := levels.CreateNewBlankLevel(64, 64, g.currentLevel.TileSize, ss) // TODO: Prompt for dimensions later
 			g.currentLevel = newLevel
+			g.editor = leveleditor.NewEditor(newLevel, g.w, g.h)
 			g.UpdateSeenTiles(*newLevel)
 		},
 	})

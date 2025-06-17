@@ -265,6 +265,8 @@ func (g *Game) handleInputPlaying() {
 
 	g.handleZoom()
 	g.handlePan()
+	g.handleDash()
+	g.handleGrapple()
 	g.handlePlayerVelocity()
 	g.handleHoverTile()
 	g.handleClicks()
@@ -272,6 +274,9 @@ func (g *Game) handleInputPlaying() {
 }
 
 func (g *Game) handlePlayerVelocity() {
+	if g.player.IsDashing || g.player.Grapple.Active {
+		return
+	}
 	dx, dy := 0.0, 0.0
 
 	// In isometric view, arrow keys map to diagonal movement.
@@ -306,6 +311,47 @@ func (g *Game) handlePlayerVelocity() {
 	} else if g.player.MoveController.Mode == movement.VelocityMode {
 		// Stop smoothly when keys released
 		g.player.MoveController.Stop()
+	}
+}
+
+func (g *Game) handleGrapple() {
+	if g.player == nil {
+		return
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyF) {
+		if g.player.Grapple.Active {
+			g.player.CancelGrapple()
+		} else {
+			g.player.StartGrapple(float64(g.hoverTileX), float64(g.hoverTileY))
+		}
+	}
+}
+
+func (g *Game) handleDash() {
+	if g.player == nil {
+		return
+	}
+	if g.player.Grapple.Active {
+		return
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyShift) {
+		if g.player.DashCharges > 0 && !g.player.IsDashing {
+			dirX, dirY := 0.0, 0.0
+			if g.player.MoveController.Mode == movement.VelocityMode {
+				dirX = g.player.MoveController.VelocityX
+				dirY = g.player.MoveController.VelocityY
+			} else if g.player.MoveController.Mode == movement.PathingMode {
+				if g.player.MoveController.Moving {
+					dirX = g.player.MoveController.TargetX - g.player.MoveController.InterpX
+					dirY = g.player.MoveController.TargetY - g.player.MoveController.InterpY
+				} else if len(g.player.MoveController.Path) > 0 {
+					next := g.player.MoveController.Path[0]
+					dirX = float64(next.X) - g.player.MoveController.InterpX
+					dirY = float64(next.Y) - g.player.MoveController.InterpY
+				}
+			}
+			g.player.StartDash(dirX, dirY)
+		}
 	}
 }
 

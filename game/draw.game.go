@@ -4,11 +4,13 @@ import (
 	"dungeoneer/constants"
 	"dungeoneer/fov"
 	"fmt"
+	"image/color"
 	"math"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
 var menuStart = time.Now()
@@ -67,6 +69,7 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 	g.drawMonsters(target, scale, cx, cy)
 	g.drawHitMarkers(target, scale, cx, cy)
 	g.drawDamageNumbers(target, scale, cx, cy)
+	g.drawGrapple(target, scale, cx, cy)
 	g.drawHoverTile(target, scale, cx, cy)
 
 	if scaleLater {
@@ -83,7 +86,47 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 	if g.ShowRays && len(g.cachedRays) > 0 {
 		fov.DebugDrawRays(screen, g.cachedRays, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
 	}
-	//fov.DebugDrawWalls(screen, g.RaycastWalls, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
+	g.drawDashUI(screen)
+	fov.DebugDrawWalls(screen, g.RaycastWalls, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
+}
+
+func (g *Game) drawGrapple(target *ebiten.Image, scale, cx, cy float64) {
+	if g.player == nil || !g.player.Grapple.Active {
+		return
+	}
+	// Draw the rope from the player's current position so it follows them
+	startX, startY := g.cartesianToIso(g.player.MoveController.InterpX, g.player.MoveController.InterpY)
+	endX, endY := g.cartesianToIso(g.player.Grapple.HookPos.X, g.player.Grapple.HookPos.Y)
+	sx1 := (startX-g.camX)*scale + cx + 30
+	sy1 := (startY+g.camY)*scale + cy + 25
+	sx2 := (endX-g.camX)*scale + cx + 30
+	sy2 := (endY+g.camY)*scale + cy + 25
+	vector.StrokeLine(target, float32(sx1), float32(sy1), float32(sx2), float32(sy2), 2, color.White, false)
+}
+func (g *Game) drawDashUI(screen *ebiten.Image) {
+	if g.player == nil {
+		return
+	}
+	size := float32(20)
+	padding := float32(5)
+	for i := 0; i < constants.MaxDashCharges; i++ {
+		x := padding + float32(i)*(size+padding)
+		y := padding
+		vector.StrokeRect(screen, x, y, size, size, 2, color.White, false)
+		fill := float32(0)
+		if g.player.DashCooldowns[i] <= 0 {
+			fill = size
+		} else {
+			ratio := float32(constants.DashRecharge-g.player.DashCooldowns[i]) / float32(constants.DashRecharge)
+			if ratio < 0 {
+				ratio = 0
+			}
+			fill = size * ratio
+		}
+		if fill > 0 {
+			vector.DrawFilledRect(screen, x, y+(size-fill), size, fill, color.RGBA{0, 200, 255, 255}, false)
+		}
+	}
 }
 
 func (g *Game) drawTiles(target *ebiten.Image, scale, cx, cy float64) {

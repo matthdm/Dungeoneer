@@ -2,16 +2,17 @@ package entities
 
 import (
 	"dungeoneer/collision"
+	"dungeoneer/constants"
 	"dungeoneer/levels"
 	"dungeoneer/movement"
 	"dungeoneer/pathing"
 	"dungeoneer/sprites"
+	"fmt"
 	"image/color"
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
-
 
 type Player struct {
 	TileX, TileY int
@@ -32,6 +33,13 @@ type Player struct {
 	MoveController *movement.MovementController
 
 	CollisionBox collision.Box
+
+	DashCharges   int
+	DashCooldowns [constants.MaxDashCharges]float64
+	IsDashing     bool
+	DashTimer     float64
+
+	Grapple Grapple
 }
 
 func NewPlayer(ss *sprites.SpriteSheet) *Player {
@@ -51,6 +59,12 @@ func NewPlayer(ss *sprites.SpriteSheet) *Player {
 		IsDead:         false,
 		MoveController: mc,
 		CollisionBox:   collision.Box{X: 3, Y: 3, Width: 0.55, Height: 0.8},
+		DashCharges:    constants.MaxDashCharges,
+		Grapple: Grapple{
+			MaxDistance: constants.GrappleMaxDistance,
+			Speed:       constants.GrappleSpeed,
+			Delay:       constants.GrappleDelay,
+		},
 	}
 
 	// Whenever InterpX/InterpY crosses into a new tile, update TileX/TileY
@@ -74,6 +88,9 @@ func (p *Player) Draw(screen *ebiten.Image, tileSize int, camX, camY, camScale, 
 	const verticalOffset = 1.0
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(0, -verticalOffset+p.BobOffset)
+	if p.IsDashing {
+		op.ColorScale.Scale(1.3, 1.3, 1.3, 1)
+	}
 
 	// 3) Flip if facing right
 	b := p.Sprite.Bounds()
@@ -134,6 +151,30 @@ func (p *Player) Update(level *levels.Level, dt float64) {
 	p.AttackTick++
 	p.BobOffset = math.Sin(float64(p.TickCount)*bobFreq) * bobAmp
 
+	p.updateGrapple(level, dt)
+
+	// Recharge dash charges
+	for i := range p.DashCooldowns {
+		if p.DashCooldowns[i] > 0 {
+			p.DashCooldowns[i] -= dt
+			if p.DashCooldowns[i] <= 0 {
+				p.DashCooldowns[i] = 0
+				if p.DashCharges < constants.MaxDashCharges {
+					p.DashCharges++
+				}
+			}
+		}
+	}
+
+	// Handle active dash timer
+	if p.IsDashing {
+		p.DashTimer -= dt
+		if p.DashTimer <= 0 {
+			p.IsDashing = false
+			p.MoveController.Stop()
+		}
+	}
+
 	// For pathing, let the controller interpolate positions
 	if p.MoveController.Mode == movement.PathingMode {
 		p.MoveController.Update(dt)
@@ -189,6 +230,128 @@ func (p *Player) Update(level *levels.Level, dt float64) {
 		// Update tile coordinates from final position
 		p.TileX = int(p.MoveController.InterpX)
 		p.TileY = int(p.MoveController.InterpY)
+	}
+}
+
+func (p *Player) StartGrapple(tx, ty float64) {
+	// Stop any current movement so the rope begins at the player's
+	// actual position rather than where they were headed.
+	//p.MoveController.Stop()
+	p.Grapple.Active = true
+	p.Grapple.Hooking = true
+	p.Grapple.Pulling = false
+	p.Grapple.StartPos = Vec2{p.MoveController.InterpX, p.MoveController.InterpY}
+	p.Grapple.HookPos = p.Grapple.StartPos
+	p.Grapple.TargetTile = Vec2{tx, ty}
+	p.Grapple.Delay = constants.GrappleDelay
+}
+
+func (p *Player) CancelGrapple() {
+	p.Grapple.Active = false
+	p.Grapple.Hooking = false
+	p.Grapple.Pulling = false
+	p.MoveController.Stop()
+}
+
+func (p *Player) updateGrapple(level *levels.Level, dt float64) {
+	g := &p.Grapple
+	if !g.Active {
+		return
+	}
+
+	if g.Hooking {
+		// Extend the hook toward the highlighted tile but do not stop there.
+		dx := g.TargetTile.X - g.StartPos.X
+		dy := g.TargetTile.Y - g.StartPos.Y
+		dist := math.Hypot(dx, dy)
+		if dist == 0 {
+			g.Active = false
+			return
+		}
+		dx /= dist
+		dy /= dist
+		step := g.Speed * dt
+		g.HookPos.X += dx * step
+		g.HookPos.Y += dy * step
+		traveled := math.Hypot(g.HookPos.X-g.StartPos.X, g.HookPos.Y-g.StartPos.Y)
+		if traveled >= g.MaxDistance {
+			// Reached max range without hitting a surface
+			g.Active = false
+			g.Hooking = false
+			return
+		}
+		tx := int(math.Floor(g.HookPos.X))
+		ty := int(math.Floor(g.HookPos.Y))
+		if !level.IsWalkable(tx, ty) {
+			g.Hooking = false
+			g.Pulling = true
+			g.HookPos = Vec2{float64(tx), float64(ty)}
+		}
+	} else if g.Pulling {
+		if g.Delay > 0 {
+			g.Delay -= dt
+		}
+		dx := g.HookPos.X - p.MoveController.InterpX
+		dy := g.HookPos.Y - p.MoveController.InterpY
+		dist := math.Hypot(dx, dy)
+
+		// Auto-cancel if we've reached the wall or, after pulling has
+		// begun, we've essentially stopped moving
+		closeEnough := 1.5 > dist
+		//stalled := false
+		//if g.Delay <= 0 {
+		//	stalled = math.Abs(p.MoveController.VelocityX)+math.Abs(p.MoveController.VelocityY) < 0.01
+		//}
+		fmt.Println("dist: ", closeEnough, dist)
+		if closeEnough { //| stalled {
+			//p.MoveController.Stop()
+			g.Active = false
+			g.Pulling = false
+			return
+		}
+
+		if g.Delay <= 0 {
+			dx /= dist
+			dy /= dist
+			p.MoveController.Mode = movement.VelocityMode
+			p.MoveController.VelocityX = dx * g.Speed
+			p.MoveController.VelocityY = dy * g.Speed
+		}
+	}
+}
+func (p *Player) StartDash(dirX, dirY float64) {
+	if p.DashCharges <= 0 || p.IsDashing {
+		return
+	}
+
+	mag := math.Hypot(dirX, dirY)
+	if mag == 0 {
+		if p.LeftFacing {
+			dirX = -1
+			dirY = 0
+		} else {
+			dirX = 1
+			dirY = 0
+		}
+		mag = 1
+	}
+
+	dirX /= mag
+	dirY /= mag
+
+	p.IsDashing = true
+	p.DashTimer = constants.DashDuration
+	dashSpeed := p.MoveController.Speed * constants.DashSpeedMultiplier
+	p.MoveController.Mode = movement.VelocityMode
+	p.MoveController.VelocityX = dirX * dashSpeed
+	p.MoveController.VelocityY = dirY * dashSpeed
+
+	p.DashCharges--
+	for i := range p.DashCooldowns {
+		if p.DashCooldowns[i] == 0 {
+			p.DashCooldowns[i] = constants.DashRecharge
+			break
+		}
 	}
 }
 
