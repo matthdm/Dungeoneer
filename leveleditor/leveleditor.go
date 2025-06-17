@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"image"
 	"image/color"
-	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -96,11 +95,6 @@ func (e *Editor) PlaceSelectedSpriteAt(tx, ty int) {
 		return
 	}
 	id := e.SelectedID
-	if e.AutoTile && strings.Contains(id, "_wall") {
-		if parts := strings.SplitN(id, "_", 2); len(parts) == 2 {
-			id = AutoSelectWallVariant(e.level, tx, ty, parts[0])
-		}
-	}
 
 	meta, ok := SpriteRegistry[id]
 	if !ok {
@@ -123,52 +117,4 @@ func (e *Editor) PlaceSelectedSpriteAt(tx, ty int) {
 
 	tile.AddSpriteByID(id, meta.Image)
 	tile.IsWalkable = meta.IsWalkable
-}
-
-// AutoSelectWallVariant chooses the correct wall sprite variant for the given
-// flavor based on adjacent tiles. It returns the sprite ID that should be used
-// at the provided location.
-func AutoSelectWallVariant(level *levels.Level, x, y int, flavor string) string {
-	isSame := func(tx, ty int) bool {
-		t := level.Tile(tx, ty)
-		if t == nil {
-			return false
-		}
-		prefix := flavor + "_"
-		for _, s := range t.Sprites {
-			if strings.HasPrefix(s.ID, prefix) && strings.Contains(s.ID, "wall") {
-				return true
-			}
-		}
-		return false
-	}
-
-	up := isSame(x, y-1)
-	down := isSame(x, y+1)
-	left := isSame(x-1, y)
-	right := isSame(x+1, y)
-
-	// Very simple heuristic using three generic variants
-	connections := 0
-	if up {
-		connections++
-	}
-	if down {
-		connections++
-	}
-	if left {
-		connections++
-	}
-	if right {
-		connections++
-	}
-
-	base := flavor + "_"
-	if connections >= 3 {
-		return base + "wall_nesw"
-	}
-	if (up && down) || (left && right) {
-		return base + "wall"
-	}
-	return base + "wall_nwse"
 }

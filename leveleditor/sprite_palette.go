@@ -56,7 +56,7 @@ func NewSpritePalette(w, h int, onSelect func(id string)) *SpritePalette {
 	}
 
 	spriteSize := 64
-	padding := 10
+	padding := 5
 	columns := 4
 	rows := 3 // set rows per page
 	spritesPerPage := columns * rows
