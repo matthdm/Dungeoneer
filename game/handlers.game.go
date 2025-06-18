@@ -202,7 +202,14 @@ func (g *Game) handleLevelHotkeys() {
 		}
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyT) {
-		//g.currentLevel = levels.NewLevel1()
+		if g.player != nil {
+			gx := g.player.MoveController.InterpX
+			gy := g.player.MoveController.InterpY
+			g.castFireball(gx, gy, float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
+		}
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyH) {
+		g.SpellDebug = !g.SpellDebug
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyG) {
 		g.ShowRays = !g.ShowRays

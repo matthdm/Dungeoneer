@@ -6,6 +6,7 @@ import (
 	"dungeoneer/levels"
 	"dungeoneer/movement"
 	"dungeoneer/pathing"
+	"dungeoneer/spells"
 	"dungeoneer/sprites"
 	"fmt"
 	"image/color"
@@ -41,6 +42,8 @@ type Player struct {
 
 	Grapple Grapple
 
+	Caster *spells.Caster
+
 	LastMoveDirX float64
 	LastMoveDirY float64
 }
@@ -68,6 +71,7 @@ func NewPlayer(ss *sprites.SpriteSheet) *Player {
 			Speed:       constants.GrappleSpeed,
 			Delay:       constants.GrappleDelay,
 		},
+		Caster:       spells.NewCaster(),
 		LastMoveDirX: -1,
 		LastMoveDirY: 0,
 	}
@@ -157,6 +161,9 @@ func (p *Player) Update(level *levels.Level, dt float64) {
 	p.BobOffset = math.Sin(float64(p.TickCount)*bobFreq) * bobAmp
 
 	p.updateGrapple(level, dt)
+	if p.Caster != nil {
+		p.Caster.Update(dt)
+	}
 
 	// Track last movement direction
 	if p.MoveController.Mode == movement.VelocityMode {

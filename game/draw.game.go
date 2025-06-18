@@ -3,6 +3,7 @@ package game
 import (
 	"dungeoneer/constants"
 	"dungeoneer/fov"
+	"dungeoneer/spells"
 	"fmt"
 	"image/color"
 	"math"
@@ -53,6 +54,17 @@ func (g *Game) drawGameOver(screen *ebiten.Image) {
 	ebitenutil.DebugPrintAt(screen, msg, g.w/2-100, g.h/2)
 }
 
+func (g *Game) drawSpells(target *ebiten.Image, scale, cx, cy float64) {
+	for _, sp := range g.ActiveSpells {
+		sp.Draw(target, g.currentLevel.TileSize, g.camX, g.camY, scale, cx, cy)
+		if g.SpellDebug {
+			if fb, ok := sp.(*spells.Fireball); ok {
+				fb.DebugDraw(target, g.currentLevel.TileSize, g.camX, g.camY, scale, cx, cy)
+			}
+		}
+	}
+}
+
 func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 	scaleLater := g.camScale > 1
 	target := screen
@@ -67,6 +79,7 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 	g.drawPathPreview(target, scale, cx, cy)
 	g.drawPlayer(target, scale, cx, cy)
 	g.drawMonsters(target, scale, cx, cy)
+	g.drawSpells(target, scale, cx, cy)
 	g.drawHitMarkers(target, scale, cx, cy)
 	g.drawDamageNumbers(target, scale, cx, cy)
 	g.drawGrapple(target, scale, cx, cy)

@@ -67,6 +67,9 @@ var (
 	//go:embed tunnel.png
 	Tunnel_png []byte
 
+	//go:embed fireball_0.png
+	Fireball_0_png []byte
+
 	//go:embed castle_fg.png
 	Castle_FG_png []byte
 
