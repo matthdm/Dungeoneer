@@ -17,19 +17,23 @@ func (g *Game) handleMainMenuInput() {
 		return
 	}
 
-	// Navigate up
-	if inpututil.IsKeyJustPressed(ebiten.KeyW) || inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) {
-		g.Menu.SelectedIndex--
-		if g.Menu.SelectedIndex < 0 {
-			g.Menu.SelectedIndex = len(g.Menu.Options) - 1
-		}
-	}
-
-	// Navigate down
-	if inpututil.IsKeyJustPressed(ebiten.KeyS) || inpututil.IsKeyJustPressed(ebiten.KeyArrowDown) {
-		g.Menu.SelectedIndex++
-		if g.Menu.SelectedIndex >= len(g.Menu.Options) {
-			g.Menu.SelectedIndex = 0
+	// Mouse hover and click handling
+	mx, my := ebiten.CursorPosition()
+	for i, r := range g.Menu.EntryRects {
+		if mx >= r.Min.X && mx <= r.Max.X && my >= r.Min.Y && my <= r.Max.Y {
+			g.Menu.SelectedIndex = i
+			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+				switch g.Menu.Options[i] {
+				case "New Game":
+					g.State = StatePlaying
+				case "Options":
+					// Implement later
+				case "Exit Game":
+					os.Exit(2)
+				}
+				return
+			}
+			break
 		}
 	}
 

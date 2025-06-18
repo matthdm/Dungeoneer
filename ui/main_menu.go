@@ -2,6 +2,7 @@ package ui
 
 import (
 	"dungeoneer/images"
+	"image"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -14,6 +15,7 @@ type MainMenu struct {
 	ExitGameLabel *ebiten.Image
 	Background    *ebiten.Image
 	FrameTick     int
+	EntryRects    []image.Rectangle
 }
 
 func NewMainMenu() (*MainMenu, error) {
@@ -41,6 +43,7 @@ func NewMainMenu() (*MainMenu, error) {
 		OptionsLabel:  optionsLabel,
 		ExitGameLabel: exitGameLabel,
 		Background:    castleFG,
+		EntryRects:    make([]image.Rectangle, 3),
 	}, nil
 }
 

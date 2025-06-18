@@ -5,6 +5,7 @@ import (
 	"dungeoneer/fov"
 	"dungeoneer/spells"
 	"fmt"
+	"image"
 	"image/color"
 	"math"
 	"time"
@@ -248,6 +249,9 @@ func (g *Game) drawMainMenuLabels(screen *ebiten.Image, cx, cy float64) {
 		g.Menu.OptionsLabel,
 		g.Menu.ExitGameLabel,
 	}
+	if len(g.Menu.EntryRects) != len(labels) {
+		g.Menu.EntryRects = make([]image.Rectangle, len(labels))
+	}
 
 	totalHeight := spacing * float64(len(labels)-1)
 	startY := cy - totalHeight/2
@@ -260,6 +264,10 @@ func (g *Game) drawMainMenuLabels(screen *ebiten.Image, cx, cy float64) {
 
 		op.GeoM.Scale(constants.MainMenuLabelScale, constants.MainMenuLabelScale)
 		op.GeoM.Translate(x, y)
+
+		w, h := img.Size()
+		rect := image.Rect(int(x), int(y), int(x+float64(w)*constants.MainMenuLabelScale), int(y+float64(h)*constants.MainMenuLabelScale))
+		g.Menu.EntryRects[i] = rect
 
 		// Only apply glow to the selected label
 		if i == g.Menu.SelectedIndex {
