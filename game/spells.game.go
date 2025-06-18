@@ -100,3 +100,50 @@ func (g *Game) castFireball(casterX, casterY, targetX, targetY float64, c *spell
 	fb := spells.NewFireball(info, casterX, casterY, targetX, targetY, g.fireballSprites, g.spriteSheet.FireBurst)
 	g.ActiveSpells = append(g.ActiveSpells, fb)
 }
+
+func (g *Game) applyChaosRayDamage(cr *spells.ChaosRay) {
+	radius := 0.6
+	for _, m := range g.Monsters {
+		if m.IsDead {
+			continue
+		}
+		px := m.InterpX
+		py := m.InterpY
+		for i := 0; i < len(cr.Path)-1; i++ {
+			p1 := cr.Path[i]
+			p2 := cr.Path[i+1]
+			if pointSegmentDistance(px, py, p1.X, p1.Y, p2.X, p2.Y) <= radius {
+				m.TakeDamage(cr.Info.Damage, &g.HitMarkers, &g.DamageNumbers)
+				break
+			}
+		}
+	}
+}
+
+func pointSegmentDistance(px, py, x1, y1, x2, y2 float64) float64 {
+	dx := x2 - x1
+	dy := y2 - y1
+	if dx == 0 && dy == 0 {
+		return math.Hypot(px-x1, py-y1)
+	}
+	t := ((px-x1)*dx + (py-y1)*dy) / (dx*dx + dy*dy)
+	if t < 0 {
+		t = 0
+	} else if t > 1 {
+		t = 1
+	}
+	projX := x1 + t*dx
+	projY := y1 + t*dy
+	return math.Hypot(px-projX, py-projY)
+}
+
+func (g *Game) castChaosRay(casterX, casterY, targetX, targetY float64, c *spells.Caster) {
+	info := spells.SpellInfo{Name: "chaosray", Level: 1, Cooldown: 1.0, Damage: 8}
+	if !c.Ready(info) {
+		return
+	}
+	c.PutOnCooldown(info)
+	cr := spells.NewChaosRay(info, casterX, casterY, targetX, targetY)
+	g.applyChaosRayDamage(cr)
+	g.ActiveSpells = append(g.ActiveSpells, cr)
+}

@@ -212,6 +212,13 @@ func (g *Game) handleLevelHotkeys() {
 			g.castFireball(gx, gy, float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
 		}
 	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyX) {
+		if g.player != nil {
+			gx := g.player.MoveController.InterpX
+			gy := g.player.MoveController.InterpY
+			g.castChaosRay(gx, gy, float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
+		}
+	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyH) {
 		g.SpellDebug = !g.SpellDebug
 	}

@@ -77,7 +77,7 @@ func NewFireball(info SpellInfo, startX, startY, targetX, targetY float64, sprit
 		Y:         startY,
 		DirX:      dx,
 		DirY:      dy,
-		Speed:     8.0,
+		Speed:     15,
 		Angle:     angle,
 		ImpactImg: impact,
 		Radius:    constants.FireballHitRadius,
