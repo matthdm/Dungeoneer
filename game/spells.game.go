@@ -47,15 +47,15 @@ func (g *Game) applyFireballDamage(fb *spells.Fireball, cx, cy int) {
 	mult := 1.0
 	switch level {
 	case 1:
-		radius = 0
+		radius = 1
 		fb.ImpactImg = g.spriteSheet.FireBurst
 		mult = 1.0
 	case 2:
-		radius = 1
+		radius = 2
 		fb.ImpactImg = g.spriteSheet.FireBurst2
 		mult = 2.0
 	case 3:
-		radius = 2
+		radius = 3
 		fb.ImpactImg = g.spriteSheet.FireBurst3
 		mult = 4.0
 	}
@@ -92,7 +92,7 @@ func (g *Game) hasLineOfSight(x1, y1, x2, y2 int) bool {
 }
 
 func (g *Game) castFireball(casterX, casterY, targetX, targetY float64, c *spells.Caster) {
-	info := spells.SpellInfo{Name: "fireball", Level: 3, Cooldown: 1.0, Damage: 6}
+	info := spells.SpellInfo{Name: "fireball", Level: 1, Cooldown: 1.0, Damage: 5}
 	if !c.Ready(info) {
 		return
 	}
