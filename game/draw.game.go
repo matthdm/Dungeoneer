@@ -111,10 +111,10 @@ func (g *Game) drawGrapple(target *ebiten.Image, scale, cx, cy float64) {
 	// Draw the rope from the player's current position so it follows them
 	startX, startY := g.cartesianToIso(g.player.MoveController.InterpX, g.player.MoveController.InterpY)
 	endX, endY := g.cartesianToIso(g.player.Grapple.HookPos.X, g.player.Grapple.HookPos.Y)
-	sx1 := (startX-g.camX)*scale + cx + 30
-	sy1 := (startY+g.camY)*scale + cy + 25
-	sx2 := (endX-g.camX)*scale + cx + 30
-	sy2 := (endY+g.camY)*scale + cy + 25
+	sx1 := (startX-g.camX+30)*scale + cx
+	sy1 := (startY+g.camY+25)*scale + cy
+	sx2 := (endX-g.camX+30)*scale + cx
+	sy2 := (endY+g.camY+25)*scale + cy
 	vector.StrokeLine(target, float32(sx1), float32(sy1), float32(sx2), float32(sy2), 2, color.White, false)
 }
 func (g *Game) drawDashUI(screen *ebiten.Image) {
