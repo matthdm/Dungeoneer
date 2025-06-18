@@ -47,12 +47,14 @@ func NewSpritePalette(w, h int, onSelect func(id string)) *SpritePalette {
 			flavorsMap[k[:idx]] = true
 		}
 	}
-	flavors := []string{"All"}
+
+	// Insert the special "Floors" group alongside flavor groups
+	flavors := []string{"All", "Floors"}
 	for f := range flavorsMap {
 		flavors = append(flavors, f)
 	}
-	if len(flavors) > 1 {
-		sort.Strings(flavors[1:])
+	if len(flavors) > 2 {
+		sort.Strings(flavors[2:])
 	}
 
 	spriteSize := 64
@@ -80,11 +82,20 @@ func NewSpritePalette(w, h int, onSelect func(id string)) *SpritePalette {
 
 // applyFilter updates the palette entries based on the current flavor filter.
 func (sp *SpritePalette) applyFilter() {
-	if sp.currentFlavor == 0 { // "All"
+	label := sp.flavors[sp.currentFlavor]
+
+	switch label {
+	case "All":
 		sp.Entries = append([]string{}, sp.allEntries...)
-	} else {
-		fl := sp.flavors[sp.currentFlavor]
-		prefix := fl + "_"
+	case "Floors":
+		sp.Entries = sp.Entries[:0]
+		for _, id := range sp.allEntries {
+			if strings.Contains(id, "_floor") {
+				sp.Entries = append(sp.Entries, id)
+			}
+		}
+	default:
+		prefix := label + "_"
 		sp.Entries = sp.Entries[:0]
 		for _, id := range sp.allEntries {
 			if strings.HasPrefix(id, prefix) {
@@ -226,6 +237,14 @@ func (sp *SpritePalette) Draw(screen *ebiten.Image) {
 		op := &ebiten.DrawImageOptions{}
 		op.GeoM.Translate(float64(x), float64(y))
 		screen.DrawImage(img, op)
+		// When viewing the Floors group, show the flavor name below each sprite
+		if sp.flavors[sp.currentFlavor] == "Floors" {
+			if idx := strings.Index(id, "_"); idx > 0 {
+				flavor := id[:idx]
+				label := strings.ToUpper(flavor[:1]) + flavor[1:]
+				ebitenutil.DebugPrintAt(screen, label, x, y+sp.spriteSize-8)
+			}
+		}
 	}
 
 	// Place buttons *below* the grid

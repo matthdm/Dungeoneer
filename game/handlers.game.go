@@ -100,16 +100,16 @@ func (g *Game) handleZoom() {
 
 func (g *Game) handlePan() {
 	pan := 7.0 / g.camScale
-	if ebiten.IsKeyPressed(ebiten.KeyA) {
+	if ebiten.IsKeyPressed(ebiten.KeyArrowLeft) {
 		g.camX -= pan
 	}
-	if ebiten.IsKeyPressed(ebiten.KeyD) {
+	if ebiten.IsKeyPressed(ebiten.KeyArrowRight) {
 		g.camX += pan
 	}
-	if ebiten.IsKeyPressed(ebiten.KeyS) {
+	if ebiten.IsKeyPressed(ebiten.KeyArrowDown) {
 		g.camY -= pan
 	}
-	if ebiten.IsKeyPressed(ebiten.KeyW) {
+	if ebiten.IsKeyPressed(ebiten.KeyArrowUp) {
 		g.camY += pan
 	}
 
@@ -279,20 +279,20 @@ func (g *Game) handlePlayerVelocity() {
 	}
 	dx, dy := 0.0, 0.0
 
-	// In isometric view, arrow keys map to diagonal movement.
-	if ebiten.IsKeyPressed(ebiten.KeyArrowLeft) {
+	// In isometric view, WASD keys map to diagonal movement.
+	if ebiten.IsKeyPressed(ebiten.KeyA) {
 		dx -= 1
 		dy += 1
 	}
-	if ebiten.IsKeyPressed(ebiten.KeyArrowRight) {
+	if ebiten.IsKeyPressed(ebiten.KeyD) {
 		dx += 1
 		dy -= 1
 	}
-	if ebiten.IsKeyPressed(ebiten.KeyArrowUp) {
+	if ebiten.IsKeyPressed(ebiten.KeyW) {
 		dx -= 1
 		dy -= 1
 	}
-	if ebiten.IsKeyPressed(ebiten.KeyArrowDown) {
+	if ebiten.IsKeyPressed(ebiten.KeyS) {
 		dx += 1
 		dy += 1
 	}
@@ -308,6 +308,11 @@ func (g *Game) handlePlayerVelocity() {
 	if dx != 0 || dy != 0 {
 		g.player.MoveController.SetVelocityFromInput(dx, dy)
 		g.player.MoveController.Mode = movement.VelocityMode
+		mag := math.Hypot(dx, dy)
+		if mag != 0 {
+			g.player.LastMoveDirX = dx / mag
+			g.player.LastMoveDirY = dy / mag
+		}
 	} else if g.player.MoveController.Mode == movement.VelocityMode {
 		// Stop smoothly when keys released
 		g.player.MoveController.Stop()
@@ -349,6 +354,10 @@ func (g *Game) handleDash() {
 					dirX = float64(next.X) - g.player.MoveController.InterpX
 					dirY = float64(next.Y) - g.player.MoveController.InterpY
 				}
+			}
+			if dirX == 0 && dirY == 0 {
+				dirX = g.player.LastMoveDirX
+				dirY = g.player.LastMoveDirY
 			}
 			g.player.StartDash(dirX, dirY)
 		}

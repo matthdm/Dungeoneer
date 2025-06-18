@@ -40,6 +40,9 @@ type Player struct {
 	DashTimer     float64
 
 	Grapple Grapple
+
+	LastMoveDirX float64
+	LastMoveDirY float64
 }
 
 func NewPlayer(ss *sprites.SpriteSheet) *Player {
@@ -65,6 +68,8 @@ func NewPlayer(ss *sprites.SpriteSheet) *Player {
 			Speed:       constants.GrappleSpeed,
 			Delay:       constants.GrappleDelay,
 		},
+		LastMoveDirX: -1,
+		LastMoveDirY: 0,
 	}
 
 	// Whenever InterpX/InterpY crosses into a new tile, update TileX/TileY
@@ -152,6 +157,25 @@ func (p *Player) Update(level *levels.Level, dt float64) {
 	p.BobOffset = math.Sin(float64(p.TickCount)*bobFreq) * bobAmp
 
 	p.updateGrapple(level, dt)
+
+	// Track last movement direction
+	if p.MoveController.Mode == movement.VelocityMode {
+		if p.MoveController.VelocityX != 0 || p.MoveController.VelocityY != 0 {
+			mag := math.Hypot(p.MoveController.VelocityX, p.MoveController.VelocityY)
+			if mag != 0 {
+				p.LastMoveDirX = p.MoveController.VelocityX / mag
+				p.LastMoveDirY = p.MoveController.VelocityY / mag
+			}
+		}
+	} else if p.MoveController.Mode == movement.PathingMode && p.MoveController.Moving {
+		dx := p.MoveController.TargetX - p.MoveController.InterpX
+		dy := p.MoveController.TargetY - p.MoveController.InterpY
+		mag := math.Hypot(dx, dy)
+		if mag != 0 {
+			p.LastMoveDirX = dx / mag
+			p.LastMoveDirY = dy / mag
+		}
+	}
 
 	// Recharge dash charges
 	for i := range p.DashCooldowns {
@@ -338,6 +362,9 @@ func (p *Player) StartDash(dirX, dirY float64) {
 
 	dirX /= mag
 	dirY /= mag
+
+	p.LastMoveDirX = dirX
+	p.LastMoveDirY = dirY
 
 	p.IsDashing = true
 	p.DashTimer = constants.DashDuration
