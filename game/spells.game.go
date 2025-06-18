@@ -13,14 +13,19 @@ func (g *Game) updateSpells() {
 		sp.Update(g.currentLevel, g.DeltaTime)
 		if fb, ok := sp.(*spells.Fireball); ok {
 			if !fb.Impact {
-				tx := int(math.Floor(fb.X))
-				ty := int(math.Floor(fb.Y))
 				for _, m := range g.Monsters {
 					if m.IsDead {
 						continue
 					}
-					if m.TileX == tx && m.TileY == ty {
+
+					dx := m.InterpX - fb.X
+					dy := m.InterpY - fb.Y
+					distSq := dx*dx + dy*dy
+
+					if distSq <= fb.Radius*fb.Radius {
 						fb.Impact = true
+						tx := int(math.Floor(fb.X))
+						ty := int(math.Floor(fb.Y))
 						g.applyFireballDamage(fb, tx, ty)
 						break
 					}
@@ -44,15 +49,15 @@ func (g *Game) applyFireballDamage(fb *spells.Fireball, cx, cy int) {
 	case 1:
 		radius = 0
 		fb.ImpactImg = g.spriteSheet.FireBurst
-		mult = 1
+		mult = 1.0
 	case 2:
 		radius = 1
 		fb.ImpactImg = g.spriteSheet.FireBurst2
-		mult = 1.5
+		mult = 2.0
 	case 3:
 		radius = 2
 		fb.ImpactImg = g.spriteSheet.FireBurst3
-		mult = 2
+		mult = 4.0
 	}
 
 	dmg := int(float64(fb.Info.Damage) * mult)

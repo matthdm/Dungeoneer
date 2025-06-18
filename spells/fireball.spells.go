@@ -1,6 +1,7 @@
 package spells
 
 import (
+	"dungeoneer/constants"
 	"dungeoneer/images"
 	"dungeoneer/levels"
 	"fmt"
@@ -46,6 +47,9 @@ type Fireball struct {
 
 	Angle float64
 
+	// Radius defines the hitbox for proximity checks
+	Radius float64
+
 	dirIndex   int
 	frame      int
 	tick       int
@@ -76,6 +80,7 @@ func NewFireball(info SpellInfo, startX, startY, targetX, targetY float64, sprit
 		Speed:     8.0,
 		Angle:     angle,
 		ImpactImg: impact,
+		Radius:    constants.FireballHitRadius,
 	}
 	fb.dirIndex = angleToDir(angle)
 	FireballSprites = sprites
