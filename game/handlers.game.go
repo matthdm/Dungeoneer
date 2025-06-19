@@ -219,6 +219,12 @@ func (g *Game) handleLevelHotkeys() {
 			g.castChaosRay(gx, gy, float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
 		}
 	}
+
+	if inpututil.IsKeyJustPressed(ebiten.KeyZ) {
+		if g.player != nil {
+			g.castLightningStrike(float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
+		}
+	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyH) {
 		g.SpellDebug = !g.SpellDebug
 	}

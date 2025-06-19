@@ -34,6 +34,12 @@ func (g *Game) updateSpells() {
 				// impact done
 			}
 		}
+		if ls, ok := sp.(*spells.LightningStrike); ok {
+			if !ls.DamageApplied {
+				g.applyLightningDamage(ls, int(math.Floor(ls.X)), int(math.Floor(ls.Y)))
+				ls.DamageApplied = true
+			}
+		}
 		if !sp.IsFinished() {
 			remaining = append(remaining, sp)
 		}
@@ -146,4 +152,31 @@ func (g *Game) castChaosRay(casterX, casterY, targetX, targetY float64, c *spell
 	cr := spells.NewChaosRay(info, casterX, casterY, targetX, targetY)
 	g.applyChaosRayDamage(cr)
 	g.ActiveSpells = append(g.ActiveSpells, cr)
+}
+
+func (g *Game) applyLightningDamage(l *spells.LightningStrike, cx, cy int) {
+	radius := 1
+	dmg := l.Info.Damage
+	for _, m := range g.Monsters {
+		if m.IsDead {
+			continue
+		}
+		dx := int(math.Abs(float64(m.TileX - cx)))
+		dy := int(math.Abs(float64(m.TileY - cy)))
+		if dx <= radius && dy <= radius {
+			if g.hasLineOfSight(cx, cy, m.TileX, m.TileY) {
+				m.TakeDamage(dmg, &g.HitMarkers, &g.DamageNumbers)
+			}
+		}
+	}
+}
+
+func (g *Game) castLightningStrike(targetX, targetY float64, c *spells.Caster) {
+	info := spells.SpellInfo{Name: "lightning", Level: 1, Cooldown: 0.01, Damage: 8}
+	if !c.Ready(info) {
+		return
+	}
+	c.PutOnCooldown(info)
+	ls := spells.NewLightningStrike(info, targetX, targetY, g.spriteSheet.ArcaneBurst)
+	g.ActiveSpells = append(g.ActiveSpells, ls)
 }
