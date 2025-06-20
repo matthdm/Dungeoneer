@@ -79,7 +79,7 @@ func NewGame() (*Game, error) {
 	if err != nil {
 		return nil, err
 	}
-	l := levels.CreateNewBlankLevel(64, 64, 64, ss)
+	l := levels.CreateNewBlankLevel(32, 32, 64, ss)
 	//if err != nil {
 	//	return nil, fmt.Errorf("failed to create new level: %s", err)
 	//}
