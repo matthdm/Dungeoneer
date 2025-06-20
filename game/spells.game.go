@@ -40,6 +40,11 @@ func (g *Game) updateSpells() {
 				ls.DamageApplied = true
 			}
 		}
+		if storm, ok := sp.(*spells.LightningStorm); ok {
+			for _, ns := range storm.TakeSpawns() {
+				remaining = append(remaining, ns)
+			}
+		}
 		if !sp.IsFinished() {
 			remaining = append(remaining, sp)
 		}
@@ -179,4 +184,19 @@ func (g *Game) castLightningStrike(targetX, targetY float64, c *spells.Caster) {
 	c.PutOnCooldown(info)
 	ls := spells.NewLightningStrike(info, targetX, targetY, g.spriteSheet.ArcaneBurst)
 	g.ActiveSpells = append(g.ActiveSpells, ls)
+}
+
+func (g *Game) castLightningStorm(centerX, centerY float64, c *spells.Caster) {
+	info := spells.SpellInfo{Name: "lightningstorm", Level: 1, Cooldown: 3.0, Damage: 8}
+	if !c.Ready(info) {
+		return
+	}
+	c.PutOnCooldown(info)
+
+	// Do not apply any offset hack here — use center-aligned tile coordinates
+	tx := float64(g.hoverTileX)
+	ty := float64(g.hoverTileY)
+
+	storm := spells.NewLightningStorm(info, tx, ty, 3, 0.2, 3.0, c, g.spriteSheet.ArcaneBurst, g.currentLevel)
+	g.ActiveSpells = append(g.ActiveSpells, storm)
 }

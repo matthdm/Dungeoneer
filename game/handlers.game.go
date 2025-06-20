@@ -180,6 +180,7 @@ func (g *Game) handleHoverTile() {
 	cx := (float64(mx)-float64(g.w/2))/g.camScale + g.camX
 	cy := (float64(my)-float64(g.h/2))/g.camScale - g.camY
 	tx, ty := g.isoToCartesian(cx, cy)
+	// These offsets align the hover tile with visual center of diamond tiles
 	g.hoverTileX = int(math.Floor(tx - 1.5))
 	g.hoverTileY = int(math.Floor(ty - 0.5))
 
@@ -219,7 +220,11 @@ func (g *Game) handleLevelHotkeys() {
 			g.castChaosRay(gx, gy, float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
 		}
 	}
-
+	if inpututil.IsKeyJustPressed(ebiten.KeyB) {
+		if g.player != nil {
+			g.castLightningStorm(float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
+		}
+	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyZ) {
 		if g.player != nil {
 			g.castLightningStrike(float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
