@@ -45,6 +45,17 @@ func (g *Game) updateSpells() {
 				remaining = append(remaining, ns)
 			}
 		}
+		if bloom, ok := sp.(*spells.FractalBloom); ok {
+			for _, n := range bloom.TakeSpawns() {
+				remaining = append(remaining, n)
+			}
+		}
+		if node, ok := sp.(*spells.FractalNode); ok {
+			if !node.DamageApplied {
+				g.applyFractalDamage(node, int(math.Floor(node.X)), int(math.Floor(node.Y)))
+				node.DamageApplied = true
+			}
+		}
 		if !sp.IsFinished() {
 			remaining = append(remaining, sp)
 		}
@@ -199,4 +210,31 @@ func (g *Game) castLightningStorm(centerX, centerY float64, c *spells.Caster) {
 
 	storm := spells.NewLightningStorm(info, tx, ty, 3, 0.2, 3.0, c, g.spriteSheet.ArcaneBurst, g.currentLevel)
 	g.ActiveSpells = append(g.ActiveSpells, storm)
+}
+
+func (g *Game) applyFractalDamage(n *spells.FractalNode, cx, cy int) {
+	radius := n.Radius
+	dmg := n.Damage
+	for _, m := range g.Monsters {
+		if m.IsDead {
+			continue
+		}
+		dx := int(math.Abs(float64(m.TileX - cx)))
+		dy := int(math.Abs(float64(m.TileY - cy)))
+		if dx <= radius && dy <= radius {
+			if g.hasLineOfSight(cx, cy, m.TileX, m.TileY) {
+				m.TakeDamage(dmg, &g.HitMarkers, &g.DamageNumbers)
+			}
+		}
+	}
+}
+
+func (g *Game) castFractalBloom(centerX, centerY float64, c *spells.Caster) {
+	info := spells.SpellInfo{Name: "fractalbloom", Level: 1, Cooldown: 4.0, Damage: 6}
+	if !c.Ready(info) {
+		return
+	}
+	c.PutOnCooldown(info)
+	bloom := spells.NewFractalBloom(info, centerX, centerY, c, g.spriteSheet.ArcaneBurst, g.currentLevel, 3, 0.7, 0.2)
+	g.ActiveSpells = append(g.ActiveSpells, bloom)
 }

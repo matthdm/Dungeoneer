@@ -24,7 +24,6 @@ type LightningStorm struct {
 	spawned          []*LightningStrike
 	Finished         bool
 	validStrikeTiles []struct{ X, Y int }
-	currentTileIdx   int
 }
 
 // NewLightningStorm creates a new storm centered on the given tile.
