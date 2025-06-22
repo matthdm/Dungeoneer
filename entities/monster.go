@@ -3,6 +3,7 @@ package entities
 import (
 	"dungeoneer/levels"
 	"dungeoneer/pathing"
+	"dungeoneer/spells"
 	"dungeoneer/sprites"
 	"image/color"
 	"math"
@@ -51,6 +52,8 @@ type Monster struct {
 	IsDead         bool
 	FlashTick      int
 	FlashTicksLeft int // total ticks remaining for the flash effect
+
+	Caster *spells.Caster
 }
 
 func NewMonster(ss *sprites.SpriteSheet) []*Monster {
@@ -69,6 +72,7 @@ func NewMonster(ss *sprites.SpriteSheet) []*Monster {
 			Damage:           1,
 			AttackRate:       30,
 			IsDead:           false,
+			Caster:           spells.NewCaster(),
 		},
 	}
 }
@@ -77,6 +81,9 @@ func (m *Monster) Update(player *Player, level *levels.Level) {
 	//m.TickCount++
 	// Smooth interpolation update
 	m.UpdateMovement()
+	if m.Caster != nil {
+		m.Caster.Update(1.0 / 60.0)
+	}
 	if m.Behavior != nil {
 		m.Behavior.Update(m, player, level)
 	}

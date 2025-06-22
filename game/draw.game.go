@@ -3,7 +3,9 @@ package game
 import (
 	"dungeoneer/constants"
 	"dungeoneer/fov"
+	"dungeoneer/spells"
 	"fmt"
+	"image"
 	"image/color"
 	"math"
 	"time"
@@ -53,6 +55,17 @@ func (g *Game) drawGameOver(screen *ebiten.Image) {
 	ebitenutil.DebugPrintAt(screen, msg, g.w/2-100, g.h/2)
 }
 
+func (g *Game) drawSpells(target *ebiten.Image, scale, cx, cy float64) {
+	for _, sp := range g.ActiveSpells {
+		sp.Draw(target, g.currentLevel.TileSize, g.camX, g.camY, scale, cx, cy)
+		if g.SpellDebug {
+			if fb, ok := sp.(*spells.Fireball); ok {
+				fb.DebugDraw(target, g.currentLevel.TileSize, g.camX, g.camY, scale, cx, cy)
+			}
+		}
+	}
+}
+
 func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 	scaleLater := g.camScale > 1
 	target := screen
@@ -67,8 +80,10 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 	g.drawPathPreview(target, scale, cx, cy)
 	g.drawPlayer(target, scale, cx, cy)
 	g.drawMonsters(target, scale, cx, cy)
+	g.drawSpells(target, scale, cx, cy)
 	g.drawHitMarkers(target, scale, cx, cy)
 	g.drawDamageNumbers(target, scale, cx, cy)
+	g.drawHealNumbers(target, scale, cx, cy)
 	g.drawGrapple(target, scale, cx, cy)
 	g.drawHoverTile(target, scale, cx, cy)
 
@@ -97,10 +112,10 @@ func (g *Game) drawGrapple(target *ebiten.Image, scale, cx, cy float64) {
 	// Draw the rope from the player's current position so it follows them
 	startX, startY := g.cartesianToIso(g.player.MoveController.InterpX, g.player.MoveController.InterpY)
 	endX, endY := g.cartesianToIso(g.player.Grapple.HookPos.X, g.player.Grapple.HookPos.Y)
-	sx1 := (startX-g.camX)*scale + cx + 30
-	sy1 := (startY+g.camY)*scale + cy + 25
-	sx2 := (endX-g.camX)*scale + cx + 30
-	sy2 := (endY+g.camY)*scale + cy + 25
+	sx1 := (startX-g.camX+30)*scale + cx
+	sy1 := (startY+g.camY+25)*scale + cy
+	sx2 := (endX-g.camX+30)*scale + cx
+	sy2 := (endY+g.camY+25)*scale + cy
 	vector.StrokeLine(target, float32(sx1), float32(sy1), float32(sx2), float32(sy2), 2, color.White, false)
 }
 func (g *Game) drawDashUI(screen *ebiten.Image) {
@@ -235,6 +250,9 @@ func (g *Game) drawMainMenuLabels(screen *ebiten.Image, cx, cy float64) {
 		g.Menu.OptionsLabel,
 		g.Menu.ExitGameLabel,
 	}
+	if len(g.Menu.EntryRects) != len(labels) {
+		g.Menu.EntryRects = make([]image.Rectangle, len(labels))
+	}
 
 	totalHeight := spacing * float64(len(labels)-1)
 	startY := cy - totalHeight/2
@@ -247,6 +265,10 @@ func (g *Game) drawMainMenuLabels(screen *ebiten.Image, cx, cy float64) {
 
 		op.GeoM.Scale(constants.MainMenuLabelScale, constants.MainMenuLabelScale)
 		op.GeoM.Translate(x, y)
+
+		w, h := img.Size()
+		rect := image.Rect(int(x), int(y), int(x+float64(w)*constants.MainMenuLabelScale), int(y+float64(h)*constants.MainMenuLabelScale))
+		g.Menu.EntryRects[i] = rect
 
 		// Only apply glow to the selected label
 		if i == g.Menu.SelectedIndex {

@@ -19,22 +19,23 @@ func NewAmbushBehavior(radius int) *AmbushBehavior {
 
 func NewStatueMonster(ss *sprites.SpriteSheet) []*Monster {
 	return []*Monster{
+
+		{
+			Name:             "Statue Monster",
+			TileX:            10,
+			TileY:            10,
+			InterpX:          10,
+			InterpY:          10,
+			Sprite:           ss.Statue,
+			MovementDuration: 30,
+			LeftFacing:       true,
+			HP:               8,
+			MaxHP:            8,
+			Damage:           2,
+			AttackRate:       45,
+			Behavior:         NewAmbushBehavior(4), // Trigger when player is within 2 tiles
+		},
 		/*
-			{
-				Name:             "Statue Monster",
-				TileX:            10,
-				TileY:            10,
-				InterpX:          10,
-				InterpY:          10,
-				Sprite:           ss.Statue,
-				MovementDuration: 30,
-				LeftFacing:       true,
-				HP:               8,
-				MaxHP:            8,
-				Damage:           2,
-				AttackRate:       45,
-				Behavior:         NewAmbushBehavior(4), // Trigger when player is within 2 tiles
-			},
 			{
 				Name:             "Statue Monster2",
 				TileX:            10,
@@ -94,7 +95,8 @@ func NewStatueMonster(ss *sprites.SpriteSheet) []*Monster {
 				Damage:           2,
 				AttackRate:       45,
 				Behavior:         NewAmbushBehavior(4), // Trigger when player is within 2 tiles
-			},*/
+			},
+		*/
 	}
 }
 

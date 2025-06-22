@@ -7,6 +7,7 @@ import (
 	"dungeoneer/leveleditor"
 	"dungeoneer/levels"
 	"dungeoneer/pathing"
+	"dungeoneer/spells"
 	"dungeoneer/sprites"
 	"dungeoneer/ui"
 	"fmt"
@@ -43,6 +44,12 @@ type Game struct {
 	Monsters               []*entities.Monster
 	HitMarkers             []entities.HitMarker
 	DamageNumbers          []entities.DamageNumber
+	HealNumbers            []entities.DamageNumber
+
+	ActiveSpells    []spells.Spell
+	fireballSprites [][]*ebiten.Image
+
+	SpellDebug bool
 
 	RaycastWalls             []fov.Line
 	ShowRays                 bool
@@ -69,7 +76,11 @@ func NewGame() (*Game, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to load sprite sheet: %s", err)
 	}
-	l := levels.CreateNewBlankLevel(64, 64, 64, ss)
+	fbSprites, err := spells.LoadFireballSprites()
+	if err != nil {
+		return nil, err
+	}
+	l := levels.CreateNewBlankLevel(32, 32, 64, ss)
 	//if err != nil {
 	//	return nil, fmt.Errorf("failed to create new level: %s", err)
 	//}
@@ -83,23 +94,26 @@ func NewGame() (*Game, error) {
 	}
 
 	g := &Game{
-		currentLevel:   l,
-		isPaused:       false,
-		camScale:       1,
-		camScaleTo:     1,
-		minCamScale:    0.12,
-		mousePanX:      math.MinInt32,
-		mousePanY:      math.MinInt32,
-		spriteSheet:    ss,
-		highlightImage: ss.Cursor,
-		editor:         leveleditor.NewEditor(l, 640, 480),
-		FullBright:     true,
-		player:         entities.NewPlayer(ss),
-		Monsters:       entities.NewStatueMonster(ss),
-		RaycastWalls:   fov.LevelToWalls(l),
-		State:          StateMainMenu,
-		DeltaTime:      1.0 / 60.0,
-		camSmooth:      0.1,
+		currentLevel:    l,
+		isPaused:        false,
+		camScale:        1,
+		camScaleTo:      1,
+		minCamScale:     0.12,
+		mousePanX:       math.MinInt32,
+		mousePanY:       math.MinInt32,
+		spriteSheet:     ss,
+		highlightImage:  ss.Cursor,
+		editor:          leveleditor.NewEditor(l, 640, 480),
+		FullBright:      true,
+		player:          entities.NewPlayer(ss),
+		Monsters:        entities.NewStatueMonster(ss),
+		fireballSprites: fbSprites,
+		ActiveSpells:    []spells.Spell{},
+		RaycastWalls:    fov.LevelToWalls(l),
+		State:           StateMainMenu,
+		DeltaTime:       1.0 / 60.0,
+		camSmooth:       0.1,
+		SpellDebug:      true,
 	}
 	mm, err := ui.NewMainMenu()
 	if err != nil {
@@ -352,10 +366,13 @@ func (g *Game) updatePlaying() error {
 		m.Update(g.player, g.currentLevel)
 	}
 
+	g.updateSpells()
+
 	// Debugging / editor / effects
 	g.DebugLevelEditor()
 	g.handleHitMarkers()
 	g.handleDamageNumbers()
+	g.handleHealNumbers()
 	return nil
 }
 

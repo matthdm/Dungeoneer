@@ -17,19 +17,23 @@ func (g *Game) handleMainMenuInput() {
 		return
 	}
 
-	// Navigate up
-	if inpututil.IsKeyJustPressed(ebiten.KeyW) || inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) {
-		g.Menu.SelectedIndex--
-		if g.Menu.SelectedIndex < 0 {
-			g.Menu.SelectedIndex = len(g.Menu.Options) - 1
-		}
-	}
-
-	// Navigate down
-	if inpututil.IsKeyJustPressed(ebiten.KeyS) || inpututil.IsKeyJustPressed(ebiten.KeyArrowDown) {
-		g.Menu.SelectedIndex++
-		if g.Menu.SelectedIndex >= len(g.Menu.Options) {
-			g.Menu.SelectedIndex = 0
+	// Mouse hover and click handling
+	mx, my := ebiten.CursorPosition()
+	for i, r := range g.Menu.EntryRects {
+		if mx >= r.Min.X && mx <= r.Max.X && my >= r.Min.Y && my <= r.Max.Y {
+			g.Menu.SelectedIndex = i
+			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+				switch g.Menu.Options[i] {
+				case "New Game":
+					g.State = StatePlaying
+				case "Options":
+					// Implement later
+				case "Exit Game":
+					os.Exit(2)
+				}
+				return
+			}
+			break
 		}
 	}
 
@@ -176,6 +180,7 @@ func (g *Game) handleHoverTile() {
 	cx := (float64(mx)-float64(g.w/2))/g.camScale + g.camX
 	cy := (float64(my)-float64(g.h/2))/g.camScale - g.camY
 	tx, ty := g.isoToCartesian(cx, cy)
+	// These offsets align the hover tile with visual center of diamond tiles
 	g.hoverTileX = int(math.Floor(tx - 1.5))
 	g.hoverTileY = int(math.Floor(ty - 0.5))
 
@@ -202,7 +207,41 @@ func (g *Game) handleLevelHotkeys() {
 		}
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyT) {
-		//g.currentLevel = levels.NewLevel1()
+		if g.player != nil {
+			gx := g.player.MoveController.InterpX
+			gy := g.player.MoveController.InterpY
+			g.castFireball(gx, gy, float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
+		}
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyX) {
+		if g.player != nil {
+			gx := g.player.MoveController.InterpX
+			gy := g.player.MoveController.InterpY
+			g.castChaosRay(gx, gy, float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
+		}
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyB) {
+		if g.player != nil {
+			g.castLightningStorm(float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
+		}
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyM) {
+		if g.player != nil {
+			g.castFractalCanopy(float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
+		}
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyN) {
+		if g.player != nil {
+			g.castFractalBloom(float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
+		}
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyZ) {
+		if g.player != nil {
+			g.castLightningStrike(float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
+		}
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyH) {
+		g.SpellDebug = !g.SpellDebug
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyG) {
 		g.ShowRays = !g.ShowRays

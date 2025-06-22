@@ -52,3 +52,7 @@ const (
 	GrappleSpeed = 30.0 // tiles per second for extension and pull
 	GrappleDelay = 0.1  // delay before pulling starts
 )
+
+const (
+	FireballHitRadius = 0.75
+)
