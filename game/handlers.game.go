@@ -225,6 +225,11 @@ func (g *Game) handleLevelHotkeys() {
 			g.castLightningStorm(float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
 		}
 	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyM) {
+		if g.player != nil {
+			g.castFractalCanopy(float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
+		}
+	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyN) {
 		if g.player != nil {
 			g.castFractalBloom(float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)

@@ -44,6 +44,7 @@ type Game struct {
 	Monsters               []*entities.Monster
 	HitMarkers             []entities.HitMarker
 	DamageNumbers          []entities.DamageNumber
+	HealNumbers            []entities.DamageNumber
 
 	ActiveSpells    []spells.Spell
 	fireballSprites [][]*ebiten.Image
@@ -371,6 +372,7 @@ func (g *Game) updatePlaying() error {
 	g.DebugLevelEditor()
 	g.handleHitMarkers()
 	g.handleDamageNumbers()
+	g.handleHealNumbers()
 	return nil
 }
 

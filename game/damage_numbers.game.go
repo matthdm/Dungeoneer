@@ -34,3 +34,28 @@ func (g *Game) drawDamageNumbers(target *ebiten.Image, scale, cx, cy float64) {
 		text.Draw(target, msg, basicfont.Face7x13, int(drawX), int(drawY), clr)
 	}
 }
+
+func (g *Game) handleHealNumbers() {
+	var remaining []entities.DamageNumber
+	for _, heal := range g.HealNumbers {
+		heal.Ticks++
+		if heal.Ticks < heal.MaxTicks {
+			remaining = append(remaining, heal)
+		}
+	}
+	g.HealNumbers = remaining
+}
+
+func (g *Game) drawHealNumbers(target *ebiten.Image, scale, cx, cy float64) {
+	for _, h := range g.HealNumbers {
+		xi, yi := g.cartesianToIso(h.X, h.Y)
+		drawX := (xi-g.camX)*scale + cx
+		drawY := (yi+g.camY)*scale + cy - float64(h.Ticks)
+
+		alpha := 1.0 - float64(h.Ticks)/float64(h.MaxTicks)
+		clr := color.NRGBA{0, 255, 0, uint8(alpha * 255)} // Green!
+
+		msg := fmt.Sprintf("+%d", h.Value)
+		text.Draw(target, msg, basicfont.Face7x13, int(drawX), int(drawY), clr)
+	}
+}

@@ -3,6 +3,7 @@ package game
 import (
 	"math"
 
+	"dungeoneer/entities"
 	"dungeoneer/fov"
 	"dungeoneer/spells"
 )
@@ -49,6 +50,9 @@ func (g *Game) updateSpells() {
 			for _, n := range bloom.TakeSpawns() {
 				remaining = append(remaining, n)
 			}
+		}
+		if fc, ok := sp.(*spells.FractalCanopy); ok {
+			g.applyFractalCanopyHealing(fc)
 		}
 		if node, ok := sp.(*spells.FractalNode); ok {
 			if !node.DamageApplied {
@@ -237,4 +241,67 @@ func (g *Game) castFractalBloom(centerX, centerY float64, c *spells.Caster) {
 	c.PutOnCooldown(info)
 	bloom := spells.NewFractalBloom(info, centerX, centerY, c, g.spriteSheet.ArcaneBurst, g.currentLevel, 3, 0.7, 0.2)
 	g.ActiveSpells = append(g.ActiveSpells, bloom)
+}
+func (g *Game) applyFractalCanopyHealing(fc *spells.FractalCanopy) {
+	if g.player == nil || g.player.IsDead {
+		return
+	}
+
+	dx := g.player.MoveController.InterpX - fc.X
+	dy := g.player.MoveController.InterpY - fc.Y
+	dist := math.Hypot(dx, dy)
+	if dist > fc.Radius {
+		return
+	}
+
+	// Scale heal based on growth stage
+	frac := fc.Age / fc.MaxGrowTime
+	if frac > 1 {
+		frac = 1
+	}
+	healPerSec := fc.HealingMin + (fc.HealingMax-fc.HealingMin)*frac
+
+	// Heal every full second
+	fc.HealingTickTimer += g.DeltaTime
+	if fc.HealingTickTimer < 1.0 {
+		return
+	}
+	fc.HealingTickTimer = 0
+
+	healAmt := int(healPerSec)
+	if healAmt <= 0 {
+		return
+	}
+
+	g.player.HP += healAmt
+	if g.player.HP > g.player.MaxHP {
+		g.player.HP = g.player.MaxHP
+	}
+
+	g.HealNumbers = append(g.HealNumbers, entities.DamageNumber{
+		X:        g.player.MoveController.InterpX,
+		Y:        g.player.MoveController.InterpY,
+		Value:    healAmt,
+		Ticks:    0,
+		MaxTicks: 40,
+	})
+}
+
+func (g *Game) castFractalCanopy(centerX, centerY float64, c *spells.Caster) {
+	info := spells.SpellInfo{Name: "fractalcanopy", Level: 1, Cooldown: 5.0, Damage: 0}
+	if !c.Ready(info) {
+		return
+	}
+	c.PutOnCooldown(info)
+	fc := &spells.FractalCanopy{
+		MaxGrowTime: 5,
+		MaxDuration: 10,
+		MaxRadius:   5,
+		HealingMin:  3,
+		HealingMax:  15,
+		X:           centerX,
+		Y:           centerY,
+		Visual:      spells.NewFractalCanopyVisual(centerX, centerY, 10),
+	}
+	g.ActiveSpells = append(g.ActiveSpells, fc)
 }
