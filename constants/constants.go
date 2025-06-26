@@ -2,13 +2,27 @@ package constants
 
 const (
 	DEBUG_TEMPLATE = `DEBUG LOG
-CAM  WASD 
-ZM   EC 
-LVL  R T Q
-FPS  %0.0f
-TPS  %0.0f
-SCA  %0.2f
-POS  %0.0f,%0.0f
+FPS      %0.0f
+TPS      %0.0f
+SCA      %0.2f
+POS      %0.0f,%0.0f
+CONTROLS F1
+`
+	DEBUG_BINDS_TEMPLATE = `BINDS
+EDITOR  P
+MOVE    WASD/M2
+DASH    SHIFT
+GRPPL   F
+MENU    ESC
+CAM     ARROWS
+DRAG    M3
+ZM      WHEEL+/-
+SPELLS  1-6
+LOS     9
+FOW     0
+ATK     M1
+QSV/LD  F5/F6
+LVL     N/M/ESC
 `
 )
 

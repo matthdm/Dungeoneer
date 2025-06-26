@@ -216,6 +216,11 @@ type SpriteSheet struct {
 	Smoke2       *ebiten.Image // (4, 11)
 	PurpleSmoke  *ebiten.Image // (5, 11)
 	Trap         *ebiten.Image // (6, 11)
+
+	// Walls stores additional wall palettes that can be used for level generation.
+	// The key is the flavor name (e.g. "stone", "brick"), and the value is a
+	// WallSpriteSheet loaded from the embedded resources.
+	Walls map[string]*WallSpriteSheet
 }
 
 // LoadSpriteSheet loads the embedded SpriteSheet.
@@ -231,8 +236,10 @@ func LoadSpriteSheet(tileSize int) (*SpriteSheet, error) {
 	}
 
 	// Populate SpriteSheet.
-	s := &SpriteSheet{} // <– Init map}
 
+	s := &SpriteSheet{} // <– Init map
+
+	s.Walls = make(map[string]*WallSpriteSheet)
 	s.Void = spriteAt(0, 0)
 	s.OakBeam = spriteAt(1, 0)
 	s.OakBeamNW = spriteAt(2, 0)
