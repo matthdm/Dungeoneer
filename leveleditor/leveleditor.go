@@ -111,7 +111,7 @@ func (e *Editor) PlaceSelectedSpriteAt(tx, ty int) {
 	}
 
 	// Allow base floor + 1 extra
-	if len(tile.Sprites) >= 2 {
+	if len(tile.Sprites) >= 3 {
 		return // already has base + 1
 	}
 

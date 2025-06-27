@@ -16,6 +16,7 @@ import (
 )
 
 var menuStart = time.Now()
+var controlToggle bool = false
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	cx, cy := float64(g.w/2), float64(g.h/2)
@@ -43,7 +44,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if g.editor.Active && g.editor.PaletteOpen {
 		g.editor.Palette.Draw(screen)
 	}
-	ebitenutil.DebugPrint(screen, fmt.Sprintf(constants.DEBUG_TEMPLATE, ebiten.ActualFPS(), ebiten.ActualTPS(), g.camScale, g.camX, g.camY))
+	if !controlToggle {
+		ebitenutil.DebugPrint(screen, fmt.Sprintf(constants.DEBUG_TEMPLATE, ebiten.ActualFPS(), ebiten.ActualTPS(), g.camScale, g.camX, g.camY))
+	} else {
+		ebitenutil.DebugPrint(screen, fmt.Sprintf(constants.DEBUG_BINDS_TEMPLATE))
+	}
+
 }
 
 func (g *Game) drawMainMenu(screen *ebiten.Image, cx, cy float64) {
@@ -102,7 +108,7 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 		fov.DebugDrawRays(screen, g.cachedRays, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
 	}
 	g.drawDashUI(screen)
-	fov.DebugDrawWalls(screen, g.RaycastWalls, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
+	//fov.DebugDrawWalls(screen, g.RaycastWalls, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
 }
 
 func (g *Game) drawGrapple(target *ebiten.Image, scale, cx, cy float64) {

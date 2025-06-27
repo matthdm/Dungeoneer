@@ -83,9 +83,9 @@ func (g *Game) resumeGame() {
 
 func (g *Game) handleZoom() {
 	var scrollY float64
-	if ebiten.IsKeyPressed(ebiten.KeyC) || ebiten.IsKeyPressed(ebiten.KeyPageDown) {
+	if ebiten.IsKeyPressed(ebiten.KeyPageDown) {
 		scrollY = -0.25
-	} else if ebiten.IsKeyPressed(ebiten.KeyE) || ebiten.IsKeyPressed(ebiten.KeyPageUp) {
+	} else if ebiten.IsKeyPressed(ebiten.KeyPageUp) {
 		scrollY = 0.25
 	} else {
 		_, scrollY = ebiten.Wheel()
@@ -196,57 +196,68 @@ func (g *Game) handleHoverTile() {
 }
 
 func (g *Game) handleLevelHotkeys() {
-	if inpututil.IsKeyJustPressed(ebiten.KeyR) {
-		if l, err := levels.NewDungeonLevel(); err == nil {
+	if inpututil.IsKeyJustPressed(ebiten.KeyM) {
+		if l, err := levels.NewMazeLevel(); err == nil {
 			g.currentLevel = l
+			g.UpdateSeenTiles(*l)
 		}
 	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyQ) {
+	if inpututil.IsKeyJustPressed(ebiten.KeyN) {
 		if l, err := levels.NewForestLevel(); err == nil {
 			g.currentLevel = l
+			g.UpdateSeenTiles(*l)
 		}
 	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyT) {
+	if inpututil.IsKeyJustPressed(ebiten.KeyF1) {
+		if !controlToggle {
+			controlToggle = true
+		} else {
+			controlToggle = false
+		}
+	}
+	if inpututil.IsKeyJustPressed(ebiten.Key1) {
 		if g.player != nil {
 			gx := g.player.MoveController.InterpX
 			gy := g.player.MoveController.InterpY
 			g.castFireball(gx, gy, float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
 		}
 	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyX) {
+	if inpututil.IsKeyJustPressed(ebiten.Key2) {
 		if g.player != nil {
 			gx := g.player.MoveController.InterpX
 			gy := g.player.MoveController.InterpY
 			g.castChaosRay(gx, gy, float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
 		}
 	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyB) {
-		if g.player != nil {
-			g.castLightningStorm(float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
-		}
-	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyM) {
+
+	if inpututil.IsKeyJustPressed(ebiten.Key6) {
 		if g.player != nil {
 			g.castFractalCanopy(float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
 		}
 	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyN) {
-		if g.player != nil {
-			g.castFractalBloom(float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
-		}
-	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyZ) {
+	if inpututil.IsKeyJustPressed(ebiten.Key3) {
 		if g.player != nil {
 			g.castLightningStrike(float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
 		}
 	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyH) {
+	if inpututil.IsKeyJustPressed(ebiten.Key4) {
+		if g.player != nil {
+			g.castLightningStorm(float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
+		}
+	}
+	if inpututil.IsKeyJustPressed(ebiten.Key5) {
+		if g.player != nil {
+			g.castFractalBloom(float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
+		}
+	}
+
+	if inpututil.IsKeyJustPressed(ebiten.Key8) {
 		g.SpellDebug = !g.SpellDebug
 	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyG) {
+	if inpututil.IsKeyJustPressed(ebiten.Key9) {
 		g.ShowRays = !g.ShowRays
 	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyY) {
+	if inpututil.IsKeyJustPressed(ebiten.Key0) {
 		g.FullBright = !g.FullBright
 	}
 	if g.State == StateGameOver && ebiten.IsKeyPressed(ebiten.KeyV) {

@@ -1,6 +1,7 @@
 package levels
 
 import (
+	"dungeoneer/constants"
 	"dungeoneer/sprites"
 	"dungeoneer/tiles"
 
@@ -84,6 +85,24 @@ func NewDungeonLevel() (*Level, error) {
 	}
 
 	return l, nil
+}
+
+func NewMazeLevel() (*Level, error) {
+	// Load embedded SpriteSheet.
+	ss, err := sprites.LoadSpriteSheet(constants.DefaultTileSize)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load embedded spritesheet: %s", err)
+	}
+	cfg := MazeConfig{
+		Width:        64,
+		Height:       64,
+		Tessellation: "ortho",
+		Routing:      "prim",
+		Texture:      "elitism",
+		WallFlavor:   "stone",
+	}
+	lvl := GenerateMaze(cfg, ss)
+	return lvl, nil
 }
 
 func NewForestLevel() (*Level, error) {
