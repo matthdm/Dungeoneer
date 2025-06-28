@@ -21,11 +21,12 @@ type TileData struct {
 }
 
 type LevelData struct {
-	Width         int          `json:"width"`
-	Height        int          `json:"height"`
-	TileSize      int          `json:"tile_size"`
-	Tiles         [][]TileData `json:"tiles"`
-	SpritePalette []string     `json:"sprite_palette"`
+	Width         int                   `json:"width"`
+	Height        int                   `json:"height"`
+	TileSize      int                   `json:"tile_size"`
+	Tiles         [][]TileData          `json:"tiles"`
+	SpritePalette []string              `json:"sprite_palette"`
+	Entities      []levels.PlacedEntity `json:"entities"`
 }
 
 var SpriteRegistry = map[string]SpriteMetadata{}
@@ -826,6 +827,7 @@ func ConvertToLevelData(level *levels.Level) *LevelData {
 		TileSize:      level.TileSize,
 		Tiles:         make([][]TileData, level.H),
 		SpritePalette: palette,
+		Entities:      level.Entities,
 	}
 
 	for y := 0; y < level.H; y++ {
@@ -857,6 +859,7 @@ func ConvertToLevel(data *LevelData) *levels.Level {
 		H:        data.Height,
 		TileSize: data.TileSize,
 		Tiles:    make([][]*tiles.Tile, data.Height),
+		Entities: data.Entities,
 	}
 
 	for y := 0; y < data.Height; y++ {

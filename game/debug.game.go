@@ -30,13 +30,21 @@ func (g *Game) DebugLevelEditor() {
 		} else {
 			g.currentLevel = level
 			g.UpdateSeenTiles(*level)
+			g.spawnEntitiesFromLevel()
 			fmt.Println("Level loaded from test_level.json")
+
 		}
 	}
 
 	// Tile painting
-	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) && !g.editor.JustSelectedSprite {
-		g.editor.PlaceSelectedSpriteAt(g.hoverTileX, g.hoverTileY)
+	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) &&
+		!g.editor.JustSelectedSprite && !g.editor.JustSelectedEntity {
+		if g.editor.SelectedEntityID != "" {
+			g.editor.PlaceSelectedEntityAt(g.hoverTileX, g.hoverTileY)
+			g.spawnEntitiesFromLevel()
+		} else {
+			g.editor.PlaceSelectedSpriteAt(g.hoverTileX, g.hoverTileY)
+		}
 	}
 
 	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonMiddle) {
