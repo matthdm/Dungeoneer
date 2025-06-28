@@ -3,6 +3,8 @@ package entities
 import (
 	"dungeoneer/levels"
 	"dungeoneer/sprites"
+
+	"github.com/hajimehoshi/ebiten/v2"
 )
 
 type AmbushBehavior struct {
@@ -14,6 +16,26 @@ func NewAmbushBehavior(radius int) *AmbushBehavior {
 	return &AmbushBehavior{
 		TriggerRadius: radius,
 		Triggered:     false,
+	}
+}
+
+// CreateAmbushMonster constructs an ambush monster at the given coordinates
+// using the provided sprite image.
+func CreateAmbushMonster(sprite *ebiten.Image, x, y int) *Monster {
+	return &Monster{
+		Name:             "Ambush Monster",
+		TileX:            x,
+		TileY:            y,
+		InterpX:          float64(x),
+		InterpY:          float64(y),
+		Sprite:           sprite,
+		MovementDuration: 30,
+		LeftFacing:       true,
+		HP:               8,
+		MaxHP:            8,
+		Damage:           2,
+		AttackRate:       45,
+		Behavior:         NewAmbushBehavior(4),
 	}
 }
 

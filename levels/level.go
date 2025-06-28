@@ -9,12 +9,21 @@ import (
 	"math/rand/v2"
 )
 
+// PlacedEntity represents an entity placed on the map via the editor.
+// It stores the tile coordinates, the entity type, and the sprite to use.
+type PlacedEntity struct {
+	X, Y     int
+	Type     string
+	SpriteID string
+}
+
 // Level represents a Game level.
 type Level struct {
 	W, H int
 
 	Tiles    [][]*tiles.Tile // (Y,X) array of tiles
 	TileSize int
+	Entities []PlacedEntity
 }
 
 // Tile returns the tile at the provided coordinates, or nil.
@@ -37,6 +46,7 @@ func NewDungeonLevel() (*Level, error) {
 		W:        64, //64,
 		H:        64, //64,
 		TileSize: 64, //64,
+		Entities: []PlacedEntity{},
 	}
 
 	// Load embedded SpriteSheet.
@@ -111,6 +121,7 @@ func NewForestLevel() (*Level, error) {
 		W:        64, //64,
 		H:        64, //64,
 		TileSize: 64, //64,
+		Entities: []PlacedEntity{},
 	}
 
 	// Load embedded SpriteSheet.
@@ -173,6 +184,7 @@ func CreateNewBlankLevel(width, height, tileSize int, ss *sprites.SpriteSheet) *
 		H:        height,
 		TileSize: tileSize,
 		Tiles:    make([][]*tiles.Tile, height),
+		Entities: []PlacedEntity{},
 	}
 
 	for y := 0; y < height; y++ {

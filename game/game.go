@@ -106,7 +106,7 @@ func NewGame() (*Game, error) {
 		editor:          leveleditor.NewEditor(l, 640, 480),
 		FullBright:      true,
 		player:          entities.NewPlayer(ss),
-		Monsters:        entities.NewStatueMonster(ss),
+		Monsters:        []*entities.Monster{},
 		fireballSprites: fbSprites,
 		ActiveSpells:    []spells.Spell{},
 		RaycastWalls:    fov.LevelToWalls(l),
@@ -115,6 +115,7 @@ func NewGame() (*Game, error) {
 		camSmooth:       0.1,
 		SpellDebug:      true,
 	}
+	g.spawnEntitiesFromLevel()
 	mm, err := ui.NewMainMenu()
 	if err != nil {
 		return nil, fmt.Errorf("failed create new main menu: %s", err)
@@ -127,6 +128,7 @@ func NewGame() (*Game, error) {
 			g.currentLevel = loaded
 			g.isPaused = false
 			g.UpdateSeenTiles(*loaded)
+			g.spawnEntitiesFromLevel()
 		},
 		func() {
 			g.LoadLevelMenu.Hide()
@@ -214,6 +216,28 @@ func (g *Game) UpdateSeenTiles(level levels.Level) {
 	}
 	g.SeenTiles = seen
 }
+
+// spawnEntitiesFromLevel creates monsters based on the placed entities in the
+// currently loaded level.
+func (g *Game) spawnEntitiesFromLevel() {
+	g.Monsters = []*entities.Monster{}
+	for _, ent := range g.currentLevel.Entities {
+		// skip invalid coordinates to avoid crashes
+		if ent.X < 0 || ent.Y < 0 || ent.X >= g.currentLevel.W || ent.Y >= g.currentLevel.H {
+			continue
+		}
+		switch ent.Type {
+		case "AmbushMonster":
+			meta, ok := leveleditor.SpriteRegistry[ent.SpriteID]
+			if !ok {
+				continue
+			}
+			m := entities.CreateAmbushMonster(meta.Image, ent.X, ent.Y)
+			g.Monsters = append(g.Monsters, m)
+		}
+	}
+}
+
 
 //This function might be useful for those who want to modify this example.
 
