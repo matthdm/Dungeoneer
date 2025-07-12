@@ -20,6 +20,7 @@ import (
 
 type Game struct {
 	w, h          int
+	currentWorld  *levels.LayeredLevel
 	currentLevel  *levels.Level
 	State         GameState
 	Menu          *ui.MainMenu
@@ -63,6 +64,20 @@ type Game struct {
 	camSmooth    float64
 }
 
+// editorLayerChanged updates the game when the level editor switches layers.
+func (g *Game) editorLayerChanged(l *levels.Level) {
+	if l == nil || g.currentWorld == nil {
+		return
+	}
+
+	idx := g.currentWorld.ActiveIndex
+	entry := levels.Point{}
+	if g.player != nil {
+		entry = levels.Point{X: g.player.TileX, Y: g.player.TileY}
+	}
+	g.switchLayer(idx, entry)
+}
+
 type GameState int
 
 const (
@@ -81,9 +96,8 @@ func NewGame() (*Game, error) {
 		return nil, err
 	}
 	l := levels.CreateNewBlankLevel(64, 64, 64, ss)
-	//if err != nil {
-	//	return nil, fmt.Errorf("failed to create new level: %s", err)
-	//}
+	world := levels.NewLayeredLevel(l)
+
 	//This is needed for save/loading levels
 	leveleditor.RegisterSprites(ss)
 	// Load wall sprite sheets for all available flavors
@@ -94,6 +108,7 @@ func NewGame() (*Game, error) {
 	}
 
 	g := &Game{
+		currentWorld:    world,
 		currentLevel:    l,
 		isPaused:        false,
 		camScale:        1,
@@ -103,7 +118,7 @@ func NewGame() (*Game, error) {
 		mousePanY:       math.MinInt32,
 		spriteSheet:     ss,
 		highlightImage:  ss.Cursor,
-		editor:          leveleditor.NewEditor(l, 640, 480),
+		editor:          leveleditor.NewLayeredEditor(world, 640, 480),
 		FullBright:      true,
 		player:          entities.NewPlayer(ss),
 		Monsters:        []*entities.Monster{},
@@ -115,6 +130,7 @@ func NewGame() (*Game, error) {
 		camSmooth:       0.1,
 		SpellDebug:      true,
 	}
+	g.editor.OnLayerChange = g.editorLayerChanged
 	g.spawnEntitiesFromLevel()
 	mm, err := ui.NewMainMenu()
 	if err != nil {
@@ -173,8 +189,11 @@ func NewGame() (*Game, error) {
 		},
 		OnNewBlank: func() {
 			newLevel := levels.CreateNewBlankLevel(64, 64, g.currentLevel.TileSize, ss) // TODO: Prompt for dimensions later
+			newWorld := levels.NewLayeredLevel(newLevel)
+			g.currentWorld = newWorld
 			g.currentLevel = newLevel
-			g.editor = leveleditor.NewEditor(newLevel, g.w, g.h)
+			g.editor = leveleditor.NewLayeredEditor(newWorld, g.w, g.h)
+			g.editor.OnLayerChange = g.editorLayerChanged
 			g.UpdateSeenTiles(*newLevel)
 		},
 	})
@@ -200,6 +219,22 @@ func (g *Game) cartesianToIso(x, y float64) (float64, float64) {
 	return ix, iy
 }
 
+// switchLayer activates the given layer and moves the player to the entry tile.
+func (g *Game) switchLayer(index int, entry levels.Point) {
+	g.currentWorld.SwitchToLayer(index, entry)
+	g.currentLevel = g.currentWorld.ActiveLayer()
+	if g.player != nil {
+		g.player.TileX = entry.X
+		g.player.TileY = entry.Y
+		g.player.MoveController.InterpX = float64(entry.X)
+		g.player.MoveController.InterpY = float64(entry.Y)
+		g.player.MoveController.Path = nil
+	}
+	g.UpdateSeenTiles(*g.currentLevel)
+	g.spawnEntitiesFromLevel()
+	g.cachedRays = nil
+	g.camX, g.camY = 0, 0
+}
 func (g *Game) screenToTile() (int, int) {
 	cx, cy := ebiten.CursorPosition()
 	worldX := float64(cx)/g.camScale + g.camX
@@ -211,10 +246,13 @@ func (g *Game) screenToTile() (int, int) {
 
 func (g *Game) UpdateSeenTiles(level levels.Level) {
 	seen := make([][]bool, level.H)
+	vis := make([][]bool, level.H)
 	for y := range seen {
 		seen[y] = make([]bool, level.W)
+		vis[y] = make([]bool, level.W)
 	}
 	g.SeenTiles = seen
+	g.VisibleTiles = vis
 }
 
 // spawnEntitiesFromLevel creates monsters based on the placed entities in the
@@ -237,7 +275,6 @@ func (g *Game) spawnEntitiesFromLevel() {
 		}
 	}
 }
-
 
 //This function might be useful for those who want to modify this example.
 
@@ -383,6 +420,14 @@ func (g *Game) updatePlaying() error {
 		g.player.PathPreview = path
 		g.player.Update(g.currentLevel, g.DeltaTime)
 		g.updateCameraFollow()
+		// Check layer links
+		for _, link := range g.currentWorld.Stairwells {
+			if link.FromLayerIndex == g.currentWorld.ActiveIndex &&
+				link.FromTile.X == g.player.TileX && link.FromTile.Y == g.player.TileY {
+				g.switchLayer(link.ToLayerIndex, link.ToTile)
+				break
+			}
+		}
 	}
 
 	// Monsters
@@ -440,7 +485,8 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	}
 
 	if g.editor == nil {
-		g.editor = leveleditor.NewEditor(g.currentLevel, g.w, g.h)
+		g.editor = leveleditor.NewLayeredEditor(g.currentWorld, g.w, g.h)
+		g.editor.OnLayerChange = g.editorLayerChanged
 	}
 
 	return g.w, g.h
