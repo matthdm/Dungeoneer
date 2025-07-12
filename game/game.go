@@ -14,6 +14,7 @@ import (
 	"image"
 	"math"
 	"os"
+	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -28,6 +29,7 @@ type Game struct {
 	LoadLevelMenu *ui.LoadLevelMenu
 	SaveLevelMenu *ui.SaveLevelMenu
 	SavePrompt    *ui.TextInputMenu
+	LinkPrompt    *ui.LayerPrompt
 	isPaused      bool
 
 	camX, camY           float64
@@ -131,6 +133,7 @@ func NewGame() (*Game, error) {
 		SpellDebug:      true,
 	}
 	g.editor.OnLayerChange = g.editorLayerChanged
+	g.editor.OnStairPlaced = g.stairPlaced
 	g.spawnEntitiesFromLevel()
 	mm, err := ui.NewMainMenu()
 	if err != nil {
@@ -194,6 +197,7 @@ func NewGame() (*Game, error) {
 			g.currentLevel = newLevel
 			g.editor = leveleditor.NewLayeredEditor(newWorld, g.w, g.h)
 			g.editor.OnLayerChange = g.editorLayerChanged
+			g.editor.OnStairPlaced = g.stairPlaced
 			g.UpdateSeenTiles(*newLevel)
 		},
 	})
@@ -274,6 +278,50 @@ func (g *Game) spawnEntitiesFromLevel() {
 			g.Monsters = append(g.Monsters, m)
 		}
 	}
+}
+
+// stairPlaced is triggered by the editor when a stairwell sprite is placed.
+func (g *Game) stairPlaced(x, y int, spriteID string) {
+	if g.LinkPrompt != nil && g.LinkPrompt.IsVisible() {
+		return
+	}
+	g.LinkPrompt = ui.NewLayerPrompt(g.w, g.h, sprites.WallFlavors,
+		func(wd, ht int, flavor string) {
+			wss, err := sprites.LoadWallSpriteSheet(flavor)
+			if err != nil {
+				g.LinkPrompt = nil
+				return
+			}
+			newL := levels.CreateNewBlankLevelWithFloor(wd, ht, g.currentLevel.TileSize, flavor+"_floor", wss.Floor)
+			g.currentWorld.AddLayer(newL)
+			newIdx := len(g.currentWorld.Layers) - 1
+			counterID := "StairsAscending"
+			if strings.Contains(strings.ToLower(spriteID), "ascending") {
+				counterID = "StairsDecending"
+			}
+			if meta, ok := leveleditor.SpriteRegistry[counterID]; ok {
+				if t := newL.Tile(x, y); t != nil {
+					t.AddSpriteByID(counterID, meta.Image)
+					t.IsWalkable = meta.IsWalkable
+				}
+			}
+			g.currentWorld.Stairwells = append(g.currentWorld.Stairwells, &levels.LayerLink{
+				FromLayerIndex: g.currentWorld.ActiveIndex,
+				FromTile:       levels.Point{X: x, Y: y},
+				ToLayerIndex:   newIdx,
+				ToTile:         levels.Point{X: x, Y: y},
+				TriggerSprite:  spriteID,
+			})
+			g.currentWorld.Stairwells = append(g.currentWorld.Stairwells, &levels.LayerLink{
+				FromLayerIndex: newIdx,
+				FromTile:       levels.Point{X: x, Y: y},
+				ToLayerIndex:   g.currentWorld.ActiveIndex,
+				ToTile:         levels.Point{X: x, Y: y},
+				TriggerSprite:  counterID,
+			})
+			g.LinkPrompt = nil
+		}, func() { g.LinkPrompt = nil })
+	g.LinkPrompt.Show()
 }
 
 //This function might be useful for those who want to modify this example.
@@ -359,6 +407,11 @@ func (g *Game) updatePlaying() error {
 		} else {
 			g.PauseMenu.Update()
 		}
+		return nil
+	}
+
+	if g.LinkPrompt != nil && g.LinkPrompt.IsVisible() {
+		g.LinkPrompt.Update()
 		return nil
 	}
 
@@ -487,6 +540,7 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	if g.editor == nil {
 		g.editor = leveleditor.NewLayeredEditor(g.currentWorld, g.w, g.h)
 		g.editor.OnLayerChange = g.editorLayerChanged
+		g.editor.OnStairPlaced = g.stairPlaced
 	}
 
 	return g.w, g.h

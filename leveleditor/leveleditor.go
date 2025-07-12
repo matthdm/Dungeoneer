@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -30,6 +31,8 @@ type Editor struct {
 	SelectedEntityID   string
 	// OnLayerChange is called whenever the active layer changes.
 	OnLayerChange func(*levels.Level)
+	// OnStairPlaced is called when a stairwell sprite is placed.
+	OnStairPlaced func(x, y int, spriteID string)
 }
 
 func NewEditor(level *levels.Level, screenWidth, screenHeight int) *Editor {
@@ -203,6 +206,12 @@ func (e *Editor) PlaceSelectedSpriteAt(tx, ty int) {
 
 	tile.AddSpriteByID(id, meta.Image)
 	tile.IsWalkable = meta.IsWalkable
+	lower := strings.ToLower(id)
+	if strings.Contains(lower, "stairsascending") || strings.Contains(lower, "stairsdecending") || strings.Contains(lower, "stairsdescending") {
+		if e.OnStairPlaced != nil {
+			e.OnStairPlaced(tx, ty, id)
+		}
+	}
 }
 
 // PlaceSelectedEntityAt places the chosen entity on the given tile.
