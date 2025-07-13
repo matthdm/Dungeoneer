@@ -16,6 +16,11 @@ var (
 	//go:embed spritesheet.png
 	Spritesheet_png []byte
 
+	//go:embed black_mage_full.png
+	Black_Mage_Full_png []byte
+	//go:embed black_mage.png
+	Black_Mage_png []byte
+
 	//go:embed brick.png
 	Brick_png []byte
 	//go:embed brick1.png
