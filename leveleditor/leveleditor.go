@@ -274,3 +274,41 @@ func (e *Editor) PrevLayer() {
 		e.OnLayerChange(e.level)
 	}
 }
+
+// SetLayeredLevel replaces the editor's layered level and refreshes its active layer.
+func (e *Editor) SetLayeredLevel(ll *levels.LayeredLevel) {
+	if ll == nil {
+		return
+	}
+	e.layered = ll
+	e.layerIndex = ll.ActiveIndex
+	e.level = ll.ActiveLayer()
+	if e.OnLayerChange != nil {
+		e.OnLayerChange(e.level)
+	}
+}
+
+// SetActiveLayer changes the editor's active layer by index.
+func (e *Editor) SetActiveLayer(idx int) {
+	if e.layered == nil || idx < 0 || idx >= len(e.layered.Layers) {
+		return
+	}
+	e.layerIndex = idx
+	e.layered.ActiveIndex = idx
+	e.level = e.layered.ActiveLayer()
+	if e.OnLayerChange != nil {
+		e.OnLayerChange(e.level)
+	}
+}
+
+// SetActiveLayerSilently updates the active layer without invoking the
+// OnLayerChange callback. This avoids recursive updates when the game code is
+// the one triggering the layer change.
+func (e *Editor) SetActiveLayerSilently(idx int) {
+	if e.layered == nil || idx < 0 || idx >= len(e.layered.Layers) {
+		return
+	}
+	e.layerIndex = idx
+	e.layered.ActiveIndex = idx
+	e.level = e.layered.ActiveLayer()
+}

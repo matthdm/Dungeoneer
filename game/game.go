@@ -64,6 +64,9 @@ type Game struct {
 	VisibleTiles [][]bool // true if currently visible
 	SeenTiles    [][]bool // true if ever seen
 	camSmooth    float64
+
+	// cooldown timer to prevent immediate re-triggering of stair links
+	layerSwitchCooldown float64
 }
 
 // editorLayerChanged updates the game when the level editor switches layers.
@@ -225,15 +228,43 @@ func (g *Game) cartesianToIso(x, y float64) (float64, float64) {
 
 // switchLayer activates the given layer and moves the player to the entry tile.
 func (g *Game) switchLayer(index int, entry levels.Point) {
+	orig := entry
 	g.currentWorld.SwitchToLayer(index, entry)
 	g.currentLevel = g.currentWorld.ActiveLayer()
+	if g.currentLevel == nil {
+		return
+	}
+
+	// ensure entry is within bounds of new level
+	if entry.X < 0 || entry.Y < 0 || entry.X >= g.currentLevel.W || entry.Y >= g.currentLevel.H {
+		entry.X = g.currentLevel.W / 2
+		entry.Y = g.currentLevel.H / 2
+		// update any links that targeted the out-of-bounds tile so the
+		// descending stair in the new layer correctly links back
+		for _, link := range g.currentWorld.Stairwells {
+			if link.ToLayerIndex == index && link.ToTile == orig {
+				link.ToTile = entry
+			}
+			if link.FromLayerIndex == index && link.FromTile == orig {
+				link.FromTile = entry
+			}
+		}
+	}
 	if g.player != nil {
 		g.player.TileX = entry.X
 		g.player.TileY = entry.Y
 		g.player.MoveController.InterpX = float64(entry.X)
 		g.player.MoveController.InterpY = float64(entry.Y)
 		g.player.MoveController.Path = nil
+		g.player.MoveController.Stop()
 	}
+
+	if g.editor != nil {
+		// Update the editor's active layer without triggering its
+		// callback to avoid a recursive loop back into this method.
+		g.editor.SetActiveLayerSilently(index)
+	}
+	g.layerSwitchCooldown = 1.0
 	g.UpdateSeenTiles(*g.currentLevel)
 	g.spawnEntitiesFromLevel()
 	g.cachedRays = nil
@@ -299,8 +330,13 @@ func (g *Game) stairPlaced(x, y int, spriteID string) {
 			if strings.Contains(strings.ToLower(spriteID), "ascending") {
 				counterID = "StairsDecending"
 			}
+			destX, destY := x, y
+			if x < 0 || y < 0 || x >= newL.W || y >= newL.H {
+				destX = newL.W / 2
+				destY = newL.H / 2
+			}
 			if meta, ok := leveleditor.SpriteRegistry[counterID]; ok {
-				if t := newL.Tile(x, y); t != nil {
+				if t := newL.Tile(destX, destY); t != nil {
 					t.AddSpriteByID(counterID, meta.Image)
 					t.IsWalkable = meta.IsWalkable
 				}
@@ -309,14 +345,14 @@ func (g *Game) stairPlaced(x, y int, spriteID string) {
 				FromLayerIndex: g.currentWorld.ActiveIndex,
 				FromTile:       levels.Point{X: x, Y: y},
 				ToLayerIndex:   newIdx,
-				ToTile:         levels.Point{X: x, Y: y},
+				ToTile:         levels.Point{X: destX, Y: destY},
 				TriggerSprite:  spriteID,
 			})
 			g.currentWorld.Stairwells = append(g.currentWorld.Stairwells, &levels.LayerLink{
 				FromLayerIndex: newIdx,
 				FromTile:       levels.Point{X: x, Y: y},
 				ToLayerIndex:   g.currentWorld.ActiveIndex,
-				ToTile:         levels.Point{X: x, Y: y},
+				ToTile:         levels.Point{X: destX, Y: destY},
 				TriggerSprite:  counterID,
 			})
 			g.LinkPrompt = nil
@@ -467,6 +503,11 @@ func (g *Game) updatePlaying() error {
 		}
 	}
 
+	// Reduce stair switch cooldown
+	if g.layerSwitchCooldown > 0 {
+		g.layerSwitchCooldown -= g.DeltaTime
+	}
+
 	// Path preview update (mouse hover A*)
 	if g.player != nil {
 		path := pathing.AStar(g.currentLevel, g.player.TileX, g.player.TileY, g.hoverTileX, g.hoverTileY)
@@ -474,11 +515,13 @@ func (g *Game) updatePlaying() error {
 		g.player.Update(g.currentLevel, g.DeltaTime)
 		g.updateCameraFollow()
 		// Check layer links
-		for _, link := range g.currentWorld.Stairwells {
-			if link.FromLayerIndex == g.currentWorld.ActiveIndex &&
-				link.FromTile.X == g.player.TileX && link.FromTile.Y == g.player.TileY {
-				g.switchLayer(link.ToLayerIndex, link.ToTile)
-				break
+		if g.layerSwitchCooldown <= 0 {
+			for _, link := range g.currentWorld.Stairwells {
+				if link.FromLayerIndex == g.currentWorld.ActiveIndex &&
+					link.FromTile.X == g.player.TileX && link.FromTile.Y == g.player.TileY {
+					g.switchLayer(link.ToLayerIndex, link.ToTile)
+					break
+				}
 			}
 		}
 	}
