@@ -14,12 +14,14 @@ import (
 	"image"
 	"math"
 	"os"
+	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
 type Game struct {
 	w, h          int
+	currentWorld  *levels.LayeredLevel
 	currentLevel  *levels.Level
 	State         GameState
 	Menu          *ui.MainMenu
@@ -27,6 +29,7 @@ type Game struct {
 	LoadLevelMenu *ui.LoadLevelMenu
 	SaveLevelMenu *ui.SaveLevelMenu
 	SavePrompt    *ui.TextInputMenu
+	LinkPrompt    *ui.LayerPrompt
 	isPaused      bool
 
 	camX, camY           float64
@@ -61,6 +64,23 @@ type Game struct {
 	VisibleTiles [][]bool // true if currently visible
 	SeenTiles    [][]bool // true if ever seen
 	camSmooth    float64
+
+	// cooldown timer to prevent immediate re-triggering of stair links
+	layerSwitchCooldown float64
+}
+
+// editorLayerChanged updates the game when the level editor switches layers.
+func (g *Game) editorLayerChanged(l *levels.Level) {
+	if l == nil || g.currentWorld == nil {
+		return
+	}
+
+	idx := g.currentWorld.ActiveIndex
+	entry := levels.Point{}
+	if g.player != nil {
+		entry = levels.Point{X: g.player.TileX, Y: g.player.TileY}
+	}
+	g.switchLayer(idx, entry)
 }
 
 type GameState int
@@ -81,9 +101,8 @@ func NewGame() (*Game, error) {
 		return nil, err
 	}
 	l := levels.CreateNewBlankLevel(64, 64, 64, ss)
-	//if err != nil {
-	//	return nil, fmt.Errorf("failed to create new level: %s", err)
-	//}
+	world := levels.NewLayeredLevel(l)
+
 	//This is needed for save/loading levels
 	leveleditor.RegisterSprites(ss)
 	// Load wall sprite sheets for all available flavors
@@ -94,6 +113,7 @@ func NewGame() (*Game, error) {
 	}
 
 	g := &Game{
+		currentWorld:    world,
 		currentLevel:    l,
 		isPaused:        false,
 		camScale:        1,
@@ -103,7 +123,7 @@ func NewGame() (*Game, error) {
 		mousePanY:       math.MinInt32,
 		spriteSheet:     ss,
 		highlightImage:  ss.Cursor,
-		editor:          leveleditor.NewEditor(l, 640, 480),
+		editor:          leveleditor.NewLayeredEditor(world, 640, 480),
 		FullBright:      true,
 		player:          entities.NewPlayer(ss),
 		Monsters:        []*entities.Monster{},
@@ -115,6 +135,8 @@ func NewGame() (*Game, error) {
 		camSmooth:       0.1,
 		SpellDebug:      true,
 	}
+	g.editor.OnLayerChange = g.editorLayerChanged
+	g.editor.OnStairPlaced = g.stairPlaced
 	g.spawnEntitiesFromLevel()
 	mm, err := ui.NewMainMenu()
 	if err != nil {
@@ -173,8 +195,12 @@ func NewGame() (*Game, error) {
 		},
 		OnNewBlank: func() {
 			newLevel := levels.CreateNewBlankLevel(64, 64, g.currentLevel.TileSize, ss) // TODO: Prompt for dimensions later
+			newWorld := levels.NewLayeredLevel(newLevel)
+			g.currentWorld = newWorld
 			g.currentLevel = newLevel
-			g.editor = leveleditor.NewEditor(newLevel, g.w, g.h)
+			g.editor = leveleditor.NewLayeredEditor(newWorld, g.w, g.h)
+			g.editor.OnLayerChange = g.editorLayerChanged
+			g.editor.OnStairPlaced = g.stairPlaced
 			g.UpdateSeenTiles(*newLevel)
 		},
 	})
@@ -200,6 +226,50 @@ func (g *Game) cartesianToIso(x, y float64) (float64, float64) {
 	return ix, iy
 }
 
+// switchLayer activates the given layer and moves the player to the entry tile.
+func (g *Game) switchLayer(index int, entry levels.Point) {
+	orig := entry
+	g.currentWorld.SwitchToLayer(index, entry)
+	g.currentLevel = g.currentWorld.ActiveLayer()
+	if g.currentLevel == nil {
+		return
+	}
+
+	// ensure entry is within bounds of new level
+	if entry.X < 0 || entry.Y < 0 || entry.X >= g.currentLevel.W || entry.Y >= g.currentLevel.H {
+		entry.X = g.currentLevel.W / 2
+		entry.Y = g.currentLevel.H / 2
+		// update any links that targeted the out-of-bounds tile so the
+		// descending stair in the new layer correctly links back
+		for _, link := range g.currentWorld.Stairwells {
+			if link.ToLayerIndex == index && link.ToTile == orig {
+				link.ToTile = entry
+			}
+			if link.FromLayerIndex == index && link.FromTile == orig {
+				link.FromTile = entry
+			}
+		}
+	}
+	if g.player != nil {
+		g.player.TileX = entry.X
+		g.player.TileY = entry.Y
+		g.player.MoveController.InterpX = float64(entry.X)
+		g.player.MoveController.InterpY = float64(entry.Y)
+		g.player.MoveController.Path = nil
+		g.player.MoveController.Stop()
+	}
+
+	if g.editor != nil {
+		// Update the editor's active layer without triggering its
+		// callback to avoid a recursive loop back into this method.
+		g.editor.SetActiveLayerSilently(index)
+	}
+	g.layerSwitchCooldown = 1.0
+	g.UpdateSeenTiles(*g.currentLevel)
+	g.spawnEntitiesFromLevel()
+	g.cachedRays = nil
+	g.camX, g.camY = 0, 0
+}
 func (g *Game) screenToTile() (int, int) {
 	cx, cy := ebiten.CursorPosition()
 	worldX := float64(cx)/g.camScale + g.camX
@@ -211,10 +281,13 @@ func (g *Game) screenToTile() (int, int) {
 
 func (g *Game) UpdateSeenTiles(level levels.Level) {
 	seen := make([][]bool, level.H)
+	vis := make([][]bool, level.H)
 	for y := range seen {
 		seen[y] = make([]bool, level.W)
+		vis[y] = make([]bool, level.W)
 	}
 	g.SeenTiles = seen
+	g.VisibleTiles = vis
 }
 
 // spawnEntitiesFromLevel creates monsters based on the placed entities in the
@@ -238,6 +311,54 @@ func (g *Game) spawnEntitiesFromLevel() {
 	}
 }
 
+// stairPlaced is triggered by the editor when a stairwell sprite is placed.
+func (g *Game) stairPlaced(x, y int, spriteID string) {
+	if g.LinkPrompt != nil && g.LinkPrompt.IsVisible() {
+		return
+	}
+	g.LinkPrompt = ui.NewLayerPrompt(g.w, g.h, sprites.WallFlavors,
+		func(wd, ht int, flavor string) {
+			wss, err := sprites.LoadWallSpriteSheet(flavor)
+			if err != nil {
+				g.LinkPrompt = nil
+				return
+			}
+			newL := levels.CreateNewBlankLevelWithFloor(wd, ht, g.currentLevel.TileSize, flavor+"_floor", wss.Floor)
+			g.currentWorld.AddLayer(newL)
+			newIdx := len(g.currentWorld.Layers) - 1
+			counterID := "StairsAscending"
+			if strings.Contains(strings.ToLower(spriteID), "ascending") {
+				counterID = "StairsDecending"
+			}
+			destX, destY := x, y
+			if x < 0 || y < 0 || x >= newL.W || y >= newL.H {
+				destX = newL.W / 2
+				destY = newL.H / 2
+			}
+			if meta, ok := leveleditor.SpriteRegistry[counterID]; ok {
+				if t := newL.Tile(destX, destY); t != nil {
+					t.AddSpriteByID(counterID, meta.Image)
+					t.IsWalkable = meta.IsWalkable
+				}
+			}
+			g.currentWorld.Stairwells = append(g.currentWorld.Stairwells, &levels.LayerLink{
+				FromLayerIndex: g.currentWorld.ActiveIndex,
+				FromTile:       levels.Point{X: x, Y: y},
+				ToLayerIndex:   newIdx,
+				ToTile:         levels.Point{X: destX, Y: destY},
+				TriggerSprite:  spriteID,
+			})
+			g.currentWorld.Stairwells = append(g.currentWorld.Stairwells, &levels.LayerLink{
+				FromLayerIndex: newIdx,
+				FromTile:       levels.Point{X: x, Y: y},
+				ToLayerIndex:   g.currentWorld.ActiveIndex,
+				ToTile:         levels.Point{X: destX, Y: destY},
+				TriggerSprite:  counterID,
+			})
+			g.LinkPrompt = nil
+		}, func() { g.LinkPrompt = nil })
+	g.LinkPrompt.Show()
+}
 
 //This function might be useful for those who want to modify this example.
 
@@ -325,6 +446,11 @@ func (g *Game) updatePlaying() error {
 		return nil
 	}
 
+	if g.LinkPrompt != nil && g.LinkPrompt.IsVisible() {
+		g.LinkPrompt.Update()
+		return nil
+	}
+
 	if g.editor.Active {
 		g.editor.Update(g.screenToTile)
 	}
@@ -377,12 +503,27 @@ func (g *Game) updatePlaying() error {
 		}
 	}
 
+	// Reduce stair switch cooldown
+	if g.layerSwitchCooldown > 0 {
+		g.layerSwitchCooldown -= g.DeltaTime
+	}
+
 	// Path preview update (mouse hover A*)
 	if g.player != nil {
 		path := pathing.AStar(g.currentLevel, g.player.TileX, g.player.TileY, g.hoverTileX, g.hoverTileY)
 		g.player.PathPreview = path
 		g.player.Update(g.currentLevel, g.DeltaTime)
 		g.updateCameraFollow()
+		// Check layer links
+		if g.layerSwitchCooldown <= 0 {
+			for _, link := range g.currentWorld.Stairwells {
+				if link.FromLayerIndex == g.currentWorld.ActiveIndex &&
+					link.FromTile.X == g.player.TileX && link.FromTile.Y == g.player.TileY {
+					g.switchLayer(link.ToLayerIndex, link.ToTile)
+					break
+				}
+			}
+		}
 	}
 
 	// Monsters
@@ -440,7 +581,9 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	}
 
 	if g.editor == nil {
-		g.editor = leveleditor.NewEditor(g.currentLevel, g.w, g.h)
+		g.editor = leveleditor.NewLayeredEditor(g.currentWorld, g.w, g.h)
+		g.editor.OnLayerChange = g.editorLayerChanged
+		g.editor.OnStairPlaced = g.stairPlaced
 	}
 
 	return g.w, g.h

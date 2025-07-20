@@ -7,6 +7,8 @@ import (
 
 	"fmt"
 	"math/rand/v2"
+
+	"github.com/hajimehoshi/ebiten/v2"
 )
 
 // PlacedEntity represents an entity placed on the map via the editor.
@@ -199,5 +201,26 @@ func CreateNewBlankLevel(width, height, tileSize int, ss *sprites.SpriteSheet) *
 		l.Tiles[y] = row
 	}
 
+	return l
+}
+
+// CreateNewBlankLevelWithFloor creates a level using the provided floor sprite.
+func CreateNewBlankLevelWithFloor(width, height, tileSize int, floorID string, img *ebiten.Image) *Level {
+	l := &Level{
+		W:        width,
+		H:        height,
+		TileSize: tileSize,
+		Tiles:    make([][]*tiles.Tile, height),
+		Entities: []PlacedEntity{},
+	}
+	for y := 0; y < height; y++ {
+		row := make([]*tiles.Tile, width)
+		for x := 0; x < width; x++ {
+			t := &tiles.Tile{IsWalkable: true}
+			t.AddSpriteByID(floorID, img)
+			row[x] = t
+		}
+		l.Tiles[y] = row
+	}
 	return l
 }

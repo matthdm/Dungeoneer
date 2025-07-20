@@ -2,9 +2,11 @@ package leveleditor
 
 import (
 	"dungeoneer/levels"
+	"dungeoneer/sprites"
 	"fmt"
 	"image"
 	"image/color"
+	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -19,13 +21,18 @@ type Editor struct {
 	level              *levels.Level
 	cursorX            int
 	cursorY            int
+	layered            *levels.LayeredLevel
+	layerIndex         int
 	cursorScreen       image.Point
 	Palette            *SpritePalette
 	EntitiesPalette    *EntitiesPalette
 	JustSelectedSprite bool
 	JustSelectedEntity bool
 	SelectedEntityID   string
-	AutoTile           bool
+	// OnLayerChange is called whenever the active layer changes.
+	OnLayerChange func(*levels.Level)
+	// OnStairPlaced is called when a stairwell sprite is placed.
+	OnStairPlaced func(x, y int, spriteID string)
 }
 
 func NewEditor(level *levels.Level, screenWidth, screenHeight int) *Editor {
@@ -35,7 +42,6 @@ func NewEditor(level *levels.Level, screenWidth, screenHeight int) *Editor {
 		PaletteOpen:       false,
 		EntityPaletteOpen: false,
 		level:             level,
-		AutoTile:          true,
 	}
 
 	// Create the palette with a callback to set the selected sprite
@@ -45,6 +51,55 @@ func NewEditor(level *levels.Level, screenWidth, screenHeight int) *Editor {
 	editor.EntitiesPalette = NewEntitiesPalette(screenWidth, screenHeight, entries, editor.SetSelectedEntity)
 
 	return editor
+}
+
+// NewLayeredEditor creates an editor for a layered level.
+func NewLayeredEditor(ll *levels.LayeredLevel, w, h int) *Editor {
+	ed := NewEditor(ll.ActiveLayer(), w, h)
+	ed.layered = ll
+	ed.layerIndex = ll.ActiveIndex
+	return ed
+}
+
+// LinkNewLayer creates a blank layer and appends it to the layered level.
+func (e *Editor) LinkNewLayer() {
+	if e.layered == nil || e.level == nil {
+		return
+	}
+	ss, err := sprites.LoadSpriteSheet(e.level.TileSize)
+	if err != nil {
+		fmt.Println("failed to load spritesheet:", err)
+		return
+	}
+	newL := levels.CreateNewBlankLevel(e.level.W, e.level.H, e.level.TileSize, ss)
+	e.layered.AddLayer(newL)
+	e.layerIndex = len(e.layered.Layers) - 1
+	e.layered.ActiveIndex = e.layerIndex
+	e.level = newL
+	if e.OnLayerChange != nil {
+		e.OnLayerChange(e.level)
+	}
+	fmt.Println("Linked new layer", e.layerIndex)
+}
+
+// UnlinkLastLayer removes the last layer from the layered level.
+func (e *Editor) UnlinkLastLayer() {
+	if e.layered == nil {
+		return
+	}
+	if len(e.layered.Layers) <= 1 {
+		fmt.Println("Cannot unlink base layer")
+		return
+	}
+	e.layered.RemoveLastLayer()
+	if e.layerIndex >= len(e.layered.Layers) {
+		e.layerIndex = len(e.layered.Layers) - 1
+	}
+	e.level = e.layered.ActiveLayer()
+	if e.OnLayerChange != nil {
+		e.OnLayerChange(e.level)
+	}
+	fmt.Println("Unlinked last layer, remaining:", len(e.layered.Layers))
 }
 func (e *Editor) TogglePalette() {
 	e.PaletteOpen = !e.PaletteOpen
@@ -70,12 +125,21 @@ func (e *Editor) Update(screenToTile func() (int, int)) {
 		return
 	}
 
-	if inpututil.IsKeyJustPressed(ebiten.KeyO) {
-		e.AutoTile = !e.AutoTile
-		if e.AutoTile {
-			fmt.Println("Auto-tiling enabled")
-		} else {
-			fmt.Println("Auto-tiling disabled")
+	if e.layered != nil {
+		if inpututil.IsKeyJustPressed(ebiten.KeyComma) {
+			e.PrevLayer()
+			fmt.Println("Switched to layer", e.layerIndex)
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyPeriod) {
+			e.NextLayer()
+			fmt.Println("Switched to layer", e.layerIndex)
+		}
+
+		if inpututil.IsKeyJustPressed(ebiten.KeyBracketLeft) {
+			e.LinkNewLayer()
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyBracketRight) {
+			e.UnlinkLastLayer()
 		}
 	}
 
@@ -142,6 +206,12 @@ func (e *Editor) PlaceSelectedSpriteAt(tx, ty int) {
 
 	tile.AddSpriteByID(id, meta.Image)
 	tile.IsWalkable = meta.IsWalkable
+	lower := strings.ToLower(id)
+	if strings.Contains(lower, "stairsascending") || strings.Contains(lower, "stairsdecending") || strings.Contains(lower, "stairsdescending") {
+		if e.OnStairPlaced != nil {
+			e.OnStairPlaced(tx, ty, id)
+		}
+	}
 }
 
 // PlaceSelectedEntityAt places the chosen entity on the given tile.
@@ -174,4 +244,71 @@ func (e *Editor) PlaceSelectedEntityAt(tx, ty int) {
 			SpriteID: e.SelectedEntityID,
 		})
 	}
+}
+
+// NextLayer switches the editor to the next layer if a layered level is loaded.
+func (e *Editor) NextLayer() {
+	if e.layered == nil || len(e.layered.Layers) == 0 {
+		return
+	}
+	e.layerIndex = (e.layerIndex + 1) % len(e.layered.Layers)
+	e.layered.ActiveIndex = e.layerIndex
+	e.level = e.layered.ActiveLayer()
+	if e.OnLayerChange != nil {
+		e.OnLayerChange(e.level)
+	}
+}
+
+// PrevLayer switches the editor to the previous layer.
+func (e *Editor) PrevLayer() {
+	if e.layered == nil || len(e.layered.Layers) == 0 {
+		return
+	}
+	e.layerIndex--
+	if e.layerIndex < 0 {
+		e.layerIndex = len(e.layered.Layers) - 1
+	}
+	e.layered.ActiveIndex = e.layerIndex
+	e.level = e.layered.ActiveLayer()
+	if e.OnLayerChange != nil {
+		e.OnLayerChange(e.level)
+	}
+}
+
+// SetLayeredLevel replaces the editor's layered level and refreshes its active layer.
+func (e *Editor) SetLayeredLevel(ll *levels.LayeredLevel) {
+	if ll == nil {
+		return
+	}
+	e.layered = ll
+	e.layerIndex = ll.ActiveIndex
+	e.level = ll.ActiveLayer()
+	if e.OnLayerChange != nil {
+		e.OnLayerChange(e.level)
+	}
+}
+
+// SetActiveLayer changes the editor's active layer by index.
+func (e *Editor) SetActiveLayer(idx int) {
+	if e.layered == nil || idx < 0 || idx >= len(e.layered.Layers) {
+		return
+	}
+	e.layerIndex = idx
+	e.layered.ActiveIndex = idx
+	e.level = e.layered.ActiveLayer()
+	if e.OnLayerChange != nil {
+		e.OnLayerChange(e.level)
+	}
+}
+
+// SetActiveLayerSilently updates the active layer without invoking the
+// OnLayerChange callback. This avoids recursive updates when the game code is
+// the one triggering the layer change.
+func (e *Editor) SetActiveLayerSilently(idx int) {
+	if e.layered == nil || idx < 0 || idx >= len(e.layered.Layers) {
+		return
+	}
+	e.layerIndex = idx
+	e.layered.ActiveIndex = idx
+	e.level = e.layered.ActiveLayer()
 }

@@ -59,10 +59,13 @@ func (t *TextInputMenu) Update() {
 		}
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyEnter) && len(t.input) > 0 {
-		if !isValidFilename(t.input) {
-			t.Instructions = []string{"Invalid filename. Use a-z, 0-9, _, -, and end with .json"}
-			return
+		if t.Title != "NEW LAYER" {
+			if !isValidFilename(t.input) {
+				t.Instructions = []string{"Invalid filename. Use a-z, 0-9, _, -, and end with .json"}
+				return
+			}
 		}
+
 		t.Hide()
 		if t.onSubmit != nil {
 			t.onSubmit(t.input)

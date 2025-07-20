@@ -3,6 +3,7 @@ package entities
 import (
 	"dungeoneer/collision"
 	"dungeoneer/constants"
+	"dungeoneer/images"
 	"dungeoneer/levels"
 	"dungeoneer/movement"
 	"dungeoneer/pathing"
@@ -52,12 +53,12 @@ func NewPlayer(ss *sprites.SpriteSheet) *Player {
 	mc := movement.NewMovementController(5) // Speed = 3 tiles/sec
 	mc.InterpX = 3
 	mc.InterpY = 3
-
+	blackMage, _ := images.LoadEmbeddedImage(images.Black_Mage_Full_png)
 	p := &Player{
 		TileX:          3,
 		TileY:          3,
 		LeftFacing:     true,
-		Sprite:         ss.GreyKnight,
+		Sprite:         blackMage, //ss.GreyKnight,
 		HP:             100,
 		MaxHP:          100,
 		Damage:         8,

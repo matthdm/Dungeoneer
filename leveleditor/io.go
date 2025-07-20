@@ -378,7 +378,7 @@ func RegisterSprites(ss *sprites.SpriteSheet) {
 		},
 		"StairsDecending": {
 			Image:      ss.StairsDecending,
-			IsWalkable: false,
+			IsWalkable: true,
 		},
 		"FloorTrap": {
 			Image:      ss.FloorTrap,

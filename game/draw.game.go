@@ -47,6 +47,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if g.editor.Active && g.editor.EntityPaletteOpen {
 		g.editor.EntitiesPalette.Draw(screen)
 	}
+	if g.LinkPrompt != nil && g.LinkPrompt.IsVisible() {
+		g.LinkPrompt.Draw(screen)
+	}
 	if !controlToggle {
 		ebitenutil.DebugPrint(screen, fmt.Sprintf(constants.DEBUG_TEMPLATE, ebiten.ActualFPS(), ebiten.ActualTPS(), g.camScale, g.camX, g.camY))
 	} else {
