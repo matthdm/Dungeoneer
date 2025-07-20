@@ -1,12 +1,12 @@
-# 🕯️ Dungeoneer
+#  Dungeoneer
 
 **Dungeoneer** is a 2D isometric dark fantasy game built using Go and the Ebiten engine. Set in a world of crumbling castles, haunted forests, and cursed ruins, the player must navigate procedurally generated dungeons filled with monsters, secrets, and mystery.
 
-This project is a technical and artistic love letter to games like *Diablo* and *Stardew Valley’s* dungeon sections — with a focus on real-time combat, tile-based navigation, and rich pixel art.
+This project is a technical and artistic love letter to games like *Diablo* and *Stardew Valleys* dungeon sections  with a focus on real-time combat, tile-based navigation, and rich pixel art.
 
 ---
 
-## 🛠️ Developer Notes: Work In Progress
+##  Developer Notes: Work In Progress
 
 _Current Feature Focus:_
 
@@ -18,40 +18,40 @@ _Current Feature Focus:_
 
 ---
 
-## 🧩 Feature Checklist
+##   Feature Checklist
 
 | Feature Description                                  | Status   |
 |------------------------------------------------------|----------|
-| Isometric tile-based rendering engine                | ✅        |
-| Smooth tile-based player movement (mouse + keyboard) | ✅        |
-| Monster pathfinding & AI                             | ✅        |
-| Real-time combat system                              | ✅        |
-| Health bars, damage numbers, and hit markers         | ✅        |
-| Monster death animations                             | ✅        |
-| Field-of-view with raycasting                        | ✅        |
-| Fog of war memory system                             | ❌        |
-| Click-to-move A* pathfinding                         | ✅        |
-| Corner-casting to eliminate visual blind spots       | ✅        |
-| Full-bright debug toggle                             | ✅        |
-| Interactive level editor                             | ✅        |
-| Procedural forest level generator                    | ✅ (Prototype) |
-| Procedural dungeon generator                         | ✅ (Prototype) |
-| Developer test level                                 | ✅        |
-| In-game monster spawning via hotkeys                 | ❌        |
-| Particle and visual effects                          | ❌        |
-| Save/load system                                     | ❌        |
-| Audio engine (SFX + music)                           | ❌        |
-| Custom UI system                                     | ✅        |
-| Main menu with animated background                   | ✅        |
-| Parallax and animated layers                         | ❌        |
-| Game state handling (Game Over, Restart)             | ✅        |
-| Boss mechanics                                       | ❌        |
-| Ranged monsters and projectiles                      | ❌        |
-| Inventory system                                     | ❌        |
+| Isometric tile-based rendering engine                |         |
+| Smooth tile-based player movement (mouse + keyboard) |         |
+| Monster pathfinding & AI                             |         |
+| Real-time combat system                              |         |
+| Health bars, damage numbers, and hit markers         |         |
+| Monster death animations                             |         |
+| Field-of-view with raycasting                        |         |
+| Fog of war memory system                             |         |
+| Click-to-move A* pathfinding                         |         |
+| Corner-casting to eliminate visual blind spots       |         |
+| Full-bright debug toggle                             |         |
+| Interactive level editor                             |         |
+| Procedural forest level generator                    |  (Prototype) |
+| Procedural dungeon generator                         |  (Prototype) |
+| Developer test level                                 |         |
+| In-game monster spawning via hotkeys                 |         |
+| Particle and visual effects                          |         |
+| Save/load system                                     |         |
+| Audio engine (SFX + music)                           |         |
+| Custom UI system                                     |         |
+| Main menu with animated background                   |         |
+| Parallax and animated layers                         |         |
+| Game state handling (Game Over, Restart)             |         |
+| Boss mechanics                                       |         |
+| Ranged monsters and projectiles                      |         |
+| Inventory system                                     |         |
 
 ---
 
-## 🐞 Known Issues / Bug Bounties
+##  Known Issues / Bug Bounties
 
 - [ ] **Bug #1**: Spamming right-click causes player to stutter in place or revert to earlier tiles.
 - [x] **Bug #2**: Crash when player character dies without proper state handling (fixed, needs retest). ***(Fixed)***
@@ -61,7 +61,7 @@ _Current Feature Focus:_
 
 ---
 
-## 🎨 Art Showcase
+##  Art Showcase
 
 | Layer / Asset        | Description                            |
 |----------------------|----------------------------------------|
@@ -69,15 +69,15 @@ _Current Feature Focus:_
 | `castle_fg.png`      | 12-frame animated dark fantasy castle with glowing towers |
 | `fog_layer.png`      | 8-frame animated fog drifting layer     |
 | `highlight_anim.png` | 6-frame selection highlight shimmer     |
-| `new_game.png`       | Pixel font menu label — New Game        |
-| `options.png`        | Pixel font menu label — Options         |
-| `exit_game.png`      | Pixel font menu label — Exit Game       |
+| `new_game.png`       | Pixel font menu label  New Game        |
+| `options.png`        | Pixel font menu label  Options         |
+| `exit_game.png`      | Pixel font menu label  Exit Game       |
 
-> 💡 Art and UI are designed in pixel-perfect resolution and support dynamic scaling.
+>  Art and UI are designed in pixel-perfect resolution and support dynamic scaling.
 
 ---
 
-## ⌨️ Hotkeys and Controls
+##  Hotkeys and Controls
 
 | Key / Button         | Action Description                                                   |
 |----------------------|------------------------------------------------------------------------|
@@ -99,9 +99,9 @@ _Current Feature Focus:_
 
 ---
 
-## 🚀 Get Involved
+##  Get Involved
 
-This game is being built with love, madness, and pixelated shadows. If you're interested in contributing to the art, design, music, or code —reach out via the issues!
+This game is being built with love, madness, and pixelated shadows. If you're interested in contributing to the art, design, music, or code reach out via the issues!
 
 ---
 

@@ -1,10 +1,10 @@
-📄 Design Document: Inventory System
+ Design Document: Inventory System
 
 Feature Name: Inventory System
 Game: Dungeoneer
 Inspiration: Minecraft, Pixel Dungeon
 Status: High-priority gameplay system
-🎯 Design Goals
+ Design Goals
 
     Allow players to collect, manage, equip, and use items in a responsive, visual way
 
@@ -16,7 +16,7 @@ Status: High-priority gameplay system
 
     Allow for visual rendering and input handling in Ebiten
 
-🔩 Core Mechanics
+ Core Mechanics
 Inventory Structure
 
     Fixed 5x4 grid (20 slots), with support for:
@@ -49,7 +49,7 @@ type Item struct {
 	OnUse       func(p *Player)
 }
 
-🧱 Inventory Data Structures
+ Inventory Data Structures
 
 type Inventory struct {
 	Grid       [][]*Item // 5x4 grid
@@ -64,24 +64,24 @@ Item Placement
 
     If dropped on an occupied slot:
 
-        If same item type and stackable → merge
+        If same item type and stackable  merge
 
-        Else → swap items
+        Else  swap items
 
-🔁 Item Types and Behavior
+ Item Types and Behavior
 Type	Example	Behavior
 Weapon	Sword, Bow	Equippable
 Armor	Leather Armor	Equippable
-Consumable	Potion	Usable → triggers OnUse()
+Consumable	Potion	Usable  triggers OnUse()
 Quest Item	Gem Key	Not usable or droppable
-🎮 Controls
+ Controls
 Input	Action
 Click & drag	Move item between slots
 Right-click	Use item if usable
 Ctrl + click	Split stack (if stackable)
 Hover	Show tooltip
 ESC / I	Open/close inventory
-🖼️ Visual System
+ Visual System
 Layout (Ebiten)
 
     Draw semi-transparent background
@@ -104,7 +104,7 @@ func (inv *Inventory) Draw(screen *ebiten.Image) {
 	drawTooltip(screen)
 }
 
-🧪 Item Usage API
+ Item Usage API
 
 All items may optionally define an OnUse(*Player) function:
 
@@ -117,7 +117,7 @@ item := &Item{
 }
 
 When a player right-clicks the item, OnUse() is called and the item is removed or decremented.
-📂 Persistence
+ Persistence
 
 Inventory should serialize with player save data:
 
@@ -126,13 +126,13 @@ type PlayerSave struct {
 	EquipmentData map[string]ItemSave
 }
 
-🔮 Expansion Hooks
+ Expansion Hooks
 Feature	Design Consideration
 Inventory Upgrades	Expand rows or slots
 Item Rarity	Add color overlays
 Tooltips with flavor text	Add multiline support
 Item crafting	Merge items in crafting UI
 Drop on death	Items spill on ground
-🧠 Codex Prompt
+ Codex Prompt
 
-    You're building a 2D isometric dungeon crawler using Ebiten in Go. Implement an inventory system inspired by Minecraft and Pixel Dungeon. It should support a 5x4 item grid, equipment slots (weapon, armor, etc.), drag-and-drop mouse control, item stacking, right-click usage, and tooltips. The Item struct should include fields like ID, Name, Icon, Stackable, Usable, and OnUse(*Player). Create an Inventory struct with rendering and input handling logic. Use Ebiten’s DrawImage API to visually draw the grid and items.
+    You're building a 2D isometric dungeon crawler using Ebiten in Go. Implement an inventory system inspired by Minecraft and Pixel Dungeon. It should support a 5x4 item grid, equipment slots (weapon, armor, etc.), drag-and-drop mouse control, item stacking, right-click usage, and tooltips. The Item struct should include fields like ID, Name, Icon, Stackable, Usable, and OnUse(*Player). Create an Inventory struct with rendering and input handling logic. Use Ebitens DrawImage API to visually draw the grid and items.

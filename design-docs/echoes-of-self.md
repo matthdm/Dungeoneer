@@ -4,7 +4,7 @@ Genre: 2D Isometric Dungeon Crawler
 Game: Dungeoneer
 Priority: High
 **Concept Overview**
-"Echoes of Self" is a system that records the player’s actions from previous runs or deaths and spawns ghostly versions of them in future playthroughs. These echoes can:
+"Echoes of Self" is a system that records the players actions from previous runs or deaths and spawns ghostly versions of them in future playthroughs. These echoes can:
 
 Replay their movements and actions (like "ghosts" in racing games),
 
@@ -14,7 +14,7 @@ Serve as narrative triggers, unlocking lore, shortcuts, or secrets,
 
 Provide unique meta-progression based on how you interact with them.
 
-This system personalizes the dungeon by reflecting the player’s past decisions into their current run, enhancing immersion and replayability.
+This system personalizes the dungeon by reflecting the players past decisions into their current run, enhancing immersion and replayability.
 
 Design Goals:
 Personalized Memory System: The dungeon "remembers" your deaths and decisions.
@@ -75,7 +75,7 @@ Optional: equipped items, tile visibility (FOV), level seed
 This gets saved as an EchoRecord struct, serialized to disk.
 
 Spawn Rules:
-Spawn an Echo in a matching dungeon room or near player’s old death location.
+Spawn an Echo in a matching dungeon room or near players old death location.
 
 Allow max N echoes per level, oldest are purged first.
 
@@ -89,7 +89,7 @@ Flickering playback line when retracing path
 Optional: a soft ghostly whisper SFX
 
 Lore Integration:
-Echoes can whisper secrets: "There’s a hidden door nearby…"
+Echoes can whisper secrets: "Theres a hidden door nearby"
 
 "You died here once. Are you ready this time?"
 
@@ -119,11 +119,11 @@ type EchoRecord struct {
 	CauseOfDeath  string
 	Timestamp     time.Time
 }
-🧪 Prototype Implementation Outline
-🔹 1. Data Capture (on player death)
-Track player’s position/actions every n ticks.
+ Prototype Implementation Outline
+ 1. Data Capture (on player death)
+Track players position/actions every n ticks.
 
-Save to a JSON file ./echoes/<RunID>.json using Go’s standard lib.
+Save to a JSON file ./echoes/<RunID>.json using Gos standard lib.
 
 go
 Copy
@@ -138,7 +138,7 @@ type RecordedAction struct {
 	Action string // "Attack", "Spell", etc.
 	Tick   int
 }
-🔹 2. Echo Spawner
+ 2. Echo Spawner
 In your level loader:
 
 go
@@ -150,7 +150,7 @@ func LoadEchoes(levelID string) []*Echo {
 		parse EchoRecord
 		create new Echo entity
 }
-🔹 3. Echo Entity
+ 3. Echo Entity
 go
 Copy
 Edit
@@ -168,13 +168,13 @@ Optional: trigger Actions like attack animations
 
 Switch to combat mode if interacted with
 
-🔹 4. Drawing
+ 4. Drawing
 Draw semi-transparent sprite following Path[TickIndex]. Add flicker or fade over time.
 
 Optional Extensions: 
 Echo Fusion: Reclaim a ghost to get a perk.
 
 
-🧠 Codex Prompt
-You are working on a 2D isometric dungeon crawler in Go using the Ebiten engine. Implement a system called "Echoes of Self" that records a player’s position, actions, and cause of death during a run. On future runs, spawn ghost entities that replay the recorded data, either visually or interactively. Echoes should be loaded from disk, follow the player’s past movement path, and optionally trigger past actions (e.g., attack swings). Design the EchoRecord, replay system, and rendering logic for a basic prototype.
+ Codex Prompt
+You are working on a 2D isometric dungeon crawler in Go using the Ebiten engine. Implement a system called "Echoes of Self" that records a players position, actions, and cause of death during a run. On future runs, spawn ghost entities that replay the recorded data, either visually or interactively. Echoes should be loaded from disk, follow the players past movement path, and optionally trigger past actions (e.g., attack swings). Design the EchoRecord, replay system, and rendering logic for a basic prototype.
 
