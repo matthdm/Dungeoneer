@@ -21,7 +21,7 @@ func (r Renderable) depth() float64 {
 
 // sortRenderables orders the slice from back to front.
 func sortRenderables(rs []Renderable) {
-	sort.Slice(rs, func(i, j int) bool {
+	sort.SliceStable(rs, func(i, j int) bool {
 		return rs[i].depth() < rs[j].depth()
 	})
 }
