@@ -4,6 +4,7 @@ import (
 	"dungeoneer/constants"
 	"dungeoneer/entities"
 	"dungeoneer/fov"
+	"dungeoneer/items"
 	"dungeoneer/leveleditor"
 	"dungeoneer/levels"
 	"dungeoneer/pathing"
@@ -110,6 +111,10 @@ func NewGame() (*Game, error) {
 		if wss, err := sprites.LoadWallSpriteSheet(fl); err == nil {
 			leveleditor.RegisterWallSprites(wss)
 		}
+	}
+
+	if err := items.LoadDefaultItems(); err != nil {
+		return nil, err
 	}
 
 	g := &Game{
