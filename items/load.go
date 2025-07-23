@@ -39,6 +39,9 @@ func LoadItemSheet(img *ebiten.Image, entries []sheetEntry) {
 			Equippable: false,
 			Stats:      map[string]int{},
 			Icon:       scaled,
+			OnUse:      nil,
+			OnEquip:    nil,
+			OnUnequip:  nil,
 		}
 		RegisterItem(tmpl)
 	}

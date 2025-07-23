@@ -70,3 +70,5 @@ const (
 const (
 	FireballHitRadius = 0.75
 )
+
+var DebugMode = true

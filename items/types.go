@@ -26,7 +26,9 @@ type ItemTemplate struct {
 	Equippable  bool
 	Stats       map[string]int
 	Icon        *ebiten.Image
-	OnUse       func(p interface{}) // Optional user data
+	OnUse       func(p interface{})
+	OnEquip     func(p interface{})
+	OnUnequip   func(p interface{})
 }
 
 // Item represents an inventory instance.
