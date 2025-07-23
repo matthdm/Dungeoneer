@@ -61,7 +61,10 @@ type Game struct {
 	RaycastWalls             []fov.Line
 	ShowRays                 bool
 	lastPlayerX, lastPlayerY float64
+	lastPlayerTileX          int
+	lastPlayerTileY          int
 	cachedRays               []fov.Line
+	cachedTriangles          []fov.Triangle
 	FullBright               bool
 
 	// Visibility tracking
@@ -143,6 +146,8 @@ func NewGame() (*Game, error) {
 		camSmooth:       0.1,
 		SpellDebug:      true,
 	}
+	g.lastPlayerTileX = g.player.TileX
+	g.lastPlayerTileY = g.player.TileY
 	g.DevMenu = ui.NewDevMenu(640, 480, g.player)
 	g.editor.OnLayerChange = g.editorLayerChanged
 	g.editor.OnStairPlaced = g.stairPlaced
@@ -518,18 +523,21 @@ func (g *Game) updatePlaying() error {
 	// Rebuild raycast walls (in case the level changed)
 	g.RaycastWalls = fov.LevelToWalls(g.currentLevel)
 
-	// Determine if we should update rays:
+	// Determine if we should update rays only when the player changes tiles
 	shouldRecast := len(g.cachedRays) == 0 ||
-		g.player.MoveController.InterpX != g.lastPlayerX ||
-		g.player.MoveController.InterpY != g.lastPlayerY
+		g.player.TileX != g.lastPlayerTileX ||
+		g.player.TileY != g.lastPlayerTileY
 
 	if g.player != nil && shouldRecast {
 		originX := g.player.MoveController.InterpX
 		originY := g.player.MoveController.InterpY
 
 		g.cachedRays = fov.RayCasting(originX, originY, g.RaycastWalls, g.currentLevel)
+		g.cachedTriangles = fov.BuildShadowTriangles(g.cachedRays)
 		g.lastPlayerX = originX
 		g.lastPlayerY = originY
+		g.lastPlayerTileX = g.player.TileX
+		g.lastPlayerTileY = g.player.TileY
 
 		// Clear visibility map
 		for y := range g.VisibleTiles {

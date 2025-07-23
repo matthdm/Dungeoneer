@@ -71,4 +71,12 @@ const (
 	FireballHitRadius = 0.75
 )
 
+// Field-of-view rendering
+const (
+	// MaxFOVRays caps the number of rays cast when computing the
+	// player's visible polygon. Large maps automatically reduce the
+	// number of rays for performance.
+	MaxFOVRays = 360
+)
+
 var DebugMode = true
