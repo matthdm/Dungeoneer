@@ -26,7 +26,9 @@ type ItemTemplate struct {
 	Equippable  bool
 	Stats       map[string]int
 	Icon        *ebiten.Image
-	OnUse       func(p interface{}) // Optional user data
+	OnUse       func(p interface{})
+	OnEquip     func(p interface{})
+	OnUnequip   func(p interface{})
 }
 
 // Item represents an inventory instance.
@@ -51,4 +53,26 @@ func FromSave(data ItemSave) *Item {
 	it := NewItem(data.ID)
 	it.Count = data.Count
 	return it
+}
+
+// SerializeEquipment converts an equipment map into savable data.
+func SerializeEquipment(eq map[string]*Item) map[string]ItemSave {
+	res := make(map[string]ItemSave)
+	for slot, it := range eq {
+		if it != nil {
+			res[slot] = it.ToSave()
+		}
+	}
+	return res
+}
+
+// DeserializeEquipment reconstructs an equipment map from saved data.
+func DeserializeEquipment(data map[string]ItemSave) map[string]*Item {
+	eq := make(map[string]*Item)
+	for slot, sv := range data {
+		if sv.ID != "" {
+			eq[slot] = FromSave(sv)
+		}
+	}
+	return eq
 }

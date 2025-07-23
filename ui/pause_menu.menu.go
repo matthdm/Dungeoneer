@@ -17,6 +17,8 @@ type PauseMenu struct {
 type PauseMenuCallbacks struct {
 	OnResume           func()
 	OnLoadLevel        func()
+	OnLoadPlayer       func()
+	OnSavePlayer       func()
 	OnSaveLevel        func()
 	OnNewBlank         func()
 	OnExit             func()
@@ -38,6 +40,8 @@ func NewPauseMenu(w, h int, cb PauseMenuCallbacks) *PauseMenu {
 	mainOptions := []MenuOption{
 		{Text: "Resume", Action: cb.OnResume},
 		{Text: "Load Level", Action: cb.OnLoadLevel},
+		{Text: "Load Player", Action: cb.OnLoadPlayer},
+		{Text: "Save Player", Action: cb.OnSavePlayer},
 		{Text: "Save Level", Action: cb.OnSaveLevel},
 		{Text: "New Blank Level", Action: cb.OnNewBlank},
 		{Text: "Settings", Action: func() {
