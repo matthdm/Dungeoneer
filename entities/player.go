@@ -18,6 +18,24 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+// BaseStats are the fundamental RPG attributes.
+type BaseStats struct {
+	Strength     int `json:"strength"`
+	Dexterity    int `json:"dexterity"`
+	Vitality     int `json:"vitality"`
+	Intelligence int `json:"intelligence"`
+	Luck         int `json:"luck"`
+}
+
+// StatModifiers represent temporary or equipment-derived stat bonuses.
+type StatModifiers struct {
+	StrengthMod     int `json:"strength_mod"`
+	DexterityMod    int `json:"dexterity_mod"`
+	VitalityMod     int `json:"vitality_mod"`
+	IntelligenceMod int `json:"intelligence_mod"`
+	LuckMod         int `json:"luck_mod"`
+}
+
 type Player struct {
 	TileX, TileY int
 
@@ -47,9 +65,14 @@ type Player struct {
 
 	Caster *spells.Caster
 
-	Inventory *inventory.Inventory
-	Stats     map[string]int
-	Equipment map[string]*items.Item
+	Inventory     *inventory.Inventory
+	Stats         BaseStats
+	TempModifiers StatModifiers
+	Equipment     map[string]*items.Item
+
+	Mana, MaxMana int
+
+	Name string
 
 	LastMoveDirX float64
 	LastMoveDirY float64
@@ -78,12 +101,22 @@ func NewPlayer(ss *sprites.SpriteSheet) *Player {
 			Speed:       constants.GrappleSpeed,
 			Delay:       constants.GrappleDelay,
 		},
-		Caster:       spells.NewCaster(),
-		Inventory:    inventory.NewInventory(),
-		Stats:        map[string]int{"Armor": 0},
-		Equipment:    make(map[string]*items.Item),
-		LastMoveDirX: -1,
-		LastMoveDirY: 0,
+		Caster:    spells.NewCaster(),
+		Inventory: inventory.NewInventory(),
+		Stats: BaseStats{
+			Strength:     1,
+			Dexterity:    1,
+			Vitality:     1,
+			Intelligence: 1,
+			Luck:         1,
+		},
+		TempModifiers: StatModifiers{},
+		Equipment:     make(map[string]*items.Item),
+		Mana:          20,
+		MaxMana:       20,
+		Name:          "Hero",
+		LastMoveDirX:  -1,
+		LastMoveDirY:  0,
 	}
 
 	// Whenever InterpX/InterpY crosses into a new tile, update TileX/TileY
@@ -92,6 +125,7 @@ func NewPlayer(ss *sprites.SpriteSheet) *Player {
 		p.TileY = y
 	}
 
+	p.RecalculateStats()
 	return p
 }
 
@@ -173,6 +207,13 @@ func (p *Player) Update(level *levels.Level, dt float64) {
 	p.updateGrapple(level, dt)
 	if p.Caster != nil {
 		p.Caster.Update(dt)
+	}
+
+	// Passive mana regeneration
+	regen := 1 + (p.Stats.Intelligence / 5)
+	p.Mana += int(float64(regen) * dt)
+	if p.Mana > p.MaxMana {
+		p.Mana = p.MaxMana
 	}
 
 	// Track last movement direction
@@ -444,4 +485,45 @@ func (p *Player) UseItem(it *items.Item) {
 		return
 	}
 	it.OnUse(p)
+}
+
+// getEquipmentStatModifiers sums stat bonuses from equipped items.
+func (p *Player) getEquipmentStatModifiers() StatModifiers {
+	mod := StatModifiers{}
+	for _, it := range p.Equipment {
+		if it == nil {
+			continue
+		}
+		if v, ok := it.Stats["Strength"]; ok {
+			mod.StrengthMod += v
+		}
+		if v, ok := it.Stats["Dexterity"]; ok {
+			mod.DexterityMod += v
+		}
+		if v, ok := it.Stats["Vitality"]; ok {
+			mod.VitalityMod += v
+		}
+		if v, ok := it.Stats["Intelligence"]; ok {
+			mod.IntelligenceMod += v
+		}
+		if v, ok := it.Stats["Luck"]; ok {
+			mod.LuckMod += v
+		}
+	}
+	return mod
+}
+
+// RecalculateStats updates derived fields like MaxHP, Damage, and AttackRate.
+func (p *Player) RecalculateStats() {
+	equip := p.getEquipmentStatModifiers()
+	p.MaxHP = 100 + (p.Stats.Vitality+p.TempModifiers.VitalityMod+equip.VitalityMod)*5
+	p.MaxMana = 20 + (p.Stats.Intelligence+p.TempModifiers.IntelligenceMod+equip.IntelligenceMod)*5
+	p.Damage = 5 + (p.Stats.Strength+equip.StrengthMod)*2
+	p.AttackRate = 60 - (p.Stats.Dexterity+equip.DexterityMod)*2
+	if p.HP > p.MaxHP {
+		p.HP = p.MaxHP
+	}
+	if p.Mana > p.MaxMana {
+		p.Mana = p.MaxMana
+	}
 }
