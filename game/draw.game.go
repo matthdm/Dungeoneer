@@ -4,6 +4,7 @@ import (
 	"dungeoneer/constants"
 	"dungeoneer/fov"
 	"dungeoneer/spells"
+	"dungeoneer/ui"
 	"fmt"
 	"image"
 	"image/color"
@@ -121,6 +122,7 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 		fov.DebugDrawRays(screen, g.cachedRays, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
 	}
 	g.drawDashUI(screen)
+	ui.DrawItemPalette(screen)
 	//fov.DebugDrawWalls(screen, g.RaycastWalls, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
 }
 

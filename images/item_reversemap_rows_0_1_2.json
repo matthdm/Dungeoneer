@@ -1,0 +1,1538 @@
+[
+  {
+    "id": "item_0_0",
+    "name": "Water Shore Icon",
+    "position": {
+      "row": 0,
+      "col": 0
+    }
+  },
+  {
+    "id": "item_0_1",
+    "name": "Iron Emblem",
+    "position": {
+      "row": 0,
+      "col": 1
+    }
+  },
+  {
+    "id": "item_0_2",
+    "name": "Arcane Emblem",
+    "position": {
+      "row": 0,
+      "col": 2
+    }
+  },
+  {
+    "id": "item_0_3",
+    "name": "Chaos Emblem",
+    "position": {
+      "row": 0,
+      "col": 3
+    }
+  },
+  {
+    "id": "item_0_4",
+    "name": "Divine Emblem",
+    "position": {
+      "row": 0,
+      "col": 4
+    }
+  },
+  {
+    "id": "item_0_5",
+    "name": "Black Gold Glyph",
+    "position": {
+      "row": 0,
+      "col": 5
+    }
+  },
+  {
+    "id": "item_0_6",
+    "name": "Grey Gold Glyph",
+    "position": {
+      "row": 0,
+      "col": 6
+    }
+  },
+  {
+    "id": "item_0_7",
+    "name": "Black Grey Glyph",
+    "position": {
+      "row": 0,
+      "col": 7
+    }
+  },
+  {
+    "id": "item_0_8",
+    "name": "Iron Amulet",
+    "position": {
+      "row": 0,
+      "col": 8
+    }
+  },
+  {
+    "id": "item_0_9",
+    "name": "Sapphire Amulet",
+    "position": {
+      "row": 0,
+      "col": 9
+    }
+  },
+  {
+    "id": "item_0_10",
+    "name": "Ruby Amulet",
+    "position": {
+      "row": 0,
+      "col": 10
+    }
+  },
+  {
+    "id": "item_0_11",
+    "name": "Coral Cross Amulet",
+    "position": {
+      "row": 0,
+      "col": 11
+    }
+  },
+  {
+    "id": "item_0_12",
+    "name": "Crimson Cross Amulet",
+    "position": {
+      "row": 0,
+      "col": 12
+    }
+  },
+  {
+    "id": "item_0_13",
+    "name": "Citrine Cross Amulet",
+    "position": {
+      "row": 0,
+      "col": 13
+    }
+  },
+  {
+    "id": "item_0_14",
+    "name": "Verdant Skull Necklace",
+    "position": {
+      "row": 0,
+      "col": 14
+    }
+  },
+  {
+    "id": "item_0_15",
+    "name": "Crimson Skull Necklace",
+    "position": {
+      "row": 0,
+      "col": 15
+    }
+  },
+  {
+    "id": "item_0_16",
+    "name": "Iron Skull Necklace",
+    "position": {
+      "row": 0,
+      "col": 16
+    }
+  },
+  {
+    "id": "item_0_17",
+    "name": "Whetstone Necklace",
+    "position": {
+      "row": 0,
+      "col": 17
+    }
+  },
+  {
+    "id": "item_0_18",
+    "name": "Wisdom Pendant",
+    "position": {
+      "row": 0,
+      "col": 18
+    }
+  },
+  {
+    "id": "item_0_19",
+    "name": "Courage Pendant",
+    "position": {
+      "row": 0,
+      "col": 19
+    }
+  },
+  {
+    "id": "item_0_20",
+    "name": "Power Pendant",
+    "position": {
+      "row": 0,
+      "col": 20
+    }
+  },
+  {
+    "id": "item_0_21",
+    "name": "Golden Medallion",
+    "position": {
+      "row": 0,
+      "col": 21
+    }
+  },
+  {
+    "id": "item_0_22",
+    "name": "Shrunken Head",
+    "position": {
+      "row": 0,
+      "col": 22
+    }
+  },
+  {
+    "id": "item_0_23",
+    "name": "Torn Page",
+    "position": {
+      "row": 0,
+      "col": 23
+    }
+  },
+  {
+    "id": "item_0_24",
+    "name": "Solar Emblem",
+    "position": {
+      "row": 0,
+      "col": 24
+    }
+  },
+  {
+    "id": "item_0_25",
+    "name": "Brew Master's Emblem",
+    "position": {
+      "row": 0,
+      "col": 25
+    }
+  },
+  {
+    "id": "item_0_26",
+    "name": "Rage Emblem",
+    "position": {
+      "row": 0,
+      "col": 26
+    }
+  },
+  {
+    "id": "item_0_27",
+    "name": "Meaty Emblem",
+    "position": {
+      "row": 0,
+      "col": 27
+    }
+  },
+  {
+    "id": "item_0_28",
+    "name": "Attack Emblem",
+    "position": {
+      "row": 0,
+      "col": 28
+    }
+  },
+  {
+    "id": "item_0_29",
+    "name": "Protection Emblem",
+    "position": {
+      "row": 0,
+      "col": 29
+    }
+  },
+  {
+    "id": "item_0_30",
+    "name": "Shield Emblem",
+    "position": {
+      "row": 0,
+      "col": 30
+    }
+  },
+  {
+    "id": "item_0_31",
+    "name": "Monster Emblem",
+    "position": {
+      "row": 0,
+      "col": 31
+    }
+  },
+  {
+    "id": "item_0_32",
+    "name": "Guardian Emblem",
+    "position": {
+      "row": 0,
+      "col": 32
+    }
+  },
+  {
+    "id": "item_0_33",
+    "name": "Time Emblem",
+    "position": {
+      "row": 0,
+      "col": 33
+    }
+  },
+  {
+    "id": "item_0_34",
+    "name": "Embryo Emblem",
+    "position": {
+      "row": 0,
+      "col": 34
+    }
+  },
+  {
+    "id": "item_0_35",
+    "name": "Azazel's Pentagram",
+    "position": {
+      "row": 0,
+      "col": 35
+    }
+  },
+  {
+    "id": "item_0_36",
+    "name": "Abaddon's Pentagram",
+    "position": {
+      "row": 0,
+      "col": 36
+    }
+  },
+  {
+    "id": "item_0_37",
+    "name": "Coral Ring",
+    "position": {
+      "row": 0,
+      "col": 37
+    }
+  },
+  {
+    "id": "item_0_38",
+    "name": "Verdant Ring",
+    "position": {
+      "row": 0,
+      "col": 38
+    }
+  },
+  {
+    "id": "item_0_39",
+    "name": "Crimson Ring",
+    "position": {
+      "row": 0,
+      "col": 39
+    }
+  },
+  {
+    "id": "item_0_40",
+    "name": "Coral Bell",
+    "position": {
+      "row": 0,
+      "col": 40
+    }
+  },
+  {
+    "id": "item_0_41",
+    "name": "Verdant Bell",
+    "position": {
+      "row": 0,
+      "col": 41
+    }
+  },
+  {
+    "id": "item_0_42",
+    "name": "Crimson Bell",
+    "position": {
+      "row": 0,
+      "col": 42
+    }
+  },
+  {
+    "id": "item_0_43",
+    "name": "Arcane Diviner's Pendant",
+    "position": {
+      "row": 0,
+      "col": 43
+    }
+  },
+  {
+    "id": "item_0_44",
+    "name": "Vital Diviner's Pendant",
+    "position": {
+      "row": 0,
+      "col": 44
+    }
+  },
+  {
+    "id": "item_0_45",
+    "name": "Surging Diviner's Pendant",
+    "position": {
+      "row": 0,
+      "col": 45
+    }
+  },
+  {
+    "id": "item_0_46",
+    "name": "Arcane Seer's Stone",
+    "position": {
+      "row": 0,
+      "col": 46
+    }
+  },
+  {
+    "id": "item_0_47",
+    "name": "Vital Seer's Stone",
+    "position": {
+      "row": 0,
+      "col": 47
+    }
+  },
+  {
+    "id": "item_0_48",
+    "name": "Surging Seer's Stone",
+    "position": {
+      "row": 0,
+      "col": 48
+    }
+  },
+  {
+    "id": "item_0_49",
+    "name": "Pixie's Blessing",
+    "position": {
+      "row": 0,
+      "col": 49
+    }
+  },
+  {
+    "id": "item_0_50",
+    "name": "Ynot's Hoop",
+    "position": {
+      "row": 0,
+      "col": 50
+    }
+  },
+  {
+    "id": "item_0_51",
+    "name": "Soul Shard",
+    "position": {
+      "row": 0,
+      "col": 51
+    }
+  },
+  {
+    "id": "item_0_52",
+    "name": "Soul Pendant",
+    "position": {
+      "row": 0,
+      "col": 52
+    }
+  },
+  {
+    "id": "item_0_53",
+    "name": "Hoid's Knot",
+    "position": {
+      "row": 0,
+      "col": 53
+    }
+  },
+  {
+    "id": "item_0_54",
+    "name": "Barbarian Pelt",
+    "position": {
+      "row": 0,
+      "col": 54
+    }
+  },
+  {
+    "id": "item_0_55",
+    "name": "Luxury Barbarian Pelt",
+    "position": {
+      "row": 0,
+      "col": 55
+    }
+  },
+  {
+    "id": "item_0_56",
+    "name": "Chainmail",
+    "position": {
+      "row": 0,
+      "col": 56
+    }
+  },
+  {
+    "id": "item_0_57",
+    "name": "Studded Chainmail",
+    "position": {
+      "row": 0,
+      "col": 57
+    }
+  },
+  {
+    "id": "item_0_58",
+    "name": "Blue Gossamer Fabric",
+    "position": {
+      "row": 0,
+      "col": 58
+    }
+  },
+  {
+    "id": "item_0_59",
+    "name": "Blue Gossamer Vestments",
+    "position": {
+      "row": 0,
+      "col": 59
+    }
+  },
+  {
+    "id": "item_0_60",
+    "name": "Leather Boots",
+    "position": {
+      "row": 0,
+      "col": 60
+    }
+  },
+  {
+    "id": "item_0_61",
+    "name": "Santa's Boots",
+    "position": {
+      "row": 0,
+      "col": 61
+    }
+  },
+  {
+    "id": "item_0_62",
+    "name": "Studded Leather Boots",
+    "position": {
+      "row": 0,
+      "col": 62
+    }
+  },
+  {
+    "id": "item_0_63",
+    "name": "Boots of Speed",
+    "position": {
+      "row": 0,
+      "col": 63
+    }
+  },
+  {
+    "id": "item_1_0",
+    "name": "Refined Chainmail",
+    "position": {
+      "row": 1,
+      "col": 0
+    }
+  },
+  {
+    "id": "item_1_1",
+    "name": "Hero's Refined Chainmail",
+    "position": {
+      "row": 1,
+      "col": 1
+    }
+  },
+  {
+    "id": "item_1_2",
+    "name": "Platemail",
+    "position": {
+      "row": 1,
+      "col": 2
+    }
+  },
+  {
+    "id": "item_1_3",
+    "name": "Nondescript Cloak",
+    "position": {
+      "row": 1,
+      "col": 3
+    }
+  },
+  {
+    "id": "item_1_4",
+    "name": "Shroud of the Pale Moon",
+    "position": {
+      "row": 1,
+      "col": 4
+    }
+  },
+  {
+    "id": "item_1_5",
+    "name": "Mantle of the Deep",
+    "position": {
+      "row": 1,
+      "col": 5
+    }
+  },
+  {
+    "id": "item_1_6",
+    "name": "Veil of the Blood Hex",
+    "position": {
+      "row": 1,
+      "col": 6
+    }
+  },
+  {
+    "id": "item_1_7",
+    "name": "Brilliant Jerkin",
+    "position": {
+      "row": 1,
+      "col": 7
+    }
+  },
+  {
+    "id": "item_1_8",
+    "name": "Brilliant Platemail",
+    "position": {
+      "row": 1,
+      "col": 8
+    }
+  },
+  {
+    "id": "item_1_9",
+    "name": "Padded Leather Armor",
+    "position": {
+      "row": 1,
+      "col": 9
+    }
+  },
+  {
+    "id": "item_1_10",
+    "name": "Brilliant Hero's Platemail",
+    "position": {
+      "row": 1,
+      "col": 10
+    }
+  },
+  {
+    "id": "item_1_11",
+    "name": "Brilliant Elven Armor",
+    "position": {
+      "row": 1,
+      "col": 11
+    }
+  },
+  {
+    "id": "item_1_12",
+    "name": "Grips of the Buried Flame",
+    "position": {
+      "row": 1,
+      "col": 12
+    }
+  },
+  {
+    "id": "item_1_13",
+    "name": "Gauntlets of the Crimson Oath",
+    "position": {
+      "row": 1,
+      "col": 13
+    }
+  },
+  {
+    "id": "item_1_14",
+    "name": "Ashwoven Mitts",
+    "position": {
+      "row": 1,
+      "col": 14
+    }
+  },
+  {
+    "id": "item_1_15",
+    "name": "Spellbinders of Arcane Mastery",
+    "position": {
+      "row": 1,
+      "col": 15
+    }
+  },
+  {
+    "id": "item_1_16",
+    "name": "Honeycomb Jerkin",
+    "position": {
+      "row": 1,
+      "col": 16
+    }
+  },
+  {
+    "id": "item_1_17",
+    "name": "Honeycomb",
+    "position": {
+      "row": 1,
+      "col": 17
+    }
+  },
+  {
+    "id": "item_1_18",
+    "name": "Moss Patch",
+    "position": {
+      "row": 1,
+      "col": 18
+    }
+  },
+  {
+    "id": "item_1_19",
+    "name": "Moss Jerkin",
+    "position": {
+      "row": 1,
+      "col": 19
+    }
+  },
+  {
+    "id": "item_1_20",
+    "name": "Lapis Jerkin",
+    "position": {
+      "row": 1,
+      "col": 20
+    }
+  },
+  {
+    "id": "item_1_21",
+    "name": "Lapis Chunk",
+    "position": {
+      "row": 1,
+      "col": 21
+    }
+  },
+  {
+    "id": "item_1_22",
+    "name": "Prisoner of War Cuirass",
+    "position": {
+      "row": 1,
+      "col": 22
+    }
+  },
+  {
+    "id": "item_1_23",
+    "name": "Gladiator Breastplate",
+    "position": {
+      "row": 1,
+      "col": 23
+    }
+  },
+  {
+    "id": "item_1_24",
+    "name": "Glorious Breastplate",
+    "position": {
+      "row": 1,
+      "col": 24
+    }
+  },
+  {
+    "id": "item_1_25",
+    "name": "Chaos Jerkin",
+    "position": {
+      "row": 1,
+      "col": 25
+    }
+  },
+  {
+    "id": "item_1_26",
+    "name": "Chaos Matter",
+    "position": {
+      "row": 1,
+      "col": 26
+    }
+  },
+  {
+    "id": "item_1_27",
+    "name": "Brilliant Tunic",
+    "position": {
+      "row": 1,
+      "col": 27
+    }
+  },
+  {
+    "id": "item_1_28",
+    "name": "Sneaky Thief Vestiges",
+    "position": {
+      "row": 1,
+      "col": 28
+    }
+  },
+  {
+    "id": "item_1_29",
+    "name": "Plate Armor",
+    "position": {
+      "row": 1,
+      "col": 29
+    }
+  },
+  {
+    "id": "item_1_30",
+    "name": "Brilliant Chainmail Dress",
+    "position": {
+      "row": 1,
+      "col": 30
+    }
+  },
+  {
+    "id": "item_1_31",
+    "name": "Husk of the Obsidian Bastion",
+    "position": {
+      "row": 1,
+      "col": 31
+    }
+  },
+  {
+    "id": "item_1_32",
+    "name": "Husk of the Golden Bringer",
+    "position": {
+      "row": 1,
+      "col": 32
+    }
+  },
+  {
+    "id": "item_1_33",
+    "name": "Chainmail Tunic",
+    "position": {
+      "row": 1,
+      "col": 33
+    }
+  },
+  {
+    "id": "item_1_34",
+    "name": "Sepikor's Yoroi",
+    "position": {
+      "row": 1,
+      "col": 34
+    }
+  },
+  {
+    "id": "item_1_35",
+    "name": "Whisper's Robes",
+    "position": {
+      "row": 1,
+      "col": 35
+    }
+  },
+  {
+    "id": "item_1_36",
+    "name": "Spellwoven Robe",
+    "position": {
+      "row": 1,
+      "col": 36
+    }
+  },
+  {
+    "id": "item_1_37",
+    "name": "Rootcaller's Mantle",
+    "position": {
+      "row": 1,
+      "col": 37
+    }
+  },
+  {
+    "id": "item_1_38",
+    "name": "Ironring Hauberk",
+    "position": {
+      "row": 1,
+      "col": 38
+    }
+  },
+  {
+    "id": "item_1_39",
+    "name": "Crimson Hauberk",
+    "position": {
+      "row": 1,
+      "col": 39
+    }
+  },
+  {
+    "id": "item_1_40",
+    "name": "Iron Slab",
+    "position": {
+      "row": 1,
+      "col": 40
+    }
+  },
+  {
+    "id": "item_1_41",
+    "name": "Iron Jerkin",
+    "position": {
+      "row": 1,
+      "col": 41
+    }
+  },
+  {
+    "id": "item_1_42",
+    "name": "Serraplate",
+    "position": {
+      "row": 1,
+      "col": 42
+    }
+  },
+  {
+    "id": "item_1_43",
+    "name": "Judicator's Carapace",
+    "position": {
+      "row": 1,
+      "col": 43
+    }
+  },
+  {
+    "id": "item_1_44",
+    "name": "Mucous Covered Jerkin",
+    "position": {
+      "row": 1,
+      "col": 44
+    }
+  },
+  {
+    "id": "item_1_45",
+    "name": "Glob of Mucous",
+    "position": {
+      "row": 1,
+      "col": 45
+    }
+  },
+  {
+    "id": "item_1_46",
+    "name": "Mossy Wreath",
+    "position": {
+      "row": 1,
+      "col": 46
+    }
+  },
+  {
+    "id": "item_1_47",
+    "name": "Mossy Tunic",
+    "position": {
+      "row": 1,
+      "col": 47
+    }
+  },
+  {
+    "id": "item_1_48",
+    "name": "Purple Tooth",
+    "position": {
+      "row": 1,
+      "col": 48
+    }
+  },
+  {
+    "id": "item_1_49",
+    "name": "Obsidian Boots",
+    "position": {
+      "row": 1,
+      "col": 49
+    }
+  },
+  {
+    "id": "item_1_50",
+    "name": "Transcendent Robes",
+    "position": {
+      "row": 1,
+      "col": 50
+    }
+  },
+  {
+    "id": "item_1_51",
+    "name": "Leather Cap",
+    "position": {
+      "row": 1,
+      "col": 51
+    }
+  },
+  {
+    "id": "item_1_52",
+    "name": "Heartseal",
+    "position": {
+      "row": 1,
+      "col": 52
+    }
+  },
+  {
+    "id": "item_1_53",
+    "name": "Starwoven Vestment",
+    "position": {
+      "row": 1,
+      "col": 53
+    }
+  },
+  {
+    "id": "item_1_54",
+    "name": "Helm of the Longing King",
+    "position": {
+      "row": 1,
+      "col": 54
+    }
+  },
+  {
+    "id": "item_1_55",
+    "name": "Golden Sentinel Plate",
+    "position": {
+      "row": 1,
+      "col": 55
+    }
+  },
+  {
+    "id": "item_1_56",
+    "name": "Crown of the Prism King",
+    "position": {
+      "row": 1,
+      "col": 56
+    }
+  },
+  {
+    "id": "item_1_57",
+    "name": "Chromavest",
+    "position": {
+      "row": 1,
+      "col": 57
+    }
+  },
+  {
+    "id": "item_1_58",
+    "name": "Alfred's Gloves",
+    "position": {
+      "row": 1,
+      "col": 58
+    }
+  },
+  {
+    "id": "item_1_59",
+    "name": "Royal Robes",
+    "position": {
+      "row": 1,
+      "col": 59
+    }
+  },
+  {
+    "id": "item_1_60",
+    "name": "Dirty Red Robes",
+    "position": {
+      "row": 1,
+      "col": 60
+    }
+  },
+  {
+    "id": "item_1_61",
+    "name": "Copper Shield",
+    "position": {
+      "row": 1,
+      "col": 61
+    }
+  },
+  {
+    "id": "item_1_62",
+    "name": "Wooden Shiled",
+    "position": {
+      "row": 1,
+      "col": 62
+    }
+  },
+  {
+    "id": "item_1_63",
+    "name": "Cloth Vest",
+    "position": {
+      "row": 1,
+      "col": 63
+    }
+  },
+  {
+    "id": "item_2_0",
+    "name": "Thornwoven Wrap",
+    "position": {
+      "row": 2,
+      "col": 0
+    }
+  },
+  {
+    "id": "item_2_1",
+    "name": "Warden\u2019s Jerkin",
+    "position": {
+      "row": 2,
+      "col": 1
+    }
+  },
+  {
+    "id": "item_2_2",
+    "name": "Mourning Robe",
+    "position": {
+      "row": 2,
+      "col": 2
+    }
+  },
+  {
+    "id": "item_2_3",
+    "name": "Elder Wizard Hat",
+    "position": {
+      "row": 2,
+      "col": 3
+    }
+  },
+  {
+    "id": "item_2_4",
+    "name": "Monster Crap",
+    "position": {
+      "row": 2,
+      "col": 4
+    }
+  },
+  {
+    "id": "item_2_5",
+    "name": "Verdant Stone",
+    "position": {
+      "row": 2,
+      "col": 5
+    }
+  },
+  {
+    "id": "item_2_6",
+    "name": "Serpentscale Vest",
+    "position": {
+      "row": 2,
+      "col": 6
+    }
+  },
+  {
+    "id": "item_2_7",
+    "name": "Golden Cloak of Virtue",
+    "position": {
+      "row": 2,
+      "col": 7
+    }
+  },
+  {
+    "id": "item_2_8",
+    "name": "Sneak-Thief Robe",
+    "position": {
+      "row": 2,
+      "col": 8
+    }
+  },
+  {
+    "id": "item_2_9",
+    "name": "Obsidian Gauntlets",
+    "position": {
+      "row": 2,
+      "col": 9
+    }
+  },
+  {
+    "id": "item_2_10",
+    "name": "Bloodstone Barbarian Pelt",
+    "position": {
+      "row": 2,
+      "col": 10
+    }
+  },
+  {
+    "id": "item_2_11",
+    "name": "Battle Satchel Blue",
+    "position": {
+      "row": 2,
+      "col": 11
+    }
+  },
+  {
+    "id": "item_2_12",
+    "name": "Battle Satchel Pink",
+    "position": {
+      "row": 2,
+      "col": 12
+    }
+  },
+  {
+    "id": "item_2_13",
+    "name": "Battle Satchel Chrome",
+    "position": {
+      "row": 2,
+      "col": 13
+    }
+  },
+  {
+    "id": "item_2_14",
+    "name": "Battle Satchel Red",
+    "position": {
+      "row": 2,
+      "col": 14
+    }
+  },
+  {
+    "id": "item_2_15",
+    "name": "Blue Cup",
+    "position": {
+      "row": 2,
+      "col": 15
+    }
+  },
+  {
+    "id": "item_2_16",
+    "name": "Pink Cup",
+    "position": {
+      "row": 2,
+      "col": 16
+    }
+  },
+  {
+    "id": "item_2_17",
+    "name": "Chrome Cup",
+    "position": {
+      "row": 2,
+      "col": 17
+    }
+  },
+  {
+    "id": "item_2_18",
+    "name": "Red Cup",
+    "position": {
+      "row": 2,
+      "col": 18
+    }
+  },
+  {
+    "id": "item_2_19",
+    "name": "Ranged Emblem",
+    "position": {
+      "row": 2,
+      "col": 19
+    }
+  },
+  {
+    "id": "item_2_20",
+    "name": "Arcane Wizardry Emblem",
+    "position": {
+      "row": 2,
+      "col": 20
+    }
+  },
+  {
+    "id": "item_2_21",
+    "name": "Mystic Emblem",
+    "position": {
+      "row": 2,
+      "col": 21
+    }
+  },
+  {
+    "id": "item_2_22",
+    "name": "Stealth Emblem",
+    "position": {
+      "row": 2,
+      "col": 22
+    }
+  },
+  {
+    "id": "item_2_23",
+    "name": "Dexterity Emblem",
+    "position": {
+      "row": 2,
+      "col": 23
+    }
+  },
+  {
+    "id": "item_2_24",
+    "name": "Fireball Emblem",
+    "position": {
+      "row": 2,
+      "col": 24
+    }
+  },
+  {
+    "id": "item_2_25",
+    "name": "Intelligence Emblem",
+    "position": {
+      "row": 2,
+      "col": 25
+    }
+  },
+  {
+    "id": "item_2_26",
+    "name": "Toughness Emblem",
+    "position": {
+      "row": 2,
+      "col": 26
+    }
+  },
+  {
+    "id": "item_2_27",
+    "name": "Enchanter\u2019s Emblem",
+    "position": {
+      "row": 2,
+      "col": 27
+    }
+  },
+  {
+    "id": "item_2_28",
+    "name": "Sanguine Emblem",
+    "position": {
+      "row": 2,
+      "col": 28
+    }
+  },
+  {
+    "id": "item_2_29",
+    "name": "Azazel's Hourglass",
+    "position": {
+      "row": 2,
+      "col": 29
+    }
+  },
+  {
+    "id": "item_2_30",
+    "name": "Disease Emblem",
+    "position": {
+      "row": 2,
+      "col": 30
+    }
+  },
+  {
+    "id": "item_2_31",
+    "name": "Enchanted Will Potion",
+    "position": {
+      "row": 2,
+      "col": 31
+    }
+  },
+  {
+    "id": "item_2_32",
+    "name": "Golden Shield of Sunlight",
+    "position": {
+      "row": 2,
+      "col": 32
+    }
+  },
+  {
+    "id": "item_2_33",
+    "name": "Swap Token",
+    "position": {
+      "row": 2,
+      "col": 33
+    }
+  },
+  {
+    "id": "item_2_34",
+    "name": "Field Medic Shield",
+    "position": {
+      "row": 2,
+      "col": 34
+    }
+  },
+  {
+    "id": "item_2_35",
+    "name": "Haste Carriers",
+    "position": {
+      "row": 2,
+      "col": 35
+    }
+  },
+  {
+    "id": "item_2_36",
+    "name": "Vision Rune",
+    "position": {
+      "row": 2,
+      "col": 36
+    }
+  },
+  {
+    "id": "item_2_37",
+    "name": "Water Sigil",
+    "position": {
+      "row": 2,
+      "col": 37
+    }
+  },
+  {
+    "id": "item_2_38",
+    "name": "Strength Emblem",
+    "position": {
+      "row": 2,
+      "col": 38
+    }
+  },
+  {
+    "id": "item_2_39",
+    "name": "Mr. Hood's Cap",
+    "position": {
+      "row": 2,
+      "col": 39
+    }
+  },
+  {
+    "id": "item_2_40",
+    "name": "Castle Knight Helm",
+    "position": {
+      "row": 2,
+      "col": 40
+    }
+  },
+  {
+    "id": "item_2_41",
+    "name": "Magneto's Helm",
+    "position": {
+      "row": 2,
+      "col": 41
+    }
+  },
+  {
+    "id": "item_2_42",
+    "name": "Golden Knight's Helm",
+    "position": {
+      "row": 2,
+      "col": 42
+    }
+  },
+  {
+    "id": "item_2_43",
+    "name": "Executioner's Helm",
+    "position": {
+      "row": 2,
+      "col": 43
+    }
+  },
+  {
+    "id": "item_2_44",
+    "name": "Grey Wizard Hat",
+    "position": {
+      "row": 2,
+      "col": 44
+    }
+  },
+  {
+    "id": "item_2_45",
+    "name": "Verdant Wizard Hat",
+    "position": {
+      "row": 2,
+      "col": 45
+    }
+  },
+  {
+    "id": "item_2_46",
+    "name": "Studded Wooden Shield",
+    "position": {
+      "row": 2,
+      "col": 46
+    }
+  },
+  {
+    "id": "item_2_47",
+    "name": "Studded Artificer's Shield",
+    "position": {
+      "row": 2,
+      "col": 47
+    }
+  },
+  {
+    "id": "item_2_48",
+    "name": "Royal Guard's Round Shield",
+    "position": {
+      "row": 2,
+      "col": 48
+    }
+  },
+  {
+    "id": "item_2_49",
+    "name": "Tall Dragon Slayer Shield",
+    "position": {
+      "row": 2,
+      "col": 49
+    }
+  },
+  {
+    "id": "item_2_50",
+    "name": "Obsidian Kite Shield",
+    "position": {
+      "row": 2,
+      "col": 50
+    }
+  },
+  {
+    "id": "item_2_51",
+    "name": "Golden Tree Sentinel Shield",
+    "position": {
+      "row": 2,
+      "col": 51
+    }
+  },
+  {
+    "id": "item_2_52",
+    "name": "Unicorn Shield",
+    "position": {
+      "row": 2,
+      "col": 52
+    }
+  },
+  {
+    "id": "item_2_53",
+    "name": "Small Dragon Slayer Shield",
+    "position": {
+      "row": 2,
+      "col": 53
+    }
+  },
+  {
+    "id": "item_2_54",
+    "name": "Round Red Shield",
+    "position": {
+      "row": 2,
+      "col": 54
+    }
+  },
+  {
+    "id": "item_2_55",
+    "name": "Necromancer's Tome",
+    "position": {
+      "row": 2,
+      "col": 55
+    }
+  },
+  {
+    "id": "item_2_56",
+    "name": "Golden Tome",
+    "position": {
+      "row": 2,
+      "col": 56
+    }
+  },
+  {
+    "id": "item_2_57",
+    "name": "White Tome",
+    "position": {
+      "row": 2,
+      "col": 57
+    }
+  },
+  {
+    "id": "item_2_58",
+    "name": "Red Tome",
+    "position": {
+      "row": 2,
+      "col": 58
+    }
+  },
+  {
+    "id": "item_2_59",
+    "name": "Teal Tome",
+    "position": {
+      "row": 2,
+      "col": 59
+    }
+  },
+  {
+    "id": "item_2_60",
+    "name": "Blue Tome",
+    "position": {
+      "row": 2,
+      "col": 60
+    }
+  },
+  {
+    "id": "item_2_61",
+    "name": "Gehena Tome",
+    "position": {
+      "row": 2,
+      "col": 61
+    }
+  },
+  {
+    "id": "item_2_62",
+    "name": "Crypt Tome",
+    "position": {
+      "row": 2,
+      "col": 62
+    }
+  },
+  {
+    "id": "item_2_63",
+    "name": "Verdant Tome",
+    "position": {
+      "row": 2,
+      "col": 63
+    }
+  }
+]
