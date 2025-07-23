@@ -5,6 +5,7 @@ import (
 	"dungeoneer/levels"
 	"dungeoneer/movement"
 	"dungeoneer/pathing"
+	"dungeoneer/ui"
 	"math"
 	"os"
 
@@ -321,6 +322,7 @@ func (g *Game) handleInputPlaying() {
 	g.handleHoverTile()
 	g.handleClicks()
 	g.handleLevelHotkeys()
+	ui.HandleItemPaletteInput(g.player)
 }
 
 func (g *Game) handlePlayerVelocity() {

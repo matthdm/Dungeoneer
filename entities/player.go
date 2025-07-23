@@ -4,6 +4,7 @@ import (
 	"dungeoneer/collision"
 	"dungeoneer/constants"
 	"dungeoneer/images"
+	"dungeoneer/inventory"
 	"dungeoneer/levels"
 	"dungeoneer/movement"
 	"dungeoneer/pathing"
@@ -45,6 +46,8 @@ type Player struct {
 
 	Caster *spells.Caster
 
+	Inventory *inventory.Inventory
+
 	LastMoveDirX float64
 	LastMoveDirY float64
 }
@@ -73,6 +76,7 @@ func NewPlayer(ss *sprites.SpriteSheet) *Player {
 			Delay:       constants.GrappleDelay,
 		},
 		Caster:       spells.NewCaster(),
+		Inventory:    inventory.NewInventory(),
 		LastMoveDirX: -1,
 		LastMoveDirY: 0,
 	}
