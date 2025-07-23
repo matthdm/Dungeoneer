@@ -92,6 +92,12 @@ var (
 
 	//go:embed smoke.png
 	Smoke_png []byte
+
+	//go:embed item_subset.png
+	Item_subset_png []byte
+
+	//go:embed item_reversemap_rows_0_1_2.json
+	Item_reversemap_rows_0_1_2_json []byte
 )
 
 // LoadEmbeddedImage loads images available through embed system, can pass name reference instead of the path
