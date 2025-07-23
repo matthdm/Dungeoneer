@@ -21,17 +21,18 @@ import (
 )
 
 type Game struct {
-	w, h          int
-	currentWorld  *levels.LayeredLevel
-	currentLevel  *levels.Level
-	State         GameState
-	Menu          *ui.MainMenu
-	PauseMenu     *ui.PauseMenu
-	LoadLevelMenu *ui.LoadLevelMenu
-	SaveLevelMenu *ui.SaveLevelMenu
-	SavePrompt    *ui.TextInputMenu
-	LinkPrompt    *ui.LayerPrompt
-	isPaused      bool
+	w, h           int
+	currentWorld   *levels.LayeredLevel
+	currentLevel   *levels.Level
+	State          GameState
+	Menu           *ui.MainMenu
+	PauseMenu      *ui.PauseMenu
+	LoadLevelMenu  *ui.LoadLevelMenu
+	LoadPlayerMenu *ui.LoadPlayerMenu
+	SaveLevelMenu  *ui.SaveLevelMenu
+	SavePrompt     *ui.TextInputMenu
+	LinkPrompt     *ui.LayerPrompt
+	isPaused       bool
 
 	camX, camY           float64
 	minCamScale          float64
@@ -165,11 +166,54 @@ func NewGame() (*Game, error) {
 			g.PauseMenu.Show() // <-- resume the previous menu
 		},
 	)
+	g.LoadPlayerMenu = ui.NewLoadPlayerMenu(g.w, g.h,
+		func(ply *entities.Player) {
+			g.player = ply
+			g.isPaused = false
+		},
+		func() {
+			g.LoadPlayerMenu.Hide()
+			if g.PauseMenu != nil {
+				g.PauseMenu.Show()
+			}
+		},
+	)
 	// Pause Menu
 	pm := ui.NewPauseMenu(l.W, l.H, ui.PauseMenuCallbacks{
-		OnResume:    func() { g.resumeGame() },
-		OnExit:      func() { os.Exit(0) },
-		OnLoadLevel: func() { g.LoadLevelMenu.Show() },
+		OnResume:     func() { g.resumeGame() },
+		OnExit:       func() { os.Exit(0) },
+		OnLoadLevel:  func() { g.LoadLevelMenu.Show() },
+		OnLoadPlayer: func() { g.LoadPlayerMenu.Show() },
+		OnSavePlayer: func() {
+			menuRect := image.Rect(g.w/2-200, g.h/2-100, g.w/2+200, g.h/2+100)
+			g.SavePrompt = ui.NewTextInputMenu(
+				menuRect,
+				"Save Player",
+				"Enter filename (with .json):",
+				func(filename string) {
+					path := "players/" + filename
+					err := entities.SavePlayerToFile(g.player, path)
+					if err != nil {
+						fmt.Println("Error saving player:", err)
+					} else {
+						fmt.Println("Saved player to:", path)
+						g.SavePrompt = ui.NewTextInputMenu(
+							menuRect,
+							"Success",
+							"Saved player to: "+filename,
+							nil,
+							nil,
+						)
+						g.SavePrompt.Instructions = []string{"Press Esc to close"}
+						g.SavePrompt.Show()
+					}
+				},
+				func() {
+					fmt.Println("Canceled saving player.")
+				},
+			)
+			g.SavePrompt.Show()
+		},
 		OnSaveLevel: func() {
 			menuRect := image.Rect(g.w/2-200, g.h/2-100, g.w/2+200, g.h/2+100)
 			g.SavePrompt = ui.NewTextInputMenu(
@@ -448,6 +492,8 @@ func (g *Game) updatePlaying() error {
 			g.SavePrompt.Update()
 		} else if g.LoadLevelMenu != nil && g.LoadLevelMenu.Menu.IsVisible() {
 			g.LoadLevelMenu.Update()
+		} else if g.LoadPlayerMenu != nil && g.LoadPlayerMenu.Menu.IsVisible() {
+			g.LoadPlayerMenu.Update()
 		} else {
 			g.PauseMenu.Update()
 		}
@@ -586,6 +632,10 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 
 	if g.LoadLevelMenu != nil {
 		g.LoadLevelMenu.SetRect(newRect)
+	}
+
+	if g.LoadPlayerMenu != nil {
+		g.LoadPlayerMenu.SetRect(newRect)
 	}
 
 	if g.SaveLevelMenu != nil {
