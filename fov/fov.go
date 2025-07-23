@@ -60,7 +60,7 @@ func RayCasting(cx, cy float64, walls []Line, level *levels.Level) []Line {
 	}
 
 	for i := 0; i < numRays; i++ {
-		angle := float64(i) * (2 * math.Pi / numRays)
+		angle := float64(i) * float64(2.0*math.Pi/float64(numRays)) // evenly spaced angles around the player
 
 		// Slightly offset the origin along the ray's direction
 		ox := cx + epsilon*math.Cos(angle)
