@@ -35,6 +35,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if g.isPaused {
 		if g.LoadLevelMenu != nil && g.LoadLevelMenu.Menu.IsVisible() {
 			g.LoadLevelMenu.Draw(screen)
+		} else if g.LoadPlayerMenu != nil && g.LoadPlayerMenu.Menu.IsVisible() {
+			g.LoadPlayerMenu.Draw(screen)
 		} else {
 			g.PauseMenu.Draw(screen)
 			if g.SavePrompt != nil && g.SavePrompt.IsVisible() {
@@ -123,6 +125,9 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 	}
 	g.drawDashUI(screen)
 	ui.DrawItemPalette(screen)
+	if g.DevMenu != nil {
+		g.DevMenu.Draw(screen)
+	}
 	//fov.DebugDrawWalls(screen, g.RaycastWalls, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
 }
 
