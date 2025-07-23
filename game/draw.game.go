@@ -35,6 +35,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if g.isPaused {
 		if g.LoadLevelMenu != nil && g.LoadLevelMenu.Menu.IsVisible() {
 			g.LoadLevelMenu.Draw(screen)
+		} else if g.LoadPlayerMenu != nil && g.LoadPlayerMenu.Menu.IsVisible() {
+			g.LoadPlayerMenu.Draw(screen)
 		} else {
 			g.PauseMenu.Draw(screen)
 			if g.SavePrompt != nil && g.SavePrompt.IsVisible() {
