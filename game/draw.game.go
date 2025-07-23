@@ -9,6 +9,7 @@ import (
 	"image"
 	"image/color"
 	"math"
+	"strings"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -88,17 +89,23 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 		target.Clear()
 		scale = 1
 	}
-
-	g.drawTiles(target, scale, cx, cy)
+	g.drawFloorTiles(target, scale, cx, cy)
 	g.drawPathPreview(target, scale, cx, cy)
-	g.drawPlayer(target, scale, cx, cy)
-	g.drawMonsters(target, scale, cx, cy)
+	renderables := g.collectRenderables(scale, cx, cy)
+	for _, r := range renderables {
+		target.DrawImage(r.Image, r.Options)
+	}
 	g.drawSpells(target, scale, cx, cy)
+
+	//g.drawTiles(target, scale, cx, cy)
+	//g.drawPathPreview(target, scale, cx, cy)
+	//g.drawPlayer(target, scale, cx, cy)
+	//g.drawMonsters(target, scale, cx, cy)
+	//g.drawSpells(target, scale, cx, cy)
 	g.drawHitMarkers(target, scale, cx, cy)
 	g.drawDamageNumbers(target, scale, cx, cy)
 	g.drawHealNumbers(target, scale, cx, cy)
 	g.drawGrapple(target, scale, cx, cy)
-	g.drawHoverTile(target, scale, cx, cy)
 
 	if scaleLater {
 		op := &ebiten.DrawImageOptions{}
@@ -158,7 +165,7 @@ func (g *Game) drawDashUI(screen *ebiten.Image) {
 	}
 }
 
-func (g *Game) drawTiles(target *ebiten.Image, scale, cx, cy float64) {
+func (g *Game) drawFloorTiles(target *ebiten.Image, scale, cx, cy float64) {
 	padding := float64(g.currentLevel.TileSize) * scale
 
 	// Precompute screen-space bounds
@@ -191,19 +198,16 @@ func (g *Game) drawTiles(target *ebiten.Image, scale, cx, cy float64) {
 				continue
 			}
 
-			op := g.getDrawOp(xi, yi, scale, cx, cy)
-			if inFOV {
-				// Draw full bright
+			for _, s := range tile.Sprites {
+				if !isFloorSprite(strings.ToLower(s.ID)) {
+					continue
+				}
 				op := g.getDrawOp(xi, yi, scale, cx, cy)
-				tile.Draw(target, op)
-			} else if wasSeen {
-				// Draw dimmed
-				op := g.getDrawOp(xi, yi, scale, cx, cy)
-				op.ColorScale.Scale(0.4, 0.4, 0.4, 1.0) // tweak brightness as needed
-				tile.Draw(target, op)
+				if !inFOV && wasSeen {
+					op.ColorScale.Scale(0.4, 0.4, 0.4, 1.0)
+				}
+				target.DrawImage(s.Image, op)
 			}
-
-			tile.Draw(target, op)
 		}
 	}
 }

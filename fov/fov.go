@@ -75,6 +75,12 @@ func RayCasting(cx, cy float64, walls []Line, level *levels.Level) []Line {
 		}
 
 		if !math.IsInf(minDist, 1) {
+			// Move the endpoint slightly into the wall so the tile
+			// is registered as visible even when the ray hits a corner.
+			const pen = 0.01
+			hitX += pen * math.Cos(angle)
+			hitY += pen * math.Sin(angle)
+
 			path := TraceLineToTiles(cx, cy, hitX, hitY)
 			rays = append(rays, Line{X1: cx, Y1: cy, X2: hitX, Y2: hitY, Path: path})
 		}
