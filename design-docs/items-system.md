@@ -1,9 +1,9 @@
-📄 Design Document: items Package
+ Design Document: items Package
 
 Feature Name: Item Management System
 Game: Dungeoneer
 Related Systems: Inventory, Equipment, Loot, Player Interactions
-🎯 Design Goals
+ Design Goals
 
     Define a modular, extensible system for in-game items
 
@@ -13,11 +13,11 @@ Related Systems: Inventory, Equipment, Loot, Player Interactions
 
     Allow custom behavior via hooks (e.g. OnUse)
 
-    Integrate with the inventory system's 5×4 grid and equipment slots
+    Integrate with the inventory system's 54 grid and equipment slots
 
     Use centralized item definitions and loading for consistency
 
-📦 Package Overview
+ Package Overview
 
 Path: /items
 
@@ -31,7 +31,7 @@ This package contains:
 
     Utilities for use, copy, stack, and render logic
 
-🔩 Core Data Structures
+ Core Data Structures
 ItemType
 
 type ItemType string
@@ -88,7 +88,7 @@ type ItemTemplate struct {
 	OnUse       func(p *entities.Player)
 }
 
-📋 Item Registry
+ Item Registry
 
 All items are defined at load time using a global registry:
 
@@ -136,14 +136,14 @@ func NewItem(id string) *Item {
 	}
 }
 
-🧪 Integration Points
+ Integration Points
 System	Integration
 Inventory	Items populate [][]*Item grid
 UI	Tooltip renders Name, Stats, etc.
 Player	Item usage applies OnUse() effects
 Combat	Equipped weapon stats modify damage
 Levels	Dropped items on ground (future)
-📂 Serialization
+ Serialization
 
 When saving an item:
 
@@ -160,13 +160,13 @@ func FromSave(s ItemSave) *Item {
 	return item
 }
 
-🔮 Future Extensions
+ Future Extensions
 Feature	Integration Notes
 Item rarity	Add Rarity string and color overlays
 Modifiers/enchants	Add dynamic Modifiers []Modifier
 Crafting	Use items.Combine(a, b) or RecipeMap
 Item cooldowns	Track item LastUsed with time.Time
 Drop on death	Convert item to entity in world map
-📜 Codex Prompt
+ Codex Prompt
 
     You are working on a 2D isometric dungeon crawler using Ebiten in Go. Implement a modular items package that integrates with a 5x4 grid inventory system. Items can be weapons, armor, consumables, quest items, etc. Each item has an ID, name, type, stats, an optional OnUse(*Player) hook, and may be stackable. Include a global item registry that loads item templates and supports instantiating live Item objects. Support item serialization and usage from the inventory system.

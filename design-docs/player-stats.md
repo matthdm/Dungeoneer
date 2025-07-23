@@ -1,9 +1,9 @@
-📄 Design Document: Player Stats & Save System Refactor
+ Design Document: Player Stats & Save System Refactor
 
 Feature: Character Stats + Save/Load Support
 Game: Dungeoneer
 Goal: Extend the Player struct to support RPG stats (Strength, Dexterity, etc.), enable full serialization of the character, and integrate with inventory and combat systems.
-🎯 Design Goals
+ Design Goals
 
     Introduce a flexible stat system to the Player struct
 
@@ -13,7 +13,7 @@ Goal: Extend the Player struct to support RPG stats (Strength, Dexterity, etc.),
 
     Lay groundwork for future systems: leveling, buffs, status effects
 
-🧠 Core Concepts
+ Core Concepts
 Stat Categories
 Stat	Purpose
 Strength	Affects melee damage, carry weight
@@ -21,8 +21,8 @@ Dexterity	Affects accuracy, ranged weapons
 Vitality	Affects max HP, resistance
 Intelligence	Affects spell power, mana (future)
 Luck	Influences crits, item drops
-🧱 Player Struct Refactor
-✅ New Fields
+ Player Struct Refactor
+ New Fields
 
 type Player struct {
 	// Existing
@@ -65,7 +65,7 @@ type StatModifiers struct {
 	LuckMod         int
 }
 
-🧮 Derived Stats Calculations
+ Derived Stats Calculations
 
 Add a helper function to recalculate derived stats from base + modifiers + equipment:
 
@@ -77,7 +77,7 @@ func (p *Player) RecalculateStats() {
 	p.AttackRate = 60 - (p.Stats.Dexterity + equipMod.DexterityMod) * 2
 }
 
-💾 Serialization
+ Serialization
 Save Format
 
 type PlayerSave struct {
@@ -120,14 +120,14 @@ func LoadPlayer(data PlayerSave) *Player {
 	return player
 }
 
-🧰 Usage in Combat / Effects
+ Usage in Combat / Effects
 
-    Player.Damage is used during combat — derived from Strength
+    Player.Damage is used during combat  derived from Strength
 
     Spells in the future may use Intelligence
 
     Buff items can temporarily adjust TempModifiers, then trigger RecalculateStats()
 
-🧠 Codex Prompt
+ Codex Prompt
 
     You are refactoring a Player struct in an isometric 2D dungeon crawler (Ebiten + Go). Add support for base RPG stats: Strength, Dexterity, Vitality, Intelligence, and Luck. Imlpement the mana and passive regen. More intelligence means more power to spells, more mana pool; mana should have passive regen, unlike health. Include support for equipment bonuses and temporary modifiers. Also implement full JSON-compatible save/load for the player, including stats, inventory, equipment, and HP. Use a PlayerSave struct and helper methods like ToSaveData() and LoadPlayer().
