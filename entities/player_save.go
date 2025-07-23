@@ -1,9 +1,11 @@
 package entities
 
 import (
+	"dungeoneer/images"
 	"dungeoneer/inventory"
 	"dungeoneer/items"
 	"dungeoneer/movement"
+	"dungeoneer/spells"
 )
 
 // PlayerSave represents the serializable player state.
@@ -34,9 +36,17 @@ func (p *Player) ToSaveData() PlayerSave {
 
 // LoadPlayer reconstructs a Player from saved data.
 func LoadPlayer(data PlayerSave) *Player {
+	mc := movement.NewMovementController(5)
+	mc.InterpX = float64(data.TileX)
+	mc.InterpY = float64(data.TileY)
+
+	blackMage, _ := images.LoadEmbeddedImage(images.Black_Mage_Full_png)
+
 	p := &Player{
 		TileX:          data.TileX,
 		TileY:          data.TileY,
+		LeftFacing:     true,
+		Sprite:         blackMage,
 		Stats:          data.Stats,
 		TempModifiers:  StatModifiers{},
 		Inventory:      inventory.FromSaveData(data.Inventory),
@@ -44,8 +54,15 @@ func LoadPlayer(data PlayerSave) *Player {
 		HP:             data.HP,
 		Mana:           data.Mana,
 		Name:           data.Name,
-		MoveController: movement.NewMovementController(5),
+		MoveController: mc,
+		Caster:         spells.NewCaster(),
 	}
+
+	mc.OnStep = func(x, y int) {
+		p.TileX = x
+		p.TileY = y
+	}
+
 	p.RecalculateStats()
 	return p
 }
