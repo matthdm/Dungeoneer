@@ -38,3 +38,23 @@ func worldToScreen(x, y float64, camX, camY, camScale float64, cx, cy float64, t
 	screenY := (isoY+camY)*camScale + cy
 	return screenX, screenY
 }
+
+// BuildShadowTriangles converts an ordered slice of rays into a set of
+// world-space triangles that describe the player's visible area. The triangles
+// can be cached and reused until the rays change.
+func BuildShadowTriangles(rays []Line) []Triangle {
+	if len(rays) < 3 {
+		return nil
+	}
+	tris := make([]Triangle, 0, len(rays))
+	for i := range rays {
+		r1 := rays[i]
+		r2 := rays[(i+1)%len(rays)]
+		tris = append(tris, Triangle{
+			X1: r1.X1, Y1: r1.Y1,
+			X2: r1.X2, Y2: r1.Y2,
+			X3: r2.X2, Y3: r2.Y2,
+		})
+	}
+	return tris
+}

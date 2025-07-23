@@ -1,6 +1,7 @@
 package fov
 
 import (
+	"dungeoneer/constants"
 	"dungeoneer/levels"
 	"math"
 )
@@ -28,7 +29,14 @@ func RayCasting(cx, cy float64, walls []Line, level *levels.Level) []Line {
 	}
 
 	const rayLength = 1000
-	const numRays = 360
+	numRays := constants.MaxFOVRays
+	// Reduce the number of rays on very large maps to keep performance
+	if level.W > 80 || level.H > 80 {
+		numRays /= 3
+	} else if level.W > 50 || level.H > 50 {
+		numRays /= 2
+	}
+
 	var rays []Line
 
 	// Offset to avoid standing "inside" a wall
