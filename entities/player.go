@@ -5,6 +5,7 @@ import (
 	"dungeoneer/constants"
 	"dungeoneer/images"
 	"dungeoneer/inventory"
+	"dungeoneer/items"
 	"dungeoneer/levels"
 	"dungeoneer/movement"
 	"dungeoneer/pathing"
@@ -47,6 +48,8 @@ type Player struct {
 	Caster *spells.Caster
 
 	Inventory *inventory.Inventory
+	Stats     map[string]int
+	Equipment map[string]*items.Item
 
 	LastMoveDirX float64
 	LastMoveDirY float64
@@ -77,6 +80,8 @@ func NewPlayer(ss *sprites.SpriteSheet) *Player {
 		},
 		Caster:       spells.NewCaster(),
 		Inventory:    inventory.NewInventory(),
+		Stats:        map[string]int{"Armor": 0},
+		Equipment:    make(map[string]*items.Item),
 		LastMoveDirX: -1,
 		LastMoveDirY: 0,
 	}
@@ -408,4 +413,35 @@ func (p *Player) TakeDamage(dmg int) {
 		p.HP = 0
 		p.IsDead = true
 	}
+}
+
+func (p *Player) Equip(slot string, it *items.Item) {
+	if p.Equipment == nil {
+		p.Equipment = make(map[string]*items.Item)
+	}
+	if old, ok := p.Equipment[slot]; ok && old != nil {
+		if old.OnUnequip != nil {
+			old.OnUnequip(p)
+		}
+	}
+	p.Equipment[slot] = it
+	if it != nil && it.OnEquip != nil {
+		it.OnEquip(p)
+	}
+}
+
+func (p *Player) Unequip(slot string) {
+	if old, ok := p.Equipment[slot]; ok && old != nil {
+		if old.OnUnequip != nil {
+			old.OnUnequip(p)
+		}
+	}
+	delete(p.Equipment, slot)
+}
+
+func (p *Player) UseItem(it *items.Item) {
+	if it == nil || !it.Usable || it.OnUse == nil {
+		return
+	}
+	it.OnUse(p)
 }

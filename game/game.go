@@ -50,6 +50,8 @@ type Game struct {
 	DamageNumbers          []entities.DamageNumber
 	HealNumbers            []entities.DamageNumber
 
+	DevMenu *ui.DevMenu
+
 	ActiveSpells    []spells.Spell
 	fireballSprites [][]*ebiten.Image
 
@@ -140,6 +142,7 @@ func NewGame() (*Game, error) {
 		camSmooth:       0.1,
 		SpellDebug:      true,
 	}
+	g.DevMenu = ui.NewDevMenu(640, 480, g.player)
 	g.editor.OnLayerChange = g.editorLayerChanged
 	g.editor.OnStairPlaced = g.stairPlaced
 	g.spawnEntitiesFromLevel()
@@ -537,6 +540,10 @@ func (g *Game) updatePlaying() error {
 	}
 
 	g.updateSpells()
+
+	if g.DevMenu != nil {
+		g.DevMenu.Update()
+	}
 
 	// Debugging / editor / effects
 	g.DebugLevelEditor()

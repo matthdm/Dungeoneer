@@ -123,6 +123,9 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 	}
 	g.drawDashUI(screen)
 	ui.DrawItemPalette(screen)
+	if g.DevMenu != nil {
+		g.DevMenu.Draw(screen)
+	}
 	//fov.DebugDrawWalls(screen, g.RaycastWalls, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
 }
 
