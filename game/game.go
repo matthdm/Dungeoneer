@@ -7,6 +7,7 @@ import (
 	"dungeoneer/items"
 	"dungeoneer/leveleditor"
 	"dungeoneer/levels"
+	"dungeoneer/menumanager"
 	"dungeoneer/pathing"
 	"dungeoneer/spells"
 	"dungeoneer/sprites"
@@ -157,33 +158,27 @@ func NewGame() (*Game, error) {
 	g.LoadLevelMenu = ui.NewLoadLevelMenu(g.w, g.h,
 		func(loaded *levels.Level) {
 			g.currentLevel = loaded
-			g.isPaused = false
 			g.UpdateSeenTiles(*loaded)
 			g.spawnEntitiesFromLevel()
 		},
 		func() {
-			g.LoadLevelMenu.Hide()
-			g.PauseMenu.Show() // <-- resume the previous menu
+			menumanager.Manager().CloseActiveMenu()
 		},
 	)
 	g.LoadPlayerMenu = ui.NewLoadPlayerMenu(g.w, g.h,
 		func(ply *entities.Player) {
 			g.player = ply
-			g.isPaused = false
 		},
 		func() {
-			g.LoadPlayerMenu.Hide()
-			if g.PauseMenu != nil {
-				g.PauseMenu.Show()
-			}
+			menumanager.Manager().CloseActiveMenu()
 		},
 	)
 	// Pause Menu
 	pm := ui.NewPauseMenu(l.W, l.H, ui.PauseMenuCallbacks{
 		OnResume:     func() { g.resumeGame() },
 		OnExit:       func() { os.Exit(0) },
-		OnLoadLevel:  func() { g.LoadLevelMenu.Show() },
-		OnLoadPlayer: func() { g.LoadPlayerMenu.Show() },
+		OnLoadLevel:  func() { menumanager.Manager().Open(g.LoadLevelMenu) },
+		OnLoadPlayer: func() { menumanager.Manager().Open(g.LoadPlayerMenu) },
 		OnSavePlayer: func() {
 			menuRect := image.Rect(g.w/2-200, g.h/2-100, g.w/2+200, g.h/2+100)
 			g.SavePrompt = ui.NewTextInputMenu(
@@ -205,14 +200,15 @@ func NewGame() (*Game, error) {
 							nil,
 						)
 						g.SavePrompt.Instructions = []string{"Press Esc to close"}
-						g.SavePrompt.Show()
+						menumanager.Manager().Open(g.SavePrompt)
 					}
 				},
 				func() {
 					fmt.Println("Canceled saving player.")
+					menumanager.Manager().CloseActiveMenu()
 				},
 			)
-			g.SavePrompt.Show()
+			menumanager.Manager().Open(g.SavePrompt)
 		},
 		OnSaveLevel: func() {
 			menuRect := image.Rect(g.w/2-200, g.h/2-100, g.w/2+200, g.h/2+100)
@@ -236,14 +232,15 @@ func NewGame() (*Game, error) {
 							nil,
 						)
 						g.SavePrompt.Instructions = []string{"Press Esc to close"}
-						g.SavePrompt.Show()
+						menumanager.Manager().Open(g.SavePrompt)
 					}
 				},
 				func() {
 					fmt.Println("Canceled saving.")
+					menumanager.Manager().CloseActiveMenu()
 				},
 			)
-			g.SavePrompt.Show()
+			menumanager.Manager().Open(g.SavePrompt)
 		},
 		OnNewBlank: func() {
 			newLevel := levels.CreateNewBlankLevel(64, 64, g.currentLevel.TileSize, ss) // TODO: Prompt for dimensions later
@@ -257,6 +254,7 @@ func NewGame() (*Game, error) {
 		},
 	})
 	g.PauseMenu = pm
+	menumanager.Init(pm)
 
 	g.VisibleTiles = make([][]bool, g.currentLevel.H)
 	g.SeenTiles = make([][]bool, g.currentLevel.H)

@@ -3,6 +3,7 @@ package game
 import (
 	"dungeoneer/entities"
 	"dungeoneer/levels"
+	"dungeoneer/menumanager"
 	"dungeoneer/movement"
 	"dungeoneer/pathing"
 	"dungeoneer/ui"
@@ -59,27 +60,24 @@ func (g *Game) handleMainMenuInput() {
 
 func (g *Game) handlePause() {
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
-		if g.isPaused {
-			// Only resume if on main pause menu
-			if !g.PauseMenu.ShowSettings {
-				g.resumeGame()
-			} else {
-				// go back to main pause menu instead
-				g.PauseMenu.SwitchToMain()
-			}
-		} else {
-			g.isPaused = true
-			g.PauseMenu.Show()
+		// Close editor palettes first
+		if g.editor.PaletteOpen {
+			g.editor.TogglePalette()
+			return
 		}
+		if g.editor.EntityPaletteOpen {
+			g.editor.ToggleEntityPalette()
+			return
+		}
+
+		menumanager.Manager().HandleEscapePress()
 	}
+	g.isPaused = menumanager.Manager().Active == g.PauseMenu
 }
 
 func (g *Game) resumeGame() {
+	menumanager.Manager().CloseActiveMenu()
 	g.isPaused = false
-	if g.PauseMenu != nil { // Ensure pauseMenu exists
-		g.PauseMenu.MainMenu.Hide()
-		g.PauseMenu.SettingsMenu.Hide()
-	}
 }
 
 func (g *Game) handleZoom() {
