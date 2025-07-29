@@ -85,6 +85,8 @@ func (llm *LoadLevelMenu) Hide() {
 	llm.Menu.Hide()
 }
 
+func (llm *LoadLevelMenu) IsVisible() bool { return llm.Menu.IsVisible() }
+
 func (llm *LoadLevelMenu) Update() {
 	llm.Menu.Update()
 }

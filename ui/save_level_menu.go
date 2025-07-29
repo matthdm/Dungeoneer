@@ -56,6 +56,7 @@ func (sm *SaveLevelMenu) saveAs(filename string) func() {
 
 func (sm *SaveLevelMenu) Show()                     { sm.Menu.Show() }
 func (sm *SaveLevelMenu) Hide()                     { sm.Menu.Hide() }
+func (sm *SaveLevelMenu) IsVisible() bool           { return sm.Menu.IsVisible() }
 func (sm *SaveLevelMenu) Update()                   { sm.Menu.Update() }
 func (sm *SaveLevelMenu) Draw(screen *ebiten.Image) { sm.Menu.Draw(screen) }
 func (sm *SaveLevelMenu) SetRect(r image.Rectangle) { sm.Menu.SetRect(r) }

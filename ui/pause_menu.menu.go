@@ -116,3 +116,13 @@ func (pm *PauseMenu) SwitchToSettings() {
 	pm.SettingsMenu.SetSelectedIndex(0) // Reset selected menu option to 1st index
 	pm.MainMenu.Hide()
 }
+
+func (pm *PauseMenu) Hide() {
+	pm.MainMenu.Hide()
+	pm.SettingsMenu.Hide()
+	pm.ShowSettings = false
+}
+
+func (pm *PauseMenu) IsVisible() bool {
+	return pm.MainMenu.IsVisible() || pm.SettingsMenu.IsVisible()
+}

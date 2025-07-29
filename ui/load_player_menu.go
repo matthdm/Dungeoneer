@@ -71,6 +71,7 @@ func (lpm *LoadPlayerMenu) populateMenuOptions() {
 
 func (lpm *LoadPlayerMenu) Show()                     { lpm.populateMenuOptions(); lpm.Menu.Show() }
 func (lpm *LoadPlayerMenu) Hide()                     { lpm.Menu.Hide() }
+func (lpm *LoadPlayerMenu) IsVisible() bool           { return lpm.Menu.IsVisible() }
 func (lpm *LoadPlayerMenu) Update()                   { lpm.Menu.Update() }
 func (lpm *LoadPlayerMenu) Draw(screen *ebiten.Image) { lpm.Menu.Draw(screen) }
 func (lpm *LoadPlayerMenu) SetRect(r image.Rectangle) { lpm.Menu.rect = r }
