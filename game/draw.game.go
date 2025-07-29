@@ -117,9 +117,6 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 		screen.DrawImage(target, op)
 	}
 
-	if g.player != nil && len(g.cachedRays) > 0 && !g.FullBright {
-		fov.DrawShadows(screen, g.cachedRays, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
-	}
 	if g.ShowRays && len(g.cachedRays) > 0 {
 		fov.DebugDrawRays(screen, g.cachedRays, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
 	}

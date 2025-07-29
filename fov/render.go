@@ -21,10 +21,14 @@ func ResizeShadowBuffer(w, h int) {
 	}
 }
 
-func DrawShadows(screen *ebiten.Image, rays []Line, camX, camY, camScale float64, cx, cy float64, tileSize int) {
+// BuildShadowImage constructs the shadow mask for the current frame and returns
+// it for rendering. The returned image is reused across calls to avoid
+// allocations.
+func BuildShadowImage(rays []Line, camX, camY, camScale float64, cx, cy float64, tileSize int) *ebiten.Image {
 	var offSetX float64 = 1
 	if len(rays) < 3 {
-		return
+		shadowImage.Clear()
+		return shadowImage
 	}
 
 	// Fill entire screen with darkness first
@@ -56,8 +60,7 @@ func DrawShadows(screen *ebiten.Image, rays []Line, camX, camY, camScale float64
 		shadowImage.DrawTriangles(verts, []uint16{0, 1, 2}, lightMask, opt)
 	}
 
-	// Composite shadow over the final screen
-	screen.DrawImage(shadowImage, nil)
+	return shadowImage
 }
 func DebugDrawRays(screen *ebiten.Image, rays []Line, camX, camY, camScale float64, cx, cy float64, tileSize int) {
 	var offSetX float64 = 1

@@ -1,6 +1,7 @@
 package game
 
 import (
+	"dungeoneer/fov"
 	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -10,6 +11,9 @@ import (
 func (g *Game) collectRenderables(scale, cx, cy float64) []Renderable {
 	var r []Renderable
 	r = append(r, g.collectTileRenderables(scale, cx, cy)...)
+	if g.player != nil && len(g.cachedRays) > 0 && !g.FullBright {
+		r = append(r, g.collectShadowRenderables(scale, cx, cy)...)
+	}
 	r = append(r, g.collectMonsterRenderables(scale, cx, cy)...)
 	if g.player != nil {
 		r = append(r, g.collectPlayerRenderables(scale, cx, cy)...)
@@ -129,4 +133,20 @@ func (g *Game) collectMonsterRenderables(scale, cx, cy float64) []Renderable {
 		})
 	}
 	return out
+}
+
+func (g *Game) collectShadowRenderables(scale, cx, cy float64) []Renderable {
+	img := fov.BuildShadowImage(g.cachedRays, g.camX, g.camY, scale, cx, cy, g.currentLevel.TileSize)
+	op := &ebiten.DrawImageOptions{}
+	tx := g.player.MoveController.InterpX
+	ty := g.player.MoveController.InterpY
+	return []Renderable{
+		{
+			Image:       img,
+			Options:     op,
+			TileX:       tx,
+			TileY:       ty,
+			DepthWeight: 0.25,
+		},
+	}
 }
