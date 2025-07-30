@@ -55,6 +55,7 @@ type Game struct {
 
 	DevMenu *ui.DevMenu
 	HUD     *hud.HUD
+	ShowHUD bool
 
 	ActiveSpells    []spells.Spell
 	fireballSprites [][]*ebiten.Image
@@ -268,6 +269,7 @@ func NewGame() (*Game, error) {
 	g.editor.Active = true // or toggle with key
 
 	g.HUD = hud.New()
+	g.ShowHUD = true
 	tomeNames := []string{"Red Tome", "Teal Tome", "Blue Tome", "Verdant Tome", "Crypt Tome"}
 	for i, name := range tomeNames {
 		for _, tmpl := range items.Registry {

@@ -120,7 +120,7 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 	if g.ShowRays && len(g.cachedRays) > 0 {
 		fov.DebugDrawRays(screen, g.cachedRays, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
 	}
-	if g.HUD != nil {
+	if g.HUD != nil && g.ShowHUD {
 		g.HUD.Draw(screen, g.w, g.h)
 	}
 	ui.DrawItemPalette(screen)

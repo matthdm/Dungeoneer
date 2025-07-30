@@ -214,6 +214,9 @@ func (g *Game) handleLevelHotkeys() {
 			controlToggle = false
 		}
 	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyF10) {
+		g.ShowHUD = !g.ShowHUD
+	}
 	if inpututil.IsKeyJustPressed(ebiten.Key1) {
 		if g.player != nil {
 			gx := g.player.MoveController.InterpX
