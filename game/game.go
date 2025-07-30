@@ -4,6 +4,7 @@ import (
 	"dungeoneer/constants"
 	"dungeoneer/entities"
 	"dungeoneer/fov"
+	"dungeoneer/hud"
 	"dungeoneer/items"
 	"dungeoneer/leveleditor"
 	"dungeoneer/levels"
@@ -53,6 +54,7 @@ type Game struct {
 	HealNumbers            []entities.DamageNumber
 
 	DevMenu *ui.DevMenu
+	HUD     *hud.HUD
 
 	ActiveSpells    []spells.Spell
 	fireballSprites [][]*ebiten.Image
@@ -264,6 +266,19 @@ func NewGame() (*Game, error) {
 	}
 
 	g.editor.Active = true // or toggle with key
+
+	g.HUD = hud.New()
+	tomeNames := []string{"Red Tome", "Teal Tome", "Blue Tome", "Verdant Tome", "Crypt Tome"}
+	for i, name := range tomeNames {
+		for _, tmpl := range items.Registry {
+			if tmpl.Name == name {
+				if i < len(g.HUD.SkillSlots) {
+					g.HUD.SkillSlots[i].Icon = tmpl.Icon
+				}
+				break
+			}
+		}
+	}
 
 	return g, nil
 }
@@ -566,6 +581,19 @@ func (g *Game) updatePlaying() error {
 		g.player.PathPreview = path
 		g.player.Update(g.currentLevel, g.DeltaTime)
 		g.updateCameraFollow()
+
+		if g.HUD != nil {
+			g.HUD.HealthPercent = float64(g.player.HP) / float64(g.player.MaxHP)
+			g.HUD.ManaPercent = float64(g.player.Mana) / float64(g.player.MaxMana)
+			g.HUD.DashCharges = g.player.DashCharges
+			maxCD := 0.0
+			for _, cd := range g.player.DashCooldowns {
+				if cd > maxCD {
+					maxCD = cd
+				}
+			}
+			g.HUD.DashCooldown = maxCD
+		}
 		// Check layer links
 		if g.layerSwitchCooldown <= 0 {
 			for _, link := range g.currentWorld.Stairwells {
