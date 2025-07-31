@@ -9,6 +9,7 @@ import (
 	"dungeoneer/levels"
 	"dungeoneer/movement"
 	"dungeoneer/pathing"
+	"dungeoneer/progression"
 	"dungeoneer/spells"
 	"dungeoneer/sprites"
 	"fmt"
@@ -72,6 +73,10 @@ type Player struct {
 
 	Mana, MaxMana int
 
+	Level           int
+	EXP             int
+	AttributePoints int
+
 	Name string
 
 	LastMoveDirX float64
@@ -110,13 +115,16 @@ func NewPlayer(ss *sprites.SpriteSheet) *Player {
 			Intelligence: 1,
 			Luck:         1,
 		},
-		TempModifiers: StatModifiers{},
-		Equipment:     make(map[string]*items.Item),
-		Mana:          20,
-		MaxMana:       20,
-		Name:          "Hero",
-		LastMoveDirX:  -1,
-		LastMoveDirY:  0,
+		TempModifiers:   StatModifiers{},
+		Equipment:       make(map[string]*items.Item),
+		Mana:            20,
+		MaxMana:         20,
+		Level:           1,
+		EXP:             0,
+		AttributePoints: 0,
+		Name:            "Hero",
+		LastMoveDirX:    -1,
+		LastMoveDirY:    0,
 	}
 
 	// Whenever InterpX/InterpY crosses into a new tile, update TileX/TileY
@@ -485,6 +493,16 @@ func (p *Player) UseItem(it *items.Item) {
 		return
 	}
 	it.OnUse(p)
+}
+
+// AddEXP grants experience to the player and handles leveling.
+func (p *Player) AddEXP(amount int) {
+	p.EXP += amount
+	for p.EXP >= progression.EXPToLevel(p.Level) {
+		p.EXP -= progression.EXPToLevel(p.Level)
+		p.Level++
+		p.AttributePoints += 3
+	}
 }
 
 // getEquipmentStatModifiers sums stat bonuses from equipped items.

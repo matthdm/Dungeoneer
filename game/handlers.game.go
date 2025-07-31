@@ -315,6 +315,12 @@ func (g *Game) handleInputPlaying() {
 		return
 	}
 
+	if inpututil.IsKeyJustPressed(ebiten.KeyH) {
+		if g.HeroPanel != nil {
+			g.HeroPanel.Toggle()
+		}
+	}
+
 	g.handleZoom()
 	g.handlePan()
 	g.handleDash()

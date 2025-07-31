@@ -123,6 +123,9 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 	if g.HUD != nil && g.ShowHUD {
 		g.HUD.Draw(screen, g.w, g.h)
 	}
+	if g.HeroPanel != nil {
+		g.HeroPanel.Draw(screen)
+	}
 	ui.DrawItemPalette(screen)
 	if g.DevMenu != nil {
 		g.DevMenu.Draw(screen)

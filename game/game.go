@@ -53,9 +53,10 @@ type Game struct {
 	DamageNumbers          []entities.DamageNumber
 	HealNumbers            []entities.DamageNumber
 
-	DevMenu *ui.DevMenu
-	HUD     *hud.HUD
-	ShowHUD bool
+	DevMenu   *ui.DevMenu
+	HUD       *hud.HUD
+	ShowHUD   bool
+	HeroPanel *ui.HeroPanel
 
 	ActiveSpells    []spells.Spell
 	fireballSprites [][]*ebiten.Image
@@ -270,6 +271,7 @@ func NewGame() (*Game, error) {
 
 	g.HUD = hud.New()
 	g.ShowHUD = true
+	g.HeroPanel = ui.NewHeroPanel(g.w, g.h, g.player)
 	tomeNames := []string{"Red Tome", "Teal Tome", "Blue Tome", "Verdant Tome", "Crypt Tome"}
 	for i, name := range tomeNames {
 		for _, tmpl := range items.Registry {
@@ -618,6 +620,9 @@ func (g *Game) updatePlaying() error {
 	if g.DevMenu != nil {
 		g.DevMenu.Update()
 	}
+	if g.HeroPanel != nil {
+		g.HeroPanel.Update()
+	}
 
 	// Debugging / editor / effects
 	g.DebugLevelEditor()
@@ -664,6 +669,10 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 
 	if g.LoadPlayerMenu != nil {
 		g.LoadPlayerMenu.SetRect(newRect)
+	}
+
+	if g.HeroPanel != nil {
+		g.HeroPanel.SetRect(image.Rect((g.w-220)/2, (g.h-220)/2, (g.w+220)/2, (g.h+220)/2))
 	}
 
 	if g.SaveLevelMenu != nil {
