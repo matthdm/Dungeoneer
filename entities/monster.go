@@ -53,6 +53,8 @@ type Monster struct {
 	FlashTick      int
 	FlashTicksLeft int // total ticks remaining for the flash effect
 
+	Level int
+
 	Caster *spells.Caster
 }
 
@@ -73,6 +75,7 @@ func NewMonster(ss *sprites.SpriteSheet) []*Monster {
 			AttackRate:       30,
 			IsDead:           false,
 			Caster:           spells.NewCaster(),
+			Level:            1,
 		},
 	}
 }
@@ -279,7 +282,7 @@ func (m *Monster) UpdateFlashStatus() {
 	}
 }
 
-func (m *Monster) TakeDamage(dmg int, markers *[]HitMarker, damageNumbers *[]DamageNumber) {
+func (m *Monster) TakeDamage(dmg int, markers *[]HitMarker, damageNumbers *[]DamageNumber) bool {
 	m.HP -= dmg
 	if m.HP <= 0 {
 		m.IsDead = true
@@ -303,5 +306,5 @@ func (m *Monster) TakeDamage(dmg int, markers *[]HitMarker, damageNumbers *[]Dam
 		Ticks:    0,
 		MaxTicks: 30,
 	})
-
+	return m.IsDead
 }

@@ -18,6 +18,9 @@ type PlayerSave struct {
 	Equipment map[string]items.ItemSave `json:"equipment"`
 	HP        int                       `json:"hp"`
 	Mana      int                       `json:"mana"`
+	Level     int                       `json:"level"`
+	EXP       int                       `json:"exp"`
+	Points    int                       `json:"points"`
 }
 
 // ToSaveData converts the player to a serializable form.
@@ -29,6 +32,9 @@ func (p *Player) ToSaveData() PlayerSave {
 		Stats:     p.Stats,
 		HP:        p.HP,
 		Mana:      p.Mana,
+		Level:     p.Level,
+		EXP:       p.EXP,
+		Points:    p.UnspentPoints,
 		Inventory: p.Inventory.ToSaveData(),
 		Equipment: items.SerializeEquipment(p.Equipment),
 	}
@@ -53,6 +59,9 @@ func LoadPlayer(data PlayerSave) *Player {
 		Equipment:      items.DeserializeEquipment(data.Equipment),
 		HP:             data.HP,
 		Mana:           data.Mana,
+		Level:          data.Level,
+		EXP:            data.EXP,
+		UnspentPoints:  data.Points,
 		Name:           data.Name,
 		MoveController: mc,
 		Caster:         spells.NewCaster(),
