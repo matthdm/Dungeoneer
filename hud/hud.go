@@ -24,6 +24,8 @@ type HUD struct {
 	ManaPercent   float64
 	DashCharges   int
 	DashCooldown  float64
+	ExpCurrent    int
+	ExpNeeded     int
 	SkillSlots    [5]SkillSlot
 	ActiveSkill   int
 
@@ -117,6 +119,7 @@ func (h *HUD) drawSkillBar(screen *ebiten.Image, w, hgt int) {
 	}
 
 	h.drawDashCharges(screen, x, barW, y)
+	h.drawEXPBar(screen, x, barW, y)
 }
 
 func (h *HUD) drawDashCharges(screen *ebiten.Image, barX, barW, barY int) {
@@ -140,6 +143,18 @@ func (h *HUD) drawDashCharges(screen *ebiten.Image, barX, barW, barY int) {
 		tx := start + (size*total+pad*(total-1)-b.Dx())/2
 		text.Draw(screen, txt, basicfont.Face7x13, tx, y-4, color.White)
 	}
+}
+
+func (h *HUD) drawEXPBar(screen *ebiten.Image, barX, barW, barY int) {
+	if h.ExpNeeded <= 0 {
+		return
+	}
+	dashSize := 18
+	y := barY - dashSize - 6 - 10
+	barH := 8
+	filled := int(float64(h.ExpCurrent) / float64(h.ExpNeeded) * float64(barW))
+	vector.DrawFilledRect(screen, float32(barX), float32(y), float32(barW), float32(barH), color.RGBA{80, 80, 80, 255}, false)
+	vector.DrawFilledRect(screen, float32(barX), float32(y), float32(filled), float32(barH), color.RGBA{0, 200, 0, 255}, false)
 }
 
 func drawOrb(dst *ebiten.Image, x, y, size int, percent float64, clr color.Color, frame *ebiten.Image, buf *ebiten.Image) {
