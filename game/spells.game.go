@@ -95,10 +95,12 @@ func (g *Game) applyFireballDamage(fb *spells.Fireball, cx, cy int) {
 		dy := int(math.Abs(float64(m.TileY - cy)))
 		if dx <= radius && dy <= radius {
 			if g.hasLineOfSight(cx, cy, m.TileX, m.TileY) {
-				m.TakeDamage(dmg, &g.HitMarkers, &g.DamageNumbers)
-			}
-		}
-	}
+                               if m.TakeDamage(dmg, &g.HitMarkers, &g.DamageNumbers) {
+                                       g.awardEXP(m)
+                               }
+                       }
+               }
+       }
 }
 
 func (g *Game) hasLineOfSight(x1, y1, x2, y2 int) bool {
@@ -139,10 +141,12 @@ func (g *Game) applyChaosRayDamage(cr *spells.ChaosRay) {
 			p1 := cr.Path[i]
 			p2 := cr.Path[i+1]
 			if pointSegmentDistance(px, py, p1.X, p1.Y, p2.X, p2.Y) <= radius {
-				m.TakeDamage(cr.Info.Damage, &g.HitMarkers, &g.DamageNumbers)
-				break
-			}
-		}
+                               if m.TakeDamage(cr.Info.Damage, &g.HitMarkers, &g.DamageNumbers) {
+                                       g.awardEXP(m)
+                               }
+                               break
+                       }
+               }
 	}
 }
 
@@ -185,9 +189,11 @@ func (g *Game) applyLightningDamage(l *spells.LightningStrike, cx, cy int) {
 		dy := int(math.Abs(float64(m.TileY - cy)))
 		if dx <= radius && dy <= radius {
 			if g.hasLineOfSight(cx, cy, m.TileX, m.TileY) {
-				m.TakeDamage(dmg, &g.HitMarkers, &g.DamageNumbers)
-			}
-		}
+                               if m.TakeDamage(dmg, &g.HitMarkers, &g.DamageNumbers) {
+                                       g.awardEXP(m)
+                               }
+                       }
+               }
 	}
 }
 
@@ -227,10 +233,12 @@ func (g *Game) applyFractalDamage(n *spells.FractalNode, cx, cy int) {
 		dy := int(math.Abs(float64(m.TileY - cy)))
 		if dx <= radius && dy <= radius {
 			if g.hasLineOfSight(cx, cy, m.TileX, m.TileY) {
-				m.TakeDamage(dmg, &g.HitMarkers, &g.DamageNumbers)
-			}
-		}
-	}
+                               if m.TakeDamage(dmg, &g.HitMarkers, &g.DamageNumbers) {
+                                       g.awardEXP(m)
+                               }
+                       }
+               }
+       }
 }
 
 func (g *Game) castFractalBloom(centerX, centerY float64, c *spells.Caster) {
