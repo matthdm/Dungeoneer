@@ -120,7 +120,9 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 	if g.ShowRays && len(g.cachedRays) > 0 {
 		fov.DebugDrawRays(screen, g.cachedRays, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
 	}
-	g.drawDashUI(screen)
+	if g.HUD != nil && g.ShowHUD {
+		g.HUD.Draw(screen, g.w, g.h)
+	}
 	ui.DrawItemPalette(screen)
 	if g.DevMenu != nil {
 		g.DevMenu.Draw(screen)
@@ -140,31 +142,6 @@ func (g *Game) drawGrapple(target *ebiten.Image, scale, cx, cy float64) {
 	sx2 := (endX-g.camX+30)*scale + cx
 	sy2 := (endY+g.camY+25)*scale + cy
 	vector.StrokeLine(target, float32(sx1), float32(sy1), float32(sx2), float32(sy2), 2, color.White, false)
-}
-func (g *Game) drawDashUI(screen *ebiten.Image) {
-	if g.player == nil {
-		return
-	}
-	size := float32(20)
-	padding := float32(5)
-	for i := 0; i < constants.MaxDashCharges; i++ {
-		x := padding + float32(i)*(size+padding)
-		y := padding
-		vector.StrokeRect(screen, x, y, size, size, 2, color.White, false)
-		fill := float32(0)
-		if g.player.DashCooldowns[i] <= 0 {
-			fill = size
-		} else {
-			ratio := float32(constants.DashRecharge-g.player.DashCooldowns[i]) / float32(constants.DashRecharge)
-			if ratio < 0 {
-				ratio = 0
-			}
-			fill = size * ratio
-		}
-		if fill > 0 {
-			vector.DrawFilledRect(screen, x, y+(size-fill), size, fill, color.RGBA{0, 200, 255, 255}, false)
-		}
-	}
 }
 
 func (g *Game) drawFloorTiles(target *ebiten.Image, scale, cx, cy float64) {
