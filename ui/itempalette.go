@@ -123,7 +123,3 @@ func DrawItemPalette(screen *ebiten.Image) {
 		}
 	}
 }
-
-func pointInRect(x, y int, r image.Rectangle) bool {
-	return x >= r.Min.X && x < r.Max.X && y >= r.Min.Y && y < r.Max.Y
-}

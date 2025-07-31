@@ -9,6 +9,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
@@ -43,7 +44,7 @@ func (hp *HeroPanel) Update() {
 		return
 	}
 	mx, my := ebiten.CursorPosition()
-	if ebiten.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		for attr, r := range hp.plus {
 			if pointInRect(mx, my, r) && hp.player.UnspentPoints > 0 {
 				switch attr {
