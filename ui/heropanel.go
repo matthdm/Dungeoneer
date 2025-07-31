@@ -5,12 +5,10 @@ import (
 	"dungeoneer/progression"
 	"fmt"
 	"image"
-	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
-	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
 // HeroPanel displays player stats and allows spending attribute points.
@@ -117,14 +115,9 @@ func (hp *HeroPanel) Draw(screen *ebiten.Image) {
 	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Level: %d", hp.player.Level), x, infoY)
 	infoY += 15
 	expNeeded := progression.EXPToLevel(hp.player.Level)
-	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("EXP: %d/%d", hp.player.EXP, expNeeded), x, infoY)
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("EXP: %d / %d", hp.player.EXP, expNeeded), x, infoY)
 
-	barWidth := 150
-	filled := int(float64(hp.player.EXP) / float64(expNeeded) * float64(barWidth))
-	vector.DrawFilledRect(screen, float32(x), float32(infoY+5), float32(barWidth), 6, color.RGBA{80, 80, 80, 255}, false)
-	vector.DrawFilledRect(screen, float32(x), float32(infoY+5), float32(filled), 6, color.RGBA{180, 180, 40, 255}, false)
-
-	statY := infoY + 25
+	statY := infoY + 20
 	stats := []struct {
 		key  string
 		name string

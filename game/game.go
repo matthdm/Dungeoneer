@@ -10,6 +10,7 @@ import (
 	"dungeoneer/levels"
 	"dungeoneer/menumanager"
 	"dungeoneer/pathing"
+	"dungeoneer/progression"
 	"dungeoneer/spells"
 	"dungeoneer/sprites"
 	"dungeoneer/ui"
@@ -598,6 +599,8 @@ func (g *Game) updatePlaying() error {
 				}
 			}
 			g.HUD.DashCooldown = maxCD
+			g.HUD.ExpCurrent = g.player.EXP
+			g.HUD.ExpNeeded = progression.EXPToLevel(g.player.Level)
 		}
 		if g.HeroPanel != nil {
 			g.HeroPanel.Update()
