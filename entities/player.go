@@ -9,6 +9,7 @@ import (
 	"dungeoneer/levels"
 	"dungeoneer/movement"
 	"dungeoneer/pathing"
+	"dungeoneer/progression"
 	"dungeoneer/spells"
 	"dungeoneer/sprites"
 	"fmt"
@@ -70,6 +71,10 @@ type Player struct {
 	TempModifiers StatModifiers
 	Equipment     map[string]*items.Item
 
+	Level         int
+	EXP           int
+	UnspentPoints int
+
 	Mana, MaxMana int
 
 	Name string
@@ -112,6 +117,9 @@ func NewPlayer(ss *sprites.SpriteSheet) *Player {
 		},
 		TempModifiers: StatModifiers{},
 		Equipment:     make(map[string]*items.Item),
+		Level:         1,
+		EXP:           0,
+		UnspentPoints: 0,
 		Mana:          20,
 		MaxMana:       20,
 		Name:          "Hero",
@@ -525,5 +533,15 @@ func (p *Player) RecalculateStats() {
 	}
 	if p.Mana > p.MaxMana {
 		p.Mana = p.MaxMana
+	}
+}
+
+// AddEXP grants experience and handles level ups.
+func (p *Player) AddEXP(amount int) {
+	p.EXP += amount
+	for p.EXP >= progression.EXPToLevel(p.Level) {
+		p.EXP -= progression.EXPToLevel(p.Level)
+		p.Level++
+		p.UnspentPoints += 3
 	}
 }

@@ -167,8 +167,11 @@ func (g *Game) handleClicks() {
 			if m.TileX == cx && m.TileY == cy &&
 				entities.IsAdjacentRanged(g.player.TileX, g.player.TileY, m.TileX, m.TileY, 2) &&
 				g.player.CanAttack() {
-				m.TakeDamage(g.player.Damage, &g.HitMarkers, &g.DamageNumbers)
+				died := m.TakeDamage(g.player.Damage, &g.HitMarkers, &g.DamageNumbers)
 				g.player.AttackTick = 0
+				if died {
+					g.awardEXP(m)
+				}
 			}
 		}
 	}
@@ -216,6 +219,11 @@ func (g *Game) handleLevelHotkeys() {
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyF10) {
 		g.ShowHUD = !g.ShowHUD
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyH) {
+		if g.HeroPanel != nil {
+			g.HeroPanel.Toggle()
+		}
 	}
 	if inpututil.IsKeyJustPressed(ebiten.Key1) {
 		if g.player != nil {
