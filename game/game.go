@@ -18,6 +18,7 @@ import (
 	"image"
 	"math"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -28,11 +29,10 @@ type Game struct {
 	currentWorld   *levels.LayeredLevel
 	currentLevel   *levels.Level
 	State          GameState
-	Menu           *ui.MainMenu
+	MainMenu       *ui.MainMenu
 	PauseMenu      *ui.PauseMenu
-	LoadLevelMenu  *ui.LoadLevelMenu
-	LoadPlayerMenu *ui.LoadPlayerMenu
-	SaveLevelMenu  *ui.SaveLevelMenu
+	LoadLevelMenu  *ui.FileSelectMenu
+	LoadPlayerMenu *ui.FileSelectMenu
 	SavePrompt     *ui.TextInputMenu
 	LinkPrompt     *ui.LayerPrompt
 	isPaused       bool
@@ -101,21 +101,19 @@ const (
 	StateGameOver
 )
 
-func NewGame() (*Game, error) {
+// loadAssets loads sprites, spell animations, and default items.
+func loadAssets() (*sprites.SpriteSheet, [][]*ebiten.Image, error) {
 	ss, err := sprites.LoadSpriteSheet(constants.DefaultTileSize)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load sprite sheet: %s", err)
+		return nil, nil, fmt.Errorf("failed to load sprite sheet: %s", err)
 	}
 	fbSprites, err := spells.LoadFireballSprites()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	l := levels.CreateNewBlankLevel(64, 64, 64, ss)
-	world := levels.NewLayeredLevel(l)
 
-	//This is needed for save/loading levels
+	// Register sprites for editor save/load features.
 	leveleditor.RegisterSprites(ss)
-	// Load wall sprite sheets for all available flavors
 	for _, fl := range sprites.WallFlavors {
 		if wss, err := sprites.LoadWallSpriteSheet(fl); err == nil {
 			leveleditor.RegisterWallSprites(wss)
@@ -123,8 +121,107 @@ func NewGame() (*Game, error) {
 	}
 
 	if err := items.LoadDefaultItems(); err != nil {
+		return nil, nil, err
+	}
+	return ss, fbSprites, nil
+}
+
+// initMenus constructs the main, pause, and file-loading menus.
+func (g *Game) initMenus() error {
+	mm, err := ui.NewMainMenu(g.w, g.h, ui.MainMenuCallbacks{
+		OnNewGame: func() { g.State = StatePlaying },
+		OnOptions: func() {},
+		OnExit:    func() { os.Exit(0) },
+	})
+	if err != nil {
+		return err
+	}
+	g.MainMenu = mm
+
+	g.LoadLevelMenu = ui.NewLoadLevelMenu(g.w, g.h,
+		func(loaded *levels.Level) {
+			g.currentLevel = loaded
+			g.UpdateSeenTiles(*loaded)
+			g.spawnEntitiesFromLevel()
+		},
+		func() { menumanager.Manager().CloseActiveMenu() },
+	)
+
+	g.LoadPlayerMenu = ui.NewLoadPlayerMenu(g.w, g.h,
+		func(ply *entities.Player) { g.player = ply },
+		func() { menumanager.Manager().CloseActiveMenu() },
+	)
+
+	pm := ui.NewPauseMenu(g.currentLevel.W, g.currentLevel.H, ui.PauseMenuCallbacks{
+		OnResume:     func() { g.resumeGame() },
+		OnExit:       func() { os.Exit(0) },
+		OnLoadLevel:  func() { menumanager.Manager().Open(g.LoadLevelMenu) },
+		OnLoadPlayer: func() { menumanager.Manager().Open(g.LoadPlayerMenu) },
+		OnSavePlayer: func() {
+			g.showSavePrompt("Save Player", "players", func(path string) error {
+				return entities.SavePlayerToFile(g.player, path)
+			})
+		},
+		OnSaveLevel: func() {
+			g.showSavePrompt("Save Level", "levels", func(path string) error {
+				return leveleditor.SaveLevelToFile(g.currentLevel, path)
+			})
+		},
+		OnNewBlank: func() {
+			newLevel := levels.CreateNewBlankLevel(64, 64, g.currentLevel.TileSize, g.spriteSheet)
+			newWorld := levels.NewLayeredLevel(newLevel)
+			g.currentWorld = newWorld
+			g.currentLevel = newLevel
+			g.editor = leveleditor.NewLayeredEditor(newWorld, g.w, g.h)
+			g.editor.OnLayerChange = g.editorLayerChanged
+			g.editor.OnStairPlaced = g.stairPlaced
+			g.UpdateSeenTiles(*newLevel)
+		},
+	})
+	g.PauseMenu = pm
+	menumanager.Init(pm)
+	return nil
+}
+
+// showSavePrompt displays a generic text input menu for saving to disk.
+func (g *Game) showSavePrompt(title, dir string, save func(string) error) {
+	menuRect := image.Rect(g.w/2-200, g.h/2-100, g.w/2+200, g.h/2+100)
+	g.SavePrompt = ui.NewTextInputMenu(
+		menuRect,
+		title,
+		"Enter filename (with .json):",
+		func(filename string) {
+			path := filepath.Join(dir, filename)
+			if err := save(path); err != nil {
+				fmt.Println("Error saving:", err)
+				return
+			}
+			fmt.Println("Saved to:", path)
+			g.SavePrompt = ui.NewTextInputMenu(
+				menuRect,
+				"Success",
+				"Saved to: "+filename,
+				nil,
+				nil,
+			)
+			g.SavePrompt.Instructions = []string{"Press Esc to close"}
+			menumanager.Manager().Open(g.SavePrompt)
+		},
+		func() {
+			fmt.Println("Canceled saving.")
+			menumanager.Manager().CloseActiveMenu()
+		},
+	)
+	menumanager.Manager().Open(g.SavePrompt)
+}
+
+func NewGame() (*Game, error) {
+	ss, fbSprites, err := loadAssets()
+	if err != nil {
 		return nil, err
 	}
+	l := levels.CreateNewBlankLevel(64, 64, 64, ss)
+	world := levels.NewLayeredLevel(l)
 
 	g := &Game{
 		currentWorld:    world,
@@ -153,113 +250,9 @@ func NewGame() (*Game, error) {
 	g.editor.OnLayerChange = g.editorLayerChanged
 	g.editor.OnStairPlaced = g.stairPlaced
 	g.spawnEntitiesFromLevel()
-	mm, err := ui.NewMainMenu()
-	if err != nil {
-		return nil, fmt.Errorf("failed create new main menu: %s", err)
+	if err := g.initMenus(); err != nil {
+		return nil, err
 	}
-	// Main Menu
-	g.Menu = mm
-	// Load Level Menu
-	g.LoadLevelMenu = ui.NewLoadLevelMenu(g.w, g.h,
-		func(loaded *levels.Level) {
-			g.currentLevel = loaded
-			g.UpdateSeenTiles(*loaded)
-			g.spawnEntitiesFromLevel()
-		},
-		func() {
-			menumanager.Manager().CloseActiveMenu()
-		},
-	)
-	g.LoadPlayerMenu = ui.NewLoadPlayerMenu(g.w, g.h,
-		func(ply *entities.Player) {
-			g.player = ply
-		},
-		func() {
-			menumanager.Manager().CloseActiveMenu()
-		},
-	)
-	// Pause Menu
-	pm := ui.NewPauseMenu(l.W, l.H, ui.PauseMenuCallbacks{
-		OnResume:     func() { g.resumeGame() },
-		OnExit:       func() { os.Exit(0) },
-		OnLoadLevel:  func() { menumanager.Manager().Open(g.LoadLevelMenu) },
-		OnLoadPlayer: func() { menumanager.Manager().Open(g.LoadPlayerMenu) },
-		OnSavePlayer: func() {
-			menuRect := image.Rect(g.w/2-200, g.h/2-100, g.w/2+200, g.h/2+100)
-			g.SavePrompt = ui.NewTextInputMenu(
-				menuRect,
-				"Save Player",
-				"Enter filename (with .json):",
-				func(filename string) {
-					path := "players/" + filename
-					err := entities.SavePlayerToFile(g.player, path)
-					if err != nil {
-						fmt.Println("Error saving player:", err)
-					} else {
-						fmt.Println("Saved player to:", path)
-						g.SavePrompt = ui.NewTextInputMenu(
-							menuRect,
-							"Success",
-							"Saved player to: "+filename,
-							nil,
-							nil,
-						)
-						g.SavePrompt.Instructions = []string{"Press Esc to close"}
-						menumanager.Manager().Open(g.SavePrompt)
-					}
-				},
-				func() {
-					fmt.Println("Canceled saving player.")
-					menumanager.Manager().CloseActiveMenu()
-				},
-			)
-			menumanager.Manager().Open(g.SavePrompt)
-		},
-		OnSaveLevel: func() {
-			menuRect := image.Rect(g.w/2-200, g.h/2-100, g.w/2+200, g.h/2+100)
-			g.SavePrompt = ui.NewTextInputMenu(
-				menuRect,
-				"Save Level",
-				"Enter filename (with .json):",
-				func(filename string) {
-					path := "levels/" + filename
-					err := leveleditor.SaveLevelToFile(g.currentLevel, path)
-					if err != nil {
-						fmt.Println("Error saving level:", err)
-					} else {
-						fmt.Println("Saved to:", path)
-						// Show confirmation popup for 2 seconds
-						g.SavePrompt = ui.NewTextInputMenu(
-							menuRect,
-							"Success",
-							"Saved level to: "+filename,
-							nil,
-							nil,
-						)
-						g.SavePrompt.Instructions = []string{"Press Esc to close"}
-						menumanager.Manager().Open(g.SavePrompt)
-					}
-				},
-				func() {
-					fmt.Println("Canceled saving.")
-					menumanager.Manager().CloseActiveMenu()
-				},
-			)
-			menumanager.Manager().Open(g.SavePrompt)
-		},
-		OnNewBlank: func() {
-			newLevel := levels.CreateNewBlankLevel(64, 64, g.currentLevel.TileSize, ss) // TODO: Prompt for dimensions later
-			newWorld := levels.NewLayeredLevel(newLevel)
-			g.currentWorld = newWorld
-			g.currentLevel = newLevel
-			g.editor = leveleditor.NewLayeredEditor(newWorld, g.w, g.h)
-			g.editor.OnLayerChange = g.editorLayerChanged
-			g.editor.OnStairPlaced = g.stairPlaced
-			g.UpdateSeenTiles(*newLevel)
-		},
-	})
-	g.PauseMenu = pm
-	menumanager.Init(pm)
 
 	g.VisibleTiles = make([][]bool, g.currentLevel.H)
 	g.SeenTiles = make([][]bool, g.currentLevel.H)
@@ -493,8 +486,7 @@ func (g *Game) updateCameraFollow() {
 }
 
 func (g *Game) updateMainMenu() error {
-	g.Menu.Update()
-	g.handleMainMenuInput()
+	g.MainMenu.Update()
 	return nil
 }
 
@@ -666,17 +658,14 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 			g.PauseMenu.SettingsMenu.SetRect(newRect)
 		}
 	}
-
 	if g.LoadLevelMenu != nil {
 		g.LoadLevelMenu.SetRect(newRect)
 	}
-
 	if g.LoadPlayerMenu != nil {
 		g.LoadPlayerMenu.SetRect(newRect)
 	}
-
-	if g.SaveLevelMenu != nil {
-		g.SaveLevelMenu.SetRect(newRect)
+	if g.MainMenu != nil {
+		g.MainMenu.Menu.SetRect(newRect)
 	}
 
 	if g.HeroPanel != nil {

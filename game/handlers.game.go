@@ -14,50 +14,6 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
-func (g *Game) handleMainMenuInput() {
-	if g.State != StateMainMenu || g.Menu == nil {
-		return
-	}
-
-	// Mouse hover and click handling
-	mx, my := ebiten.CursorPosition()
-	for i, r := range g.Menu.EntryRects {
-		if mx >= r.Min.X && mx <= r.Max.X && my >= r.Min.Y && my <= r.Max.Y {
-			g.Menu.SelectedIndex = i
-			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-				switch g.Menu.Options[i] {
-				case "New Game":
-					g.State = StatePlaying
-				case "Options":
-					// Implement later
-				case "Exit Game":
-					os.Exit(2)
-				}
-				return
-			}
-			break
-		}
-	}
-
-	// Confirm selection
-	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) || inpututil.IsKeyJustPressed(ebiten.KeySpace) {
-		switch g.Menu.Options[g.Menu.SelectedIndex] {
-		case "New Game":
-			//newGame, _ := NewGame()
-			//*g = *newGame
-
-			//TODO to add character creation sequence?
-			//TODO to add intro cinematic
-			//Game object already created
-			g.State = StatePlaying
-		case "Options":
-			// Implement later
-		case "Exit Game":
-			os.Exit(2)
-		}
-	}
-}
-
 func (g *Game) handlePause() {
 	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		// Close editor palettes first
@@ -278,40 +234,10 @@ func (g *Game) handleLevelHotkeys() {
 
 func (g *Game) handleInput() {
 	switch g.State {
-	case StateMainMenu:
-		g.handleInputMainMenu()
 	case StatePlaying:
 		g.handleInputPlaying()
 	case StateGameOver:
 		g.handleInputGameOver()
-	}
-}
-
-func (g *Game) handleInputMainMenu() {
-	if g.Menu == nil {
-		return
-	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyW) || inpututil.IsKeyJustPressed(ebiten.KeyArrowUp) {
-		g.Menu.SelectedIndex--
-		if g.Menu.SelectedIndex < 0 {
-			g.Menu.SelectedIndex = len(g.Menu.Options) - 1
-		}
-	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyS) || inpututil.IsKeyJustPressed(ebiten.KeyArrowDown) {
-		g.Menu.SelectedIndex++
-		if g.Menu.SelectedIndex >= len(g.Menu.Options) {
-			g.Menu.SelectedIndex = 0
-		}
-	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) || inpututil.IsKeyJustPressed(ebiten.KeySpace) {
-		switch g.Menu.Options[g.Menu.SelectedIndex] {
-		case "New Game":
-			g.State = StatePlaying
-		case "Options":
-			// Future support
-		case "Exit Game":
-			os.Exit(0)
-		}
 	}
 }
 
