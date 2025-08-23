@@ -70,6 +70,7 @@ func LoadItemSheet(img *ebiten.Image, entries []sheetEntry) {
 				ChancePct:    e.Effects.Effect.ChancePct,
 			}
 		}
+		equippable := len(stats) > 0 || eff != nil
 		tmpl := &ItemTemplate{
 			ID:          e.ID,
 			Name:        e.Name,
@@ -78,7 +79,7 @@ func LoadItemSheet(img *ebiten.Image, entries []sheetEntry) {
 			Stackable:   false,
 			MaxStack:    1,
 			Usable:      false,
-			Equippable:  false,
+			Equippable:  equippable,
 			Stats:       stats,
 			Effect:      eff,
 			Icon:        scaled,

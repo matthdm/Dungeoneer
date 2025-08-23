@@ -74,8 +74,12 @@ func (s *InventoryScreen) Update(p *entities.Player, hint func(string)) {
 				if mx >= r.Min.X && mx <= r.Max.X && my >= r.Min.Y && my <= r.Max.Y {
 					switch opt {
 					case "Equip":
-						if !p.Equip(autoSlot(p.Inventory.Grid[s.menuTargetY][s.menuTargetX]), s.menuTargetX, s.menuTargetY) && hint != nil {
-							hint("Inventory full")
+						it := p.Inventory.Grid[s.menuTargetY][s.menuTargetX]
+						slot := autoSlot(p, it)
+						if slot == "" || !p.Equip(slot, s.menuTargetX, s.menuTargetY) {
+							if hint != nil {
+								hint("Cannot equip")
+							}
 						}
 					case "Drop":
 						p.DropFromInventory(s.menuTargetX, s.menuTargetY, 1)
@@ -201,15 +205,16 @@ func (s *InventoryScreen) Draw(dst *ebiten.Image, p *entities.Player) {
 	y += 15
 	ebitenutil.DebugPrintAt(dst, fmt.Sprintf("Gold: %d", p.Gold), x, y)
 	y += 25
-	ebitenutil.DebugPrintAt(dst, fmt.Sprintf("STR %d", p.Stats.Strength), x, y)
+	eff := p.EffectiveStats()
+	ebitenutil.DebugPrintAt(dst, fmt.Sprintf("STR %d", eff.Strength), x, y)
 	y += 15
-	ebitenutil.DebugPrintAt(dst, fmt.Sprintf("DEX %d", p.Stats.Dexterity), x, y)
+	ebitenutil.DebugPrintAt(dst, fmt.Sprintf("DEX %d", eff.Dexterity), x, y)
 	y += 15
-	ebitenutil.DebugPrintAt(dst, fmt.Sprintf("VIT %d", p.Stats.Vitality), x, y)
+	ebitenutil.DebugPrintAt(dst, fmt.Sprintf("VIT %d", eff.Vitality), x, y)
 	y += 15
-	ebitenutil.DebugPrintAt(dst, fmt.Sprintf("INT %d", p.Stats.Intelligence), x, y)
+	ebitenutil.DebugPrintAt(dst, fmt.Sprintf("INT %d", eff.Intelligence), x, y)
 	y += 15
-	ebitenutil.DebugPrintAt(dst, fmt.Sprintf("LUK %d", p.Stats.Luck), x, y)
+	ebitenutil.DebugPrintAt(dst, fmt.Sprintf("LUK %d", eff.Luck), x, y)
 
 	// Equipment slots
 	for slot, r := range s.EquipSlots {
@@ -279,15 +284,20 @@ func (s *InventoryScreen) Draw(dst *ebiten.Image, p *entities.Player) {
 	}
 }
 
-func autoSlot(it *items.Item) string {
+func autoSlot(p *entities.Player, it *items.Item) string {
 	switch it.Type {
 	case items.ItemWeapon:
 		return "Weapon"
 	case items.ItemArmor:
 		return "Chest"
-	default:
-		return ""
 	}
+	order := []string{"Head", "Chest", "Weapon", "Offhand", "Ring1", "Ring2"}
+	for _, slot := range order {
+		if p.Equipment[slot] == nil {
+			return slot
+		}
+	}
+	return ""
 }
 
 func truncate(s string, n int) string {
@@ -303,8 +313,11 @@ func drawItemTooltip(dst *ebiten.Image, it *items.Item, x, y int) {
 		lines = append(lines, it.Description)
 	}
 	if len(it.Stats) > 0 {
-		for stat, v := range it.Stats {
-			lines = append(lines, fmt.Sprintf("%s %+d", stat, v))
+		order := []string{"Strength", "Dexterity", "Vitality", "Intelligence", "Luck"}
+		for _, stat := range order {
+			if v, ok := it.Stats[stat]; ok {
+				lines = append(lines, fmt.Sprintf("%s %+d", stat, v))
+			}
 		}
 	}
 	if it.Effect != nil {

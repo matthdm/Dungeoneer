@@ -499,6 +499,18 @@ func (p *Player) getEquipmentStatModifiers() StatModifiers {
 	return mod
 }
 
+// EffectiveStats returns the player's stats including equipment and temporary modifiers.
+func (p *Player) EffectiveStats() BaseStats {
+	equip := p.getEquipmentStatModifiers()
+	return BaseStats{
+		Strength:     p.Stats.Strength + p.TempModifiers.StrengthMod + equip.StrengthMod,
+		Dexterity:    p.Stats.Dexterity + p.TempModifiers.DexterityMod + equip.DexterityMod,
+		Vitality:     p.Stats.Vitality + p.TempModifiers.VitalityMod + equip.VitalityMod,
+		Intelligence: p.Stats.Intelligence + p.TempModifiers.IntelligenceMod + equip.IntelligenceMod,
+		Luck:         p.Stats.Luck + p.TempModifiers.LuckMod + equip.LuckMod,
+	}
+}
+
 // RecalculateStats updates derived fields like MaxHP, Damage, and AttackRate.
 func (p *Player) RecalculateStats() {
 	equip := p.getEquipmentStatModifiers()
