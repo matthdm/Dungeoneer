@@ -322,6 +322,14 @@ func (g *Game) handleInputPlaying() {
 		g.PauseMenu.Update()
 		return
 	}
+	if g.InventoryScreen != nil && g.InventoryScreen.Active {
+		g.InventoryScreen.Update(g.player, g.ShowHint)
+		return
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyTab) {
+		g.InventoryScreen.Open()
+		return
+	}
 
 	g.handleZoom()
 	g.handlePan()
@@ -331,7 +339,7 @@ func (g *Game) handleInputPlaying() {
 	g.handleHoverTile()
 	g.handleClicks()
 	g.handleLevelHotkeys()
-	ui.HandleItemPaletteInput(g.player)
+	ui.HandleItemPaletteInput(g.player, g.ShowHint)
 }
 
 func (g *Game) handlePlayerVelocity() {

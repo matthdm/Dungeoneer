@@ -54,10 +54,11 @@ type Game struct {
 	DamageNumbers          []entities.DamageNumber
 	HealNumbers            []entities.DamageNumber
 
-	DevMenu   *ui.DevMenu
-	HUD       *hud.HUD
-	ShowHUD   bool
-	HeroPanel *ui.HeroPanel
+	DevMenu         *ui.DevMenu
+	HUD             *hud.HUD
+	ShowHUD         bool
+	HeroPanel       *ui.HeroPanel
+	InventoryScreen *ui.InventoryScreen
 
 	ActiveSpells    []spells.Spell
 	fireballSprites [][]*ebiten.Image
@@ -77,6 +78,9 @@ type Game struct {
 
 	// cooldown timer to prevent immediate re-triggering of stair links
 	layerSwitchCooldown float64
+
+	hintTimer int
+	hint      string
 }
 
 // editorLayerChanged updates the game when the level editor switches layers.
@@ -149,7 +153,7 @@ func NewGame() (*Game, error) {
 		camSmooth:       0.1,
 		SpellDebug:      true,
 	}
-	g.DevMenu = ui.NewDevMenu(640, 480, g.player)
+	g.DevMenu = ui.NewDevMenu(640, 480, g.player, g.ShowHint)
 	g.editor.OnLayerChange = g.editorLayerChanged
 	g.editor.OnStairPlaced = g.stairPlaced
 	g.spawnEntitiesFromLevel()
@@ -274,6 +278,7 @@ func NewGame() (*Game, error) {
 	g.ShowHUD = true
 	panelRect := image.Rect(g.w/2-150, g.h/2-150, g.w/2+150, g.h/2+150)
 	g.HeroPanel = ui.NewHeroPanel(panelRect, g.player)
+	g.InventoryScreen = ui.NewInventoryScreen()
 	tomeNames := []string{"Red Tome", "Teal Tome", "Blue Tome", "Verdant Tome", "Crypt Tome"}
 	for i, name := range tomeNames {
 		for _, tmpl := range items.Registry {
@@ -287,6 +292,25 @@ func NewGame() (*Game, error) {
 	}
 
 	return g, nil
+}
+
+// ShowHint displays a temporary on-screen message.
+func (g *Game) ShowHint(msg string) {
+	g.hint = msg
+	g.hintTimer = 180
+}
+
+// AddItemToPlayer tries to add an item to the player's inventory.
+// If the inventory is full, a hint is shown.
+func (g *Game) AddItemToPlayer(it *items.Item) bool {
+	if g.player == nil {
+		return false
+	}
+	if g.player.Inventory.AddItem(it) {
+		return true
+	}
+	g.ShowHint("Inventory full")
+	return false
 }
 
 // cartesianToIso transforms cartesian coordinates into isometric coordinates.
@@ -442,6 +466,9 @@ func (g *Game) isoToCartesian(x, y float64) (float64, float64) {
 }
 
 func (g *Game) Update() error {
+	if g.hintTimer > 0 {
+		g.hintTimer--
+	}
 	switch g.State {
 	case StateMainMenu:
 		return g.updateMainMenu()

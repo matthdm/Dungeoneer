@@ -21,6 +21,7 @@ type PlayerSave struct {
 	Level     int                       `json:"level"`
 	EXP       int                       `json:"exp"`
 	Points    int                       `json:"points"`
+	Gold      int                       `json:"gold"`
 }
 
 // ToSaveData converts the player to a serializable form.
@@ -35,6 +36,7 @@ func (p *Player) ToSaveData() PlayerSave {
 		Level:     p.Level,
 		EXP:       p.EXP,
 		Points:    p.UnspentPoints,
+		Gold:      p.Gold,
 		Inventory: p.Inventory.ToSaveData(),
 		Equipment: items.SerializeEquipment(p.Equipment),
 	}
@@ -62,6 +64,7 @@ func LoadPlayer(data PlayerSave) *Player {
 		Level:          data.Level,
 		EXP:            data.EXP,
 		UnspentPoints:  data.Points,
+		Gold:           data.Gold,
 		Name:           data.Name,
 		MoveController: mc,
 		Caster:         spells.NewCaster(),
