@@ -17,22 +17,31 @@ import (
 
 // InventoryScreen renders and manages the player's inventory and equipment.
 type InventoryScreen struct {
-	Active      bool
-	Face        font.Face
-	EquipSlots  map[string]image.Rectangle
-	GridOrigin  image.Point
-	CellSize    image.Point
-	HoverGridX  int
-	HoverGridY  int
-	Dragging    bool
-	DragItem    *items.Item
-	DragFromX   int
-	DragFromY   int
-	menuActive  bool
-	menuPos     image.Point
-	menuOpts    []string
-	menuTargetX int
-	menuTargetY int
+	Active         bool
+	Face           font.Face
+	EquipSlots     map[string]image.Rectangle
+	GridOrigin     image.Point
+	CellSize       image.Point
+	HoverGridX     int
+	HoverGridY     int
+	Dragging       bool
+	DragItem       *items.Item
+	DragFromX      int
+	DragFromY      int
+	menuActive     bool
+	menuPos        image.Point
+	menuOpts       []string
+	menuTargetX    int
+	menuTargetY    int
+	menuSlot       string
+	menuHover      int
+	confirmActive  bool
+	confirmItem    *items.Item
+	confirmTargetX int
+	confirmTargetY int
+	confirmSlot    string
+	confirmPos     image.Point
+	confirmHover   int
 }
 
 // NewInventoryScreen creates a screen with default layout values.
@@ -46,14 +55,17 @@ func NewInventoryScreen() *InventoryScreen {
 		"Ring2":   image.Rect(270, 180, 334, 244),
 	}
 	return &InventoryScreen{
-		Face:       basicfont.Face7x13,
-		EquipSlots: slots,
-		GridOrigin: image.Pt(350, 40),
-		CellSize:   image.Pt(64, 64),
-		HoverGridX: -1,
-		HoverGridY: -1,
-		DragFromX:  -1,
-		DragFromY:  -1,
+		Face:           basicfont.Face7x13,
+		EquipSlots:     slots,
+		GridOrigin:     image.Pt(350, 40),
+		CellSize:       image.Pt(64, 64),
+		HoverGridX:     -1,
+		HoverGridY:     -1,
+		DragFromX:      -1,
+		DragFromY:      -1,
+		menuHover:      -1,
+		confirmTargetX: -1,
+		confirmTargetY: -1,
 	}
 }
 
@@ -67,11 +79,50 @@ func (s *InventoryScreen) Update(p *entities.Player, hint func(string)) {
 	}
 	mx, my := ebiten.CursorPosition()
 
+	if s.confirmActive {
+		s.confirmHover = -1
+		yes := image.Rect(s.confirmPos.X+20, s.confirmPos.Y+40, s.confirmPos.X+80, s.confirmPos.Y+56)
+		no := image.Rect(s.confirmPos.X+110, s.confirmPos.Y+40, s.confirmPos.X+170, s.confirmPos.Y+56)
+		if mx >= yes.Min.X && mx <= yes.Max.X && my >= yes.Min.Y && my <= yes.Max.Y {
+			s.confirmHover = 0
+			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+				if s.confirmSlot != "" {
+					p.DropEquipped(s.confirmSlot)
+				} else if s.confirmTargetY >= 0 {
+					p.Inventory.Grid[s.confirmTargetY][s.confirmTargetX] = nil
+				}
+				s.confirmActive = false
+				s.confirmItem = nil
+				s.confirmSlot = ""
+				s.confirmTargetX, s.confirmTargetY = -1, -1
+				return
+			}
+		} else if mx >= no.Min.X && mx <= no.Max.X && my >= no.Min.Y && my <= no.Max.Y {
+			s.confirmHover = 1
+			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+				s.confirmActive = false
+				s.confirmItem = nil
+				s.confirmSlot = ""
+				s.confirmTargetX, s.confirmTargetY = -1, -1
+				return
+			}
+		}
+		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) || inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+			s.confirmActive = false
+			s.confirmItem = nil
+			s.confirmSlot = ""
+			s.confirmTargetX, s.confirmTargetY = -1, -1
+		}
+		return
+	}
+
 	if s.menuActive {
-		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-			for i, opt := range s.menuOpts {
-				r := image.Rect(s.menuPos.X, s.menuPos.Y+i*16, s.menuPos.X+80, s.menuPos.Y+(i+1)*16)
-				if mx >= r.Min.X && mx <= r.Max.X && my >= r.Min.Y && my <= r.Max.Y {
+		s.menuHover = -1
+		for i, opt := range s.menuOpts {
+			r := image.Rect(s.menuPos.X, s.menuPos.Y+i*16, s.menuPos.X+80, s.menuPos.Y+(i+1)*16)
+			if mx >= r.Min.X && mx <= r.Max.X && my >= r.Min.Y && my <= r.Max.Y {
+				s.menuHover = i
+				if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 					switch opt {
 					case "Equip":
 						it := p.Inventory.Grid[s.menuTargetY][s.menuTargetX]
@@ -82,16 +133,34 @@ func (s *InventoryScreen) Update(p *entities.Player, hint func(string)) {
 							}
 						}
 					case "Drop":
-						p.DropFromInventory(s.menuTargetX, s.menuTargetY, 1)
+						if s.menuSlot != "" {
+							p.DropEquipped(s.menuSlot)
+						} else {
+							p.DropFromInventory(s.menuTargetX, s.menuTargetY, 1)
+						}
 					case "Destroy":
-						p.Inventory.Grid[s.menuTargetY][s.menuTargetX] = nil
+						if s.menuSlot != "" {
+							s.confirmItem = p.Equipment[s.menuSlot]
+							s.confirmSlot = s.menuSlot
+							s.confirmTargetX, s.confirmTargetY = -1, -1
+						} else {
+							s.confirmItem = p.Inventory.Grid[s.menuTargetY][s.menuTargetX]
+							s.confirmTargetX, s.confirmTargetY = s.menuTargetX, s.menuTargetY
+							s.confirmSlot = ""
+						}
+						s.confirmPos = s.menuPos
+						s.confirmActive = true
+					case "Unequip":
+						if !p.Unequip(s.menuSlot) && hint != nil {
+							hint("Inventory full")
+						}
 					}
 					s.menuActive = false
 					return
 				}
 			}
-			s.menuActive = false
-		} else if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) || inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		}
+		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) || inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 			s.menuActive = false
 		}
 		return
@@ -164,17 +233,34 @@ func (s *InventoryScreen) Update(p *entities.Player, hint func(string)) {
 			p.Inventory.Grid[s.DragFromY][s.DragFromX] = nil
 		}
 	}
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) && s.HoverGridX >= 0 {
-		it := p.Inventory.Grid[s.HoverGridY][s.HoverGridX]
-		if it != nil {
-			s.menuActive = true
-			s.menuPos = image.Pt(mx, my)
-			s.menuTargetX, s.menuTargetY = s.HoverGridX, s.HoverGridY
-			s.menuOpts = s.menuOpts[:0]
-			if it.Equippable {
-				s.menuOpts = append(s.menuOpts, "Equip")
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
+		if s.HoverGridX >= 0 {
+			it := p.Inventory.Grid[s.HoverGridY][s.HoverGridX]
+			if it != nil {
+				s.menuActive = true
+				s.menuPos = image.Pt(mx, my)
+				s.menuTargetX, s.menuTargetY = s.HoverGridX, s.HoverGridY
+				s.menuSlot = ""
+				s.menuOpts = s.menuOpts[:0]
+				if it.Equippable {
+					s.menuOpts = append(s.menuOpts, "Equip")
+				}
+				s.menuOpts = append(s.menuOpts, "Drop", "Destroy")
 			}
-			s.menuOpts = append(s.menuOpts, "Drop", "Destroy")
+		} else {
+			for slot, r := range s.EquipSlots {
+				if mx >= r.Min.X && mx <= r.Max.X && my >= r.Min.Y && my <= r.Max.Y {
+					it := p.Equipment[slot]
+					if it != nil {
+						s.menuActive = true
+						s.menuPos = image.Pt(mx, my)
+						s.menuSlot = slot
+						s.menuTargetX, s.menuTargetY = -1, -1
+						s.menuOpts = []string{"Unequip", "Drop", "Destroy"}
+					}
+					break
+				}
+			}
 		}
 	}
 
@@ -256,7 +342,7 @@ func (s *InventoryScreen) Draw(dst *ebiten.Image, p *entities.Player) {
 	}
 
 	// Tooltip
-	if s.HoverGridX >= 0 && s.HoverGridY >= 0 && !s.menuActive {
+	if s.HoverGridX >= 0 && s.HoverGridY >= 0 && !s.menuActive && !s.confirmActive {
 		if it := p.Inventory.Grid[s.HoverGridY][s.HoverGridX]; it != nil {
 			drawItemTooltip(dst, it, mx+16, my+16)
 		}
@@ -279,8 +365,35 @@ func (s *InventoryScreen) Draw(dst *ebiten.Image, p *entities.Player) {
 		height := len(s.menuOpts) * 16
 		vector.DrawFilledRect(dst, float32(s.menuPos.X), float32(s.menuPos.Y), float32(width), float32(height), color.RGBA{0, 0, 0, 200}, false)
 		for i, opt := range s.menuOpts {
+			if i == s.menuHover {
+				vector.DrawFilledRect(dst, float32(s.menuPos.X), float32(s.menuPos.Y+i*16), float32(width), 16, color.RGBA{80, 80, 80, 255}, false)
+			}
 			ebitenutil.DebugPrintAt(dst, opt, s.menuPos.X+2, s.menuPos.Y+i*16+2)
 		}
+	}
+
+	if s.confirmActive {
+		width := 200
+		height := 60
+		x := s.confirmPos.X
+		y := s.confirmPos.Y
+		vector.DrawFilledRect(dst, float32(x), float32(y), float32(width), float32(height), color.RGBA{0, 0, 0, 200}, false)
+		msg := fmt.Sprintf("Are you sure you want to destroy %s?", s.confirmItem.Name)
+		ebitenutil.DebugPrintAt(dst, truncate(msg, 28), x+4, y+4)
+		yes := image.Rect(x+20, y+40, x+80, y+56)
+		no := image.Rect(x+110, y+40, x+170, y+56)
+		if s.confirmHover == 0 {
+			vector.DrawFilledRect(dst, float32(yes.Min.X), float32(yes.Min.Y), float32(yes.Dx()), float32(yes.Dy()), color.RGBA{80, 80, 80, 255}, false)
+		} else {
+			vector.DrawFilledRect(dst, float32(yes.Min.X), float32(yes.Min.Y), float32(yes.Dx()), float32(yes.Dy()), color.RGBA{40, 40, 40, 255}, false)
+		}
+		if s.confirmHover == 1 {
+			vector.DrawFilledRect(dst, float32(no.Min.X), float32(no.Min.Y), float32(no.Dx()), float32(no.Dy()), color.RGBA{80, 80, 80, 255}, false)
+		} else {
+			vector.DrawFilledRect(dst, float32(no.Min.X), float32(no.Min.Y), float32(no.Dx()), float32(no.Dy()), color.RGBA{40, 40, 40, 255}, false)
+		}
+		ebitenutil.DebugPrintAt(dst, "Yes", yes.Min.X+2, yes.Min.Y+2)
+		ebitenutil.DebugPrintAt(dst, "No", no.Min.X+2, no.Min.Y+2)
 	}
 }
 

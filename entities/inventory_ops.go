@@ -59,6 +59,24 @@ func (p *Player) Unequip(slot string) bool {
 	return true
 }
 
+// DropEquipped removes the item from the given equipment slot without adding it to the inventory.
+func (p *Player) DropEquipped(slot string) bool {
+	if p.Equipment == nil {
+		return false
+	}
+	it := p.Equipment[slot]
+	if it == nil {
+		return false
+	}
+	if it.OnUnequip != nil {
+		it.OnUnequip(p)
+	}
+	p.Equipment[slot] = nil
+	p.RecalculateStats()
+	// TODO: hook to drop into world
+	return true
+}
+
 // DropFromInventory removes count items from the specified grid cell.
 func (p *Player) DropFromInventory(gx, gy int, count int) bool {
 	if p.Inventory == nil {
