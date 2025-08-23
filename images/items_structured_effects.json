@@ -1,0 +1,4474 @@
+[
+  {
+    "id": "item_0_0",
+    "name": "Water Shore Icon",
+    "position": {
+      "row": 0,
+      "col": 0
+    },
+    "effects": {
+      "description": "Salt-stung and sea-born, Water Shore Icon: ash-scent clings to its edge, ragged scars cross its face like bite marks. Marked 0:0 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 0,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_1",
+    "name": "Iron Emblem",
+    "position": {
+      "row": 0,
+      "col": 1
+    },
+    "effects": {
+      "description": "Iron-scented and stubborn, Iron Emblem: smells of black powder and old oaths, sticky with old gore that never washes clean. Marked 0:1 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 2,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "damage_reduction",
+        "magnitude_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_0_2",
+    "name": "Arcane Emblem",
+    "position": {
+      "row": 0,
+      "col": 2
+    },
+    "effects": {
+      "description": "Runes smolder at the edge of sight, Arcane Emblem: metal sings at its passing, its weight shifts when lies are told. Marked 0:2 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 2,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "mana_cost_reduction",
+        "magnitude_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_0_3",
+    "name": "Chaos Emblem",
+    "position": {
+      "row": 0,
+      "col": 3
+    },
+    "effects": {
+      "description": "Edges refuse to meet, Chaos Emblem: lines of power skitter like quicksilver, chews the hand that clutches it too tightly. Marked 0:3 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 2
+      },
+      "effect": {
+        "trigger": "on_hit",
+        "type": "crit_multiplier",
+        "magnitude_pct": 100,
+        "chance_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_0_4",
+    "name": "Divine Emblem",
+    "position": {
+      "row": 0,
+      "col": 4
+    },
+    "effects": {
+      "description": "Iron-scented and stubborn, Divine Emblem: blessed in a temple whose name is forgotten, it answers to horns at the gates. Marked 0:4 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 0,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_5",
+    "name": "Black Gold Glyph",
+    "position": {
+      "row": 0,
+      "col": 5
+    },
+    "effects": {
+      "description": "Sun-caught and brazen, Black Gold Glyph: keeps counsel with old stars, it answers to horns at the gates. Marked 0:5 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 2
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "gold_find",
+        "magnitude_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_0_6",
+    "name": "Grey Gold Glyph",
+    "position": {
+      "row": 0,
+      "col": 6
+    },
+    "effects": {
+      "description": "Sun-caught and brazen, Grey Gold Glyph: it remembers the oath of a lost knight, it answers to horns at the gates. Marked 0:6 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 2
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "gold_find",
+        "magnitude_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_0_7",
+    "name": "Black Grey Glyph",
+    "position": {
+      "row": 0,
+      "col": 7
+    },
+    "effects": {
+      "description": "Black as oathstone, Black Grey Glyph: it tastes faintly of night-blooming flowers, ash-scent clings to its edge. Marked 0:7 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_8",
+    "name": "Iron Amulet",
+    "position": {
+      "row": 0,
+      "col": 8
+    },
+    "effects": {
+      "description": "Iron-scented and stubborn, Iron Amulet: smells of black powder and old oaths, bearing dents like a ledger of grudges. Marked 0:8 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 2,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 1,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "damage_reduction",
+        "magnitude_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_0_9",
+    "name": "Sapphire Amulet",
+    "position": {
+      "row": 0,
+      "col": 9
+    },
+    "effects": {
+      "description": "Crowned in old dust, Sapphire Amulet: pulled subtly toward hidden ore, it answers to horns at the gates. Marked 0:9 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 2,
+        "luck_mod": 2
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_10",
+    "name": "Ruby Amulet",
+    "position": {
+      "row": 0,
+      "col": 10
+    },
+    "effects": {
+      "description": "Crowned in old dust, Ruby Amulet: runes settle only when unobserved, threads of glamour thrum in its weave. Marked 0:10 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 2,
+        "luck_mod": 2
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_11",
+    "name": "Coral Cross Amulet",
+    "position": {
+      "row": 0,
+      "col": 11
+    },
+    "effects": {
+      "description": "Salt-stung and sea-born, Coral Cross Amulet: hungry for vows and softer sins, cool as moonlight across bare skin. Marked 0:11 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 1,
+        "luck_mod": 2
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_12",
+    "name": "Crimson Cross Amulet",
+    "position": {
+      "row": 0,
+      "col": 12
+    },
+    "effects": {
+      "description": "Salt-stung and sea-born, Crimson Cross Amulet: lines of power skitter like quicksilver, scented with crushed violets and danger. Marked 0:12 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 2,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 1,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "on_kill",
+        "type": "lifesteal",
+        "magnitude_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_0_13",
+    "name": "Citrine Cross Amulet",
+    "position": {
+      "row": 0,
+      "col": 13
+    },
+    "effects": {
+      "description": "Damp with sap and soil, Citrine Cross Amulet: its luster deepens when dragons wake, its touch sparks along the wrists. Marked 0:13 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 2,
+        "luck_mod": 2
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_14",
+    "name": "Verdant Skull Necklace",
+    "position": {
+      "row": 0,
+      "col": 14
+    },
+    "effects": {
+      "description": "Damp with sap and soil, Verdant Skull Necklace: its luster deepens when dragons wake, bearing dents like a ledger of grudges. Marked 0:14 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 2,
+        "intelligence_mod": 1,
+        "luck_mod": 2
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "regen_hp",
+        "magnitude_flat": 1,
+        "interval_s": 10
+      }
+    }
+  },
+  {
+    "id": "item_0_15",
+    "name": "Crimson Skull Necklace",
+    "position": {
+      "row": 0,
+      "col": 15
+    },
+    "effects": {
+      "description": "Edges refuse to meet, Crimson Skull Necklace: sticky with old gore that never washes clean, whispers a promise you’ll regret keeping. Marked 0:15 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 2,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 1,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "on_kill",
+        "type": "lifesteal",
+        "magnitude_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_0_16",
+    "name": "Iron Skull Necklace",
+    "position": {
+      "row": 0,
+      "col": 16
+    },
+    "effects": {
+      "description": "Iron-scented and stubborn, Iron Skull Necklace: ragged scars cross its face like bite marks, a hush of wings follows its movement. Marked 0:16 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 2,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 1,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "damage_reduction",
+        "magnitude_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_0_17",
+    "name": "Whetstone Necklace",
+    "position": {
+      "row": 0,
+      "col": 17
+    },
+    "effects": {
+      "description": "Iron-scented and stubborn, Whetstone Necklace: metal sings at its passing, ragged scars cross its face like bite marks. Marked 0:17 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 1,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 1,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_18",
+    "name": "Wisdom Pendant",
+    "position": {
+      "row": 0,
+      "col": 18
+    },
+    "effects": {
+      "description": "Black as oathstone, Wisdom Pendant: it answers to horns at the gates, edges chewed by a dozen sieges. Marked 0:18 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 3,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_19",
+    "name": "Courage Pendant",
+    "position": {
+      "row": 0,
+      "col": 19
+    },
+    "effects": {
+      "description": "Edges refuse to meet, Courage Pendant: ash-scent clings to its edge, chews the hand that clutches it too tightly. Marked 0:19 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 1,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 1,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_20",
+    "name": "Power Pendant",
+    "position": {
+      "row": 0,
+      "col": 20
+    },
+    "effects": {
+      "description": "Black as oathstone, Power Pendant: whispers a promise you’ll regret keeping, its luster deepens when dragons wake. Marked 0:20 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 4,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 1,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_21",
+    "name": "Golden Medallion",
+    "position": {
+      "row": 0,
+      "col": 21
+    },
+    "effects": {
+      "description": "Sun-caught and brazen, Golden Medallion: it answers to horns at the gates, keeps counsel with old stars. Marked 0:21 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 1,
+        "luck_mod": 3
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "gold_find",
+        "magnitude_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_0_22",
+    "name": "Shrunken Head",
+    "position": {
+      "row": 0,
+      "col": 22
+    },
+    "effects": {
+      "description": "Black as oathstone, Shrunken Head: ash-scent clings to its edge, it answers to horns at the gates. Marked 0:22 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 1,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_23",
+    "name": "Torn Page",
+    "position": {
+      "row": 0,
+      "col": 23
+    },
+    "effects": {
+      "description": "Runes smolder at the edge of sight, Torn Page: pulled subtly toward hidden ore, it answers to horns at the gates. Marked 0:23 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_24",
+    "name": "Solar Emblem",
+    "position": {
+      "row": 0,
+      "col": 24
+    },
+    "effects": {
+      "description": "Sun-caught and brazen, Solar Emblem: keeps counsel with old stars, pulled subtly toward hidden ore. Marked 0:24 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 0,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "on_low_hp",
+        "type": "heal",
+        "magnitude_flat": 10,
+        "threshold_pct": 20,
+        "cooldown_s": 60
+      }
+    }
+  },
+  {
+    "id": "item_0_25",
+    "name": "Brew Master's Emblem",
+    "position": {
+      "row": 0,
+      "col": 25
+    },
+    "effects": {
+      "description": "Runes smolder at the edge of sight, Brew Master's Emblem: whispers a promise you’ll regret keeping, ragged scars cross its face like bite marks. Marked 0:25 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "on_potion_use",
+        "type": "bonus_healing",
+        "magnitude_pct": 20
+      }
+    }
+  },
+  {
+    "id": "item_0_26",
+    "name": "Rage Emblem",
+    "position": {
+      "row": 0,
+      "col": 26
+    },
+    "effects": {
+      "description": "Edges refuse to meet, Rage Emblem: whispers a promise you’ll regret keeping, chews the hand that clutches it too tightly. Marked 0:26 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_27",
+    "name": "Meaty Emblem",
+    "position": {
+      "row": 0,
+      "col": 27
+    },
+    "effects": {
+      "description": "Edges refuse to meet, Meaty Emblem: scented with crushed violets and danger, cool as moonlight across bare skin. Marked 0:27 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_28",
+    "name": "Attack Emblem",
+    "position": {
+      "row": 0,
+      "col": 28
+    },
+    "effects": {
+      "description": "Black as oathstone, Attack Emblem: it tastes faintly of night-blooming flowers, scented with crushed violets and danger. Marked 0:28 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 2,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_29",
+    "name": "Protection Emblem",
+    "position": {
+      "row": 0,
+      "col": 29
+    },
+    "effects": {
+      "description": "Crowned in old dust, Protection Emblem: chews the hand that clutches it too tightly, whispers a promise you’ll regret keeping. Marked 0:29 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 2,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_30",
+    "name": "Shield Emblem",
+    "position": {
+      "row": 0,
+      "col": 30
+    },
+    "effects": {
+      "description": "Sun-caught and brazen, Shield Emblem: smells of black powder and old oaths, sticky with old gore that never washes clean. Marked 0:30 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 4,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "on_block",
+        "type": "counterpulse",
+        "element": "physical",
+        "magnitude_pct": 20,
+        "cooldown_s": 15
+      }
+    }
+  },
+  {
+    "id": "item_0_31",
+    "name": "Monster Emblem",
+    "position": {
+      "row": 0,
+      "col": 31
+    },
+    "effects": {
+      "description": "Runes smolder at the edge of sight, Monster Emblem: it drinks the trace of metals from the air, threads of glamour thrum in its weave. Marked 0:31 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 1,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_32",
+    "name": "Guardian Emblem",
+    "position": {
+      "row": 0,
+      "col": 32
+    },
+    "effects": {
+      "description": "Veiled in candle smoke, Guardian Emblem: it answers to horns at the gates, sang once beneath a sky of burning banners. Marked 0:32 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 2,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "on_block",
+        "type": "damage_reduction_buff",
+        "magnitude_pct": 10,
+        "duration_s": 3
+      }
+    }
+  },
+  {
+    "id": "item_0_33",
+    "name": "Time Emblem",
+    "position": {
+      "row": 0,
+      "col": 33
+    },
+    "effects": {
+      "description": "Edges refuse to meet, Time Emblem: chews the hand that clutches it too tightly, edges chewed by a dozen sieges. Marked 0:33 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 1,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "cooldown_reduction",
+        "magnitude_pct": 6
+      }
+    }
+  },
+  {
+    "id": "item_0_34",
+    "name": "Embryo Emblem",
+    "position": {
+      "row": 0,
+      "col": 34
+    },
+    "effects": {
+      "description": "Black as oathstone, Embryo Emblem: its touch sparks along the wrists, ragged scars cross its face like bite marks. Marked 0:34 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_35",
+    "name": "Azazel's Pentagram",
+    "position": {
+      "row": 0,
+      "col": 35
+    },
+    "effects": {
+      "description": "Edges refuse to meet, Azazel's Pentagram: sticky with old gore that never washes clean, blessed in a temple whose name is forgotten. Marked 0:35 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 1,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "on_kill",
+        "type": "summon",
+        "summon": "flame_wisp",
+        "duration_s": 6,
+        "chance_pct": 3
+      }
+    }
+  },
+  {
+    "id": "item_0_36",
+    "name": "Abaddon's Pentagram",
+    "position": {
+      "row": 0,
+      "col": 36
+    },
+    "effects": {
+      "description": "Edges refuse to meet, Abaddon's Pentagram: its touch sparks along the wrists, smells of black powder and old oaths. Marked 0:36 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 1,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "bonus_vs_elites",
+        "magnitude_pct": 10,
+        "penalty_taken_pct": 3
+      }
+    }
+  },
+  {
+    "id": "item_0_37",
+    "name": "Coral Ring",
+    "position": {
+      "row": 0,
+      "col": 37
+    },
+    "effects": {
+      "description": "Salt-stung and sea-born, Coral Ring: whispers a promise you’ll regret keeping, bearing dents like a ledger of grudges. Marked 0:37 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 0,
+        "luck_mod": 3
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_38",
+    "name": "Verdant Ring",
+    "position": {
+      "row": 0,
+      "col": 38
+    },
+    "effects": {
+      "description": "Damp with sap and soil, Verdant Ring: blessed in a temple whose name is forgotten, forged where dragonfire licked the anvil. Marked 0:38 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 2,
+        "intelligence_mod": 0,
+        "luck_mod": 3
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "regen_hp",
+        "magnitude_flat": 1,
+        "interval_s": 10
+      }
+    }
+  },
+  {
+    "id": "item_0_39",
+    "name": "Crimson Ring",
+    "position": {
+      "row": 0,
+      "col": 39
+    },
+    "effects": {
+      "description": "Damp with sap and soil, Crimson Ring: threads of glamour thrum in its weave, cool as moonlight across bare skin. Marked 0:39 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 2,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 0,
+        "luck_mod": 2
+      },
+      "effect": {
+        "trigger": "on_kill",
+        "type": "lifesteal",
+        "magnitude_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_0_40",
+    "name": "Coral Bell",
+    "position": {
+      "row": 0,
+      "col": 40
+    },
+    "effects": {
+      "description": "Salt-stung and sea-born, Coral Bell: cool as moonlight across bare skin, chews the hand that clutches it too tightly. Marked 0:40 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 0,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "on_use",
+        "type": "taunt",
+        "radius": 3,
+        "duration_s": 2,
+        "cooldown_s": 30
+      }
+    }
+  },
+  {
+    "id": "item_0_41",
+    "name": "Verdant Bell",
+    "position": {
+      "row": 0,
+      "col": 41
+    },
+    "effects": {
+      "description": "Damp with sap and soil, Verdant Bell: runes brightened at the first cry of war, rings like a helm struck at dawn. Marked 0:41 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 2,
+        "intelligence_mod": 0,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "regen_hp",
+        "magnitude_flat": 1,
+        "interval_s": 10
+      }
+    }
+  },
+  {
+    "id": "item_0_42",
+    "name": "Crimson Bell",
+    "position": {
+      "row": 0,
+      "col": 42
+    },
+    "effects": {
+      "description": "Crowned in old dust, Crimson Bell: whispers a promise you’ll regret keeping, edges chewed by a dozen sieges. Marked 0:42 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 2,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "on_kill",
+        "type": "lifesteal",
+        "magnitude_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_0_43",
+    "name": "Arcane Diviner's Pendant",
+    "position": {
+      "row": 0,
+      "col": 43
+    },
+    "effects": {
+      "description": "Runes smolder at the edge of sight, Arcane Diviner's Pendant: metal sings at its passing, it drinks the trace of metals from the air. Marked 0:43 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 3,
+        "luck_mod": 2
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "mana_cost_reduction",
+        "magnitude_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_0_44",
+    "name": "Vital Diviner's Pendant",
+    "position": {
+      "row": 0,
+      "col": 44
+    },
+    "effects": {
+      "description": "Runes smolder at the edge of sight, Vital Diviner's Pendant: metal sings at its passing, pulled subtly toward hidden ore. Marked 0:44 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 3,
+        "intelligence_mod": 3,
+        "luck_mod": 2
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "trap_detection",
+        "radius": 4
+      }
+    }
+  },
+  {
+    "id": "item_0_45",
+    "name": "Surging Diviner's Pendant",
+    "position": {
+      "row": 0,
+      "col": 45
+    },
+    "effects": {
+      "description": "Runes smolder at the edge of sight, Surging Diviner's Pendant: its weight shifts when lies are told, pulled subtly toward hidden ore. Marked 0:45 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 3,
+        "luck_mod": 2
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "trap_detection",
+        "radius": 4
+      }
+    }
+  },
+  {
+    "id": "item_0_46",
+    "name": "Arcane Seer's Stone",
+    "position": {
+      "row": 0,
+      "col": 46
+    },
+    "effects": {
+      "description": "Runes smolder at the edge of sight, Arcane Seer's Stone: secrets bead on it like dew, lines of power skitter like quicksilver. Marked 0:46 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 2,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "mana_cost_reduction",
+        "magnitude_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_0_47",
+    "name": "Vital Seer's Stone",
+    "position": {
+      "row": 0,
+      "col": 47
+    },
+    "effects": {
+      "description": "Runes smolder at the edge of sight, Vital Seer's Stone: secrets bead on it like dew, its weight shifts when lies are told. Marked 0:47 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 2,
+        "intelligence_mod": 2,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "vision_radius",
+        "magnitude_flat": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_48",
+    "name": "Surging Seer's Stone",
+    "position": {
+      "row": 0,
+      "col": 48
+    },
+    "effects": {
+      "description": "Runes smolder at the edge of sight, Surging Seer's Stone: pulled subtly toward hidden ore, its weight shifts when lies are told. Marked 0:48 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 2,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "vision_radius",
+        "magnitude_flat": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_49",
+    "name": "Pixie's Blessing",
+    "position": {
+      "row": 0,
+      "col": 49
+    },
+    "effects": {
+      "description": "Crowned in old dust, Pixie's Blessing: cool as moonlight across bare skin, forged where dragonfire licked the anvil. Marked 0:49 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 1,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 2
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "stamina_cost_reduction",
+        "action": "jump",
+        "magnitude_pct": 25
+      }
+    }
+  },
+  {
+    "id": "item_0_50",
+    "name": "Ynot's Hoop",
+    "position": {
+      "row": 0,
+      "col": 50
+    },
+    "effects": {
+      "description": "Sun-caught and brazen, Ynot's Hoop: scented with crushed violets and danger, metal sings at its passing. Marked 0:50 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 2
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_51",
+    "name": "Soul Shard",
+    "position": {
+      "row": 0,
+      "col": 51
+    },
+    "effects": {
+      "description": "Sun-caught and brazen, Soul Shard: rings like a helm struck at dawn, bearing dents like a ledger of grudges. Marked 0:51 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 1,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_52",
+    "name": "Soul Pendant",
+    "position": {
+      "row": 0,
+      "col": 52
+    },
+    "effects": {
+      "description": "Damp with sap and soil, Soul Pendant: whispers a promise you’ll regret keeping, rings like a helm struck at dawn. Marked 0:52 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 2,
+        "luck_mod": 2
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_53",
+    "name": "Hoid's Knot",
+    "position": {
+      "row": 0,
+      "col": 53
+    },
+    "effects": {
+      "description": "Crowned in old dust, Hoid's Knot: lines of power skitter like quicksilver, etched with curses best left unread. Marked 0:53 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 2
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_54",
+    "name": "Barbarian Pelt",
+    "position": {
+      "row": 0,
+      "col": 54
+    },
+    "effects": {
+      "description": "Veiled in candle smoke, Barbarian Pelt: forged where dragonfire licked the anvil, rings like a helm struck at dawn. Marked 0:54 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 1,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_55",
+    "name": "Luxury Barbarian Pelt",
+    "position": {
+      "row": 0,
+      "col": 55
+    },
+    "effects": {
+      "description": "Edges refuse to meet, Luxury Barbarian Pelt: it drinks the trace of metals from the air, it tastes faintly of night-blooming flowers. Marked 0:55 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 1,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_56",
+    "name": "Chainmail",
+    "position": {
+      "row": 0,
+      "col": 56
+    },
+    "effects": {
+      "description": "Iron-scented and stubborn, Chainmail: chews the hand that clutches it too tightly, bearing dents like a ledger of grudges. Marked 0:56 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_57",
+    "name": "Studded Chainmail",
+    "position": {
+      "row": 0,
+      "col": 57
+    },
+    "effects": {
+      "description": "Iron-scented and stubborn, Studded Chainmail: rings like a helm struck at dawn, etched with curses best left unread. Marked 0:57 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 1,
+        "dexterity_mod": 0,
+        "vitality_mod": 2,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_58",
+    "name": "Blue Gossamer Fabric",
+    "position": {
+      "row": 0,
+      "col": 58
+    },
+    "effects": {
+      "description": "Runes smolder at the edge of sight, Blue Gossamer Fabric: scented with crushed violets and danger, blessed in a temple whose name is forgotten. Marked 0:58 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 2,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_59",
+    "name": "Blue Gossamer Vestments",
+    "position": {
+      "row": 0,
+      "col": 59
+    },
+    "effects": {
+      "description": "Veiled in candle smoke, Blue Gossamer Vestments: chews the hand that clutches it too tightly, ash-scent clings to its edge. Marked 0:59 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 3,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_60",
+    "name": "Leather Boots",
+    "position": {
+      "row": 0,
+      "col": 60
+    },
+    "effects": {
+      "description": "Crowned in old dust, Leather Boots: its touch sparks along the wrists, bearing dents like a ledger of grudges. Marked 0:60 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 2,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_61",
+    "name": "Santa's Boots",
+    "position": {
+      "row": 0,
+      "col": 61
+    },
+    "effects": {
+      "description": "Sun-caught and brazen, Santa's Boots: etched with curses best left unread, its weight shifts when lies are told. Marked 0:61 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 1,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_62",
+    "name": "Studded Leather Boots",
+    "position": {
+      "row": 0,
+      "col": 62
+    },
+    "effects": {
+      "description": "Edges refuse to meet, Studded Leather Boots: keeps counsel with old stars, scented with crushed violets and danger. Marked 0:62 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 1,
+        "dexterity_mod": 2,
+        "vitality_mod": 1,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_63",
+    "name": "Boots of Speed",
+    "position": {
+      "row": 0,
+      "col": 63
+    },
+    "effects": {
+      "description": "Crowned in old dust, Boots of Speed: a hush of wings follows its movement, ragged scars cross its face like bite marks. Marked 0:63 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 3,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_0",
+    "name": "Refined Chainmail",
+    "position": {
+      "row": 1,
+      "col": 0
+    },
+    "effects": {
+      "description": "Iron-scented and stubborn, Refined Chainmail: edges chewed by a dozen sieges, sticky with old gore that never washes clean. Marked 1:0 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_1",
+    "name": "Hero's Refined Chainmail",
+    "position": {
+      "row": 1,
+      "col": 1
+    },
+    "effects": {
+      "description": "Iron-scented and stubborn, Hero's Refined Chainmail: etched with curses best left unread, rings like a helm struck at dawn. Marked 1:1 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_2",
+    "name": "Platemail",
+    "position": {
+      "row": 1,
+      "col": 2
+    },
+    "effects": {
+      "description": "Iron-scented and stubborn, Platemail: smells of black powder and old oaths, rings like a helm struck at dawn. Marked 1:2 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 2,
+        "dexterity_mod": 0,
+        "vitality_mod": 2,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "block_chance",
+        "magnitude_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_1_3",
+    "name": "Nondescript Cloak",
+    "position": {
+      "row": 1,
+      "col": 3
+    },
+    "effects": {
+      "description": "Veiled in candle smoke, Nondescript Cloak: scented with crushed violets and danger, a hush of wings follows its movement. Marked 1:3 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 1,
+        "vitality_mod": 0,
+        "intelligence_mod": 1,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_4",
+    "name": "Shroud of the Pale Moon",
+    "position": {
+      "row": 1,
+      "col": 4
+    },
+    "effects": {
+      "description": "Crowned in old dust, Shroud of the Pale Moon: its touch sparks along the wrists, runes settle only when unobserved. Marked 1:4 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 0,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_5",
+    "name": "Mantle of the Deep",
+    "position": {
+      "row": 1,
+      "col": 5
+    },
+    "effects": {
+      "description": "Veiled in candle smoke, Mantle of the Deep: it answers to horns at the gates, sang once beneath a sky of burning banners. Marked 1:5 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 1,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_6",
+    "name": "Veil of the Blood Hex",
+    "position": {
+      "row": 1,
+      "col": 6
+    },
+    "effects": {
+      "description": "Veiled in candle smoke, Veil of the Blood Hex: a hush of wings follows its movement, cool as moonlight across bare skin. Marked 1:6 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 1,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "on_hit",
+        "type": "apply_status",
+        "status": "bleed",
+        "chance_pct": 15,
+        "duration_s": 5
+      }
+    }
+  },
+  {
+    "id": "item_1_7",
+    "name": "Brilliant Jerkin",
+    "position": {
+      "row": 1,
+      "col": 7
+    },
+    "effects": {
+      "description": "Veiled in candle smoke, Brilliant Jerkin: pulled subtly toward hidden ore, ragged scars cross its face like bite marks. Marked 1:7 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 1,
+        "vitality_mod": 0,
+        "intelligence_mod": 2,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_8",
+    "name": "Brilliant Platemail",
+    "position": {
+      "row": 1,
+      "col": 8
+    },
+    "effects": {
+      "description": "Iron-scented and stubborn, Brilliant Platemail: bearing dents like a ledger of grudges, etched with curses best left unread. Marked 1:8 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 2,
+        "dexterity_mod": 0,
+        "vitality_mod": 2,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "block_chance",
+        "magnitude_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_1_9",
+    "name": "Padded Leather Armor",
+    "position": {
+      "row": 1,
+      "col": 9
+    },
+    "effects": {
+      "description": "Veiled in candle smoke, Padded Leather Armor: it tastes faintly of night-blooming flowers, forged where dragonfire licked the anvil. Marked 1:9 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 1,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_10",
+    "name": "Brilliant Hero's Platemail",
+    "position": {
+      "row": 1,
+      "col": 10
+    },
+    "effects": {
+      "description": "Iron-scented and stubborn, Brilliant Hero's Platemail: sticky with old gore that never washes clean, etched with curses best left unread. Marked 1:10 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 2,
+        "dexterity_mod": 0,
+        "vitality_mod": 2,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "block_chance",
+        "magnitude_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_1_11",
+    "name": "Brilliant Elven Armor",
+    "position": {
+      "row": 1,
+      "col": 11
+    },
+    "effects": {
+      "description": "Salt-stung and sea-born, Brilliant Elven Armor: metal sings at its passing, pulled subtly toward hidden ore. Marked 1:11 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_12",
+    "name": "Grips of the Buried Flame",
+    "position": {
+      "row": 1,
+      "col": 12
+    },
+    "effects": {
+      "description": "Edges refuse to meet, Grips of the Buried Flame: rings like a helm struck at dawn, metal sings at its passing. Marked 1:12 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 3,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 1,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_13",
+    "name": "Gauntlets of the Crimson Oath",
+    "position": {
+      "row": 1,
+      "col": 13
+    },
+    "effects": {
+      "description": "Damp with sap and soil, Gauntlets of the Crimson Oath: ragged scars cross its face like bite marks, rings like a helm struck at dawn. Marked 1:13 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 4,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "on_kill",
+        "type": "lifesteal",
+        "magnitude_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_1_14",
+    "name": "Ashwoven Mitts",
+    "position": {
+      "row": 1,
+      "col": 14
+    },
+    "effects": {
+      "description": "Runes smolder at the edge of sight, Ashwoven Mitts: sticky with old gore that never washes clean, ash-scent clings to its edge. Marked 1:14 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 1,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_15",
+    "name": "Spellbinders of Arcane Mastery",
+    "position": {
+      "row": 1,
+      "col": 15
+    },
+    "effects": {
+      "description": "Runes smolder at the edge of sight, Spellbinders of Arcane Mastery: secrets bead on it like dew, its weight shifts when lies are told. Marked 1:15 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 2,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "mana_cost_reduction",
+        "magnitude_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_1_16",
+    "name": "Honeycomb Jerkin",
+    "position": {
+      "row": 1,
+      "col": 16
+    },
+    "effects": {
+      "description": "Sun-caught and brazen, Honeycomb Jerkin: whispers a promise you’ll regret keeping, it drinks the trace of metals from the air. Marked 1:16 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 1,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_17",
+    "name": "Honeycomb",
+    "position": {
+      "row": 1,
+      "col": 17
+    },
+    "effects": {
+      "description": "Veiled in candle smoke, Honeycomb: its touch sparks along the wrists, smells of black powder and old oaths. Marked 1:17 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 0,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_18",
+    "name": "Moss Patch",
+    "position": {
+      "row": 1,
+      "col": 18
+    },
+    "effects": {
+      "description": "Damp with sap and soil, Moss Patch: sticky with old gore that never washes clean, blessed in a temple whose name is forgotten. Marked 1:18 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 2,
+        "intelligence_mod": 0,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "resistance",
+        "element": "poison",
+        "magnitude_pct": 20
+      }
+    }
+  },
+  {
+    "id": "item_1_19",
+    "name": "Moss Jerkin",
+    "position": {
+      "row": 1,
+      "col": 19
+    },
+    "effects": {
+      "description": "Damp with sap and soil, Moss Jerkin: metal sings at its passing, sticky with old gore that never washes clean. Marked 1:19 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 2,
+        "intelligence_mod": 1,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "resistance",
+        "element": "poison",
+        "magnitude_pct": 20
+      }
+    }
+  },
+  {
+    "id": "item_1_20",
+    "name": "Lapis Jerkin",
+    "position": {
+      "row": 1,
+      "col": 20
+    },
+    "effects": {
+      "description": "Crowned in old dust, Lapis Jerkin: scented with crushed violets and danger, it remembers the oath of a lost knight. Marked 1:20 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 2,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_21",
+    "name": "Lapis Chunk",
+    "position": {
+      "row": 1,
+      "col": 21
+    },
+    "effects": {
+      "description": "Runes smolder at the edge of sight, Lapis Chunk: threads of glamour thrum in its weave, hungry for vows and softer sins. Marked 1:21 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 1,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_22",
+    "name": "Prisoner of War Cuirass",
+    "position": {
+      "row": 1,
+      "col": 22
+    },
+    "effects": {
+      "description": "Black as oathstone, Prisoner of War Cuirass: it remembers the oath of a lost knight, ragged scars cross its face like bite marks. Marked 1:22 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_23",
+    "name": "Gladiator Breastplate",
+    "position": {
+      "row": 1,
+      "col": 23
+    },
+    "effects": {
+      "description": "Iron-scented and stubborn, Gladiator Breastplate: rings like a helm struck at dawn, sticky with old gore that never washes clean. Marked 1:23 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 4,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "block_chance",
+        "magnitude_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_1_24",
+    "name": "Glorious Breastplate",
+    "position": {
+      "row": 1,
+      "col": 24
+    },
+    "effects": {
+      "description": "Iron-scented and stubborn, Glorious Breastplate: rings like a helm struck at dawn, sticky with old gore that never washes clean. Marked 1:24 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 2,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 0,
+        "luck_mod": 2
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "block_chance",
+        "magnitude_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_1_25",
+    "name": "Chaos Jerkin",
+    "position": {
+      "row": 1,
+      "col": 25
+    },
+    "effects": {
+      "description": "Edges refuse to meet, Chaos Jerkin: it remembers the oath of a lost knight, edges chewed by a dozen sieges. Marked 1:25 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 1,
+        "luck_mod": 2
+      },
+      "effect": {
+        "trigger": "on_hit",
+        "type": "crit_multiplier",
+        "magnitude_pct": 100,
+        "chance_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_1_26",
+    "name": "Chaos Matter",
+    "position": {
+      "row": 1,
+      "col": 26
+    },
+    "effects": {
+      "description": "Edges refuse to meet, Chaos Matter: threads of glamour thrum in its weave, smells of black powder and old oaths. Marked 1:26 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 2
+      },
+      "effect": {
+        "trigger": "on_hit",
+        "type": "crit_multiplier",
+        "magnitude_pct": 100,
+        "chance_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_1_27",
+    "name": "Brilliant Tunic",
+    "position": {
+      "row": 1,
+      "col": 27
+    },
+    "effects": {
+      "description": "Salt-stung and sea-born, Brilliant Tunic: pulled subtly toward hidden ore, blessed in a temple whose name is forgotten. Marked 1:27 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 1,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_28",
+    "name": "Sneaky Thief Vestiges",
+    "position": {
+      "row": 1,
+      "col": 28
+    },
+    "effects": {
+      "description": "Damp with sap and soil, Sneaky Thief Vestiges: ash-scent clings to its edge, etched with curses best left unread. Marked 1:28 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 2,
+        "vitality_mod": 0,
+        "intelligence_mod": 1,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_29",
+    "name": "Plate Armor",
+    "position": {
+      "row": 1,
+      "col": 29
+    },
+    "effects": {
+      "description": "Iron-scented and stubborn, Plate Armor: chews the hand that clutches it too tightly, sticky with old gore that never washes clean. Marked 1:29 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 2,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "block_chance",
+        "magnitude_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_1_30",
+    "name": "Brilliant Chainmail Dress",
+    "position": {
+      "row": 1,
+      "col": 30
+    },
+    "effects": {
+      "description": "Iron-scented and stubborn, Brilliant Chainmail Dress: sticky with old gore that never washes clean, rings like a helm struck at dawn. Marked 1:30 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_31",
+    "name": "Husk of the Obsidian Bastion",
+    "position": {
+      "row": 1,
+      "col": 31
+    },
+    "effects": {
+      "description": "Black as oathstone, Husk of the Obsidian Bastion: blessed in a temple whose name is forgotten, it answers to horns at the gates. Marked 1:31 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 4,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_32",
+    "name": "Husk of the Golden Bringer",
+    "position": {
+      "row": 1,
+      "col": 32
+    },
+    "effects": {
+      "description": "Sun-caught and brazen, Husk of the Golden Bringer: keeps counsel with old stars, blessed in a temple whose name is forgotten. Marked 1:32 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 4
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "gold_find",
+        "magnitude_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_1_33",
+    "name": "Chainmail Tunic",
+    "position": {
+      "row": 1,
+      "col": 33
+    },
+    "effects": {
+      "description": "Iron-scented and stubborn, Chainmail Tunic: rings like a helm struck at dawn, chews the hand that clutches it too tightly. Marked 1:33 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 1,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_34",
+    "name": "Sepikor's Yoroi",
+    "position": {
+      "row": 1,
+      "col": 34
+    },
+    "effects": {
+      "description": "Edges refuse to meet, Sepikor's Yoroi: runes settle only when unobserved, cool as moonlight across bare skin. Marked 1:34 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_35",
+    "name": "Whisper's Robes",
+    "position": {
+      "row": 1,
+      "col": 35
+    },
+    "effects": {
+      "description": "Veiled in candle smoke, Whisper's Robes: cool as moonlight across bare skin, hungry for vows and softer sins. Marked 1:35 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 1,
+        "vitality_mod": 0,
+        "intelligence_mod": 1,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_36",
+    "name": "Spellwoven Robe",
+    "position": {
+      "row": 1,
+      "col": 36
+    },
+    "effects": {
+      "description": "Damp with sap and soil, Spellwoven Robe: its touch sparks along the wrists, scented with crushed violets and danger. Marked 1:36 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 3,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_37",
+    "name": "Rootcaller's Mantle",
+    "position": {
+      "row": 1,
+      "col": 37
+    },
+    "effects": {
+      "description": "Damp with sap and soil, Rootcaller's Mantle: hungry for vows and softer sins, threads of glamour thrum in its weave. Marked 1:37 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 2,
+        "intelligence_mod": 1,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "regen_hp",
+        "magnitude_flat": 1,
+        "interval_s": 8
+      }
+    }
+  },
+  {
+    "id": "item_1_38",
+    "name": "Ironring Hauberk",
+    "position": {
+      "row": 1,
+      "col": 38
+    },
+    "effects": {
+      "description": "Iron-scented and stubborn, Ironring Hauberk: smells of black powder and old oaths, edges chewed by a dozen sieges. Marked 1:38 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 2,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 0,
+        "luck_mod": 2
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "damage_reduction",
+        "magnitude_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_1_39",
+    "name": "Crimson Hauberk",
+    "position": {
+      "row": 1,
+      "col": 39
+    },
+    "effects": {
+      "description": "Runes smolder at the edge of sight, Crimson Hauberk: scented with crushed violets and danger, runes settle only when unobserved. Marked 1:39 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 4,
+        "dexterity_mod": 0,
+        "vitality_mod": 2,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "on_kill",
+        "type": "lifesteal",
+        "magnitude_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_1_40",
+    "name": "Iron Slab",
+    "position": {
+      "row": 1,
+      "col": 40
+    },
+    "effects": {
+      "description": "Iron-scented and stubborn, Iron Slab: smells of black powder and old oaths, bearing dents like a ledger of grudges. Marked 1:40 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 2,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "damage_reduction",
+        "magnitude_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_1_41",
+    "name": "Iron Jerkin",
+    "position": {
+      "row": 1,
+      "col": 41
+    },
+    "effects": {
+      "description": "Iron-scented and stubborn, Iron Jerkin: edges chewed by a dozen sieges, rings like a helm struck at dawn. Marked 1:41 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 2,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 1,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "damage_reduction",
+        "magnitude_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_1_42",
+    "name": "Serraplate",
+    "position": {
+      "row": 1,
+      "col": 42
+    },
+    "effects": {
+      "description": "Iron-scented and stubborn, Serraplate: bearing dents like a ledger of grudges, etched with curses best left unread. Marked 1:42 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 2,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "block_chance",
+        "magnitude_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_1_43",
+    "name": "Judicator's Carapace",
+    "position": {
+      "row": 1,
+      "col": 43
+    },
+    "effects": {
+      "description": "Iron-scented and stubborn, Judicator's Carapace: its touch sparks along the wrists, bearing dents like a ledger of grudges. Marked 1:43 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 2,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_44",
+    "name": "Mucous Covered Jerkin",
+    "position": {
+      "row": 1,
+      "col": 44
+    },
+    "effects": {
+      "description": "Sun-caught and brazen, Mucous Covered Jerkin: hungry for vows and softer sins, runes brightened at the first cry of war. Marked 1:44 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 1,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 1,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_45",
+    "name": "Glob of Mucous",
+    "position": {
+      "row": 1,
+      "col": 45
+    },
+    "effects": {
+      "description": "Crowned in old dust, Glob of Mucous: threads of glamour thrum in its weave, chews the hand that clutches it too tightly. Marked 1:45 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_46",
+    "name": "Mossy Wreath",
+    "position": {
+      "row": 1,
+      "col": 46
+    },
+    "effects": {
+      "description": "Damp with sap and soil, Mossy Wreath: hungry for vows and softer sins, its touch sparks along the wrists. Marked 1:46 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 3,
+        "intelligence_mod": 0,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "resistance",
+        "element": "poison",
+        "magnitude_pct": 20
+      }
+    }
+  },
+  {
+    "id": "item_1_47",
+    "name": "Mossy Tunic",
+    "position": {
+      "row": 1,
+      "col": 47
+    },
+    "effects": {
+      "description": "Damp with sap and soil, Mossy Tunic: scented with crushed violets and danger, forged where dragonfire licked the anvil. Marked 1:47 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 2,
+        "intelligence_mod": 1,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "resistance",
+        "element": "poison",
+        "magnitude_pct": 20
+      }
+    }
+  },
+  {
+    "id": "item_1_48",
+    "name": "Purple Tooth",
+    "position": {
+      "row": 1,
+      "col": 48
+    },
+    "effects": {
+      "description": "Black as oathstone, Purple Tooth: etched with curses best left unread, its weight shifts when lies are told. Marked 1:48 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 1,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_49",
+    "name": "Obsidian Boots",
+    "position": {
+      "row": 1,
+      "col": 49
+    },
+    "effects": {
+      "description": "Black as oathstone, Obsidian Boots: threads of glamour thrum in its weave, etched with curses best left unread. Marked 1:49 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 1,
+        "vitality_mod": 2,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_50",
+    "name": "Transcendent Robes",
+    "position": {
+      "row": 1,
+      "col": 50
+    },
+    "effects": {
+      "description": "Veiled in candle smoke, Transcendent Robes: its touch sparks along the wrists, sticky with old gore that never washes clean. Marked 1:50 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 1,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_51",
+    "name": "Leather Cap",
+    "position": {
+      "row": 1,
+      "col": 51
+    },
+    "effects": {
+      "description": "Iron-scented and stubborn, Leather Cap: hungry for vows and softer sins, etched with curses best left unread. Marked 1:51 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 1,
+        "vitality_mod": 1,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_52",
+    "name": "Heartseal",
+    "position": {
+      "row": 1,
+      "col": 52
+    },
+    "effects": {
+      "description": "Sun-caught and brazen, Heartseal: it tastes faintly of night-blooming flowers, chews the hand that clutches it too tightly. Marked 1:52 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 2
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_53",
+    "name": "Starwoven Vestment",
+    "position": {
+      "row": 1,
+      "col": 53
+    },
+    "effects": {
+      "description": "Damp with sap and soil, Starwoven Vestment: blessed in a temple whose name is forgotten, it drinks the trace of metals from the air. Marked 1:53 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 2,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_54",
+    "name": "Helm of the Longing King",
+    "position": {
+      "row": 1,
+      "col": 54
+    },
+    "effects": {
+      "description": "Crowned in old dust, Helm of the Longing King: chews the hand that clutches it too tightly, ragged scars cross its face like bite marks. Marked 1:54 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 2,
+        "intelligence_mod": 0,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_55",
+    "name": "Golden Sentinel Plate",
+    "position": {
+      "row": 1,
+      "col": 55
+    },
+    "effects": {
+      "description": "Iron-scented and stubborn, Golden Sentinel Plate: forged where dragonfire licked the anvil, sang once beneath a sky of burning banners. Marked 1:55 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 2,
+        "dexterity_mod": 0,
+        "vitality_mod": 3,
+        "intelligence_mod": 0,
+        "luck_mod": 2
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "block_chance",
+        "magnitude_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_1_56",
+    "name": "Crown of the Prism King",
+    "position": {
+      "row": 1,
+      "col": 56
+    },
+    "effects": {
+      "description": "Crowned in old dust, Crown of the Prism King: cool as moonlight across bare skin, its luster deepens when dragons wake. Marked 1:56 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 2,
+        "intelligence_mod": 1,
+        "luck_mod": 2
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_57",
+    "name": "Chromavest",
+    "position": {
+      "row": 1,
+      "col": 57
+    },
+    "effects": {
+      "description": "Crowned in old dust, Chromavest: it tastes faintly of night-blooming flowers, sticky with old gore that never washes clean. Marked 1:57 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 2,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_58",
+    "name": "Alfred's Gloves",
+    "position": {
+      "row": 1,
+      "col": 58
+    },
+    "effects": {
+      "description": "Edges refuse to meet, Alfred's Gloves: threads of glamour thrum in its weave, whispers a promise you’ll regret keeping. Marked 1:58 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 1,
+        "dexterity_mod": 1,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_59",
+    "name": "Royal Robes",
+    "position": {
+      "row": 1,
+      "col": 59
+    },
+    "effects": {
+      "description": "Crowned in old dust, Royal Robes: a hush of wings follows its movement, threads of glamour thrum in its weave. Marked 1:59 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 1,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_60",
+    "name": "Dirty Red Robes",
+    "position": {
+      "row": 1,
+      "col": 60
+    },
+    "effects": {
+      "description": "Veiled in candle smoke, Dirty Red Robes: whispers a promise you’ll regret keeping, hungry for vows and softer sins. Marked 1:60 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 1,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 1,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_61",
+    "name": "Copper Shield",
+    "position": {
+      "row": 1,
+      "col": 61
+    },
+    "effects": {
+      "description": "Crowned in old dust, Copper Shield: smells of black powder and old oaths, chews the hand that clutches it too tightly. Marked 1:61 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 5,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "on_block",
+        "type": "counterpulse",
+        "element": "physical",
+        "magnitude_pct": 20,
+        "cooldown_s": 15
+      }
+    }
+  },
+  {
+    "id": "item_1_62",
+    "name": "Wooden Shiled",
+    "position": {
+      "row": 1,
+      "col": 62
+    },
+    "effects": {
+      "description": "Sun-caught and brazen, Wooden Shiled: keeps counsel with old stars, ragged scars cross its face like bite marks. Marked 1:62 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_1_63",
+    "name": "Cloth Vest",
+    "position": {
+      "row": 1,
+      "col": 63
+    },
+    "effects": {
+      "description": "Sun-caught and brazen, Cloth Vest: secrets bead on it like dew, bearing dents like a ledger of grudges. Marked 1:63 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 1,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_2_0",
+    "name": "Thornwoven Wrap",
+    "position": {
+      "row": 2,
+      "col": 0
+    },
+    "effects": {
+      "description": "Runes smolder at the edge of sight, Thornwoven Wrap: cool as moonlight across bare skin, its luster deepens when dragons wake. Marked 2:0 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 1,
+        "dexterity_mod": 1,
+        "vitality_mod": 0,
+        "intelligence_mod": 1,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_2_1",
+    "name": "Warden’s Jerkin",
+    "position": {
+      "row": 2,
+      "col": 1
+    },
+    "effects": {
+      "description": "Damp with sap and soil, Warden’s Jerkin: metal sings at its passing, bearing dents like a ledger of grudges. Marked 2:1 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 1,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 1,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_2_2",
+    "name": "Mourning Robe",
+    "position": {
+      "row": 2,
+      "col": 2
+    },
+    "effects": {
+      "description": "Crowned in old dust, Mourning Robe: whispers a promise you’ll regret keeping, threads of glamour thrum in its weave. Marked 2:2 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 2,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_2_3",
+    "name": "Elder Wizard Hat",
+    "position": {
+      "row": 2,
+      "col": 3
+    },
+    "effects": {
+      "description": "Black as oathstone, Elder Wizard Hat: runes settle only when unobserved, it drinks the trace of metals from the air. Marked 2:3 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 2,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "cast_speed",
+        "magnitude_pct": 8
+      }
+    }
+  },
+  {
+    "id": "item_2_4",
+    "name": "Monster Crap",
+    "position": {
+      "row": 2,
+      "col": 4
+    },
+    "effects": {
+      "description": "Sun-caught and brazen, Monster Crap: etched with curses best left unread, whispers a promise you’ll regret keeping. Marked 2:4 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_2_5",
+    "name": "Verdant Stone",
+    "position": {
+      "row": 2,
+      "col": 5
+    },
+    "effects": {
+      "description": "Damp with sap and soil, Verdant Stone: it tastes faintly of night-blooming flowers, smells of black powder and old oaths. Marked 2:5 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 2,
+        "intelligence_mod": 0,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "regen_hp",
+        "magnitude_flat": 1,
+        "interval_s": 10
+      }
+    }
+  },
+  {
+    "id": "item_2_6",
+    "name": "Serpentscale Vest",
+    "position": {
+      "row": 2,
+      "col": 6
+    },
+    "effects": {
+      "description": "Veiled in candle smoke, Serpentscale Vest: ragged scars cross its face like bite marks, metal sings at its passing. Marked 2:6 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 1,
+        "dexterity_mod": 1,
+        "vitality_mod": 0,
+        "intelligence_mod": 1,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_2_7",
+    "name": "Golden Cloak of Virtue",
+    "position": {
+      "row": 2,
+      "col": 7
+    },
+    "effects": {
+      "description": "Sun-caught and brazen, Golden Cloak of Virtue: forged where dragonfire licked the anvil, smells of black powder and old oaths. Marked 2:7 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 1,
+        "luck_mod": 2
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "gold_find",
+        "magnitude_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_2_8",
+    "name": "Sneak-Thief Robe",
+    "position": {
+      "row": 2,
+      "col": 8
+    },
+    "effects": {
+      "description": "Damp with sap and soil, Sneak-Thief Robe: its touch sparks along the wrists, a hush of wings follows its movement. Marked 2:8 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 2,
+        "vitality_mod": 0,
+        "intelligence_mod": 1,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_2_9",
+    "name": "Obsidian Gauntlets",
+    "position": {
+      "row": 2,
+      "col": 9
+    },
+    "effects": {
+      "description": "Black as oathstone, Obsidian Gauntlets: etched with curses best left unread, rings like a helm struck at dawn. Marked 2:9 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 2,
+        "dexterity_mod": 0,
+        "vitality_mod": 2,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_2_10",
+    "name": "Bloodstone Barbarian Pelt",
+    "position": {
+      "row": 2,
+      "col": 10
+    },
+    "effects": {
+      "description": "Damp with sap and soil, Bloodstone Barbarian Pelt: it answers to horns at the gates, rings like a helm struck at dawn. Marked 2:10 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 2,
+        "dexterity_mod": 0,
+        "vitality_mod": 2,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "on_hit",
+        "type": "apply_status",
+        "status": "bleed",
+        "chance_pct": 15,
+        "duration_s": 5
+      }
+    }
+  },
+  {
+    "id": "item_2_11",
+    "name": "Battle Satchel Blue",
+    "position": {
+      "row": 2,
+      "col": 11
+    },
+    "effects": {
+      "description": "Salt-stung and sea-born, Battle Satchel Blue: hungry for vows and softer sins, it tastes faintly of night-blooming flowers. Marked 2:11 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 1,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "on_potion_use",
+        "type": "bonus_healing",
+        "magnitude_pct": 10
+      }
+    }
+  },
+  {
+    "id": "item_2_12",
+    "name": "Battle Satchel Pink",
+    "position": {
+      "row": 2,
+      "col": 12
+    },
+    "effects": {
+      "description": "Crowned in old dust, Battle Satchel Pink: ash-scent clings to its edge, ragged scars cross its face like bite marks. Marked 2:12 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "on_potion_use",
+        "type": "bonus_healing",
+        "magnitude_pct": 10
+      }
+    }
+  },
+  {
+    "id": "item_2_13",
+    "name": "Battle Satchel Chrome",
+    "position": {
+      "row": 2,
+      "col": 13
+    },
+    "effects": {
+      "description": "Sun-caught and brazen, Battle Satchel Chrome: pulled subtly toward hidden ore, chews the hand that clutches it too tightly. Marked 2:13 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 1,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "on_potion_use",
+        "type": "bonus_healing",
+        "magnitude_pct": 10
+      }
+    }
+  },
+  {
+    "id": "item_2_14",
+    "name": "Battle Satchel Red",
+    "position": {
+      "row": 2,
+      "col": 14
+    },
+    "effects": {
+      "description": "Iron-scented and stubborn, Battle Satchel Red: cool as moonlight across bare skin, hungry for vows and softer sins. Marked 2:14 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 1,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "on_potion_use",
+        "type": "bonus_healing",
+        "magnitude_pct": 10
+      }
+    }
+  },
+  {
+    "id": "item_2_15",
+    "name": "Blue Cup",
+    "position": {
+      "row": 2,
+      "col": 15
+    },
+    "effects": {
+      "description": "Salt-stung and sea-born, Blue Cup: it tastes faintly of night-blooming flowers, blessed in a temple whose name is forgotten. Marked 2:15 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 1,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "on_potion_use",
+        "type": "bonus_healing",
+        "magnitude_pct": 15
+      }
+    }
+  },
+  {
+    "id": "item_2_16",
+    "name": "Pink Cup",
+    "position": {
+      "row": 2,
+      "col": 16
+    },
+    "effects": {
+      "description": "Damp with sap and soil, Pink Cup: threads of glamour thrum in its weave, smells of black powder and old oaths. Marked 2:16 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "on_potion_use",
+        "type": "bonus_healing",
+        "magnitude_pct": 15
+      }
+    }
+  },
+  {
+    "id": "item_2_17",
+    "name": "Chrome Cup",
+    "position": {
+      "row": 2,
+      "col": 17
+    },
+    "effects": {
+      "description": "Edges refuse to meet, Chrome Cup: a hush of wings follows its movement, blessed in a temple whose name is forgotten. Marked 2:17 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 1,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "on_potion_use",
+        "type": "bonus_healing",
+        "magnitude_pct": 15
+      }
+    }
+  },
+  {
+    "id": "item_2_18",
+    "name": "Red Cup",
+    "position": {
+      "row": 2,
+      "col": 18
+    },
+    "effects": {
+      "description": "Veiled in candle smoke, Red Cup: scented with crushed violets and danger, pulled subtly toward hidden ore. Marked 2:18 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 1,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "on_potion_use",
+        "type": "bonus_healing",
+        "magnitude_pct": 15
+      }
+    }
+  },
+  {
+    "id": "item_2_19",
+    "name": "Ranged Emblem",
+    "position": {
+      "row": 2,
+      "col": 19
+    },
+    "effects": {
+      "description": "Edges refuse to meet, Ranged Emblem: keeps counsel with old stars, pulled subtly toward hidden ore. Marked 2:19 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 2,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_2_20",
+    "name": "Arcane Wizardry Emblem",
+    "position": {
+      "row": 2,
+      "col": 20
+    },
+    "effects": {
+      "description": "Runes smolder at the edge of sight, Arcane Wizardry Emblem: runes settle only when unobserved, it drinks the trace of metals from the air. Marked 2:20 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 2,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "mana_cost_reduction",
+        "magnitude_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_2_21",
+    "name": "Mystic Emblem",
+    "position": {
+      "row": 2,
+      "col": 21
+    },
+    "effects": {
+      "description": "Edges refuse to meet, Mystic Emblem: a hush of wings follows its movement, cool as moonlight across bare skin. Marked 2:21 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 2,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_2_22",
+    "name": "Stealth Emblem",
+    "position": {
+      "row": 2,
+      "col": 22
+    },
+    "effects": {
+      "description": "Iron-scented and stubborn, Stealth Emblem: rings like a helm struck at dawn, forged where dragonfire licked the anvil. Marked 2:22 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 1,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_2_23",
+    "name": "Dexterity Emblem",
+    "position": {
+      "row": 2,
+      "col": 23
+    },
+    "effects": {
+      "description": "Runes smolder at the edge of sight, Dexterity Emblem: ash-scent clings to its edge, sticky with old gore that never washes clean. Marked 2:23 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 2,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_2_24",
+    "name": "Fireball Emblem",
+    "position": {
+      "row": 2,
+      "col": 24
+    },
+    "effects": {
+      "description": "Iron-scented and stubborn, Fireball Emblem: forged where dragonfire licked the anvil, runes brightened at the first cry of war. Marked 2:24 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 1,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 1,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_2_25",
+    "name": "Intelligence Emblem",
+    "position": {
+      "row": 2,
+      "col": 25
+    },
+    "effects": {
+      "description": "Iron-scented and stubborn, Intelligence Emblem: threads of glamour thrum in its weave, runes brightened at the first cry of war. Marked 2:25 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 2,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_2_26",
+    "name": "Toughness Emblem",
+    "position": {
+      "row": 2,
+      "col": 26
+    },
+    "effects": {
+      "description": "Veiled in candle smoke, Toughness Emblem: it tastes faintly of night-blooming flowers, etched with curses best left unread. Marked 2:26 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 2,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_2_27",
+    "name": "Enchanter’s Emblem",
+    "position": {
+      "row": 2,
+      "col": 27
+    },
+    "effects": {
+      "description": "Sun-caught and brazen, Enchanter’s Emblem: its luster deepens when dragons wake, ragged scars cross its face like bite marks. Marked 2:27 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 2,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_2_28",
+    "name": "Sanguine Emblem",
+    "position": {
+      "row": 2,
+      "col": 28
+    },
+    "effects": {
+      "description": "Veiled in candle smoke, Sanguine Emblem: chews the hand that clutches it too tightly, etched with curses best left unread. Marked 2:28 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 1,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_2_29",
+    "name": "Azazel's Hourglass",
+    "position": {
+      "row": 2,
+      "col": 29
+    },
+    "effects": {
+      "description": "Runes smolder at the edge of sight, Azazel's Hourglass: it remembers the oath of a lost knight, etched with curses best left unread. Marked 2:29 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 2,
+        "luck_mod": 2
+      },
+      "effect": {
+        "trigger": "on_combat_start",
+        "type": "haste",
+        "magnitude_pct": 20,
+        "duration_s": 5,
+        "cooldown_s": 60
+      }
+    }
+  },
+  {
+    "id": "item_2_30",
+    "name": "Disease Emblem",
+    "position": {
+      "row": 2,
+      "col": 30
+    },
+    "effects": {
+      "description": "Damp with sap and soil, Disease Emblem: sticky with old gore that never washes clean, edges chewed by a dozen sieges. Marked 2:30 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_2_31",
+    "name": "Enchanted Will Potion",
+    "position": {
+      "row": 2,
+      "col": 31
+    },
+    "effects": {
+      "description": "Black as oathstone, Enchanted Will Potion: whispers a promise you’ll regret keeping, bearing dents like a ledger of grudges. Marked 2:31 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_2_32",
+    "name": "Golden Shield of Sunlight",
+    "position": {
+      "row": 2,
+      "col": 32
+    },
+    "effects": {
+      "description": "Sun-caught and brazen, Golden Shield of Sunlight: runes brightened at the first cry of war, blessed in a temple whose name is forgotten. Marked 2:32 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 5,
+        "intelligence_mod": 0,
+        "luck_mod": 3
+      },
+      "effect": {
+        "trigger": "on_block",
+        "type": "counterpulse",
+        "element": "physical",
+        "magnitude_pct": 20,
+        "cooldown_s": 15
+      }
+    }
+  },
+  {
+    "id": "item_2_33",
+    "name": "Swap Token",
+    "position": {
+      "row": 2,
+      "col": 33
+    },
+    "effects": {
+      "description": "Crowned in old dust, Swap Token: smells of black powder and old oaths, bearing dents like a ledger of grudges. Marked 2:33 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_2_34",
+    "name": "Field Medic Shield",
+    "position": {
+      "row": 2,
+      "col": 34
+    },
+    "effects": {
+      "description": "Runes smolder at the edge of sight, Field Medic Shield: chews the hand that clutches it too tightly, bearing dents like a ledger of grudges. Marked 2:34 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 5,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "on_block",
+        "type": "counterpulse",
+        "element": "physical",
+        "magnitude_pct": 20,
+        "cooldown_s": 15
+      }
+    }
+  },
+  {
+    "id": "item_2_35",
+    "name": "Haste Carriers",
+    "position": {
+      "row": 2,
+      "col": 35
+    },
+    "effects": {
+      "description": "Runes smolder at the edge of sight, Haste Carriers: it drinks the trace of metals from the air, pulled subtly toward hidden ore. Marked 2:35 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 2,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_2_36",
+    "name": "Vision Rune",
+    "position": {
+      "row": 2,
+      "col": 36
+    },
+    "effects": {
+      "description": "Sun-caught and brazen, Vision Rune: ash-scent clings to its edge, runes settle only when unobserved. Marked 2:36 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_2_37",
+    "name": "Water Sigil",
+    "position": {
+      "row": 2,
+      "col": 37
+    },
+    "effects": {
+      "description": "Salt-stung and sea-born, Water Sigil: smells of black powder and old oaths, runes settle only when unobserved. Marked 2:37 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 0,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_2_38",
+    "name": "Strength Emblem",
+    "position": {
+      "row": 2,
+      "col": 38
+    },
+    "effects": {
+      "description": "Crowned in old dust, Strength Emblem: hungry for vows and softer sins, blessed in a temple whose name is forgotten. Marked 2:38 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 3,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_2_39",
+    "name": "Mr. Hood's Cap",
+    "position": {
+      "row": 2,
+      "col": 39
+    },
+    "effects": {
+      "description": "Crowned in old dust, Mr. Hood's Cap: a hush of wings follows its movement, pulled subtly toward hidden ore. Marked 2:39 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 2,
+        "vitality_mod": 1,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_2_40",
+    "name": "Castle Knight Helm",
+    "position": {
+      "row": 2,
+      "col": 40
+    },
+    "effects": {
+      "description": "Iron-scented and stubborn, Castle Knight Helm: smells of black powder and old oaths, sticky with old gore that never washes clean. Marked 2:40 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_2_41",
+    "name": "Magneto's Helm",
+    "position": {
+      "row": 2,
+      "col": 41
+    },
+    "effects": {
+      "description": "Sun-caught and brazen, Magneto's Helm: chews the hand that clutches it too tightly, sticky with old gore that never washes clean. Marked 2:41 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 1,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "on_trigger",
+        "type": "pull_coins",
+        "radius": 3
+      }
+    }
+  },
+  {
+    "id": "item_2_42",
+    "name": "Golden Knight's Helm",
+    "position": {
+      "row": 2,
+      "col": 42
+    },
+    "effects": {
+      "description": "Sun-caught and brazen, Golden Knight's Helm: cool as moonlight across bare skin, chews the hand that clutches it too tightly. Marked 2:42 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 0,
+        "luck_mod": 2
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "gold_find",
+        "magnitude_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_2_43",
+    "name": "Executioner's Helm",
+    "position": {
+      "row": 2,
+      "col": 43
+    },
+    "effects": {
+      "description": "Salt-stung and sea-born, Executioner's Helm: bearing dents like a ledger of grudges, edges chewed by a dozen sieges. Marked 2:43 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 2,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "on_hit",
+        "type": "execute",
+        "threshold_pct": 20,
+        "bonus_damage_pct": 20
+      }
+    }
+  },
+  {
+    "id": "item_2_44",
+    "name": "Grey Wizard Hat",
+    "position": {
+      "row": 2,
+      "col": 44
+    },
+    "effects": {
+      "description": "Sun-caught and brazen, Grey Wizard Hat: metal sings at its passing, it drinks the trace of metals from the air. Marked 2:44 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 2,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "cast_speed",
+        "magnitude_pct": 8
+      }
+    }
+  },
+  {
+    "id": "item_2_45",
+    "name": "Verdant Wizard Hat",
+    "position": {
+      "row": 2,
+      "col": 45
+    },
+    "effects": {
+      "description": "Damp with sap and soil, Verdant Wizard Hat: runes settle only when unobserved, it drinks the trace of metals from the air. Marked 2:45 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 2,
+        "intelligence_mod": 2,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "regen_hp",
+        "magnitude_flat": 1,
+        "interval_s": 10
+      }
+    }
+  },
+  {
+    "id": "item_2_46",
+    "name": "Studded Wooden Shield",
+    "position": {
+      "row": 2,
+      "col": 46
+    },
+    "effects": {
+      "description": "Damp with sap and soil, Studded Wooden Shield: edges chewed by a dozen sieges, ragged scars cross its face like bite marks. Marked 2:46 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 1,
+        "dexterity_mod": 0,
+        "vitality_mod": 6,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "on_block",
+        "type": "counterpulse",
+        "element": "physical",
+        "magnitude_pct": 20,
+        "cooldown_s": 15
+      }
+    }
+  },
+  {
+    "id": "item_2_47",
+    "name": "Studded Artificer's Shield",
+    "position": {
+      "row": 2,
+      "col": 47
+    },
+    "effects": {
+      "description": "Edges refuse to meet, Studded Artificer's Shield: chews the hand that clutches it too tightly, bearing dents like a ledger of grudges. Marked 2:47 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 1,
+        "dexterity_mod": 0,
+        "vitality_mod": 5,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "on_block",
+        "type": "counterpulse",
+        "element": "physical",
+        "magnitude_pct": 20,
+        "cooldown_s": 15
+      }
+    }
+  },
+  {
+    "id": "item_2_48",
+    "name": "Royal Guard's Round Shield",
+    "position": {
+      "row": 2,
+      "col": 48
+    },
+    "effects": {
+      "description": "Crowned in old dust, Royal Guard's Round Shield: bearing dents like a ledger of grudges, ragged scars cross its face like bite marks. Marked 2:48 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 5,
+        "intelligence_mod": 0,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "on_block",
+        "type": "counterpulse",
+        "element": "physical",
+        "magnitude_pct": 20,
+        "cooldown_s": 15
+      }
+    }
+  },
+  {
+    "id": "item_2_49",
+    "name": "Tall Dragon Slayer Shield",
+    "position": {
+      "row": 2,
+      "col": 49
+    },
+    "effects": {
+      "description": "Runes smolder at the edge of sight, Tall Dragon Slayer Shield: bearing dents like a ledger of grudges, keeps counsel with old stars. Marked 2:49 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 2,
+        "dexterity_mod": 0,
+        "vitality_mod": 5,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "on_block",
+        "type": "counterpulse",
+        "element": "physical",
+        "magnitude_pct": 20,
+        "cooldown_s": 15
+      }
+    }
+  },
+  {
+    "id": "item_2_50",
+    "name": "Obsidian Kite Shield",
+    "position": {
+      "row": 2,
+      "col": 50
+    },
+    "effects": {
+      "description": "Black as oathstone, Obsidian Kite Shield: etched with curses best left unread, smells of black powder and old oaths. Marked 2:50 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 6,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "on_block",
+        "type": "counterpulse",
+        "element": "physical",
+        "magnitude_pct": 20,
+        "cooldown_s": 15
+      }
+    }
+  },
+  {
+    "id": "item_2_51",
+    "name": "Golden Tree Sentinel Shield",
+    "position": {
+      "row": 2,
+      "col": 51
+    },
+    "effects": {
+      "description": "Sun-caught and brazen, Golden Tree Sentinel Shield: sticky with old gore that never washes clean, bearing dents like a ledger of grudges. Marked 2:51 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 4,
+        "intelligence_mod": 0,
+        "luck_mod": 2
+      },
+      "effect": {
+        "trigger": "on_block",
+        "type": "counterpulse",
+        "element": "physical",
+        "magnitude_pct": 20,
+        "cooldown_s": 15
+      }
+    }
+  },
+  {
+    "id": "item_2_52",
+    "name": "Unicorn Shield",
+    "position": {
+      "row": 2,
+      "col": 52
+    },
+    "effects": {
+      "description": "Black as oathstone, Unicorn Shield: chews the hand that clutches it too tightly, sticky with old gore that never washes clean. Marked 2:52 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 4,
+        "intelligence_mod": 0,
+        "luck_mod": 4
+      },
+      "effect": {
+        "trigger": "on_block",
+        "type": "counterpulse",
+        "element": "physical",
+        "magnitude_pct": 20,
+        "cooldown_s": 15
+      }
+    }
+  },
+  {
+    "id": "item_2_53",
+    "name": "Small Dragon Slayer Shield",
+    "position": {
+      "row": 2,
+      "col": 53
+    },
+    "effects": {
+      "description": "Damp with sap and soil, Small Dragon Slayer Shield: ragged scars cross its face like bite marks, its touch sparks along the wrists. Marked 2:53 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 2,
+        "dexterity_mod": 0,
+        "vitality_mod": 5,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "on_block",
+        "type": "counterpulse",
+        "element": "physical",
+        "magnitude_pct": 20,
+        "cooldown_s": 15
+      }
+    }
+  },
+  {
+    "id": "item_2_54",
+    "name": "Round Red Shield",
+    "position": {
+      "row": 2,
+      "col": 54
+    },
+    "effects": {
+      "description": "Sun-caught and brazen, Round Red Shield: etched with curses best left unread, smells of black powder and old oaths. Marked 2:54 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 1,
+        "dexterity_mod": 0,
+        "vitality_mod": 4,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "on_block",
+        "type": "counterpulse",
+        "element": "physical",
+        "magnitude_pct": 20,
+        "cooldown_s": 15
+      }
+    }
+  },
+  {
+    "id": "item_2_55",
+    "name": "Necromancer's Tome",
+    "position": {
+      "row": 2,
+      "col": 55
+    },
+    "effects": {
+      "description": "Runes smolder at the edge of sight, Necromancer's Tome: lines of power skitter like quicksilver, secrets bead on it like dew. Marked 2:55 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 3,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "mana_regen",
+        "magnitude_pct": 10
+      }
+    }
+  },
+  {
+    "id": "item_2_56",
+    "name": "Golden Tome",
+    "position": {
+      "row": 2,
+      "col": 56
+    },
+    "effects": {
+      "description": "Runes smolder at the edge of sight, Golden Tome: runes settle only when unobserved, it remembers the oath of a lost knight. Marked 2:56 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 2,
+        "luck_mod": 2
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "mana_regen",
+        "magnitude_pct": 10
+      }
+    }
+  },
+  {
+    "id": "item_2_57",
+    "name": "White Tome",
+    "position": {
+      "row": 2,
+      "col": 57
+    },
+    "effects": {
+      "description": "Runes smolder at the edge of sight, White Tome: runes settle only when unobserved, pulled subtly toward hidden ore. Marked 2:57 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 2,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "mana_regen",
+        "magnitude_pct": 10
+      }
+    }
+  },
+  {
+    "id": "item_2_58",
+    "name": "Red Tome",
+    "position": {
+      "row": 2,
+      "col": 58
+    },
+    "effects": {
+      "description": "Runes smolder at the edge of sight, Red Tome: runes settle only when unobserved, lines of power skitter like quicksilver. Marked 2:58 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 1,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 2,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "mana_regen",
+        "magnitude_pct": 10
+      }
+    }
+  },
+  {
+    "id": "item_2_59",
+    "name": "Teal Tome",
+    "position": {
+      "row": 2,
+      "col": 59
+    },
+    "effects": {
+      "description": "Runes smolder at the edge of sight, Teal Tome: lines of power skitter like quicksilver, pulled subtly toward hidden ore. Marked 2:59 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 2,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "mana_regen",
+        "magnitude_pct": 10
+      }
+    }
+  },
+  {
+    "id": "item_2_60",
+    "name": "Blue Tome",
+    "position": {
+      "row": 2,
+      "col": 60
+    },
+    "effects": {
+      "description": "Runes smolder at the edge of sight, Blue Tome: its weight shifts when lies are told, pulled subtly toward hidden ore. Marked 2:60 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 3,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "mana_regen",
+        "magnitude_pct": 10
+      }
+    }
+  },
+  {
+    "id": "item_2_61",
+    "name": "Gehena Tome",
+    "position": {
+      "row": 2,
+      "col": 61
+    },
+    "effects": {
+      "description": "Runes smolder at the edge of sight, Gehena Tome: it drinks the trace of metals from the air, runes settle only when unobserved. Marked 2:61 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 3,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "mana_regen",
+        "magnitude_pct": 10
+      }
+    }
+  },
+  {
+    "id": "item_2_62",
+    "name": "Crypt Tome",
+    "position": {
+      "row": 2,
+      "col": 62
+    },
+    "effects": {
+      "description": "Runes smolder at the edge of sight, Crypt Tome: ash-scent clings to its edge, it drinks the trace of metals from the air. Marked 2:62 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 3,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "mana_regen",
+        "magnitude_pct": 10
+      }
+    }
+  },
+  {
+    "id": "item_2_63",
+    "name": "Verdant Tome",
+    "position": {
+      "row": 2,
+      "col": 63
+    },
+    "effects": {
+      "description": "Runes smolder at the edge of sight, Verdant Tome: secrets bead on it like dew, its weight shifts when lies are told. Marked 2:63 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 2,
+        "intelligence_mod": 2,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "regen_hp",
+        "magnitude_flat": 1,
+        "interval_s": 10
+      }
+    }
+  }
+]
