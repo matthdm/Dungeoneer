@@ -126,6 +126,9 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 	if g.HeroPanel != nil && g.HeroPanel.IsVisible() {
 		g.HeroPanel.Draw(screen)
 	}
+	if g.InventoryScreen != nil && g.InventoryScreen.Active {
+		g.InventoryScreen.Draw(screen, g.player)
+	}
 	ui.DrawItemPalette(screen)
 	if g.DevMenu != nil {
 		g.DevMenu.Draw(screen)

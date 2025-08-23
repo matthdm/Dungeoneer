@@ -76,6 +76,7 @@ type Player struct {
 	UnspentPoints int
 
 	Mana, MaxMana int
+	Gold          int
 
 	Name string
 
@@ -107,7 +108,7 @@ func NewPlayer(ss *sprites.SpriteSheet) *Player {
 			Delay:       constants.GrappleDelay,
 		},
 		Caster:    spells.NewCaster(),
-		Inventory: inventory.NewInventory(),
+		Inventory: inventory.New(inventory.Width, inventory.Height),
 		Stats: BaseStats{
 			Strength:     1,
 			Dexterity:    1,
@@ -116,12 +117,20 @@ func NewPlayer(ss *sprites.SpriteSheet) *Player {
 			Luck:         1,
 		},
 		TempModifiers: StatModifiers{},
-		Equipment:     make(map[string]*items.Item),
+		Equipment: map[string]*items.Item{
+			"Head":    nil,
+			"Chest":   nil,
+			"Weapon":  nil,
+			"Offhand": nil,
+			"Ring1":   nil,
+			"Ring2":   nil,
+		},
 		Level:         1,
 		EXP:           0,
 		UnspentPoints: 0,
 		Mana:          20,
 		MaxMana:       20,
+		Gold:          0,
 		Name:          "Hero",
 		LastMoveDirX:  -1,
 		LastMoveDirY:  0,
@@ -462,37 +471,6 @@ func (p *Player) TakeDamage(dmg int) {
 		p.HP = 0
 		p.IsDead = true
 	}
-}
-
-func (p *Player) Equip(slot string, it *items.Item) {
-	if p.Equipment == nil {
-		p.Equipment = make(map[string]*items.Item)
-	}
-	if old, ok := p.Equipment[slot]; ok && old != nil {
-		if old.OnUnequip != nil {
-			old.OnUnequip(p)
-		}
-	}
-	p.Equipment[slot] = it
-	if it != nil && it.OnEquip != nil {
-		it.OnEquip(p)
-	}
-}
-
-func (p *Player) Unequip(slot string) {
-	if old, ok := p.Equipment[slot]; ok && old != nil {
-		if old.OnUnequip != nil {
-			old.OnUnequip(p)
-		}
-	}
-	delete(p.Equipment, slot)
-}
-
-func (p *Player) UseItem(it *items.Item) {
-	if it == nil || !it.Usable || it.OnUse == nil {
-		return
-	}
-	it.OnUse(p)
 }
 
 // getEquipmentStatModifiers sums stat bonuses from equipped items.

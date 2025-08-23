@@ -322,6 +322,14 @@ func (g *Game) handleInputPlaying() {
 		g.PauseMenu.Update()
 		return
 	}
+	if g.InventoryScreen != nil && g.InventoryScreen.Active {
+		g.InventoryScreen.Update(g.player)
+		return
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyI) {
+		g.InventoryScreen.Open()
+		return
+	}
 
 	g.handleZoom()
 	g.handlePan()

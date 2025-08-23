@@ -54,10 +54,11 @@ type Game struct {
 	DamageNumbers          []entities.DamageNumber
 	HealNumbers            []entities.DamageNumber
 
-	DevMenu   *ui.DevMenu
-	HUD       *hud.HUD
-	ShowHUD   bool
-	HeroPanel *ui.HeroPanel
+	DevMenu         *ui.DevMenu
+	HUD             *hud.HUD
+	ShowHUD         bool
+	HeroPanel       *ui.HeroPanel
+	InventoryScreen *ui.InventoryScreen
 
 	ActiveSpells    []spells.Spell
 	fireballSprites [][]*ebiten.Image
@@ -274,6 +275,7 @@ func NewGame() (*Game, error) {
 	g.ShowHUD = true
 	panelRect := image.Rect(g.w/2-150, g.h/2-150, g.w/2+150, g.h/2+150)
 	g.HeroPanel = ui.NewHeroPanel(panelRect, g.player)
+	g.InventoryScreen = ui.NewInventoryScreen()
 	tomeNames := []string{"Red Tome", "Teal Tome", "Blue Tome", "Verdant Tome", "Crypt Tome"}
 	for i, name := range tomeNames {
 		for _, tmpl := range items.Registry {
