@@ -38,7 +38,7 @@ func ensureIDs() {
 }
 
 // HandleItemPaletteInput updates palette state and handles clicks.
-func HandleItemPaletteInput(p *entities.Player) {
+func HandleItemPaletteInput(p *entities.Player, hint func(string)) {
 	if inpututil.IsKeyJustPressed(ebiten.KeyI) {
 		paletteVisible = !paletteVisible
 	}
@@ -77,7 +77,9 @@ func HandleItemPaletteInput(p *entities.Player) {
 	if idx >= 0 && idx < len(itemIDs) {
 		id := itemIDs[idx]
 		if p != nil && p.Inventory != nil {
-			p.Inventory.AddItem(items.NewItem(id))
+			if !p.AddToInventory(items.NewItem(id)) && hint != nil {
+				hint("Inventory full")
+			}
 		}
 	}
 }

@@ -16,11 +16,12 @@ type DevMenu struct {
 	menu    *Menu
 	itemIDs []string
 	player  *entities.Player
+	hint    func(string)
 }
 
 // NewDevMenu creates a new dev menu centered on the screen.
-func NewDevMenu(w, h int, p *entities.Player) *DevMenu {
-	dm := &DevMenu{player: p}
+func NewDevMenu(w, h int, p *entities.Player, hint func(string)) *DevMenu {
+	dm := &DevMenu{player: p, hint: hint}
 	dm.refreshItemIDs()
 	rect := image.Rect(w/2-150, h/2-150, w/2+150, h/2+150)
 	dm.menu = NewMenu(rect, "Spawn Item", dm.buildOptions(), DefaultMenuStyles())
@@ -50,7 +51,9 @@ func (dm *DevMenu) buildOptions() []MenuOption {
 			Text: name,
 			Action: func() {
 				if dm.player != nil {
-					dm.player.Inventory.AddItem(items.NewItem(itemID))
+					if !dm.player.AddToInventory(items.NewItem(itemID)) && dm.hint != nil {
+						dm.hint("Inventory full")
+					}
 				}
 			},
 		})

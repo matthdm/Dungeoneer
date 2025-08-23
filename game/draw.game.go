@@ -60,6 +60,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		ebitenutil.DebugPrint(screen, fmt.Sprintf(constants.DEBUG_BINDS_TEMPLATE))
 	}
 
+	if g.hintTimer > 0 {
+		ebitenutil.DebugPrintAt(screen, g.hint, g.w/2-50, g.h-20)
+	}
+
 }
 
 func (g *Game) drawMainMenu(screen *ebiten.Image, cx, cy float64) {
@@ -125,6 +129,9 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 	}
 	if g.HeroPanel != nil && g.HeroPanel.IsVisible() {
 		g.HeroPanel.Draw(screen)
+	}
+	if g.InventoryScreen != nil && g.InventoryScreen.Active {
+		g.InventoryScreen.Draw(screen, g.player)
 	}
 	ui.DrawItemPalette(screen)
 	if g.DevMenu != nil {

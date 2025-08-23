@@ -25,6 +25,7 @@ type ItemTemplate struct {
 	Usable      bool
 	Equippable  bool
 	Stats       map[string]int
+	Effect      *ItemEffect
 	Icon        *ebiten.Image
 	OnUse       func(p interface{})
 	OnEquip     func(p interface{})
@@ -35,6 +36,14 @@ type ItemTemplate struct {
 type Item struct {
 	*ItemTemplate
 	Count int
+}
+
+// ItemEffect describes a special effect an item grants.
+type ItemEffect struct {
+	Trigger      string
+	Type         string
+	MagnitudePct int
+	ChancePct    int
 }
 
 // ItemSave is a minimal representation for serialization.

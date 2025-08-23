@@ -1,0 +1,256 @@
+[
+  {
+    "id": "item_0_0",
+    "name": "Water Shore Icon",
+    "position": {
+      "row": 0,
+      "col": 0
+    },
+    "effects": {
+      "description": "Salt-stung and sea-born, Water Shore Icon: ash-scent clings to its edge, ragged scars cross its face like bite marks. Marked 0:0 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 0,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_1",
+    "name": "Iron Emblem",
+    "position": {
+      "row": 0,
+      "col": 1
+    },
+    "effects": {
+      "description": "Iron-scented and stubborn, Iron Emblem: smells of black powder and old oaths, sticky with old gore that never washes clean. Marked 0:1 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 2,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "damage_reduction",
+        "magnitude_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_0_2",
+    "name": "Arcane Emblem",
+    "position": {
+      "row": 0,
+      "col": 2
+    },
+    "effects": {
+      "description": "Runes smolder at the edge of sight, Arcane Emblem: metal sings at its passing, its weight shifts when lies are told. Marked 0:2 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 2,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "mana_cost_reduction",
+        "magnitude_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_0_3",
+    "name": "Chaos Emblem",
+    "position": {
+      "row": 0,
+      "col": 3
+    },
+    "effects": {
+      "description": "Edges refuse to meet, Chaos Emblem: lines of power skitter like quicksilver, chews the hand that clutches it too tightly. Marked 0:3 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 2
+      },
+      "effect": {
+        "trigger": "on_hit",
+        "type": "crit_multiplier",
+        "magnitude_pct": 100,
+        "chance_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_0_4",
+    "name": "Divine Emblem",
+    "position": {
+      "row": 0,
+      "col": 4
+    },
+    "effects": {
+      "description": "Iron-scented and stubborn, Divine Emblem: blessed in a temple whose name is forgotten, it answers to horns at the gates. Marked 0:4 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 0,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_5",
+    "name": "Black Gold Glyph",
+    "position": {
+      "row": 0,
+      "col": 5
+    },
+    "effects": {
+      "description": "Sun-caught and brazen, Black Gold Glyph: keeps counsel with old stars, it answers to horns at the gates. Marked 0:5 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 2
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "gold_find",
+        "magnitude_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_0_6",
+    "name": "Grey Gold Glyph",
+    "position": {
+      "row": 0,
+      "col": 6
+    },
+    "effects": {
+      "description": "Sun-caught and brazen, Grey Gold Glyph: it remembers the oath of a lost knight, it answers to horns at the gates. Marked 0:6 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 2
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "gold_find",
+        "magnitude_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_0_7",
+    "name": "Black Grey Glyph",
+    "position": {
+      "row": 0,
+      "col": 7
+    },
+    "effects": {
+      "description": "Black as oathstone, Black Grey Glyph: it tastes faintly of night-blooming flowers, ash-scent clings to its edge. Marked 0:7 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 0,
+        "luck_mod": 0
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_8",
+    "name": "Iron Amulet",
+    "position": {
+      "row": 0,
+      "col": 8
+    },
+    "effects": {
+      "description": "Iron-scented and stubborn, Iron Amulet: smells of black powder and old oaths, bearing dents like a ledger of grudges. Marked 0:8 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 2,
+        "dexterity_mod": 0,
+        "vitality_mod": 1,
+        "intelligence_mod": 1,
+        "luck_mod": 1
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "damage_reduction",
+        "magnitude_pct": 5
+      }
+    }
+  },
+  {
+    "id": "item_0_9",
+    "name": "Sapphire Amulet",
+    "position": {
+      "row": 0,
+      "col": 9
+    },
+    "effects": {
+      "description": "Crowned in old dust, Sapphire Amulet: pulled subtly toward hidden ore, it answers to horns at the gates. Marked 0:9 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 2,
+        "luck_mod": 2
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  },
+  {
+    "id": "item_0_10",
+    "name": "Ruby Amulet",
+    "position": {
+      "row": 0,
+      "col": 10
+    },
+    "effects": {
+      "description": "Crowned in old dust, Ruby Amulet: runes settle only when unobserved, threads of glamour thrum in its weave. Marked 0:10 by an unremembered maker.",
+      "stat_modifiers": {
+        "strength_mod": 0,
+        "dexterity_mod": 0,
+        "vitality_mod": 0,
+        "intelligence_mod": 2,
+        "luck_mod": 2
+      },
+      "effect": {
+        "trigger": "passive",
+        "type": "all_resistance",
+        "magnitude_pct": 2
+      }
+    }
+  }
+]
