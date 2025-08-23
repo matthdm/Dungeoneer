@@ -326,7 +326,7 @@ func (g *Game) handleInputPlaying() {
 		g.InventoryScreen.Update(g.player, g.ShowHint)
 		return
 	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyI) {
+	if inpututil.IsKeyJustPressed(ebiten.KeyTab) {
 		g.InventoryScreen.Open()
 		return
 	}
