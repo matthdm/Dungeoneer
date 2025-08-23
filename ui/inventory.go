@@ -48,18 +48,19 @@ type InventoryScreen struct {
 
 // NewInventoryScreen creates a screen with default layout values.
 func NewInventoryScreen() *InventoryScreen {
+	const offsetX = 80
 	slots := map[string]image.Rectangle{
-		"Head":    image.Rect(200, 40, 264, 104),
-		"Chest":   image.Rect(200, 110, 264, 174),
-		"Weapon":  image.Rect(130, 110, 194, 174),
-		"Offhand": image.Rect(270, 110, 334, 174),
-		"Ring1":   image.Rect(130, 180, 194, 244),
-		"Ring2":   image.Rect(270, 180, 334, 244),
+		"Head":    image.Rect(200+offsetX, 40, 264+offsetX, 104),
+		"Chest":   image.Rect(200+offsetX, 110, 264+offsetX, 174),
+		"Weapon":  image.Rect(130+offsetX, 110, 194+offsetX, 174),
+		"Offhand": image.Rect(270+offsetX, 110, 334+offsetX, 174),
+		"Ring1":   image.Rect(130+offsetX, 180, 194+offsetX, 244),
+		"Ring2":   image.Rect(270+offsetX, 180, 334+offsetX, 244),
 	}
 	return &InventoryScreen{
 		Face:           basicfont.Face7x13,
 		EquipSlots:     slots,
-		GridOrigin:     image.Pt(420, 40),
+		GridOrigin:     image.Pt(480, 40),
 		CellSize:       image.Pt(64, 64),
 		HoverGridX:     -1,
 		HoverGridY:     -1,

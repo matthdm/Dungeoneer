@@ -13,7 +13,7 @@ import (
 
 // DevMenu provides a simple debug UI for spawning items.
 type DevMenu struct {
-	menu    *Menu
+	list    *ScrollList
 	itemIDs []string
 	player  *entities.Player
 	hint    func(string)
@@ -22,10 +22,11 @@ type DevMenu struct {
 // NewDevMenu creates a new dev menu centered on the screen.
 func NewDevMenu(w, h int, p *entities.Player, hint func(string)) *DevMenu {
 	dm := &DevMenu{player: p, hint: hint}
-	dm.refreshItemIDs()
 	rect := image.Rect(w/2-150, h/2-150, w/2+150, h/2+150)
-	dm.menu = NewMenu(rect, "Spawn Item", dm.buildOptions(), DefaultMenuStyles())
-	dm.menu.SetInstructions([]string{"F2 Toggle", "Enter Spawn"})
+	dm.list = NewScrollList(rect, "Spawn Item", nil, DefaultMenuStyles())
+	dm.list.SetInstructions([]string{"F2 Toggle", "Enter Spawn"})
+	dm.refreshItemIDs()
+	dm.list.SetOptions(dm.buildOptions())
 	return dm
 }
 
@@ -38,13 +39,8 @@ func (dm *DevMenu) refreshItemIDs() {
 }
 
 func (dm *DevMenu) buildOptions() []MenuOption {
-	options := []MenuOption{}
-	max := 10
-	if len(dm.itemIDs) < max {
-		max = len(dm.itemIDs)
-	}
-	for i := 0; i < max; i++ {
-		id := dm.itemIDs[i]
+	options := make([]MenuOption, 0, len(dm.itemIDs)+1)
+	for _, id := range dm.itemIDs {
 		name := items.Registry[id].Name
 		itemID := id
 		options = append(options, MenuOption{
@@ -58,7 +54,7 @@ func (dm *DevMenu) buildOptions() []MenuOption {
 			},
 		})
 	}
-	options = append(options, MenuOption{Text: "Close", Action: func() { dm.menu.Hide() }})
+	options = append(options, MenuOption{Text: "Close", Action: func() { dm.list.Hide() }})
 	return options
 }
 
@@ -68,10 +64,10 @@ func (dm *DevMenu) Update() {
 		return
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyF2) {
-		dm.menu.ToggleVisibility()
+		dm.list.ToggleVisibility()
 	}
-	if dm.menu.IsVisible() {
-		dm.menu.Update()
+	if dm.list.IsVisible() {
+		dm.list.Update()
 	}
 }
 
@@ -80,7 +76,7 @@ func (dm *DevMenu) Draw(screen *ebiten.Image) {
 	if !constants.DebugMode {
 		return
 	}
-	if dm.menu.IsVisible() {
-		dm.menu.Draw(screen)
+	if dm.list.IsVisible() {
+		dm.list.Draw(screen)
 	}
 }
