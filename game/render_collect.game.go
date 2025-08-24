@@ -86,7 +86,7 @@ func (g *Game) collectItemDropRenderables(scale, cx, cy float64) []Renderable {
 		h := float64(b.Dy())
 		op := &ebiten.DrawImageOptions{}
 		op.GeoM.Scale(0.5, 0.5)
-		op.GeoM.Translate(-w/4, -h/2)
+		op.GeoM.Translate(-w/4, -h/4)
 		op.GeoM.Translate(xi, yi)
 		op.GeoM.Translate(-g.camX, g.camY)
 		op.GeoM.Scale(scale, scale)

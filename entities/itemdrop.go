@@ -23,7 +23,7 @@ func (d *ItemDrop) Draw(screen *ebiten.Image, tileSize int, camX, camY, camScale
 	h := float64(b.Dy())
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Scale(0.5, 0.5)
-	op.GeoM.Translate(-w/4, -h/2)
+	op.GeoM.Translate(-w/4, -h/4)
 	op.GeoM.Translate(x, y)
 	op.GeoM.Translate(-camX, camY)
 	op.GeoM.Scale(camScale, camScale)
