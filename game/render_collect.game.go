@@ -11,6 +11,7 @@ import (
 func (g *Game) collectRenderables(scale, cx, cy float64) []Renderable {
 	var r []Renderable
 	r = append(r, g.collectTileRenderables(scale, cx, cy)...)
+	r = append(r, g.collectItemDropRenderables(scale, cx, cy)...)
 	if g.player != nil && len(g.cachedRays) > 0 && !g.FullBright {
 		r = append(r, g.collectShadowRenderables(scale, cx, cy)...)
 	}
@@ -64,6 +65,33 @@ func (g *Game) collectTileRenderables(scale, cx, cy float64) []Renderable {
 				})
 			}
 		}
+	}
+	return out
+}
+
+func (g *Game) collectItemDropRenderables(scale, cx, cy float64) []Renderable {
+	var out []Renderable
+	for _, d := range g.ItemDrops {
+		if d.TileX < 0 || d.TileY < 0 || d.TileX >= g.currentLevel.W || d.TileY >= g.currentLevel.H {
+			continue
+		}
+		inFOV := g.isTileVisible(d.TileX, d.TileY)
+		wasSeen := g.SeenTiles[d.TileY][d.TileX]
+		if !inFOV && !wasSeen {
+			continue
+		}
+		xi, yi := g.cartesianToIso(float64(d.TileX), float64(d.TileY))
+		op := g.getDrawOp(xi, yi, scale, cx, cy)
+		if !inFOV && wasSeen {
+			op.ColorScale.Scale(0.4, 0.4, 0.4, 1.0)
+		}
+		out = append(out, Renderable{
+			Image:       d.Item.Icon,
+			Options:     op,
+			TileX:       float64(d.TileX),
+			TileY:       float64(d.TileY),
+			DepthWeight: 0.3,
+		})
 	}
 	return out
 }

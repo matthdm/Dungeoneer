@@ -81,7 +81,7 @@ func (s *InventoryScreen) Open() {
 func (s *InventoryScreen) Close() { s.Active = false }
 
 // Update handles mouse and keyboard input while the screen is open.
-func (s *InventoryScreen) Update(p *entities.Player, hint func(string)) {
+func (s *InventoryScreen) Update(p *entities.Player, hint func(string), drop func(*items.Item)) {
 	if !s.Active || p == nil || p.Inventory == nil {
 		return
 	}
@@ -144,10 +144,14 @@ func (s *InventoryScreen) Update(p *entities.Player, hint func(string)) {
 							}
 						}
 					case "Drop":
+						var it *items.Item
 						if s.menuSlot != "" {
-							p.DropEquipped(s.menuSlot)
+							it = p.DropEquipped(s.menuSlot)
 						} else {
-							p.DropFromInventory(s.menuTargetX, s.menuTargetY, 1)
+							it = p.DropFromInventory(s.menuTargetX, s.menuTargetY, 1)
+						}
+						if it != nil && drop != nil {
+							drop(it)
 						}
 					case "Destroy":
 						if s.menuSlot != "" {
@@ -182,6 +186,12 @@ func (s *InventoryScreen) Update(p *entities.Player, hint func(string)) {
 	s.HoverGridX, s.HoverGridY = -1, -1
 	if gx >= 0 && gy >= 0 && gx < p.Inventory.Width && gy < p.Inventory.Height {
 		s.HoverGridX, s.HoverGridY = gx, gy
+	}
+
+	if s.HoverGridX >= 0 && s.HoverGridY >= 0 && inpututil.IsKeyJustPressed(ebiten.KeyD) {
+		if it := p.DropFromInventory(s.HoverGridX, s.HoverGridY, 1); it != nil && drop != nil {
+			drop(it)
+		}
 	}
 
 	if s.Dragging {

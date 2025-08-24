@@ -28,6 +28,21 @@ type Level struct {
 	Entities []PlacedEntity
 }
 
+// AddEntity appends an entity to the level.
+func (l *Level) AddEntity(e PlacedEntity) {
+	l.Entities = append(l.Entities, e)
+}
+
+// RemoveEntityAt removes entities matching the given tile, type, and optional ID.
+func (l *Level) RemoveEntityAt(x, y int, typ, id string) {
+	for i := len(l.Entities) - 1; i >= 0; i-- {
+		e := l.Entities[i]
+		if e.X == x && e.Y == y && e.Type == typ && (id == "" || e.SpriteID == id) {
+			l.Entities = append(l.Entities[:i], l.Entities[i+1:]...)
+		}
+	}
+}
+
 // Tile returns the tile at the provided coordinates, or nil.
 func (l *Level) Tile(x, y int) *tiles.Tile {
 	if x >= 0 && y >= 0 && x < l.W && y < l.H {
