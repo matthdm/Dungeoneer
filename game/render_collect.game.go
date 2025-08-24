@@ -81,7 +81,16 @@ func (g *Game) collectItemDropRenderables(scale, cx, cy float64) []Renderable {
 			continue
 		}
 		xi, yi := g.cartesianToIso(float64(d.TileX), float64(d.TileY))
-		op := g.getDrawOp(xi, yi, scale, cx, cy)
+		b := d.Item.Icon.Bounds()
+		w := float64(b.Dx())
+		h := float64(b.Dy())
+		op := &ebiten.DrawImageOptions{}
+		op.GeoM.Scale(0.5, 0.5)
+		op.GeoM.Translate(-w/4, -h/2)
+		op.GeoM.Translate(xi, yi)
+		op.GeoM.Translate(-g.camX, g.camY)
+		op.GeoM.Scale(scale, scale)
+		op.GeoM.Translate(cx, cy)
 		if !inFOV && wasSeen {
 			op.ColorScale.Scale(0.4, 0.4, 0.4, 1.0)
 		}
