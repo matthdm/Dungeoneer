@@ -2,10 +2,29 @@ package game
 
 import (
 	"dungeoneer/fov"
+	"image/color"
+	"math"
 	"strings"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
+
+var itemSparkle *ebiten.Image
+
+func init() {
+	itemSparkle = ebiten.NewImage(5, 5)
+	white := color.NRGBA{255, 255, 255, 255}
+	itemSparkle.Set(2, 0, white)
+	itemSparkle.Set(2, 1, white)
+	itemSparkle.Set(2, 2, white)
+	itemSparkle.Set(2, 3, white)
+	itemSparkle.Set(2, 4, white)
+	itemSparkle.Set(0, 2, white)
+	itemSparkle.Set(1, 2, white)
+	itemSparkle.Set(3, 2, white)
+	itemSparkle.Set(4, 2, white)
+}
 
 // collectRenderables gathers renderables for the current frame.
 func (g *Game) collectRenderables(scale, cx, cy float64) []Renderable {
@@ -92,8 +111,12 @@ func (g *Game) collectItemDropRenderables(scale, cx, cy float64) []Renderable {
 		op.GeoM.Translate(-g.camX, g.camY)
 		op.GeoM.Scale(scale, scale)
 		op.GeoM.Translate(cx, cy)
-		if !inFOV && wasSeen {
-			op.ColorScale.Scale(0.4, 0.4, 0.4, 1.0)
+		phase := 0.8 + 0.2*math.Sin(float64(time.Now().UnixNano()%1e9)/1e9*2*math.Pi)
+		if inFOV {
+			p := float32(phase)
+			op.ColorScale.Scale(p, p, p, 1)
+		} else if wasSeen {
+			op.ColorScale.Scale(0.4, 0.4, 0.4, 1)
 		}
 		out = append(out, Renderable{
 			Image:       d.Item.Icon,
@@ -102,6 +125,22 @@ func (g *Game) collectItemDropRenderables(scale, cx, cy float64) []Renderable {
 			TileY:       float64(d.TileY),
 			DepthWeight: 0.3,
 		})
+		if inFOV {
+			spark := &ebiten.DrawImageOptions{}
+			spark.GeoM.Translate(ts/2-2, ts/4-h/4-4)
+			spark.GeoM.Translate(xi, yi)
+			spark.GeoM.Translate(-g.camX, g.camY)
+			spark.GeoM.Scale(scale, scale)
+			spark.GeoM.Translate(cx, cy)
+			spark.ColorScale.Scale(1, 1, 1, float32(0.6+0.4*phase))
+			out = append(out, Renderable{
+				Image:       itemSparkle,
+				Options:     spark,
+				TileX:       float64(d.TileX),
+				TileY:       float64(d.TileY),
+				DepthWeight: 0.31,
+			})
+		}
 	}
 	return out
 }
