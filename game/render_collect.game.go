@@ -2,15 +2,35 @@ package game
 
 import (
 	"dungeoneer/fov"
+	"image/color"
+	"math"
 	"strings"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
+
+var itemSparkle *ebiten.Image
+
+func init() {
+	itemSparkle = ebiten.NewImage(5, 5)
+	white := color.NRGBA{255, 255, 255, 255}
+	itemSparkle.Set(2, 0, white)
+	itemSparkle.Set(2, 1, white)
+	itemSparkle.Set(2, 2, white)
+	itemSparkle.Set(2, 3, white)
+	itemSparkle.Set(2, 4, white)
+	itemSparkle.Set(0, 2, white)
+	itemSparkle.Set(1, 2, white)
+	itemSparkle.Set(3, 2, white)
+	itemSparkle.Set(4, 2, white)
+}
 
 // collectRenderables gathers renderables for the current frame.
 func (g *Game) collectRenderables(scale, cx, cy float64) []Renderable {
 	var r []Renderable
 	r = append(r, g.collectTileRenderables(scale, cx, cy)...)
+	r = append(r, g.collectItemDropRenderables(scale, cx, cy)...)
 	if g.player != nil && len(g.cachedRays) > 0 && !g.FullBright {
 		r = append(r, g.collectShadowRenderables(scale, cx, cy)...)
 	}
@@ -63,6 +83,63 @@ func (g *Game) collectTileRenderables(scale, cx, cy float64) []Renderable {
 					DepthWeight: weight,
 				})
 			}
+		}
+	}
+	return out
+}
+
+func (g *Game) collectItemDropRenderables(scale, cx, cy float64) []Renderable {
+	var out []Renderable
+	for _, d := range g.ItemDrops {
+		if d.TileX < 0 || d.TileY < 0 || d.TileX >= g.currentLevel.W || d.TileY >= g.currentLevel.H {
+			continue
+		}
+		inFOV := g.isTileVisible(d.TileX, d.TileY)
+		wasSeen := g.SeenTiles[d.TileY][d.TileX]
+		if !inFOV && !wasSeen {
+			continue
+		}
+		xi, yi := g.cartesianToIso(float64(d.TileX), float64(d.TileY))
+		b := d.Item.Icon.Bounds()
+		w := float64(b.Dx())
+		h := float64(b.Dy())
+		ts := float64(g.currentLevel.TileSize)
+		op := &ebiten.DrawImageOptions{}
+		op.GeoM.Scale(0.5, 0.5)
+		op.GeoM.Translate(ts/2-w/4, ts/4-h/4)
+		op.GeoM.Translate(xi, yi)
+		op.GeoM.Translate(-g.camX, g.camY)
+		op.GeoM.Scale(scale, scale)
+		op.GeoM.Translate(cx, cy)
+		phase := 0.8 + 0.2*math.Sin(float64(time.Now().UnixNano()%1e9)/1e9*2*math.Pi)
+		if inFOV {
+			p := float32(phase)
+			op.ColorScale.Scale(p, p, p, 1)
+		} else if wasSeen {
+			op.ColorScale.Scale(0.4, 0.4, 0.4, 1)
+		}
+		out = append(out, Renderable{
+			Image:       d.Item.Icon,
+			Options:     op,
+			TileX:       float64(d.TileX),
+			TileY:       float64(d.TileY),
+			DepthWeight: 0.3,
+		})
+		if inFOV {
+			spark := &ebiten.DrawImageOptions{}
+			spark.GeoM.Translate(ts/2-2, ts/4-h/4-4)
+			spark.GeoM.Translate(xi, yi)
+			spark.GeoM.Translate(-g.camX, g.camY)
+			spark.GeoM.Scale(scale, scale)
+			spark.GeoM.Translate(cx, cy)
+			spark.ColorScale.Scale(1, 1, 1, float32(0.6+0.4*phase))
+			out = append(out, Renderable{
+				Image:       itemSparkle,
+				Options:     spark,
+				TileX:       float64(d.TileX),
+				TileY:       float64(d.TileY),
+				DepthWeight: 0.31,
+			})
 		}
 	}
 	return out

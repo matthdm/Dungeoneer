@@ -2,6 +2,7 @@ package game
 
 import (
 	"dungeoneer/entities"
+	"dungeoneer/items"
 	"dungeoneer/levels"
 	"dungeoneer/menumanager"
 	"dungeoneer/movement"
@@ -323,7 +324,9 @@ func (g *Game) handleInputPlaying() {
 		return
 	}
 	if g.InventoryScreen != nil && g.InventoryScreen.Active {
-		g.InventoryScreen.Update(g.player, g.ShowHint)
+		g.InventoryScreen.Update(g.player, g.ShowHint, func(it *items.Item) {
+			g.spawnItemDrop(it, g.player.TileX, g.player.TileY)
+		})
 		return
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyTab) {

@@ -68,19 +68,8 @@ func New(w, h int) *Inventory {
 // It returns true if the entire item stack was added, false if inventory was full.
 func (inv *Inventory) AddItem(it *items.Item) bool {
 	// try stacking
-	for y := 0; y < inv.Height; y++ {
-		for x := 0; x < inv.Width; x++ {
-			slot := inv.Grid[y][x]
-			if slot != nil && slot.ID == it.ID && slot.Stackable && slot.Count < slot.MaxStack {
-				needed := slot.MaxStack - slot.Count
-				if it.Count <= needed {
-					slot.Count += it.Count
-					return true
-				}
-				slot.Count = slot.MaxStack
-				it.Count -= needed
-			}
-		}
+	if TryStack(inv, *it) {
+		return true
 	}
 	// place in empty slot
 	for y := 0; y < inv.Height; y++ {

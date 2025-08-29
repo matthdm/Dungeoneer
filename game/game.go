@@ -50,6 +50,7 @@ type Game struct {
 	editor                 *leveleditor.Editor
 	player                 *entities.Player
 	Monsters               []*entities.Monster
+	ItemDrops              []*entities.ItemDrop
 	HitMarkers             []entities.HitMarker
 	DamageNumbers          []entities.DamageNumber
 	HealNumbers            []entities.DamageNumber
@@ -81,6 +82,9 @@ type Game struct {
 
 	hintTimer int
 	hint      string
+
+	lastPlayerTileX int
+	lastPlayerTileY int
 }
 
 // editorLayerChanged updates the game when the level editor switches layers.
@@ -157,6 +161,7 @@ func NewGame() (*Game, error) {
 	g.editor.OnLayerChange = g.editorLayerChanged
 	g.editor.OnStairPlaced = g.stairPlaced
 	g.spawnEntitiesFromLevel()
+	g.lastPlayerTileX, g.lastPlayerTileY = g.player.TileX, g.player.TileY
 	mm, err := ui.NewMainMenu()
 	if err != nil {
 		return nil, fmt.Errorf("failed create new main menu: %s", err)
@@ -313,6 +318,40 @@ func (g *Game) AddItemToPlayer(it *items.Item) bool {
 	return false
 }
 
+// spawnItemDrop places an item into the world at the given tile.
+func (g *Game) spawnItemDrop(it *items.Item, x, y int) {
+	if it == nil {
+		return
+	}
+	drop := &entities.ItemDrop{TileX: x, TileY: y, Item: *it}
+	g.ItemDrops = append(g.ItemDrops, drop)
+	if g.currentLevel != nil {
+		g.currentLevel.AddEntity(levels.PlacedEntity{
+			X: x, Y: y, Type: "ItemDrop", SpriteID: it.ID,
+		})
+	}
+}
+
+// pickupItemsAt transfers any item drops at the given tile into the player's inventory.
+func (g *Game) pickupItemsAt(x, y int) {
+	if g.player == nil || g.player.Inventory == nil {
+		return
+	}
+	for i := len(g.ItemDrops) - 1; i >= 0; i-- {
+		d := g.ItemDrops[i]
+		if d.TileX != x || d.TileY != y {
+			continue
+		}
+		it := d.Item
+		if g.AddItemToPlayer(&it) {
+			g.ItemDrops = append(g.ItemDrops[:i], g.ItemDrops[i+1:]...)
+			if g.currentLevel != nil {
+				g.currentLevel.RemoveEntityAt(x, y, "ItemDrop", d.Item.ID)
+			}
+		}
+	}
+}
+
 // cartesianToIso transforms cartesian coordinates into isometric coordinates.
 func (g *Game) cartesianToIso(x, y float64) (float64, float64) {
 	tileSize := g.currentLevel.TileSize
@@ -389,6 +428,7 @@ func (g *Game) UpdateSeenTiles(level levels.Level) {
 // currently loaded level.
 func (g *Game) spawnEntitiesFromLevel() {
 	g.Monsters = []*entities.Monster{}
+	g.ItemDrops = []*entities.ItemDrop{}
 	for _, ent := range g.currentLevel.Entities {
 		// skip invalid coordinates to avoid crashes
 		if ent.X < 0 || ent.Y < 0 || ent.X >= g.currentLevel.W || ent.Y >= g.currentLevel.H {
@@ -402,6 +442,11 @@ func (g *Game) spawnEntitiesFromLevel() {
 			}
 			m := entities.CreateAmbushMonster(meta.Image, ent.X, ent.Y)
 			g.Monsters = append(g.Monsters, m)
+		case "ItemDrop":
+			if tmpl, ok := items.Registry[ent.SpriteID]; ok {
+				it := &items.Item{ItemTemplate: tmpl, Count: 1}
+				g.ItemDrops = append(g.ItemDrops, &entities.ItemDrop{TileX: ent.X, TileY: ent.Y, Item: *it})
+			}
 		}
 	}
 }
@@ -612,7 +657,12 @@ func (g *Game) updatePlaying() error {
 	if g.player != nil {
 		path := pathing.AStar(g.currentLevel, g.player.TileX, g.player.TileY, g.hoverTileX, g.hoverTileY)
 		g.player.PathPreview = path
+		prevX, prevY := g.lastPlayerTileX, g.lastPlayerTileY
 		g.player.Update(g.currentLevel, g.DeltaTime)
+		if g.player.TileX != prevX || g.player.TileY != prevY {
+			g.pickupItemsAt(g.player.TileX, g.player.TileY)
+			g.lastPlayerTileX, g.lastPlayerTileY = g.player.TileX, g.player.TileY
+		}
 		g.updateCameraFollow()
 
 		if g.HUD != nil {
