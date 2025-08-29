@@ -6,11 +6,18 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+const (
+	TagNone          = 0
+	TagDashLane      = 1 << 0
+	TagGrappleAnchor = 1 << 1
+)
+
 // Tile represents a space with an x,y coordinate within a Level. Any number of
 // sprites may be added to a Tile.
 type Tile struct {
 	Sprites    []SpriteRef
 	IsWalkable bool
+	Tags       uint8
 }
 
 type SpriteRef struct {
@@ -64,4 +71,12 @@ func (t *Tile) HasSpriteID(id string) bool {
 		}
 	}
 	return false
+}
+
+func (t *Tile) SetTag(tag uint8) {
+	t.Tags |= tag
+}
+
+func (t *Tile) HasTag(tag uint8) bool {
+	return t.Tags&tag != 0
 }
