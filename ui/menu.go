@@ -145,6 +145,10 @@ func (m *Menu) ToggleVisibility() { m.visible = !m.visible }
 func (m *Menu) SetSelectedIndex(index int) {
 	m.selectedOptionIndex = index
 }
+
+func (m *Menu) SelectedIndex() int {
+	return m.selectedOptionIndex
+}
 func (m *Menu) SetRect(newRect image.Rectangle) {
 	m.rect = newRect
 }
