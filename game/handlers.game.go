@@ -70,10 +70,9 @@ func (g *Game) handlePause() {
 			g.editor.ToggleEntityPalette()
 			return
 		}
-
 		menumanager.Manager().HandleEscapePress()
 	}
-	g.isPaused = menumanager.Manager().Active == g.PauseMenu
+	g.isPaused = g.State == StatePlaying && menumanager.Manager().IsMenuOpen()
 }
 
 func (g *Game) resumeGame() {

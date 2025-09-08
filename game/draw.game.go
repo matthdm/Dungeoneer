@@ -3,6 +3,7 @@ package game
 import (
 	"dungeoneer/constants"
 	"dungeoneer/fov"
+	"dungeoneer/menumanager"
 	"dungeoneer/spells"
 	"dungeoneer/ui"
 	"fmt"
@@ -32,7 +33,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		g.drawPlaying(screen, cx, cy)
 	}
 
-	if g.isPaused {
+	if menumanager.Manager().IsMenuOpen() {
 		if g.LoadLevelMenu != nil && g.LoadLevelMenu.Menu.IsVisible() {
 			g.LoadLevelMenu.Draw(screen)
 		} else if g.LoadPlayerMenu != nil && g.LoadPlayerMenu.Menu.IsVisible() {
