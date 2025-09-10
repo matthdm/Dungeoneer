@@ -38,6 +38,33 @@ func Generate64x64(p GenParams) *Level {
 	if p.Height == 0 {
 		p.Height = 64
 	}
+	if p.RoomCountMin == 0 {
+		p.RoomCountMin = 8
+	}
+	if p.RoomCountMax == 0 {
+		p.RoomCountMax = 14
+	}
+	if p.RoomCountMax < p.RoomCountMin {
+		p.RoomCountMax = p.RoomCountMin
+	}
+	if p.RoomWMin == 0 {
+		p.RoomWMin = 6
+	}
+	if p.RoomWMax == 0 {
+		p.RoomWMax = 12
+	}
+	if p.RoomWMax < p.RoomWMin {
+		p.RoomWMax = p.RoomWMin
+	}
+	if p.RoomHMin == 0 {
+		p.RoomHMin = 6
+	}
+	if p.RoomHMax == 0 {
+		p.RoomHMax = 12
+	}
+	if p.RoomHMax < p.RoomHMin {
+		p.RoomHMax = p.RoomHMin
+	}
 	if p.CorridorWidth == 0 {
 		p.CorridorWidth = 3
 	}
@@ -56,9 +83,9 @@ func Generate64x64(p GenParams) *Level {
 		ss = nil
 	}
 
-	depth := 2
-	if rng.IntN(2) == 1 {
-		depth = 3
+	depth := 3
+	if p.RoomCountMin > 8 {
+		depth = 4
 	}
 	regions := bspRegions(p.Width, p.Height, depth, rng)
 	centers := poissonInRegions(regions, p, rng)
@@ -76,9 +103,8 @@ func Generate64x64(p GenParams) *Level {
 		for y := 0; y < l.H; y++ {
 			for x := 0; x < l.W; x++ {
 				t := l.Tiles[y][x]
-				if t.IsWalkable {
-					t.AddSpriteByID("Floor", ss.Floor)
-				} else {
+				t.AddSpriteByID("Floor", ss.Floor)
+				if !t.IsWalkable {
 					t.AddSpriteByID("DungeonWall", ss.DungeonWall)
 				}
 			}
@@ -139,10 +165,20 @@ func bspRegions(w, h, depth int, rng *rand.Rand) []rect {
 }
 
 func poissonInRegions(rs []rect, p GenParams, rng *rand.Rand) []image.Point {
+	marginX := p.CorridorWidth + p.RoomWMax/2
+	marginY := p.CorridorWidth + p.RoomHMax/2
 	var pts []image.Point
+	// one candidate per region
 	for _, r := range rs {
-		cx := r.X + r.W/2 + rng.IntN(5) - 2
-		cy := r.Y + r.H/2 + rng.IntN(5) - 2
+		minX := r.X + marginX
+		maxX := r.X + r.W - marginX - 1
+		minY := r.Y + marginY
+		maxY := r.Y + r.H - marginY - 1
+		if minX > maxX || minY > maxY {
+			continue
+		}
+		cx := minX + rng.IntN(maxX-minX+1)
+		cy := minY + rng.IntN(maxY-minY+1)
 		pt := image.Point{cx, cy}
 		ok := true
 		for _, q := range pts {
@@ -156,6 +192,30 @@ func poissonInRegions(rs []rect, p GenParams, rng *rand.Rand) []image.Point {
 		if ok {
 			pts = append(pts, pt)
 		}
+	}
+	// supplement until reaching RoomCountMin
+	attempts := 0
+	for len(pts) < p.RoomCountMin && attempts < 1000 {
+		cx := marginX + rng.IntN(p.Width-2*marginX)
+		cy := marginY + rng.IntN(p.Height-2*marginY)
+		pt := image.Point{cx, cy}
+		ok := true
+		for _, q := range pts {
+			dx := q.X - pt.X
+			dy := q.Y - pt.Y
+			if dx*dx+dy*dy < 64 {
+				ok = false
+				break
+			}
+		}
+		if ok {
+			pts = append(pts, pt)
+		}
+		attempts++
+	}
+	if len(pts) > p.RoomCountMax {
+		rng.Shuffle(len(pts), func(i, j int) { pts[i], pts[j] = pts[j], pts[i] })
+		pts = pts[:p.RoomCountMax]
 	}
 	return pts
 }
