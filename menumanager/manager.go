@@ -12,7 +12,7 @@ type Menu interface {
 }
 
 type MenuManager struct {
-	Active    Menu
+	stack     []Menu
 	PauseMenu Menu
 }
 
@@ -30,19 +30,25 @@ func Manager() *MenuManager {
 }
 
 func (mm *MenuManager) Open(menu Menu) {
-	if mm.Active != nil && mm.Active != menu {
-		mm.Active.Hide()
+	if menu == nil {
+		return
 	}
-	mm.Active = menu
-	if menu != nil {
-		menu.Show()
+	if len(mm.stack) > 0 {
+		mm.stack[len(mm.stack)-1].Hide()
 	}
+	mm.stack = append(mm.stack, menu)
+	menu.Show()
 }
 
 func (mm *MenuManager) CloseActiveMenu() {
-	if mm.Active != nil {
-		mm.Active.Hide()
-		mm.Active = nil
+	if len(mm.stack) == 0 {
+		return
+	}
+	top := mm.stack[len(mm.stack)-1]
+	top.Hide()
+	mm.stack = mm.stack[:len(mm.stack)-1]
+	if len(mm.stack) > 0 {
+		mm.stack[len(mm.stack)-1].Show()
 	}
 }
 
@@ -50,17 +56,20 @@ func (mm *MenuManager) HandleEscapePress() {
 	if !inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		return
 	}
-	if mm.Active != nil {
-		if mm.Active == mm.PauseMenu {
-			mm.CloseActiveMenu()
-		} else {
-			mm.CloseActiveMenu()
-		}
+	if len(mm.stack) > 0 {
+		mm.CloseActiveMenu()
 	} else if mm.PauseMenu != nil {
 		mm.Open(mm.PauseMenu)
 	}
 }
 
 func (mm *MenuManager) IsMenuOpen() bool {
-	return mm.Active != nil && mm.Active.IsVisible()
+	return len(mm.stack) > 0 && mm.stack[len(mm.stack)-1].IsVisible()
+}
+
+func (mm *MenuManager) Active() Menu {
+	if len(mm.stack) == 0 {
+		return nil
+	}
+	return mm.stack[len(mm.stack)-1]
 }

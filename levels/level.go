@@ -28,6 +28,25 @@ type Level struct {
 	Entities []PlacedEntity
 }
 
+// NewEmptyLevel creates a Level filled entirely with non-walkable tiles.
+func NewEmptyLevel(w, h int) *Level {
+	l := &Level{
+		W:        w,
+		H:        h,
+		TileSize: constants.DefaultTileSize,
+		Tiles:    make([][]*tiles.Tile, h),
+		Entities: []PlacedEntity{},
+	}
+	for y := 0; y < h; y++ {
+		row := make([]*tiles.Tile, w)
+		for x := 0; x < w; x++ {
+			row[x] = &tiles.Tile{IsWalkable: false}
+		}
+		l.Tiles[y] = row
+	}
+	return l
+}
+
 // AddEntity appends an entity to the level.
 func (l *Level) AddEntity(e PlacedEntity) {
 	l.Entities = append(l.Entities, e)

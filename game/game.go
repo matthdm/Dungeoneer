@@ -34,6 +34,8 @@ type Game struct {
 	LoadPlayerMenu *ui.LoadPlayerMenu
 	SaveLevelMenu  *ui.SaveLevelMenu
 	SavePrompt     *ui.TextInputMenu
+	GenerateMenu   *ui.GenerateLevelMenu
+	ProcGenMenu    *ui.ProcGenMenu
 	LinkPrompt     *ui.LayerPrompt
 	isPaused       bool
 
@@ -187,12 +189,56 @@ func NewGame() (*Game, error) {
 			menumanager.Manager().CloseActiveMenu()
 		},
 	)
+	defaultParams := levels.GenParams{
+		Seed:           1,
+		Width:          64,
+		Height:         64,
+		RoomCountMin:   8,
+		RoomCountMax:   14,
+		RoomWMin:       6,
+		RoomWMax:       12,
+		RoomHMin:       6,
+		RoomHMax:       12,
+		CorridorWidth:  3,
+		DashLaneMinLen: 8,
+		GrappleRange:   12,
+		Extras:         2,
+	}
+	g.ProcGenMenu = ui.NewProcGenMenu(g.w, g.h, defaultParams, func(p levels.GenParams) {
+		lvl := levels.Generate64x64(p)
+		newWorld := levels.NewLayeredLevel(lvl)
+		g.currentWorld = newWorld
+		g.currentLevel = lvl
+		g.editor = leveleditor.NewLayeredEditor(newWorld, g.w, g.h)
+		g.editor.OnLayerChange = g.editorLayerChanged
+		g.editor.OnStairPlaced = g.stairPlaced
+		g.UpdateSeenTiles(*lvl)
+		menumanager.Manager().CloseActiveMenu()
+	}, func() {
+		menumanager.Manager().Open(g.GenerateMenu)
+	})
+	g.GenerateMenu = ui.NewGenerateLevelMenu(g.w, g.h,
+		func() {
+			newLevel := levels.CreateNewBlankLevel(64, 64, g.currentLevel.TileSize, ss)
+			newWorld := levels.NewLayeredLevel(newLevel)
+			g.currentWorld = newWorld
+			g.currentLevel = newLevel
+			g.editor = leveleditor.NewLayeredEditor(newWorld, g.w, g.h)
+			g.editor.OnLayerChange = g.editorLayerChanged
+			g.editor.OnStairPlaced = g.stairPlaced
+			g.UpdateSeenTiles(*newLevel)
+			menumanager.Manager().CloseActiveMenu()
+		},
+		func() { menumanager.Manager().Open(g.ProcGenMenu) },
+		func() { menumanager.Manager().CloseActiveMenu() },
+	)
 	// Pause Menu
 	pm := ui.NewPauseMenu(l.W, l.H, ui.PauseMenuCallbacks{
 		OnResume:     func() { g.resumeGame() },
 		OnExit:       func() { os.Exit(0) },
 		OnLoadLevel:  func() { menumanager.Manager().Open(g.LoadLevelMenu) },
 		OnLoadPlayer: func() { menumanager.Manager().Open(g.LoadPlayerMenu) },
+		OnGenerate:   func() { menumanager.Manager().Open(g.GenerateMenu) },
 		OnSavePlayer: func() {
 			menuRect := image.Rect(g.w/2-200, g.h/2-100, g.w/2+200, g.h/2+100)
 			g.SavePrompt = ui.NewTextInputMenu(
@@ -237,7 +283,6 @@ func NewGame() (*Game, error) {
 						fmt.Println("Error saving level:", err)
 					} else {
 						fmt.Println("Saved to:", path)
-						// Show confirmation popup for 2 seconds
 						g.SavePrompt = ui.NewTextInputMenu(
 							menuRect,
 							"Success",
@@ -255,16 +300,6 @@ func NewGame() (*Game, error) {
 				},
 			)
 			menumanager.Manager().Open(g.SavePrompt)
-		},
-		OnNewBlank: func() {
-			newLevel := levels.CreateNewBlankLevel(64, 64, g.currentLevel.TileSize, ss) // TODO: Prompt for dimensions later
-			newWorld := levels.NewLayeredLevel(newLevel)
-			g.currentWorld = newWorld
-			g.currentLevel = newLevel
-			g.editor = leveleditor.NewLayeredEditor(newWorld, g.w, g.h)
-			g.editor.OnLayerChange = g.editorLayerChanged
-			g.editor.OnStairPlaced = g.stairPlaced
-			g.UpdateSeenTiles(*newLevel)
 		},
 	})
 	g.PauseMenu = pm
@@ -585,6 +620,10 @@ func (g *Game) updatePlaying() error {
 			g.LoadLevelMenu.Update()
 		} else if g.LoadPlayerMenu != nil && g.LoadPlayerMenu.Menu.IsVisible() {
 			g.LoadPlayerMenu.Update()
+		} else if g.GenerateMenu != nil && g.GenerateMenu.Menu.IsVisible() {
+			g.GenerateMenu.Update()
+		} else if g.ProcGenMenu != nil && g.ProcGenMenu.Menu.IsVisible() {
+			g.ProcGenMenu.Update()
 		} else {
 			g.PauseMenu.Update()
 		}
@@ -754,6 +793,13 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 
 	if g.SaveLevelMenu != nil {
 		g.SaveLevelMenu.SetRect(newRect)
+	}
+
+	if g.GenerateMenu != nil {
+		g.GenerateMenu.SetRect(newRect)
+	}
+	if g.ProcGenMenu != nil {
+		g.ProcGenMenu.SetRect(newRect)
 	}
 
 	if g.HeroPanel != nil {

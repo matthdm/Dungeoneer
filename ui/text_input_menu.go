@@ -7,6 +7,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 type TextInputMenu struct {
@@ -52,13 +53,13 @@ func (t *TextInputMenu) Update() {
 	if ebiten.IsKeyPressed(ebiten.KeyBackspace) && len(t.input) > 0 {
 		t.input = t.input[:len(t.input)-1]
 	}
-	if ebiten.IsKeyPressed(ebiten.KeyEscape) {
+	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
 		t.Hide()
 		if t.onCancel != nil {
 			t.onCancel()
 		}
 	}
-	if ebiten.IsKeyPressed(ebiten.KeyEnter) && len(t.input) > 0 {
+	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) && len(t.input) > 0 {
 		if t.Title != "NEW LAYER" {
 			if !isValidFilename(t.input) {
 				t.Instructions = []string{"Invalid filename. Use a-z, 0-9, _, -, and end with .json"}

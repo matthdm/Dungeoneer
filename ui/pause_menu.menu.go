@@ -20,7 +20,7 @@ type PauseMenuCallbacks struct {
 	OnLoadPlayer       func()
 	OnSavePlayer       func()
 	OnSaveLevel        func()
-	OnNewBlank         func()
+	OnGenerate         func()
 	OnExit             func()
 	OnShowSettings     func()
 	OnBackFromSettings func()
@@ -43,7 +43,7 @@ func NewPauseMenu(w, h int, cb PauseMenuCallbacks) *PauseMenu {
 		{Text: "Load Player", Action: cb.OnLoadPlayer},
 		{Text: "Save Player", Action: cb.OnSavePlayer},
 		{Text: "Save Level", Action: cb.OnSaveLevel},
-		{Text: "New Blank Level", Action: cb.OnNewBlank},
+		{Text: "Generate Level", Action: cb.OnGenerate},
 		{Text: "Settings", Action: func() {
 			pm.ShowSettings = true
 			pm.SwitchToSettings()
