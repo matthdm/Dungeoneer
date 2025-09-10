@@ -6,8 +6,6 @@ import (
 
 	"math/rand/v2"
 
-	"dungeoneer/constants"
-	"dungeoneer/sprites"
 	"dungeoneer/tiles"
 )
 
@@ -26,10 +24,6 @@ type GenParams struct {
 type rect struct{ X, Y, W, H int }
 
 type edge struct{ A, B int }
-
-var currentCenters []image.Point
-var currentParams GenParams
-var rng *rand.Rand
 
 func Generate64x64(p GenParams) *Level {
 	if p.Width == 0 {
@@ -74,51 +68,34 @@ func Generate64x64(p GenParams) *Level {
 	if p.GrappleRange == 0 {
 		p.GrappleRange = 12
 	}
-	currentParams = p
-	rng = rand.New(rand.NewPCG(uint64(p.Seed), uint64(p.Seed^0xface)))
+	rng := rand.New(rand.NewPCG(uint64(p.Seed), uint64(p.Seed^0xface)))
 
 	l := NewEmptyLevel(p.Width, p.Height)
-	ss, err := sprites.LoadSpriteSheet(constants.DefaultTileSize)
-	if err != nil {
-		ss = nil
-	}
 
 	depth := 3
 	if p.RoomCountMin > 8 {
 		depth = 4
 	}
-	regions := bspRegions(p.Width, p.Height, depth, rng)
+	regions := bspRegions(p.Width, p.Height, depth, p, rng)
 	centers := poissonInRegions(regions, p, rng)
-	currentCenters = centers
 	rooms := growRooms(l, centers, p, rng)
 	edges := connectKNN(centers, 3)
 	edges = mstPlusExtras(edges, centers, p.Extras, rng)
-	carveCorridors(l, edges, p.CorridorWidth)
+	carveCorridors(l, centers, edges, p.CorridorWidth, rng)
 	widenPinches(l, p.CorridorWidth)
 	tagDashLanes(l, p.CorridorWidth, p.DashLaneMinLen)
 	placeGrappleAnchors(l, rooms, p.GrappleRange, rng)
 	pruneDeadEnds(l, 3)
 	ensureConnectivity(l)
-	if ss != nil {
-		for y := 0; y < l.H; y++ {
-			for x := 0; x < l.W; x++ {
-				t := l.Tiles[y][x]
-				t.AddSpriteByID("Floor", ss.Floor)
-				if !t.IsWalkable {
-					t.AddSpriteByID("DungeonWall", ss.DungeonWall)
-				}
-			}
-		}
-	}
 	return l
 }
 
 // --- helpers ---
 
-func bspRegions(w, h, depth int, rng *rand.Rand) []rect {
+func bspRegions(w, h, depth int, p GenParams, rng *rand.Rand) []rect {
 	regs := []rect{{0, 0, w, h}}
-	minW := currentParams.RoomWMax + currentParams.CorridorWidth*2
-	minH := currentParams.RoomHMax + currentParams.CorridorWidth*2
+	minW := p.RoomWMax + p.CorridorWidth*2
+	minH := p.RoomHMax + p.CorridorWidth*2
 	for d := 0; d < depth; d++ {
 		var next []rect
 		for _, r := range regs {
@@ -342,15 +319,14 @@ func mstPlusExtras(edges []edge, pts []image.Point, extras int, rng *rand.Rand) 
 	return result
 }
 
-func carveCorridors(L *Level, es []edge, W int) {
+func carveCorridors(L *Level, centers []image.Point, es []edge, W int, rng *rand.Rand) {
 	half := W / 2
 	for _, e := range es {
-		a := currentCenters[e.A]
-		b := currentCenters[e.B]
+		a := centers[e.A]
+		b := centers[e.B]
 		x1, y1 := a.X, a.Y
 		x2, y2 := b.X, b.Y
-		// horizontal then vertical; choose shorter first
-		horizFirst := abs(x2-x1) < abs(y2-y1)
+		horizFirst := rng.IntN(2) == 0
 		if horizFirst {
 			carveCorridorSegment(L, x1, y1, x1, y2, half)
 			carveCorridorSegment(L, x1, y2, x2, y2, half)
