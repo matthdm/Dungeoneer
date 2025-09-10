@@ -33,28 +33,28 @@ func Generate64x64(p GenParams) *Level {
 		p.Height = 64
 	}
 	if p.RoomCountMin == 0 {
-		p.RoomCountMin = 8
+		p.RoomCountMin = 9
 	}
 	if p.RoomCountMax == 0 {
-		p.RoomCountMax = 14
+		p.RoomCountMax = 12
 	}
 	if p.RoomCountMax < p.RoomCountMin {
 		p.RoomCountMax = p.RoomCountMin
 	}
 	if p.RoomWMin == 0 {
-		p.RoomWMin = 6
+		p.RoomWMin = 7
 	}
 	if p.RoomWMax == 0 {
-		p.RoomWMax = 12
+		p.RoomWMax = 10
 	}
 	if p.RoomWMax < p.RoomWMin {
 		p.RoomWMax = p.RoomWMin
 	}
 	if p.RoomHMin == 0 {
-		p.RoomHMin = 6
+		p.RoomHMin = 7
 	}
 	if p.RoomHMax == 0 {
-		p.RoomHMax = 12
+		p.RoomHMax = 10
 	}
 	if p.RoomHMax < p.RoomHMin {
 		p.RoomHMax = p.RoomHMin
@@ -67,6 +67,9 @@ func Generate64x64(p GenParams) *Level {
 	}
 	if p.GrappleRange == 0 {
 		p.GrappleRange = 12
+	}
+	if p.Extras == 0 {
+		p.Extras = 2
 	}
 	rng := rand.New(rand.NewPCG(uint64(p.Seed), uint64(p.Seed^0xface)))
 
@@ -81,12 +84,12 @@ func Generate64x64(p GenParams) *Level {
 	rooms := growRooms(l, centers, p, rng)
 	edges := connectKNN(centers, 3)
 	edges = mstPlusExtras(edges, centers, p.Extras, rng)
-	carveCorridors(l, centers, edges, p.CorridorWidth, rng)
+	carveCorridors(l, centers, rooms, edges, p.CorridorWidth, rng)
 	widenPinches(l, p.CorridorWidth)
 	tagDashLanes(l, p.CorridorWidth, p.DashLaneMinLen)
 	placeGrappleAnchors(l, rooms, p.GrappleRange, rng)
 	pruneDeadEnds(l, 3)
-	ensureConnectivity(l)
+	ensureConnectivity(l, p.CorridorWidth)
 	return l
 }
 
@@ -144,9 +147,12 @@ func bspRegions(w, h, depth int, p GenParams, rng *rand.Rand) []rect {
 func poissonInRegions(rs []rect, p GenParams, rng *rand.Rand) []image.Point {
 	marginX := p.CorridorWidth + p.RoomWMax/2
 	marginY := p.CorridorWidth + p.RoomHMax/2
+	minR2 := 100
 	var pts []image.Point
-	// one candidate per region
 	for _, r := range rs {
+		if rng.Float64() < 0.2 {
+			continue
+		}
 		minX := r.X + marginX
 		maxX := r.X + r.W - marginX - 1
 		minY := r.Y + marginY
@@ -161,7 +167,7 @@ func poissonInRegions(rs []rect, p GenParams, rng *rand.Rand) []image.Point {
 		for _, q := range pts {
 			dx := q.X - pt.X
 			dy := q.Y - pt.Y
-			if dx*dx+dy*dy < 64 {
+			if dx*dx+dy*dy < minR2 {
 				ok = false
 				break
 			}
@@ -170,7 +176,6 @@ func poissonInRegions(rs []rect, p GenParams, rng *rand.Rand) []image.Point {
 			pts = append(pts, pt)
 		}
 	}
-	// supplement until reaching RoomCountMin
 	attempts := 0
 	for len(pts) < p.RoomCountMin && attempts < 1000 {
 		cx := marginX + rng.IntN(p.Width-2*marginX)
@@ -180,7 +185,7 @@ func poissonInRegions(rs []rect, p GenParams, rng *rand.Rand) []image.Point {
 		for _, q := range pts {
 			dx := q.X - pt.X
 			dy := q.Y - pt.Y
-			if dx*dx+dy*dy < 64 {
+			if dx*dx+dy*dy < minR2 {
 				ok = false
 				break
 			}
@@ -224,11 +229,6 @@ func growRooms(L *Level, centers []image.Point, p GenParams, rng *rand.Rand) []r
 				L.Tiles[yy][xx].IsWalkable = true
 			}
 		}
-		// shave corners
-		L.Tiles[y][x].IsWalkable = false
-		L.Tiles[y][x+w-1].IsWalkable = false
-		L.Tiles[y+h-1][x].IsWalkable = false
-		L.Tiles[y+h-1][x+w-1].IsWalkable = false
 	}
 	return rooms
 }
@@ -319,20 +319,71 @@ func mstPlusExtras(edges []edge, pts []image.Point, extras int, rng *rand.Rand) 
 	return result
 }
 
-func carveCorridors(L *Level, centers []image.Point, es []edge, W int, rng *rand.Rand) {
+func carveCorridors(L *Level, centers []image.Point, rooms []rect, es []edge, W int, rng *rand.Rand) {
 	half := W / 2
 	for _, e := range es {
 		a := centers[e.A]
 		b := centers[e.B]
-		x1, y1 := a.X, a.Y
-		x2, y2 := b.X, b.Y
-		horizFirst := rng.IntN(2) == 0
-		if horizFirst {
-			carveCorridorSegment(L, x1, y1, x1, y2, half)
-			carveCorridorSegment(L, x1, y2, x2, y2, half)
-		} else {
-			carveCorridorSegment(L, x1, y1, x2, y1, half)
-			carveCorridorSegment(L, x2, y1, x2, y2, half)
+		ra := rooms[e.A]
+		rb := rooms[e.B]
+		sa := doorToward(ra, b)
+		sb := doorToward(rb, a)
+		carveL(L, sa.X, sa.Y, sb.X, sb.Y, half, rng.IntN(2) == 0)
+		carveDisk(L, sa.X, sa.Y, half)
+		carveDisk(L, sb.X, sb.Y, half)
+	}
+}
+
+func doorToward(r rect, target image.Point) image.Point {
+	cx, cy := r.X+r.W/2, r.Y+r.H/2
+	dx, dy := target.X-cx, target.Y-cy
+	if abs(dx) > abs(dy) {
+		if dx > 0 {
+			return image.Point{r.X + r.W - 1, clamp(target.Y, r.Y, r.Y+r.H-1)}
+		}
+		return image.Point{r.X, clamp(target.Y, r.Y, r.Y+r.H-1)}
+	}
+	if dy > 0 {
+		return image.Point{clamp(target.X, r.X, r.X+r.W-1), r.Y + r.H - 1}
+	}
+	return image.Point{clamp(target.X, r.X, r.X+r.W-1), r.Y}
+}
+
+func clamp(v, lo, hi int) int {
+	if v < lo {
+		return lo
+	}
+	if v > hi {
+		return hi
+	}
+	return v
+}
+
+func carveL(L *Level, x1, y1, x2, y2, half int, horizFirst bool) {
+	if horizFirst {
+		carveCorridorSegment(L, x1, y1, x2, y1, half)
+		carveCorridorSegment(L, x2, y1, x2, y2, half)
+		carveDisk(L, x2, y1, half)
+	} else {
+		carveCorridorSegment(L, x1, y1, x1, y2, half)
+		carveCorridorSegment(L, x1, y2, x2, y2, half)
+		carveDisk(L, x1, y2, half)
+	}
+}
+
+func carveDisk(L *Level, cx, cy, r int) {
+	for y := cy - r; y <= cy+r; y++ {
+		if y < 0 || y >= L.H {
+			continue
+		}
+		for x := cx - r; x <= cx+r; x++ {
+			if x < 0 || x >= L.W {
+				continue
+			}
+			dx, dy := x-cx, y-cy
+			if dx*dx+dy*dy <= r*r {
+				L.Tiles[y][x].IsWalkable = true
+			}
 		}
 	}
 }
@@ -368,27 +419,52 @@ func carveCorridorSegment(L *Level, x1, y1, x2, y2, half int) {
 func widenPinches(L *Level, W int) {
 	for y := 1; y < L.H-1; y++ {
 		for x := 1; x < L.W-1; x++ {
-			if L.Tiles[y][x].IsWalkable {
+			if !L.Tiles[y][x].IsWalkable {
 				continue
 			}
-			cnt := 0
-			if L.Tiles[y-1][x].IsWalkable {
-				cnt++
+			wx, wy := corridorWidthAt(L, x, y)
+			if wx < W {
+				if !L.Tiles[y][x-1].IsWalkable {
+					L.Tiles[y][x-1].IsWalkable = true
+					continue
+				}
+				if !L.Tiles[y][x+1].IsWalkable {
+					L.Tiles[y][x+1].IsWalkable = true
+					continue
+				}
 			}
-			if L.Tiles[y+1][x].IsWalkable {
-				cnt++
-			}
-			if L.Tiles[y][x-1].IsWalkable {
-				cnt++
-			}
-			if L.Tiles[y][x+1].IsWalkable {
-				cnt++
-			}
-			if cnt >= 3 {
-				L.Tiles[y][x].IsWalkable = true
+			if wy < W {
+				if !L.Tiles[y-1][x].IsWalkable {
+					L.Tiles[y-1][x].IsWalkable = true
+					continue
+				}
+				if !L.Tiles[y+1][x].IsWalkable {
+					L.Tiles[y+1][x].IsWalkable = true
+					continue
+				}
 			}
 		}
 	}
+}
+
+func corridorWidthAt(L *Level, x, y int) (int, int) {
+	lx := 0
+	for i := x; i >= 0 && L.Tiles[y][i].IsWalkable; i-- {
+		lx++
+	}
+	rx := 0
+	for i := x; i < L.W && L.Tiles[y][i].IsWalkable; i++ {
+		rx++
+	}
+	ly := 0
+	for j := y; j >= 0 && L.Tiles[j][x].IsWalkable; j-- {
+		ly++
+	}
+	ry := 0
+	for j := y; j < L.H && L.Tiles[j][x].IsWalkable; j++ {
+		ry++
+	}
+	return lx + rx - 1, ly + ry - 1
 }
 
 func tagDashLanes(L *Level, W, minLen int) {
@@ -558,32 +634,85 @@ func bresenhamClear(L *Level, x0, y0, x1, y1 int) bool {
 }
 
 func pruneDeadEnds(L *Level, minLen int) {
-	changed := true
+	if minLen <= 0 {
+		return
+	}
 	dirs := []image.Point{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}
-	for changed {
-		changed = false
+	for {
+		changed := false
+		var ends []image.Point
 		for y := 1; y < L.H-1; y++ {
 			for x := 1; x < L.W-1; x++ {
 				t := L.Tiles[y][x]
 				if !t.IsWalkable || t.HasTag(tiles.TagGrappleAnchor) {
 					continue
 				}
-				cnt := 0
+				deg := 0
 				for _, d := range dirs {
 					if L.Tiles[y+d.Y][x+d.X].IsWalkable {
-						cnt++
+						deg++
 					}
 				}
-				if cnt <= 1 {
-					t.IsWalkable = false
-					changed = true
+				if deg == 1 {
+					ends = append(ends, image.Point{x, y})
 				}
 			}
+		}
+		for _, s := range ends {
+			prev := image.Point{-999, -999}
+			cur := s
+			length := 0
+			var trail []image.Point
+			for length < minLen {
+				trail = append(trail, cur)
+				length++
+				nextFound := false
+				for _, d := range dirs {
+					nx, ny := cur.X+d.X, cur.Y+d.Y
+					if nx < 0 || ny < 0 || nx >= L.W || ny >= L.H {
+						continue
+					}
+					if !L.Tiles[ny][nx].IsWalkable {
+						continue
+					}
+					if nx == prev.X && ny == prev.Y {
+						continue
+					}
+					deg := 0
+					for _, d2 := range dirs {
+						if L.Tiles[ny+d2.Y][nx+d2.X].IsWalkable {
+							deg++
+						}
+					}
+					prev = cur
+					cur = image.Point{nx, ny}
+					if deg != 2 {
+						nextFound = false
+					} else {
+						nextFound = true
+					}
+					break
+				}
+				if !nextFound {
+					break
+				}
+			}
+			if length < minLen {
+				for _, p := range trail {
+					if !L.Tiles[p.Y][p.X].HasTag(tiles.TagGrappleAnchor) {
+						L.Tiles[p.Y][p.X].IsWalkable = false
+						changed = true
+					}
+				}
+			}
+		}
+		if !changed {
+			break
 		}
 	}
 }
 
-func ensureConnectivity(L *Level) {
+func ensureConnectivity(L *Level, corridorWidth int) {
 	comps := floodComponents(L)
 	for len(comps) > 1 {
 		a := comps[0]
@@ -600,8 +729,8 @@ func ensureConnectivity(L *Level) {
 				}
 			}
 		}
-		carveCorridorSegment(L, pa.X, pa.Y, pb.X, pa.Y, 1)
-		carveCorridorSegment(L, pb.X, pa.Y, pb.X, pb.Y, 1)
+		half := max(1, corridorWidth/2)
+		carveL(L, pa.X, pa.Y, pb.X, pb.Y, half, true)
 		comps = floodComponents(L)
 	}
 }
@@ -644,4 +773,11 @@ func abs(x int) int {
 		return -x
 	}
 	return x
+}
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }
