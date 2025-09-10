@@ -6,6 +6,8 @@ import (
 
 	"math/rand/v2"
 
+	"dungeoneer/constants"
+	"dungeoneer/sprites"
 	"dungeoneer/tiles"
 )
 
@@ -49,6 +51,10 @@ func Generate64x64(p GenParams) *Level {
 	rng = rand.New(rand.NewPCG(uint64(p.Seed), uint64(p.Seed^0xface)))
 
 	l := NewEmptyLevel(p.Width, p.Height)
+	ss, err := sprites.LoadSpriteSheet(constants.DefaultTileSize)
+	if err != nil {
+		ss = nil
+	}
 
 	depth := 2
 	if rng.IntN(2) == 1 {
@@ -66,6 +72,18 @@ func Generate64x64(p GenParams) *Level {
 	placeGrappleAnchors(l, rooms, p.GrappleRange, rng)
 	pruneDeadEnds(l, 3)
 	ensureConnectivity(l)
+	if ss != nil {
+		for y := 0; y < l.H; y++ {
+			for x := 0; x < l.W; x++ {
+				t := l.Tiles[y][x]
+				if t.IsWalkable {
+					t.AddSpriteByID("Floor", ss.Floor)
+				} else {
+					t.AddSpriteByID("DungeonWall", ss.DungeonWall)
+				}
+			}
+		}
+	}
 	return l
 }
 

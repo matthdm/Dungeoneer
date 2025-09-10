@@ -103,10 +103,10 @@ func (pg *ProcGenMenu) Update() {
 		return
 	}
 	idx := pg.Menu.SelectedIndex()
-	if inpututil.IsKeyJustPressed(ebiten.KeyArrowLeft) {
+	if inpututil.IsKeyJustPressed(ebiten.KeyArrowLeft) || inpututil.IsKeyJustPressed(ebiten.KeyA) {
 		pg.adjust(idx, -1)
 	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyArrowRight) {
+	if inpututil.IsKeyJustPressed(ebiten.KeyArrowRight) || inpututil.IsKeyJustPressed(ebiten.KeyD) {
 		pg.adjust(idx, 1)
 	}
 }
