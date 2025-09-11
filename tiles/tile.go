@@ -10,6 +10,8 @@ const (
 	TagNone          = 0
 	TagDashLane      = 1 << 0
 	TagGrappleAnchor = 1 << 1
+	TagLockedDoor    = 1 << 2
+	TagKeySpawn      = 1 << 3
 )
 
 // Tile represents a space with an x,y coordinate within a Level. Any number of

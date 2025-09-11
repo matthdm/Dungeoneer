@@ -1,7 +1,9 @@
 package game
 
 import (
+	"dungeoneer/constants"
 	"dungeoneer/leveleditor"
+	"dungeoneer/render"
 	"dungeoneer/tiles"
 	"fmt"
 
@@ -31,6 +33,7 @@ func (g *Game) DebugLevelEditor() {
 			g.currentLevel = level
 			g.UpdateSeenTiles(*level)
 			g.spawnEntitiesFromLevel()
+			g.tileRenderer = render.NewTileRenderer(level, g.spriteSheet, constants.DefaultTileSize)
 			fmt.Println("Level loaded from test_level.json")
 
 		}

@@ -10,7 +10,6 @@ import (
 	"image"
 	"image/color"
 	"math"
-	"strings"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -160,49 +159,8 @@ func (g *Game) drawGrapple(target *ebiten.Image, scale, cx, cy float64) {
 }
 
 func (g *Game) drawFloorTiles(target *ebiten.Image, scale, cx, cy float64) {
-	padding := float64(g.currentLevel.TileSize) * scale
-
-	// Precompute screen-space bounds
-	screenLeft := -padding
-	screenTop := -padding
-	screenRight := float64(g.w)
-	screenBottom := float64(g.h)
-
-	for y := 0; y < g.currentLevel.H; y++ {
-		for x := 0; x < g.currentLevel.W; x++ {
-			tile := g.currentLevel.Tiles[y][x]
-			if tile == nil {
-				continue
-			}
-
-			xi, yi := g.cartesianToIso(float64(x), float64(y))
-			drawX := ((xi - g.camX) * scale) + cx
-			drawY := ((yi + g.camY) * scale) + cy
-
-			// Skip tiles that fall outside the screen bounds
-			if drawX < screenLeft || drawY < screenTop || drawX > screenRight || drawY > screenBottom {
-				continue
-			}
-
-			inFOV := g.isTileVisible(x, y)
-			wasSeen := g.SeenTiles[y][x]
-
-			// Fully hidden — skip
-			if !inFOV && !wasSeen {
-				continue
-			}
-
-			for _, s := range tile.Sprites {
-				if !isFloorSprite(strings.ToLower(s.ID)) {
-					continue
-				}
-				op := g.getDrawOp(xi, yi, scale, cx, cy)
-				if !inFOV && wasSeen {
-					op.ColorScale.Scale(0.4, 0.4, 0.4, 1.0)
-				}
-				target.DrawImage(s.Image, op)
-			}
-		}
+	if g.tileRenderer != nil {
+		g.tileRenderer.Draw(target, g.currentLevel, int(g.camX), int(g.camY), g.w, g.h)
 	}
 }
 func (g *Game) drawHoverTile(target *ebiten.Image, scale, cx, cy float64) {

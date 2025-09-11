@@ -21,17 +21,297 @@ type GenParams struct {
 	DashLaneMinLen             int
 	GrappleRange               int
 	Extras                     int
-	CoverageTarget             float64 // e.g., 0.40–0.55 desired walkable ratio
-	FillerRoomsMax             int     // hard cap on post-pass filler rooms
+	CoverageTarget             float64 // desired walkable ratio 0.40–0.55
+	FillerRoomsMax             int     // cap for coverage pass fillers
+	UseMainPath                bool    // build mission spine
+	BranchLoopExtras           int     // extra cross edges
+	LockBranches               int     // place locked doors + keys
 }
 
 type rect struct{ X, Y, W, H int }
 
 type edge struct{ A, B int }
 
+type roomInfo struct {
+	rect
+	Flavor string
+}
+
+var roomMeta []roomInfo
+
 var currentCenters []image.Point
 var currentParams GenParams
 var rng *rand.Rand
+var lastMainPathLen int
+
+type RNode struct {
+	idx int
+	p   image.Point
+}
+type RGraph struct {
+	nodes []RNode
+	edges []edge
+	adj   [][]int
+	main  []int
+}
+
+func buildGraph(centers []image.Point, base []edge) RGraph {
+	n := len(centers)
+	adj := make([][]int, n)
+	for _, e := range base {
+		adj[e.A] = append(adj[e.A], e.B)
+		adj[e.B] = append(adj[e.B], e.A)
+	}
+	nodes := make([]RNode, n)
+	for i, c := range centers {
+		nodes[i] = RNode{i, c}
+	}
+	return RGraph{nodes: nodes, edges: base, adj: adj}
+}
+
+func farthestPair(g RGraph) (int, int) {
+	best, a, b := -1, 0, 0
+	for i := range g.nodes {
+		for j := i + 1; j < len(g.nodes); j++ {
+			dx := g.nodes[i].p.X - g.nodes[j].p.X
+			dy := g.nodes[i].p.Y - g.nodes[j].p.Y
+			d := dx*dx + dy*dy
+			if d > best {
+				best, a, b = d, i, j
+			}
+		}
+	}
+	return a, b
+}
+
+func bfsPath(g RGraph, s, t int) []int {
+	prev := make([]int, len(g.nodes))
+	for i := range prev {
+		prev[i] = -1
+	}
+	q := []int{s}
+	prev[s] = s
+	for len(q) > 0 {
+		v := q[0]
+		q = q[1:]
+		if v == t {
+			break
+		}
+		for _, u := range g.adj[v] {
+			if prev[u] == -1 {
+				prev[u] = v
+				q = append(q, u)
+			}
+		}
+	}
+	if prev[t] == -1 {
+		return nil
+	}
+	path := []int{t}
+	for v := t; v != s; v = prev[v] {
+		path = append(path, prev[v])
+	}
+	for i, j := 0, len(path)-1; i < j; i, j = i+1, j-1 {
+		path[i], path[j] = path[j], path[i]
+	}
+	return path
+}
+
+func carvePathByIndexList(L *Level, g RGraph, W int, soft, hard [][]bool) {
+	half := max(1, W/2)
+	for i := 0; i+1 < len(g.main); i++ {
+		a := g.main[i]
+		b := g.main[i+1]
+		sa := doorToward(centerIndexToRoom[a], g.nodes[b].p)
+		sb := doorToward(centerIndexToRoom[b], g.nodes[a].p)
+		carvePathAStar(L, sa.X, sa.Y, sb.X, sb.Y, half, soft, hard)
+		carveDisk(L, sa.X, sa.Y, half)
+		carveDisk(L, sb.X, sb.Y, half)
+	}
+}
+
+func buildNoiseMask(w, h int, rng *rand.Rand) ([][]bool, [][]bool) {
+	scale := 8
+	gw := w/scale + 2
+	gh := h/scale + 2
+	grid := make([][]float64, gh)
+	for j := 0; j < gh; j++ {
+		grid[j] = make([]float64, gw)
+		for i := 0; i < gw; i++ {
+			grid[j][i] = rng.Float64()
+		}
+	}
+	soft := make([][]bool, h)
+	hard := make([][]bool, h)
+	for y := 0; y < h; y++ {
+		soft[y] = make([]bool, w)
+		hard[y] = make([]bool, w)
+		fy := float64(y%scale) / float64(scale)
+		gy := y / scale
+		for x := 0; x < w; x++ {
+			fx := float64(x%scale) / float64(scale)
+			gx := x / scale
+			v00 := grid[gy][gx]
+			v10 := grid[gy][gx+1]
+			v01 := grid[gy+1][gx]
+			v11 := grid[gy+1][gx+1]
+			v := (1-fx)*(1-fy)*v00 + fx*(1-fy)*v10 + (1-fx)*fy*v01 + fx*fy*v11
+			if v < 0.4 {
+				soft[y][x] = true
+			}
+			if v > 0.6 {
+				hard[y][x] = true
+			}
+		}
+	}
+	return soft, hard
+}
+
+func buildBias(L *Level, soft, hard [][]bool) [][]int {
+	b := make([][]int, L.H)
+	for y := 0; y < L.H; y++ {
+		b[y] = make([]int, L.W)
+		for x := 0; x < L.W; x++ {
+			if soft[y][x] {
+				b[y][x] -= 1
+			}
+			if hard[y][x] {
+				b[y][x] += 2
+			}
+		}
+	}
+	for y := 0; y < L.H; y++ {
+		for x := 0; x < L.W; x++ {
+			if !L.Tiles[y][x].IsWalkable {
+				continue
+			}
+			for dy := -2; dy <= 2; dy++ {
+				for dx := -2; dx <= 2; dx++ {
+					nx, ny := x+dx, y+dy
+					if nx >= 0 && ny >= 0 && nx < L.W && ny < L.H {
+						b[ny][nx] += 2
+					}
+				}
+			}
+		}
+	}
+	return b
+}
+
+func gridAStar(L *Level, sx, sy, tx, ty int, bias [][]int) []image.Point {
+	type node struct {
+		x, y int
+		g, h int
+		f    int
+		p    *node
+	}
+	w, hgt := L.W, L.H
+	open := []*node{{x: sx, y: sy}}
+	opened := map[int]*node{sy*w + sx: open[0]}
+	closed := map[int]bool{}
+	for len(open) > 0 {
+		ci := 0
+		cur := open[0]
+		for i, n := range open[1:] {
+			if n.f < cur.f {
+				cur = n
+				ci = i + 1
+			}
+		}
+		open = append(open[:ci], open[ci+1:]...)
+		key := cur.y*w + cur.x
+		if cur.x == tx && cur.y == ty {
+			var path []image.Point
+			for n := cur; n != nil; n = n.p {
+				path = append([]image.Point{{n.x, n.y}}, path...)
+			}
+			return path
+		}
+		closed[key] = true
+		for _, d := range []image.Point{{1, 0}, {-1, 0}, {0, 1}, {0, -1}} {
+			nx, ny := cur.x+d.X, cur.y+d.Y
+			if nx < 0 || ny < 0 || nx >= w || ny >= hgt {
+				continue
+			}
+			k := ny*w + nx
+			if closed[k] {
+				continue
+			}
+			cost := cur.g + 1
+			if bias != nil {
+				cost += bias[ny][nx]
+			}
+			if cost < 1 {
+				cost = 1
+			}
+			hval := abs(nx-tx) + abs(ny-ty)
+			nn, ok := opened[k]
+			if !ok || cost < nn.g {
+				nnode := &node{x: nx, y: ny, g: cost, h: hval, f: cost + hval, p: cur}
+				opened[k] = nnode
+				if ok {
+					for i := range open {
+						if open[i] == nn {
+							open[i] = nnode
+							break
+						}
+					}
+				} else {
+					open = append(open, nnode)
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func carvePathAStar(L *Level, sx, sy, tx, ty, half int, soft, hard [][]bool) {
+	bias := buildBias(L, soft, hard)
+	path := gridAStar(L, sx, sy, tx, ty, bias)
+	if len(path) == 0 {
+		carveL(L, sx, sy, tx, ty, half)
+		return
+	}
+	for i := 0; i+1 < len(path); i++ {
+		a, b := path[i], path[i+1]
+		carveCorridorSegment(L, a.X, a.Y, b.X, b.Y, half)
+	}
+}
+
+func ensureMainLoop(es []edge, main []int, rng *rand.Rand) []edge {
+	if len(main) < 3 {
+		return es
+	}
+	mset := map[int]bool{}
+	for _, i := range main {
+		mset[i] = true
+	}
+	has := false
+	for _, e := range es {
+		if mset[e.A] && mset[e.B] {
+			if abs(indexOf(main, e.A)-indexOf(main, e.B)) > 1 {
+				has = true
+				break
+			}
+		}
+	}
+	if !has {
+		i := rng.IntN(len(main) - 2)
+		a := main[i]
+		b := main[i+2]
+		es = append(es, edge{A: a, B: b})
+	}
+	return es
+}
+
+func indexOf(list []int, v int) int {
+	for i, x := range list {
+		if x == v {
+			return i
+		}
+	}
+	return -1
+}
 
 func Generate64x64(p GenParams) *Level {
 	if p.Width == 0 {
@@ -77,11 +357,17 @@ func Generate64x64(p GenParams) *Level {
 		p.GrappleRange = 12
 	}
 	if p.CoverageTarget <= 0 {
-		p.CoverageTarget = 0.45
-	} // tune 0.40–0.55
+		p.CoverageTarget = 0.48
+	}
 	if p.FillerRoomsMax == 0 {
 		p.FillerRoomsMax = 6
-	} // a few extra pockets
+	}
+	if !p.UseMainPath {
+		p.UseMainPath = true
+	}
+	if p.BranchLoopExtras == 0 {
+		p.BranchLoopExtras = 2
+	}
 
 	currentParams = p
 	rng = rand.New(rand.NewPCG(uint64(p.Seed), uint64(p.Seed^0xface)))
@@ -92,6 +378,8 @@ func Generate64x64(p GenParams) *Level {
 		ss = nil
 	}
 
+	softMask, hardMask := buildNoiseMask(p.Width, p.Height, rng)
+
 	depth := 3
 	if p.RoomCountMin > 8 {
 		depth = 4
@@ -101,25 +389,89 @@ func Generate64x64(p GenParams) *Level {
 	currentCenters = centers
 	rooms := growRooms(l, centers, p, rng)
 	edges := connectKNN(centers, 3)
-	edges = mstPlusExtras(edges, centers, p.Extras, rng)
-	carveCorridors(l, edges, p.CorridorWidth)
+	edges = mstPlusExtras(edges, centers, p.Extras+p.BranchLoopExtras, rng)
+
+	if p.UseMainPath && len(centers) >= 2 {
+		g := buildGraph(centers, edges)
+		start, goal := farthestPair(g)
+		main := bfsPath(g, start, goal)
+		edges = ensureMainLoop(edges, main, rng)
+		g = buildGraph(centers, edges)
+		main = bfsPath(g, start, goal)
+		lastMainPathLen = len(main)
+		if len(main) >= 2 {
+			g.main = main
+			carvePathByIndexList(l, g, p.CorridorWidth+1, softMask, hardMask)
+
+			mainSet := map[int]bool{}
+			for _, i := range main {
+				mainSet[i] = true
+			}
+			var branches []edge
+			for _, e := range edges {
+				if mainSet[e.A] && mainSet[e.B] {
+					continue
+				}
+				branches = append(branches, e)
+			}
+			carveCorridors(l, branches, p.CorridorWidth, softMask, hardMask)
+
+			if p.LockBranches > 0 {
+				rng.Shuffle(len(branches), func(i, j int) { branches[i], branches[j] = branches[j], branches[i] })
+				cnt := min(p.LockBranches, len(branches))
+				for i := 0; i < cnt; i++ {
+					e := branches[i]
+					sa := doorToward(centerIndexToRoom[e.A], centers[e.B])
+					sb := doorToward(centerIndexToRoom[e.B], centers[e.A])
+					mx, my := (sa.X+sb.X)/2, (sa.Y+sb.Y)/2
+					half := max(1, p.CorridorWidth/2)
+					for dy := -half; dy <= half; dy++ {
+						for dx := -half; dx <= half; dx++ {
+							if dx == 0 && dy == 0 {
+								continue
+							}
+							nx, ny := mx+dx, my+dy
+							if nx >= 0 && ny >= 0 && nx < l.W && ny < l.H {
+								l.Tiles[ny][nx].IsWalkable = false
+							}
+						}
+					}
+					if my >= 0 && my < l.H && mx >= 0 && mx < l.W {
+						l.Tiles[my][mx].IsWalkable = true
+						l.Tiles[my][mx].SetTag(tiles.TagLockedDoor)
+					}
+					kr := e.A
+					for {
+						kr = rng.IntN(len(rooms))
+						if kr != e.A && kr != e.B {
+							break
+						}
+					}
+					r := centerIndexToRoom[kr]
+					cx, cy := r.X+r.W/2, r.Y+r.H/2
+					if cy >= 0 && cy < l.H && cx >= 0 && cx < l.W {
+						l.Tiles[cy][cx].SetTag(tiles.TagKeySpawn)
+					}
+				}
+			}
+		} else {
+			carveCorridors(l, edges, p.CorridorWidth, softMask, hardMask)
+		}
+	} else {
+		carveCorridors(l, edges, p.CorridorWidth, softMask, hardMask)
+	}
+
 	widenPinches(l, p.CorridorWidth)
-	optionalPerimeterLoop(l, p.CorridorWidth, p.CorridorWidth/2, true) // 30% chance
+	if rng.IntN(100) < 30 {
+		optionalPerimeterLoop(l, p.CorridorWidth, p.CorridorWidth/2, true)
+	}
 	tagDashLanes(l, p.CorridorWidth, p.DashLaneMinLen)
 	placeGrappleAnchors(l, rooms, p.GrappleRange, rng)
 	pruneDeadEnds(l, 3)
 	ensureConnectivity(l)
 	growToCoverage(l, p, rng) // NEW
 	if ss != nil {
-		for y := 0; y < l.H; y++ {
-			for x := 0; x < l.W; x++ {
-				t := l.Tiles[y][x]
-				t.AddSpriteByID("Floor", ss.Floor)
-				if !t.IsWalkable {
-					t.AddSpriteByID("DungeonWall", ss.DungeonWall)
-				}
-			}
-		}
+		paintTilesThemed(l, ss)
 	}
 	return l
 }
@@ -138,6 +490,16 @@ func optionalPerimeterLoop(L *Level, inset, half int, enable bool) {
 
 // --- helpers ---
 
+func carveBar(L *Level, cx, cy, lenTiles, half int, horiz bool) {
+	if horiz {
+		carveCorridorSegment(L, cx-lenTiles/2, cy, cx+lenTiles/2, cy, half)
+	} else {
+		carveCorridorSegment(L, cx, cy-lenTiles/2, cx, cy+lenTiles/2, half)
+	}
+	carveDisk(L, cx-lenTiles/2, cy, half)
+	carveDisk(L, cx+lenTiles/2, cy, half)
+}
+
 func growToCoverage(L *Level, p GenParams, rng *rand.Rand) {
 	cw := max(1, p.CorridorWidth/2)
 	tries := p.FillerRoomsMax
@@ -151,7 +513,12 @@ func growToCoverage(L *Level, p GenParams, rng *rand.Rand) {
 		// 2) carve a small room/blob around the seed
 		rw := clampi(p.RoomWMin-2, 4, 9) + rng.IntN(3) // 4–11
 		rh := clampi(p.RoomHMin-2, 4, 9) + rng.IntN(3)
-		carveRect(L, sx-rw/2, sy-rh/2, rw, rh)
+		if rng.IntN(100) < 30 {
+			horiz := rng.IntN(2) == 0
+			carveBar(L, sx, sy, max(rw, rh), cw, horiz)
+		} else {
+			carveRect(L, sx-rw/2, sy-rh/2, rw, rh)
+		}
 
 		// 3) connect to nearest existing walkable (shortest straight-ish path)
 		tx, ty, ok := nearestWalkable(L, sx, sy)
@@ -232,6 +599,51 @@ func nearestWalkable(L *Level, x, y int) (int, int, bool) {
 		return 0, 0, false
 	}
 	return bx, by, true
+}
+
+func nearestFlavorAt(x, y int) string {
+	best := 1 << 30
+	flavor := "stone"
+	for _, rm := range roomMeta {
+		cx, cy := rm.X+rm.W/2, rm.Y+rm.H/2
+		dx, dy := x-cx, y-cy
+		d := dx*dx + dy*dy
+		if d < best {
+			best = d
+			flavor = rm.Flavor
+		}
+	}
+	return flavor
+}
+
+func paintTilesThemed(l *Level, ss *sprites.SpriteSheet) {
+	if ss.Walls == nil {
+		ss.Walls = make(map[string]*sprites.WallSpriteSheet)
+	}
+	cache := map[string]*sprites.WallSpriteSheet{}
+	get := func(name string) *sprites.WallSpriteSheet {
+		if ws, ok := cache[name]; ok {
+			return ws
+		}
+		ws, err := sprites.LoadWallSpriteSheet(name)
+		if err != nil {
+			ws, _ = sprites.LoadWallSpriteSheet("stone")
+		}
+		cache[name] = ws
+		ss.Walls[name] = ws
+		return ws
+	}
+	for y := 0; y < l.H; y++ {
+		for x := 0; x < l.W; x++ {
+			t := l.Tiles[y][x]
+			t.AddSpriteByID("Floor", ss.Floor)
+			if !t.IsWalkable {
+				flavor := nearestFlavorAt(x, y)
+				ws := get(flavor)
+				t.AddSpriteByID("Wall", ws.Wall)
+			}
+		}
+	}
 }
 
 func carveRect(L *Level, x, y, w, h int) {
@@ -374,34 +786,84 @@ func poissonInRegions(rs []rect, p GenParams, rng *rand.Rand) []image.Point {
 
 var centerIndexToRoom = map[int]rect{} // add near top (file-scope)
 
+func pickFlavor(rng *rand.Rand) string {
+	flavors := []string{"stone", "moss", "brick", "ruin"}
+	return flavors[rng.IntN(len(flavors))]
+}
+
+func carveRoomShape(L *Level, r rect, rng *rand.Rand) {
+	shape := rng.IntN(4)
+	switch shape {
+	case 1: // plus
+		cx, cy := r.X+r.W/2, r.Y+r.H/2
+		for y := r.Y; y < r.Y+r.H; y++ {
+			for x := cx - r.W/4; x <= cx+r.W/4; x++ {
+				if x >= 0 && y >= 0 && x < L.W && y < L.H {
+					L.Tiles[y][x].IsWalkable = true
+				}
+			}
+		}
+		for x := r.X; x < r.X+r.W; x++ {
+			for y := cy - r.H/4; y <= cy+r.H/4; y++ {
+				if x >= 0 && y >= 0 && x < L.W && y < L.H {
+					L.Tiles[y][x].IsWalkable = true
+				}
+			}
+		}
+	case 2: // pill
+		rx, ry := max(2, r.W/2), max(2, r.H/2)
+		cx, cy := r.X+rx, r.Y+ry
+		for y := r.Y; y < r.Y+r.H; y++ {
+			for x := r.X; x < r.X+r.W; x++ {
+				dx, dy := x-cx, y-cy
+				if (dx*dx*4)/max(1, rx*rx)+(dy*dy*4)/max(1, ry*ry) <= 3 {
+					if x >= 0 && y >= 0 && x < L.W && y < L.H {
+						L.Tiles[y][x].IsWalkable = true
+					}
+				}
+			}
+		}
+	case 3: // T
+		mid := r.Y + r.H/3
+		for y := r.Y; y < r.Y+r.H; y++ {
+			for x := r.X + r.W/3; x < r.X+2*r.W/3; x++ {
+				if x >= 0 && y >= 0 && x < L.W && y < L.H {
+					L.Tiles[y][x].IsWalkable = true
+				}
+			}
+		}
+		for x := r.X; x < r.X+r.W; x++ {
+			for y := mid; y < mid+r.H/3; y++ {
+				if x >= 0 && y >= 0 && x < L.W && y < L.H {
+					L.Tiles[y][x].IsWalkable = true
+				}
+			}
+		}
+	default: // rectangle
+		for y := r.Y; y < r.Y+r.H; y++ {
+			for x := r.X; x < r.X+r.W; x++ {
+				if x >= 0 && y >= 0 && x < L.W && y < L.H {
+					L.Tiles[y][x].IsWalkable = true
+				}
+			}
+		}
+	}
+}
+
 func growRooms(L *Level, centers []image.Point, p GenParams, rng *rand.Rand) []rect {
+	roomMeta = roomMeta[:0]
 	rooms := make([]rect, len(centers))
 	margin := p.CorridorWidth
 	for i, c := range centers {
 		w := p.RoomWMin + rng.IntN(p.RoomWMax-p.RoomWMin+1)
 		h := p.RoomHMin + rng.IntN(p.RoomHMax-p.RoomHMin+1)
-		x := c.X - w/2
-		y := c.Y - h/2
-		if x < margin {
-			x = margin
-		}
-		if y < margin {
-			y = margin
-		}
-		if x+w >= L.W-margin {
-			x = L.W - margin - w
-		}
-		if y+h >= L.H-margin {
-			y = L.H - margin - h
-		}
+		x := clamp(c.X-w/2, margin, L.W-margin-w)
+		y := clamp(c.Y-h/2, margin, L.H-margin-h)
 		r := rect{x, y, w, h}
 		rooms[i] = r
-		centerIndexToRoom[i] = r // <— store mapping
-		for yy := y; yy < y+h; yy++ {
-			for xx := x; xx < x+w; xx++ {
-				L.Tiles[yy][xx].IsWalkable = true
-			}
-		}
+		centerIndexToRoom[i] = r
+		carveRoomShape(L, r, rng)
+		roomMeta = append(roomMeta, roomInfo{rect: r, Flavor: pickFlavor(rng)})
 	}
 	return rooms
 }
@@ -492,7 +954,7 @@ func mstPlusExtras(edges []edge, pts []image.Point, extras int, rng *rand.Rand) 
 	return result
 }
 
-func carveCorridors(L *Level, es []edge, W int) {
+func carveCorridors(L *Level, es []edge, W int, soft, hard [][]bool) {
 	half := max(1, W/2)
 	for _, e := range es {
 		aCenter := currentCenters[e.A]
@@ -501,8 +963,7 @@ func carveCorridors(L *Level, es []edge, W int) {
 		rb := centerIndexToRoom[e.B]
 		sa := doorToward(ra, bCenter)
 		sb := doorToward(rb, aCenter)
-		carveL(L, sa.X, sa.Y, sb.X, sb.Y, half)
-		// widen door mouths slightly
+		carvePathAStar(L, sa.X, sa.Y, sb.X, sb.Y, half, soft, hard)
 		carveDisk(L, sa.X, sa.Y, half)
 		carveDisk(L, sb.X, sb.Y, half)
 	}
@@ -755,27 +1216,61 @@ func bresenhamClear(L *Level, x0, y0, x1, y1 int) bool {
 }
 
 func pruneDeadEnds(L *Level, minLen int) {
-	changed := true
 	dirs := []image.Point{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}
-	for changed {
-		changed = false
+	for {
+		changed := false
 		for y := 1; y < L.H-1; y++ {
 			for x := 1; x < L.W-1; x++ {
 				t := L.Tiles[y][x]
-				if !t.IsWalkable || t.HasTag(tiles.TagGrappleAnchor) {
+				if !t.IsWalkable || t.HasTag(tiles.TagGrappleAnchor) || t.HasTag(tiles.TagLockedDoor) || t.HasTag(tiles.TagKeySpawn) {
 					continue
 				}
-				cnt := 0
+				deg := 0
+				var last image.Point
 				for _, d := range dirs {
 					if L.Tiles[y+d.Y][x+d.X].IsWalkable {
-						cnt++
+						deg++
+						last = d
 					}
 				}
-				if cnt <= 1 {
-					t.IsWalkable = false
-					changed = true
+				if deg == 1 {
+					cx, cy := x, y
+					length := 0
+					ok := true
+					for length < minLen {
+						nx, ny := cx+last.X, cy+last.Y
+						if nx <= 0 || ny <= 0 || nx >= L.W-1 || ny >= L.H-1 {
+							ok = false
+							break
+						}
+						nt := L.Tiles[ny][nx]
+						if !nt.IsWalkable || nt.HasTag(tiles.TagGrappleAnchor) || nt.HasTag(tiles.TagLockedDoor) || nt.HasTag(tiles.TagKeySpawn) {
+							ok = false
+							break
+						}
+						nd := 0
+						var next image.Point
+						for _, d := range dirs {
+							if L.Tiles[ny+d.Y][nx+d.X].IsWalkable {
+								nd++
+								next = d
+							}
+						}
+						length++
+						if nd != 2 {
+							break
+						}
+						cx, cy, last = nx, ny, next
+					}
+					if length < minLen && ok {
+						L.Tiles[y][x].IsWalkable = false
+						changed = true
+					}
 				}
 			}
+		}
+		if !changed {
+			break
 		}
 	}
 }

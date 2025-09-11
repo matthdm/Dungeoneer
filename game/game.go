@@ -11,6 +11,7 @@ import (
 	"dungeoneer/menumanager"
 	"dungeoneer/pathing"
 	"dungeoneer/progression"
+	"dungeoneer/render"
 	"dungeoneer/spells"
 	"dungeoneer/sprites"
 	"dungeoneer/ui"
@@ -50,6 +51,7 @@ type Game struct {
 	spriteSheet            *sprites.SpriteSheet
 	highlightImage         *ebiten.Image
 	editor                 *leveleditor.Editor
+	tileRenderer           *render.TileRenderer
 	player                 *entities.Player
 	Monsters               []*entities.Monster
 	ItemDrops              []*entities.ItemDrop
@@ -164,6 +166,7 @@ func NewGame() (*Game, error) {
 	g.editor.OnStairPlaced = g.stairPlaced
 	g.spawnEntitiesFromLevel()
 	g.lastPlayerTileX, g.lastPlayerTileY = g.player.TileX, g.player.TileY
+	g.tileRenderer = render.NewTileRenderer(l, ss, constants.DefaultTileSize)
 	mm, err := ui.NewMainMenu()
 	if err != nil {
 		return nil, fmt.Errorf("failed create new main menu: %s", err)
@@ -176,6 +179,7 @@ func NewGame() (*Game, error) {
 			g.currentLevel = loaded
 			g.UpdateSeenTiles(*loaded)
 			g.spawnEntitiesFromLevel()
+			g.tileRenderer = render.NewTileRenderer(loaded, g.spriteSheet, constants.DefaultTileSize)
 		},
 		func() {
 			menumanager.Manager().CloseActiveMenu()
@@ -213,6 +217,7 @@ func NewGame() (*Game, error) {
 		g.editor.OnLayerChange = g.editorLayerChanged
 		g.editor.OnStairPlaced = g.stairPlaced
 		g.UpdateSeenTiles(*lvl)
+		g.tileRenderer = render.NewTileRenderer(lvl, g.spriteSheet, constants.DefaultTileSize)
 		menumanager.Manager().CloseActiveMenu()
 	}, func() {
 		menumanager.Manager().Open(g.GenerateMenu)
@@ -227,6 +232,7 @@ func NewGame() (*Game, error) {
 			g.editor.OnLayerChange = g.editorLayerChanged
 			g.editor.OnStairPlaced = g.stairPlaced
 			g.UpdateSeenTiles(*newLevel)
+			g.tileRenderer = render.NewTileRenderer(newLevel, g.spriteSheet, constants.DefaultTileSize)
 			menumanager.Manager().CloseActiveMenu()
 		},
 		func() { menumanager.Manager().Open(g.ProcGenMenu) },
@@ -403,6 +409,7 @@ func (g *Game) switchLayer(index int, entry levels.Point) {
 	if g.currentLevel == nil {
 		return
 	}
+	g.tileRenderer = render.NewTileRenderer(g.currentLevel, g.spriteSheet, constants.DefaultTileSize)
 
 	// ensure entry is within bounds of new level
 	if entry.X < 0 || entry.Y < 0 || entry.X >= g.currentLevel.W || entry.Y >= g.currentLevel.H {

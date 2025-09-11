@@ -1,12 +1,14 @@
 package game
 
 import (
+	"dungeoneer/constants"
 	"dungeoneer/entities"
 	"dungeoneer/items"
 	"dungeoneer/levels"
 	"dungeoneer/menumanager"
 	"dungeoneer/movement"
 	"dungeoneer/pathing"
+	"dungeoneer/render"
 	"dungeoneer/ui"
 	"math"
 	"os"
@@ -202,12 +204,14 @@ func (g *Game) handleLevelHotkeys() {
 		if l, err := levels.NewMazeLevel(); err == nil {
 			g.currentLevel = l
 			g.UpdateSeenTiles(*l)
+			g.tileRenderer = render.NewTileRenderer(l, g.spriteSheet, constants.DefaultTileSize)
 		}
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyN) {
 		if l, err := levels.NewForestLevel(); err == nil {
 			g.currentLevel = l
 			g.UpdateSeenTiles(*l)
+			g.tileRenderer = render.NewTileRenderer(l, g.spriteSheet, constants.DefaultTileSize)
 		}
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyF1) {
