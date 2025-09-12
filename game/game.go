@@ -622,7 +622,7 @@ func (g *Game) updatePlaying() error {
 			g.LoadPlayerMenu.Update()
 		} else if g.GenerateMenu != nil && g.GenerateMenu.Menu.IsVisible() {
 			g.GenerateMenu.Update()
-		} else if g.ProcGenMenu != nil && g.ProcGenMenu.Menu.IsVisible() {
+		} else if g.ProcGenMenu != nil && g.ProcGenMenu.IsVisible() {
 			g.ProcGenMenu.Update()
 		} else {
 			g.PauseMenu.Update()

@@ -23,6 +23,9 @@ type GenParams struct {
 	Extras                     int
 	CoverageTarget             float64 // e.g., 0.40–0.55 desired walkable ratio
 	FillerRoomsMax             int     // hard cap on post-pass filler rooms
+	// Visual/theme
+	WallFlavor  string // e.g., "crypt", "moss", "normal"
+	FloorFlavor string // usually same list as wall flavors
 }
 
 type rect struct{ X, Y, W, H int }
@@ -82,6 +85,12 @@ func Generate64x64(p GenParams) *Level {
 	if p.FillerRoomsMax == 0 {
 		p.FillerRoomsMax = 6
 	} // a few extra pockets
+	if p.WallFlavor == "" {
+		p.WallFlavor = "crypt"
+	}
+	if p.FloorFlavor == "" {
+		p.FloorFlavor = "crypt"
+	}
 
 	currentParams = p
 	rng = rand.New(rand.NewPCG(uint64(p.Seed), uint64(p.Seed^0xface)))
@@ -111,12 +120,33 @@ func Generate64x64(p GenParams) *Level {
 	ensureConnectivity(l)
 	growToCoverage(l, p, rng) // NEW
 	if ss != nil {
+		// Try to load flavored sheets; fall back to base if unavailable
+		var floorImg, wallImg = ss.Floor, ss.DungeonWall
+
+		// These helpers are assumed in your sprites pkg; if LoadWallSpriteSheet returns (imgFloor, imgWall)
+		// or a struct with .Floor / .Wall, adjust the field names accordingly.
+		if wss, err := sprites.LoadWallSpriteSheet(p.WallFlavor); err == nil && wss != nil {
+			if wss.Wall != nil {
+				wallImg = wss.Wall
+			}
+		}
+		if fss, err := sprites.LoadWallSpriteSheet(p.FloorFlavor); err == nil && fss != nil {
+			if fss.Floor != nil {
+				floorImg = fss.Floor
+			}
+		}
+
 		for y := 0; y < l.H; y++ {
 			for x := 0; x < l.W; x++ {
 				t := l.Tiles[y][x]
-				t.AddSpriteByID("Floor", ss.Floor)
-				if !t.IsWalkable {
-					t.AddSpriteByID("DungeonWall", ss.DungeonWall)
+
+				// If you have layer-aware clears, use them; otherwise this is fine.
+				// t.ClearSprites()
+
+				if t.IsWalkable {
+					t.AddSpriteByID(p.FloorFlavor+"_floor", floorImg)
+				} else {
+					t.AddSpriteByID(p.WallFlavor+"_wall", wallImg)
 				}
 			}
 		}
@@ -139,26 +169,54 @@ func optionalPerimeterLoop(L *Level, inset, half int, enable bool) {
 // --- helpers ---
 
 func growToCoverage(L *Level, p GenParams, rng *rand.Rand) {
+	target := p.CoverageTarget
+	if target <= 0 {
+		return
+	}
+	if target < 0.10 {
+		target = 0.10
+	}
+	if target > 0.90 {
+		target = 0.90
+	}
+
+	// Estimate how many blobs we might need for the remaining delta.
+	// Each blob is ~ area of a small room; tune blob area a bit from your room mins.
+	cur := coverage(L)
+	if cur >= target {
+		return
+	}
+
+	avgBlob := max(9, (p.RoomWMin*p.RoomHMin)/4) // rough, fast, small-ish blobs
+	needTiles := int((target - cur) * float64(L.W*L.H))
+	estBlobs := needTiles / avgBlob
+	if estBlobs < 1 {
+		estBlobs = 1
+	}
+
+	// Respect FillerRoomsMax as a soft cap, but allow some headroom so coverage is achievable.
+	budget := max(p.FillerRoomsMax, estBlobs)
+	maxAttempts := max(50, budget*6) // generous attempt budget
+
 	cw := max(1, p.CorridorWidth/2)
-	tries := p.FillerRoomsMax
-	for tries > 0 && coverage(L) < p.CoverageTarget {
-		// 1) pick a good empty seed (far from existing floors)
+	attempts := 0
+	for coverage(L) < target && attempts < maxAttempts {
+		attempts++
+
 		sx, sy, ok := farthestEmpty(L, 4) // margin from border
 		if !ok {
 			break
 		}
 
-		// 2) carve a small room/blob around the seed
+		// carve a compact blob based on min room sizes, with a little randomness
 		rw := clampi(p.RoomWMin-2, 4, 9) + rng.IntN(3) // 4–11
 		rh := clampi(p.RoomHMin-2, 4, 9) + rng.IntN(3)
 		carveRect(L, sx-rw/2, sy-rh/2, rw, rh)
 
-		// 3) connect to nearest existing walkable (shortest straight-ish path)
-		tx, ty, ok := nearestWalkable(L, sx, sy)
-		if ok {
+		// connect to closest existing walkable to avoid isolated islands
+		if tx, ty, ok2 := nearestWalkable(L, sx, sy); ok2 {
 			carveL(L, sx, sy, tx, ty, cw)
 		}
-		tries--
 	}
 }
 
