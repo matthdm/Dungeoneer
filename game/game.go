@@ -63,7 +63,8 @@ type Game struct {
 	HeroPanel       *ui.HeroPanel
 	InventoryScreen *ui.InventoryScreen
 
-	ActiveSpells    []spells.Spell
+	//ActiveSpells    []spells.Spell
+	SpellCtrl       *spells.Controller
 	fireballSprites [][]*ebiten.Image
 
 	SpellDebug bool
@@ -120,6 +121,7 @@ func NewGame() (*Game, error) {
 	if err != nil {
 		return nil, err
 	}
+	sc := NewSpellController(fbSprites)
 	l := levels.CreateNewBlankLevel(64, 64, 64, ss)
 	world := levels.NewLayeredLevel(l)
 
@@ -152,12 +154,13 @@ func NewGame() (*Game, error) {
 		player:          entities.NewPlayer(ss),
 		Monsters:        []*entities.Monster{},
 		fireballSprites: fbSprites,
-		ActiveSpells:    []spells.Spell{},
-		RaycastWalls:    fov.LevelToWalls(l),
-		State:           StateMainMenu,
-		DeltaTime:       1.0 / 60.0,
-		camSmooth:       0.1,
-		SpellDebug:      true,
+		//ActiveSpells:    []spells.Spell{},
+		SpellCtrl:    sc,
+		RaycastWalls: fov.LevelToWalls(l),
+		State:        StateMainMenu,
+		DeltaTime:    1.0 / 60.0,
+		camSmooth:    0.1,
+		SpellDebug:   true,
 	}
 	g.DevMenu = ui.NewDevMenu(640, 480, g.player, g.ShowHint)
 	g.editor.OnLayerChange = g.editorLayerChanged
@@ -319,19 +322,138 @@ func NewGame() (*Game, error) {
 	panelRect := image.Rect(g.w/2-150, g.h/2-150, g.w/2+150, g.h/2+150)
 	g.HeroPanel = ui.NewHeroPanel(panelRect, g.player)
 	g.InventoryScreen = ui.NewInventoryScreen()
-	tomeNames := []string{"Red Tome", "Teal Tome", "Blue Tome", "Verdant Tome", "Crypt Tome"}
-	for i, name := range tomeNames {
-		for _, tmpl := range items.Registry {
-			if tmpl.Name == name {
-				if i < len(g.HUD.SkillSlots) {
-					g.HUD.SkillSlots[i].Icon = tmpl.Icon
-				}
-				break
-			}
+
+	return g, nil
+}
+
+func NewSpellController(fbSprites [][]*ebiten.Image) *spells.Controller {
+	// --- Spell Controller setup ---
+	sc := spells.NewController()
+
+	// Icons: re-use your tome icons for now (or any 40x40 square)
+	var iconFire, iconLightning, iconChaos, iconBloom, iconCanopy *ebiten.Image
+	for _, tmpl := range items.Registry {
+		switch tmpl.Name {
+		case "Red Tome":
+			iconFire = tmpl.Icon
+		case "Teal Tome":
+			iconLightning = tmpl.Icon
+		case "Blue Tome":
+			iconBloom = tmpl.Icon
+		case "Verdant Tome":
+			iconCanopy = tmpl.Icon
+		case "Crypt Tome":
+			iconChaos = tmpl.Icon
 		}
 	}
 
-	return g, nil
+	// Register Fireball
+	_ = sc.Register(&spells.SpellDef{
+		Name: "fireball",
+		Info: spells.SpellInfo{Name: "fireball", Level: 1, Cooldown: 2.0, Damage: 20, Cost: 10},
+		Icon: iconFire,
+		Factory: func(ctx spells.CastContext) (spells.Spell, error) {
+			return spells.NewFireball(ctx.Info, ctx.StartX, ctx.StartY, ctx.TargetX, ctx.TargetY, fbSprites, nil), nil
+		},
+	})
+	// Register Lightning (instant on target)
+	_ = sc.Register(&spells.SpellDef{
+		Name:    "lightning",
+		Info:    spells.SpellInfo{Name: "lightning", Level: 1, Cooldown: 1.5, Damage: 25},
+		Icon:    iconLightning,
+		Instant: true,
+		Factory: func(ctx spells.CastContext) (spells.Spell, error) {
+			return spells.NewLightningStrike(ctx.Info, ctx.TargetX, ctx.TargetY, nil), nil
+		},
+	})
+	// Register Chaos Ray (beam)
+	_ = sc.Register(&spells.SpellDef{
+		Name: "chaosray",
+		Info: spells.SpellInfo{Name: "chaosray", Level: 1, Cooldown: 3.0, Damage: 18},
+		Icon: iconChaos,
+		Factory: func(ctx spells.CastContext) (spells.Spell, error) {
+			return spells.NewChaosRay(ctx.Info, ctx.StartX, ctx.StartY, ctx.TargetX, ctx.TargetY), nil
+		},
+	})
+	// Register Fractal Bloom (spawner)
+	_ = sc.Register(&spells.SpellDef{
+		Name:    "fractalbloom",
+		Info:    spells.SpellInfo{Name: "fractalbloom", Level: 1, Cooldown: 6.0, Damage: 16},
+		Icon:    iconBloom,
+		Instant: true,
+		Factory: func(ctx spells.CastContext) (spells.Spell, error) {
+			// Creates an orchestrator that will spawn FractalNodes; controller will collect them via TakeSpawns.
+			return spells.NewFractalBloom(ctx.Info, ctx.TargetX, ctx.TargetY, ctx.Caster, nil, ctx.Level, 3, 0.6, 0.12), nil
+		},
+	})
+	// Register Fractal Canopy (HoT area with branches)
+	_ = sc.Register(&spells.SpellDef{
+		Name:    "fractalcanopy",
+		Info:    spells.SpellInfo{Name: "fractalcanopy", Level: 1, Cooldown: 8.0, Damage: 0},
+		Icon:    iconCanopy,
+		Instant: true,
+		Factory: func(ctx spells.CastContext) (spells.Spell, error) {
+			// A simple wrapper: canopy grows at target tile
+			v := spells.NewFractalCanopyVisual(ctx.TargetX, ctx.TargetY, 4)
+			can := &spells.FractalCanopy{
+				X: ctx.TargetX, Y: ctx.TargetY,
+				MaxGrowTime: 1.2, MaxDuration: 4.0, MaxRadius: 5,
+				Visual: v,
+			}
+			return can, nil
+		},
+	})
+
+	// Grant a couple of spells (as if from a starter item and a native unlock)
+	sc.GrantFromItem("fireball")
+	sc.GrantNative("lightning")
+	//// Equip into slots
+	_ = sc.Equip(0, "fireball")
+	_ = sc.Equip(1, "lightning")
+	// Leave 2 & 3 empty for the player to fill later
+
+	return sc
+}
+
+func (g *Game) handleSpellInput() {
+	if g.SpellCtrl == nil || g.player == nil {
+		return
+	}
+
+	// Use the hover-tile the player sees (already iso-corrected)
+	targetX := float64(g.hoverTileX)
+	targetY := float64(g.hoverTileY)
+
+	// Cast from the player's interpolated world position for smooth aim
+	startX := g.player.MoveController.InterpX
+	startY := g.player.MoveController.InterpY
+
+	ctx := spells.CastContext{
+		Level:  g.currentLevel,
+		Caster: g.SpellCtrl.Caster,
+		StartX: startX, StartY: startY,
+		TargetX: targetX, TargetY: targetY,
+		Assets: map[string]any{},
+	}
+
+	if inputPressed(ebiten.KeyDigit1) {
+		g.SpellCtrl.TryCast(0, ctx)
+	}
+	if inputPressed(ebiten.KeyDigit2) {
+		g.SpellCtrl.TryCast(1, ctx)
+	}
+	if inputPressed(ebiten.KeyDigit3) {
+		g.SpellCtrl.TryCast(2, ctx)
+	}
+	if inputPressed(ebiten.KeyDigit4) {
+		g.SpellCtrl.TryCast(3, ctx)
+	}
+	if inputPressed(ebiten.KeyDigit5) {
+		g.SpellCtrl.TryCast(4, ctx)
+	}
+}
+func inputPressed(k ebiten.Key) bool {
+	return ebiten.IsKeyPressed(k) && !ebiten.IsKeyPressed(ebiten.KeyShift) // adjust to taste
 }
 
 // ShowHint displays a temporary on-screen message.
@@ -641,6 +763,7 @@ func (g *Game) updatePlaying() error {
 
 	// Handle controls (mouse, keys, etc.)
 	g.handleInput()
+	g.handleSpellInput()
 
 	// Update seen/visible memory arrays based on current level size
 	//g.UpdateSeenTiles(*g.currentLevel)
@@ -738,7 +861,14 @@ func (g *Game) updatePlaying() error {
 		m.Update(g.player, g.currentLevel)
 	}
 
-	g.updateSpells()
+	if g.SpellCtrl != nil {
+		g.SpellCtrl.Update(g.currentLevel, g.DeltaTime) // ticks cooldowns + active spells
+		g.updateSpells()
+	}
+	if g.SpellCtrl != nil && g.SpellCtrl.Caster != nil {
+		g.SpellCtrl.Caster.Update(g.DeltaTime)
+	}
+	g.syncEquippedTomesToSpells() // keeps HUD & slots in lock-step with equipment
 
 	if g.DevMenu != nil {
 		g.DevMenu.Update()

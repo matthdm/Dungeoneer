@@ -4,7 +4,6 @@ import (
 	"dungeoneer/constants"
 	"dungeoneer/fov"
 	"dungeoneer/menumanager"
-	"dungeoneer/spells"
 	"dungeoneer/ui"
 	"fmt"
 	"image"
@@ -80,6 +79,7 @@ func (g *Game) drawGameOver(screen *ebiten.Image) {
 	ebitenutil.DebugPrintAt(screen, msg, g.w/2-100, g.h/2)
 }
 
+/*
 func (g *Game) drawSpells(target *ebiten.Image, scale, cx, cy float64) {
 	for _, sp := range g.ActiveSpells {
 		sp.Draw(target, g.currentLevel.TileSize, g.camX, g.camY, scale, cx, cy)
@@ -90,6 +90,7 @@ func (g *Game) drawSpells(target *ebiten.Image, scale, cx, cy float64) {
 		}
 	}
 }
+*/
 
 func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 	scaleLater := g.camScale > 1
@@ -106,7 +107,10 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 	for _, r := range renderables {
 		target.DrawImage(r.Image, r.Options)
 	}
-	g.drawSpells(target, scale, cx, cy)
+	if g.SpellCtrl != nil {
+		g.SpellCtrl.DrawWorld(target, g.currentLevel.TileSize, g.camX, g.camY, scale, cx, cy)
+	}
+	//g.drawSpells(target, scale, cx, cy)
 
 	//g.drawTiles(target, scale, cx, cy)
 	//g.drawPathPreview(target, scale, cx, cy)
@@ -132,6 +136,10 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 	if g.HUD != nil && g.ShowHUD {
 		g.HUD.Draw(screen, g.w, g.h)
 	}
+	//if g.SpellCtrl != nil {
+	//	g.SpellCtrl.DrawHUD(screen)
+	//}
+
 	if g.HeroPanel != nil && g.HeroPanel.IsVisible() {
 		g.HeroPanel.Draw(screen)
 	}

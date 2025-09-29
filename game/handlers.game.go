@@ -225,41 +225,42 @@ func (g *Game) handleLevelHotkeys() {
 			g.HeroPanel.Toggle()
 		}
 	}
-	if inpututil.IsKeyJustPressed(ebiten.Key1) {
-		if g.player != nil {
-			gx := g.player.MoveController.InterpX
-			gy := g.player.MoveController.InterpY
-			g.castFireball(gx, gy, float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
+	/*
+		if inpututil.IsKeyJustPressed(ebiten.Key1) {
+			if g.player != nil {
+				gx := g.player.MoveController.InterpX
+				gy := g.player.MoveController.InterpY
+				g.castFireball(gx, gy, float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
+			}
 		}
-	}
-	if inpututil.IsKeyJustPressed(ebiten.Key2) {
-		if g.player != nil {
-			gx := g.player.MoveController.InterpX
-			gy := g.player.MoveController.InterpY
-			g.castChaosRay(gx, gy, float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
+		if inpututil.IsKeyJustPressed(ebiten.Key2) {
+			if g.player != nil {
+				gx := g.player.MoveController.InterpX
+				gy := g.player.MoveController.InterpY
+				g.castChaosRay(gx, gy, float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
+			}
 		}
-	}
 
-	if inpututil.IsKeyJustPressed(ebiten.Key6) {
-		if g.player != nil {
-			g.castFractalCanopy(float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
+		if inpututil.IsKeyJustPressed(ebiten.Key6) {
+			if g.player != nil {
+				g.castFractalCanopy(float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
+			}
 		}
-	}
-	if inpututil.IsKeyJustPressed(ebiten.Key3) {
-		if g.player != nil {
-			g.castLightningStrike(float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
+		if inpututil.IsKeyJustPressed(ebiten.Key3) {
+			if g.player != nil {
+				g.castLightningStrike(float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
+			}
 		}
-	}
-	if inpututil.IsKeyJustPressed(ebiten.Key4) {
-		if g.player != nil {
-			g.castLightningStorm(float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
+		if inpututil.IsKeyJustPressed(ebiten.Key4) {
+			if g.player != nil {
+				g.castLightningStorm(float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
+			}
 		}
-	}
-	if inpututil.IsKeyJustPressed(ebiten.Key5) {
-		if g.player != nil {
-			g.castFractalBloom(float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
-		}
-	}
+		if inpututil.IsKeyJustPressed(ebiten.Key5) {
+			if g.player != nil {
+				g.castFractalBloom(float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
+			}
+		}*/
 
 	if inpututil.IsKeyJustPressed(ebiten.Key8) {
 		g.SpellDebug = !g.SpellDebug
