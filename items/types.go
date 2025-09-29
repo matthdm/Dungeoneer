@@ -38,6 +38,45 @@ type Item struct {
 	Count int
 }
 
+// SpellLoadout represents an entity capable of synchronizing tome-granted spells
+// with an underlying spell controller. Player implements this to allow tome
+// equipment callbacks to rebuild the player's known/equipped spells without
+// creating package cycles.
+type SpellLoadout interface {
+	RebuildSpellLoadout()
+}
+
+// TomeSpellInfo describes the spell granted by a tome item template.
+type TomeSpellInfo struct {
+	SpellKey  string
+	SpellName string
+}
+
+// TomeSpells maps tome item names to the spells they grant.
+var TomeSpells = map[string]TomeSpellInfo{
+	"Red Tome":     {SpellKey: "fireball", SpellName: "Fireball"},
+	"Teal Tome":    {SpellKey: "lightning", SpellName: "Lightning"},
+	"Crypt Tome":   {SpellKey: "chaosray", SpellName: "Chaos Ray"},
+	"Blue Tome":    {SpellKey: "fractalbloom", SpellName: "Fractal Bloom"},
+	"Verdant Tome": {SpellKey: "fractalcanopy", SpellName: "Fractal Canopy"},
+}
+
+// SpellKeyForTome returns the registry key for the spell granted by the tome.
+func SpellKeyForTome(name string) string {
+	if info, ok := TomeSpells[name]; ok {
+		return info.SpellKey
+	}
+	return ""
+}
+
+// SpellNameForTome returns the display name of the spell granted by the tome.
+func SpellNameForTome(name string) string {
+	if info, ok := TomeSpells[name]; ok {
+		return info.SpellName
+	}
+	return ""
+}
+
 // ItemEffect describes a special effect an item grants.
 type ItemEffect struct {
 	Trigger      string

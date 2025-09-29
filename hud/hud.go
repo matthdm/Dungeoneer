@@ -6,6 +6,7 @@ import (
 	"image/color"
 
 	"dungeoneer/constants"
+	"dungeoneer/spells"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text"
 	"github.com/hajimehoshi/ebiten/v2/vector"
@@ -14,8 +15,10 @@ import (
 
 // SkillSlot represents a single skill slot in the HUD.
 type SkillSlot struct {
-	Icon     *ebiten.Image
-	Cooldown float64
+	Icon          *ebiten.Image
+	Cooldown      float64
+	CooldownTotal float64
+	Info          spells.SpellInfo
 }
 
 // HUD renders a bottom-screen interface similar to classic action RPGs.
@@ -56,13 +59,15 @@ func (h *HUD) Update(dt float64) {
 			h.DashCooldown = 0
 		}
 	}
-	for i := range h.SkillSlots {
-		if h.SkillSlots[i].Cooldown > 0 {
-			h.SkillSlots[i].Cooldown -= dt
-			if h.SkillSlots[i].Cooldown < 0 {
-				h.SkillSlots[i].Cooldown = 0
-			}
-		}
+}
+
+// SetSkillSlots updates the HUD skill slots from the spell controller.
+func (h *HUD) SetSkillSlots(icons [5]*ebiten.Image, remaining [5]float64, totals [5]float64, infos [5]spells.SpellInfo) {
+	for i := 0; i < len(h.SkillSlots); i++ {
+		h.SkillSlots[i].Icon = icons[i]
+		h.SkillSlots[i].Cooldown = remaining[i]
+		h.SkillSlots[i].CooldownTotal = totals[i]
+		h.SkillSlots[i].Info = infos[i]
 	}
 }
 
@@ -94,6 +99,10 @@ func (h *HUD) drawSkillBar(screen *ebiten.Image, w, hgt int) {
 	x := (w - barW) / 2
 	y := hgt - slot - 20
 
+	mx, my := ebiten.CursorPosition()
+	hoverIdx := -1
+	hoverRect := image.Rectangle{}
+
 	for i := 0; i < 5; i++ {
 		sx := x + i*(slot+pad)
 		vector.StrokeRect(screen, float32(sx), float32(y), float32(slot), float32(slot), 2, color.White, false)
@@ -106,9 +115,19 @@ func (h *HUD) drawSkillBar(screen *ebiten.Image, w, hgt int) {
 			screen.DrawImage(ic, op)
 		}
 
-		if cd := h.SkillSlots[i].Cooldown; cd > 0 {
-			overlay := float32(slot) * float32(cd) / 5
-			vector.DrawFilledRect(screen, float32(sx), float32(y)+float32(slot)-overlay, float32(slot), overlay, color.RGBA{0, 0, 0, 150}, false)
+		if total := h.SkillSlots[i].CooldownTotal; total > 0 {
+			remaining := h.SkillSlots[i].Cooldown
+			frac := remaining / total
+			if frac < 0 {
+				frac = 0
+			}
+			if frac > 1 {
+				frac = 1
+			}
+			if frac > 0 {
+				overlayH := float32(slot) * float32(frac)
+				vector.DrawFilledRect(screen, float32(sx), float32(y), float32(slot), overlayH, color.NRGBA{0, 0, 0, 160}, false)
+			}
 		}
 
 		if i == h.ActiveSkill {
@@ -116,10 +135,47 @@ func (h *HUD) drawSkillBar(screen *ebiten.Image, w, hgt int) {
 		}
 
 		text.Draw(screen, fmt.Sprintf("%d", i+1), basicfont.Face7x13, sx+slot/2-4, y+slot+12, color.White)
+
+		rect := image.Rect(sx, y, sx+slot, y+slot)
+		if hoverIdx == -1 && mx >= rect.Min.X && mx < rect.Max.X && my >= rect.Min.Y && my < rect.Max.Y {
+			hoverIdx = i
+			hoverRect = rect
+		}
 	}
 
 	h.drawDashCharges(screen, x, barW, y)
 	h.drawEXPBar(screen, x, barW, y)
+
+	if hoverIdx >= 0 {
+		h.drawSkillTooltip(screen, hoverRect.Max.X+8, hoverRect.Min.Y, h.SkillSlots[hoverIdx])
+	}
+}
+
+func (h *HUD) drawSkillTooltip(screen *ebiten.Image, x, y int, slot SkillSlot) {
+	if slot.Info.Name == "" {
+		return
+	}
+	name := slot.Info.DisplayName
+	if name == "" {
+		name = slot.Info.Name
+	}
+	lines := []string{
+		name,
+		fmt.Sprintf("Cooldown: %.1fs", slot.CooldownTotal),
+		fmt.Sprintf("Damage: %d", slot.Info.Damage),
+		fmt.Sprintf("Level: %d", slot.Info.Level),
+	}
+	width := 0
+	for _, ln := range lines {
+		if w := len(ln) * 7; w > width {
+			width = w
+		}
+	}
+	height := len(lines) * 14
+	vector.DrawFilledRect(screen, float32(x), float32(y), float32(width+6), float32(height+6), color.NRGBA{0, 0, 0, 200}, false)
+	for i, ln := range lines {
+		text.Draw(screen, ln, basicfont.Face7x13, x+3, y+3+i*14, color.White)
+	}
 }
 
 func (h *HUD) drawDashCharges(screen *ebiten.Image, barX, barW, barY int) {

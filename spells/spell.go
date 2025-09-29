@@ -8,11 +8,12 @@ import (
 
 // SpellInfo holds data about a spell type.
 type SpellInfo struct {
-	Name     string
-	Level    int
-	Cooldown float64
-	Damage   int
-	Cost     int
+	Name        string
+	DisplayName string
+	Level       int
+	Cooldown    float64
+	Damage      int
+	Cost        int
 }
 
 type Spell interface {

@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"image/color"
 	"math"
+	"sort"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -64,7 +65,8 @@ type Player struct {
 
 	Grapple Grapple
 
-	Caster *spells.Caster
+	Caster          *spells.Caster
+	SpellController *spells.Controller
 
 	Inventory     *inventory.Inventory
 	Stats         BaseStats
@@ -107,8 +109,9 @@ func NewPlayer(ss *sprites.SpriteSheet) *Player {
 			Speed:       constants.GrappleSpeed,
 			Delay:       constants.GrappleDelay,
 		},
-		Caster:    spells.NewCaster(),
-		Inventory: inventory.New(inventory.Width, inventory.Height),
+		Caster:          spells.NewCaster(),
+		SpellController: nil,
+		Inventory:       inventory.New(inventory.Width, inventory.Height),
 		Stats: BaseStats{
 			Strength:     1,
 			Dexterity:    1,
@@ -144,6 +147,12 @@ func NewPlayer(ss *sprites.SpriteSheet) *Player {
 
 	p.RecalculateStats()
 	return p
+}
+
+// SetSpellController attaches the shared spell controller to the player.
+func (p *Player) SetSpellController(ctrl *spells.Controller) {
+	p.SpellController = ctrl
+	p.RebuildSpellLoadout()
 }
 
 func (p *Player) Draw(screen *ebiten.Image, tileSize int, camX, camY, camScale, cx, cy float64) {
@@ -207,6 +216,92 @@ func (p *Player) drawHealthBar(screen *ebiten.Image, sx, sy, camX, camY, camScal
 
 	screen.DrawImage(full, barOp)
 	screen.DrawImage(part, barOp)
+}
+
+// GrantSpellFromItem ensures the controller knows about the given spell key.
+func (p *Player) GrantSpellFromItem(spellKey string) {
+	if p.SpellController == nil || spellKey == "" {
+		return
+	}
+	p.SpellController.GrantFromItem(spellKey)
+}
+
+// RevokeSpellFromItem removes the spell granted by an item from the controller.
+func (p *Player) RevokeSpellFromItem(spellKey string) {
+	if p.SpellController == nil || spellKey == "" {
+		return
+	}
+	p.SpellController.RevokeFromItem(spellKey)
+}
+
+// EquipSpellFromItem ensures the spell appears in one of the quick slots.
+func (p *Player) EquipSpellFromItem(spellKey string) {
+	if p.SpellController == nil || spellKey == "" {
+		return
+	}
+	// Already equipped somewhere? nothing to do.
+	if idx := p.SpellController.SlotIndex(spellKey); idx >= 0 {
+		return
+	}
+	for i := 0; i < spells.SlotCount; i++ {
+		if p.SpellController.Slot(i) == "" {
+			_ = p.SpellController.Equip(i, spellKey)
+			return
+		}
+	}
+}
+
+// UnequipSpellFromItem clears any quick slot using the given spell key.
+func (p *Player) UnequipSpellFromItem(spellKey string) {
+	if p.SpellController == nil || spellKey == "" {
+		return
+	}
+	for i := 0; i < spells.SlotCount; i++ {
+		if p.SpellController.Slot(i) == spellKey {
+			p.SpellController.Unequip(i)
+		}
+	}
+}
+
+// RebuildSpellLoadout synchronizes the spell controller with equipped tomes.
+// It removes any item-granted spells not currently equipped and equips spells
+// in deterministic slot order based on equipment slot names.
+func (p *Player) RebuildSpellLoadout() {
+	if p.SpellController == nil || p.Equipment == nil {
+		return
+	}
+
+	p.SpellController.ClearItemSpells()
+
+	keys := make([]string, 0, len(p.Equipment))
+	for slot := range p.Equipment {
+		keys = append(keys, slot)
+	}
+	sort.Strings(keys)
+
+	slotIdx := 0
+	for _, slot := range keys {
+		if slotIdx >= spells.SlotCount {
+			break
+		}
+		item := p.Equipment[slot]
+		if item == nil {
+			continue
+		}
+		spellKey := items.SpellKeyForTome(item.Name)
+		if spellKey == "" {
+			continue
+		}
+		p.SpellController.GrantFromItem(spellKey)
+		for slotIdx < spells.SlotCount && p.SpellController.Slot(slotIdx) != "" {
+			slotIdx++
+		}
+		if slotIdx >= spells.SlotCount {
+			break
+		}
+		_ = p.SpellController.Equip(slotIdx, spellKey)
+		slotIdx++
+	}
 }
 
 func (p *Player) CanMoveTo(x, y int, level *levels.Level) bool {

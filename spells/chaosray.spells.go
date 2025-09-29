@@ -17,15 +17,16 @@ type Point struct {
 
 // ChaosRay is an instant lightning-like beam.
 type ChaosRay struct {
-	Info     SpellInfo
-	Path     []Point
-	Duration float64
-	Age      float64
-	Finished bool
+	Info       SpellInfo
+	Path       []Point
+	Duration   float64
+	Age        float64
+	Finished   bool
+	HitIndices map[int]bool
 }
 
 func NewChaosRay(info SpellInfo, startX, startY, endX, endY float64) *ChaosRay {
-	cr := &ChaosRay{Info: info, Duration: 0.5}
+	cr := &ChaosRay{Info: info, Duration: 0.5, HitIndices: make(map[int]bool)}
 	cr.Path = generateJaggedLightningPath(startX, startY, endX, endY)
 	return cr
 }

@@ -121,7 +121,7 @@ func NewGame() (*Game, error) {
 	if err != nil {
 		return nil, err
 	}
-	sc := NewSpellController(fbSprites)
+	sc := NewSpellController(fbSprites, ss)
 	l := levels.CreateNewBlankLevel(64, 64, 64, ss)
 	world := levels.NewLayeredLevel(l)
 
@@ -137,6 +137,7 @@ func NewGame() (*Game, error) {
 	if err := items.LoadDefaultItems(); err != nil {
 		return nil, err
 	}
+	configureTomeItems()
 
 	g := &Game{
 		currentWorld:    world,
@@ -162,6 +163,8 @@ func NewGame() (*Game, error) {
 		camSmooth:    0.1,
 		SpellDebug:   true,
 	}
+	g.player.SetSpellController(sc)
+	g.refreshSpellHUD()
 	g.DevMenu = ui.NewDevMenu(640, 480, g.player, g.ShowHint)
 	g.editor.OnLayerChange = g.editorLayerChanged
 	g.editor.OnStairPlaced = g.stairPlaced
@@ -187,6 +190,10 @@ func NewGame() (*Game, error) {
 	g.LoadPlayerMenu = ui.NewLoadPlayerMenu(g.w, g.h,
 		func(ply *entities.Player) {
 			g.player = ply
+			if g.SpellCtrl != nil {
+				g.player.SetSpellController(g.SpellCtrl)
+			}
+			g.refreshSpellHUD()
 		},
 		func() {
 			menumanager.Manager().CloseActiveMenu()
@@ -326,7 +333,7 @@ func NewGame() (*Game, error) {
 	return g, nil
 }
 
-func NewSpellController(fbSprites [][]*ebiten.Image) *spells.Controller {
+func NewSpellController(fbSprites [][]*ebiten.Image, ss *sprites.SpriteSheet) *spells.Controller {
 	// --- Spell Controller setup ---
 	sc := spells.NewController()
 
@@ -350,26 +357,26 @@ func NewSpellController(fbSprites [][]*ebiten.Image) *spells.Controller {
 	// Register Fireball
 	_ = sc.Register(&spells.SpellDef{
 		Name: "fireball",
-		Info: spells.SpellInfo{Name: "fireball", Level: 1, Cooldown: 2.0, Damage: 20, Cost: 10},
+		Info: spells.SpellInfo{Name: "fireball", DisplayName: "Fireball", Level: 1, Cooldown: 2.0, Damage: 20, Cost: 10},
 		Icon: iconFire,
 		Factory: func(ctx spells.CastContext) (spells.Spell, error) {
-			return spells.NewFireball(ctx.Info, ctx.StartX, ctx.StartY, ctx.TargetX, ctx.TargetY, fbSprites, nil), nil
+			return spells.NewFireball(ctx.Info, ctx.StartX, ctx.StartY, ctx.TargetX, ctx.TargetY, fbSprites, ss.FireBurst), nil
 		},
 	})
 	// Register Lightning (instant on target)
 	_ = sc.Register(&spells.SpellDef{
 		Name:    "lightning",
-		Info:    spells.SpellInfo{Name: "lightning", Level: 1, Cooldown: 1.5, Damage: 25},
+		Info:    spells.SpellInfo{Name: "lightning", DisplayName: "Lightning", Level: 1, Cooldown: 1.5, Damage: 25},
 		Icon:    iconLightning,
 		Instant: true,
 		Factory: func(ctx spells.CastContext) (spells.Spell, error) {
-			return spells.NewLightningStrike(ctx.Info, ctx.TargetX, ctx.TargetY, nil), nil
+			return spells.NewLightningStrike(ctx.Info, ctx.TargetX, ctx.TargetY, ss.ArcaneBurst), nil
 		},
 	})
 	// Register Chaos Ray (beam)
 	_ = sc.Register(&spells.SpellDef{
 		Name: "chaosray",
-		Info: spells.SpellInfo{Name: "chaosray", Level: 1, Cooldown: 3.0, Damage: 18},
+		Info: spells.SpellInfo{Name: "chaosray", DisplayName: "Chaos Ray", Level: 1, Cooldown: 3.0, Damage: 18},
 		Icon: iconChaos,
 		Factory: func(ctx spells.CastContext) (spells.Spell, error) {
 			return spells.NewChaosRay(ctx.Info, ctx.StartX, ctx.StartY, ctx.TargetX, ctx.TargetY), nil
@@ -378,18 +385,18 @@ func NewSpellController(fbSprites [][]*ebiten.Image) *spells.Controller {
 	// Register Fractal Bloom (spawner)
 	_ = sc.Register(&spells.SpellDef{
 		Name:    "fractalbloom",
-		Info:    spells.SpellInfo{Name: "fractalbloom", Level: 1, Cooldown: 6.0, Damage: 16},
+		Info:    spells.SpellInfo{Name: "fractalbloom", DisplayName: "Fractal Bloom", Level: 1, Cooldown: 6.0, Damage: 16},
 		Icon:    iconBloom,
 		Instant: true,
 		Factory: func(ctx spells.CastContext) (spells.Spell, error) {
 			// Creates an orchestrator that will spawn FractalNodes; controller will collect them via TakeSpawns.
-			return spells.NewFractalBloom(ctx.Info, ctx.TargetX, ctx.TargetY, ctx.Caster, nil, ctx.Level, 3, 0.6, 0.12), nil
+			return spells.NewFractalBloom(ctx.Info, ctx.TargetX, ctx.TargetY, ctx.Caster, ss.ArcaneBurst2, ctx.Level, 3, 0.6, 0.12), nil
 		},
 	})
 	// Register Fractal Canopy (HoT area with branches)
 	_ = sc.Register(&spells.SpellDef{
 		Name:    "fractalcanopy",
-		Info:    spells.SpellInfo{Name: "fractalcanopy", Level: 1, Cooldown: 8.0, Damage: 0},
+		Info:    spells.SpellInfo{Name: "fractalcanopy", DisplayName: "Fractal Canopy", Level: 1, Cooldown: 8.0, Damage: 0},
 		Icon:    iconCanopy,
 		Instant: true,
 		Factory: func(ctx spells.CastContext) (spells.Spell, error) {
@@ -405,13 +412,6 @@ func NewSpellController(fbSprites [][]*ebiten.Image) *spells.Controller {
 	})
 
 	// Grant a couple of spells (as if from a starter item and a native unlock)
-	sc.GrantFromItem("fireball")
-	sc.GrantNative("lightning")
-	//// Equip into slots
-	_ = sc.Equip(0, "fireball")
-	_ = sc.Equip(1, "lightning")
-	// Leave 2 & 3 empty for the player to fill later
-
 	return sc
 }
 
@@ -436,19 +436,19 @@ func (g *Game) handleSpellInput() {
 		Assets: map[string]any{},
 	}
 
-	if inputPressed(ebiten.KeyDigit1) {
+	if inputPressed(ebiten.KeyDigit1) && g.SpellCtrl.HasEquipped(0) {
 		g.SpellCtrl.TryCast(0, ctx)
 	}
-	if inputPressed(ebiten.KeyDigit2) {
+	if inputPressed(ebiten.KeyDigit2) && g.SpellCtrl.HasEquipped(1) {
 		g.SpellCtrl.TryCast(1, ctx)
 	}
-	if inputPressed(ebiten.KeyDigit3) {
+	if inputPressed(ebiten.KeyDigit3) && g.SpellCtrl.HasEquipped(2) {
 		g.SpellCtrl.TryCast(2, ctx)
 	}
-	if inputPressed(ebiten.KeyDigit4) {
+	if inputPressed(ebiten.KeyDigit4) && g.SpellCtrl.HasEquipped(3) {
 		g.SpellCtrl.TryCast(3, ctx)
 	}
-	if inputPressed(ebiten.KeyDigit5) {
+	if inputPressed(ebiten.KeyDigit5) && g.SpellCtrl.HasEquipped(4) {
 		g.SpellCtrl.TryCast(4, ctx)
 	}
 }
@@ -862,13 +862,9 @@ func (g *Game) updatePlaying() error {
 	}
 
 	if g.SpellCtrl != nil {
-		g.SpellCtrl.Update(g.currentLevel, g.DeltaTime) // ticks cooldowns + active spells
-		g.updateSpells()
+		g.SpellCtrl.Update(g.currentLevel, g.DeltaTime, g)
 	}
-	if g.SpellCtrl != nil && g.SpellCtrl.Caster != nil {
-		g.SpellCtrl.Caster.Update(g.DeltaTime)
-	}
-	g.syncEquippedTomesToSpells() // keeps HUD & slots in lock-step with equipment
+	g.refreshSpellHUD()
 
 	if g.DevMenu != nil {
 		g.DevMenu.Update()

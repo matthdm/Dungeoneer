@@ -1,12 +1,14 @@
 package spells
 
 import (
+	"image/color"
 	"math"
 	"math/rand"
 
 	"dungeoneer/levels"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
 // FractalNode is a single explosion node within a FractalBloom
@@ -61,6 +63,7 @@ type FractalBloom struct {
 	Info       SpellInfo
 	Caster     *Caster
 	ImpactImg  *ebiten.Image
+	X, Y       float64
 	spawnQueue []*FractalNode
 	spawned    []*FractalNode
 	elapsed    float64
@@ -75,6 +78,8 @@ func NewFractalBloom(info SpellInfo, cx, cy float64, caster *Caster, impact *ebi
 		Info:      info,
 		Caster:    caster,
 		ImpactImg: impact,
+		X:         cx,
+		Y:         cy,
 	}
 	fb.buildNodes(cx, cy, info.Damage, 2, 0, maxDepth, dropoff, 0, delay, level)
 	// sort by spawn time to ensure deterministic ordering
@@ -139,13 +144,39 @@ func (fb *FractalBloom) Update(level *levels.Level, dt float64) {
 }
 
 func (fb *FractalBloom) Draw(screen *ebiten.Image, tileSize int, camX, camY, camScale, cx, cy float64) {
+	if fb.Finished && len(fb.spawnQueue) == 0 {
+		return
+	}
+
+	centerX, centerY := isoToScreenFloat(fb.X, fb.Y, tileSize)
+	screenX := (centerX-camX)*camScale + cx
+	screenY := (centerY+camY)*camScale + cy
+
+	pulse := 0.25 + 0.1*math.Sin(fb.elapsed*6)
+	radius := float32(float64(tileSize) * pulse * camScale)
+	col := color.NRGBA{R: 120, G: 200, B: 255, A: 160}
+	vector.DrawFilledCircle(screen, float32(screenX), float32(screenY), radius, col, true)
+
+	previewCol := color.NRGBA{R: 180, G: 240, B: 255, A: 120}
+	for _, n := range fb.spawnQueue {
+		nx, ny := isoToScreenFloat(n.X, n.Y, tileSize)
+		sx := (nx-camX)*camScale + cx
+		sy := (ny+camY)*camScale + cy
+		vector.DrawFilledCircle(screen, float32(sx), float32(sy), float32(tileSize)*0.1*float32(camScale), previewCol, true)
+	}
 }
 
 func (fb *FractalBloom) IsFinished() bool { return fb.Finished }
 
 // TakeSpawns returns any FractalNodes spawned since last call.
-func (fb *FractalBloom) TakeSpawns() []*FractalNode {
-	out := fb.spawned
+func (fb *FractalBloom) TakeSpawns() []Spell {
+	if len(fb.spawned) == 0 {
+		return nil
+	}
+	out := make([]Spell, len(fb.spawned))
+	for i, n := range fb.spawned {
+		out[i] = n
+	}
 	fb.spawned = nil
 	return out
 }

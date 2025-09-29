@@ -1,88 +1,80 @@
 package game
 
 import (
+	"fmt"
 	"math"
-	"sort"
 
 	"dungeoneer/entities"
 	"dungeoneer/fov"
+	"dungeoneer/items"
+	"dungeoneer/levels"
 	"dungeoneer/spells"
-
-	"github.com/hajimehoshi/ebiten/v2"
 )
 
-// updateSpells is responsible for:
-// - advancing each active spell instance
-// - applying on-hit/aoe effects (fireball, lightning, fractal nodes, canopy healing)
-// - adopting spawned children (storm → strikes, bloom → nodes)
-// - pruning finished spells
-//
-// IMPORTANT: While this handles per-instance updates, do NOT also call
-// g.SpellCtrl.Update(...) for instances elsewhere or you'll double-tick.
-// Keep the controller for cooldown timing + HUD + slotting.
-func (g *Game) updateSpells() {
-	if g.SpellCtrl == nil {
-		return
+// configureTomeItems rewires tome templates so equipping them keeps the spell
+// controller and HUD in sync.
+func configureTomeItems() {
+	for name, info := range items.TomeSpells {
+		tmpl, ok := items.Registry[name]
+		if !ok || tmpl == nil {
+			continue
+		}
+		tmpl.Description = fmt.Sprintf("Grants the %s spell.", info.SpellName)
+		tmpl.OnEquip = func(p interface{}) {
+			if loadout, ok := p.(items.SpellLoadout); ok {
+				loadout.RebuildSpellLoadout()
+			}
+		}
+		tmpl.OnUnequip = func(p interface{}) {
+			if loadout, ok := p.(items.SpellLoadout); ok {
+				loadout.RebuildSpellLoadout()
+			}
+		}
 	}
-	var remaining []spells.Spell
+}
 
-	for _, sp := range g.SpellCtrl.Active {
-		// 1) advance
-		sp.Update(g.currentLevel, g.DeltaTime)
-
-		// 2) spell-specific side-effects
-		if fb, ok := sp.(*spells.Fireball); ok {
-			if !fb.Impact {
-				for _, m := range g.Monsters {
-					if m.IsDead {
-						continue
-					}
-					dx := m.InterpX - fb.X
-					dy := m.InterpY - fb.Y
-					if dx*dx+dy*dy <= fb.Radius*fb.Radius {
-						fb.Impact = true
-						tx := int(math.Floor(fb.X))
-						ty := int(math.Floor(fb.Y))
-						g.applyFireballDamage(fb, tx, ty)
-						break
-					}
+// ResolveSpellEffects satisfies spells.EffectResolver. It applies damage,
+// healing, and other side-effects exactly once per frame after the controller
+// advances each spell.
+func (g *Game) ResolveSpellEffects(sp spells.Spell, level *levels.Level) {
+	switch s := sp.(type) {
+	case *spells.Fireball:
+		if !s.Impact {
+			for _, m := range g.Monsters {
+				if m.IsDead {
+					continue
+				}
+				dx := m.InterpX - s.X
+				dy := m.InterpY - s.Y
+				if dx*dx+dy*dy <= s.Radius*s.Radius {
+					s.Impact = true
+					s.X = m.InterpX
+					s.Y = m.InterpY
+					break
 				}
 			}
 		}
-		if ls, ok := sp.(*spells.LightningStrike); ok {
-			if !ls.DamageApplied {
-				g.applyLightningDamage(ls, int(math.Floor(ls.X)), int(math.Floor(ls.Y)))
-				ls.DamageApplied = true
-			}
+		if s.Impact && !s.DamageApplied {
+			s.DamageApplied = true
+			tx := int(math.Floor(s.X))
+			ty := int(math.Floor(s.Y))
+			g.applyFireballDamage(s, tx, ty)
 		}
-		if storm, ok := sp.(*spells.LightningStorm); ok {
-			for _, ns := range storm.TakeSpawns() {
-				remaining = append(remaining, ns)
-			}
+	case *spells.LightningStrike:
+		if !s.DamageApplied {
+			g.applyLightningDamage(s, int(math.Floor(s.X)), int(math.Floor(s.Y)))
+			s.DamageApplied = true
 		}
-		if bloom, ok := sp.(*spells.FractalBloom); ok {
-			for _, n := range bloom.TakeSpawns() {
-				remaining = append(remaining, n)
-			}
-		}
-		if fc, ok := sp.(*spells.FractalCanopy); ok {
-			g.applyFractalCanopyHealing(fc)
-		}
-		if node, ok := sp.(*spells.FractalNode); ok {
-			if !node.DamageApplied {
-				g.applyFractalDamage(node, int(math.Floor(node.X)), int(math.Floor(node.Y)))
-				node.DamageApplied = true
-			}
-		}
-
-		// 3) keep if still alive
-		if !sp.IsFinished() {
-			remaining = append(remaining, sp)
+	case *spells.ChaosRay:
+		g.applyChaosRayDamage(s)
+	case *spells.FractalCanopy:
+		g.applyFractalCanopyHealing(s)
+	case *spells.FractalNode:
+		if !s.DamageApplied {
+			g.applyFractalDamage(s, int(math.Floor(s.X)), int(math.Floor(s.Y)))
+			s.DamageApplied = true
 		}
 	}
-
-	// write back
-	g.SpellCtrl.Active = remaining
 }
 
 func (g *Game) applyFireballDamage(fb *spells.Fireball, cx, cy int) {
@@ -93,7 +85,6 @@ func (g *Game) applyFireballDamage(fb *spells.Fireball, cx, cy int) {
 	case 1:
 		radius = 1
 		fb.ImpactImg = g.spriteSheet.FireBurst
-		mult = 1.0
 	case 2:
 		radius = 2
 		fb.ImpactImg = g.spriteSheet.FireBurst2
@@ -137,30 +128,13 @@ func (g *Game) hasLineOfSight(x1, y1, x2, y2 int) bool {
 	return true
 }
 
-// --- Casting helpers that your input can call directly.
-// These now append into the controller's Active list and use either the
-// passed-in caster or the controller's caster. ---
-
-func (g *Game) castFireball(casterX, casterY, targetX, targetY float64, c *spells.Caster) {
-	if g.SpellCtrl == nil {
-		return
-	}
-	info := spells.SpellInfo{Name: "fireball", Level: 1, Cooldown: 1.0, Damage: 5} // :contentReference[oaicite:5]{index=5}
-	if c == nil {
-		c = g.SpellCtrl.Caster
-	}
-	if !c.Ready(info) {
-		return
-	}
-	c.PutOnCooldown(info)
-	fb := spells.NewFireball(info, casterX, casterY, targetX, targetY, g.fireballSprites, g.spriteSheet.FireBurst) // :contentReference[oaicite:6]{index=6}
-	g.SpellCtrl.Active = append(g.SpellCtrl.Active, fb)
-}
-
 func (g *Game) applyChaosRayDamage(cr *spells.ChaosRay) {
 	radius := 0.6
-	for _, m := range g.Monsters {
+	for idx, m := range g.Monsters {
 		if m.IsDead {
+			continue
+		}
+		if cr.HitIndices[idx] {
 			continue
 		}
 		px := m.InterpX
@@ -172,6 +146,7 @@ func (g *Game) applyChaosRayDamage(cr *spells.ChaosRay) {
 				if m.TakeDamage(cr.Info.Damage, &g.HitMarkers, &g.DamageNumbers) {
 					g.awardEXP(m)
 				}
+				cr.HitIndices[idx] = true
 				break
 			}
 		}
@@ -195,23 +170,6 @@ func pointSegmentDistance(px, py, x1, y1, x2, y2 float64) float64 {
 	return math.Hypot(px-projX, py-projY)
 }
 
-func (g *Game) castChaosRay(casterX, casterY, targetX, targetY float64, c *spells.Caster) {
-	if g.SpellCtrl == nil {
-		return
-	}
-	info := spells.SpellInfo{Name: "chaosray", Level: 1, Cooldown: 1.0, Damage: 8} // :contentReference[oaicite:7]{index=7}
-	if c == nil {
-		c = g.SpellCtrl.Caster
-	}
-	if !c.Ready(info) {
-		return
-	}
-	c.PutOnCooldown(info)
-	cr := spells.NewChaosRay(info, casterX, casterY, targetX, targetY) // :contentReference[oaicite:8]{index=8}
-	g.applyChaosRayDamage(cr)
-	g.SpellCtrl.Active = append(g.SpellCtrl.Active, cr)
-}
-
 func (g *Game) applyLightningDamage(l *spells.LightningStrike, cx, cy int) {
 	radius := 1
 	dmg := l.Info.Damage
@@ -231,43 +189,6 @@ func (g *Game) applyLightningDamage(l *spells.LightningStrike, cx, cy int) {
 	}
 }
 
-func (g *Game) castLightningStrike(targetX, targetY float64, c *spells.Caster) {
-	if g.SpellCtrl == nil {
-		return
-	}
-	info := spells.SpellInfo{Name: "lightning", Level: 1, Cooldown: 0.01, Damage: 8} // :contentReference[oaicite:9]{index=9}
-	if c == nil {
-		c = g.SpellCtrl.Caster
-	}
-	if !c.Ready(info) {
-		return
-	}
-	c.PutOnCooldown(info)
-	ls := spells.NewLightningStrike(info, targetX, targetY, g.spriteSheet.ArcaneBurst) // :contentReference[oaicite:10]{index=10}
-	g.SpellCtrl.Active = append(g.SpellCtrl.Active, ls)
-}
-
-func (g *Game) castLightningStorm(centerX, centerY float64, c *spells.Caster) {
-	if g.SpellCtrl == nil {
-		return
-	}
-	info := spells.SpellInfo{Name: "lightningstorm", Level: 1, Cooldown: 3.0, Damage: 8} // :contentReference[oaicite:11]{index=11}
-	if c == nil {
-		c = g.SpellCtrl.Caster
-	}
-	if !c.Ready(info) {
-		return
-	}
-	c.PutOnCooldown(info)
-
-	// Target from current hover (tile-aligned)
-	tx := float64(g.hoverTileX)
-	ty := float64(g.hoverTileY)
-
-	storm := spells.NewLightningStorm(info, tx, ty, 3, 0.2, 3.0, c, g.spriteSheet.ArcaneBurst, g.currentLevel) // :contentReference[oaicite:12]{index=12}
-	g.SpellCtrl.Active = append(g.SpellCtrl.Active, storm)
-}
-
 func (g *Game) applyFractalDamage(n *spells.FractalNode, cx, cy int) {
 	radius := n.Radius
 	dmg := n.Damage
@@ -285,22 +206,6 @@ func (g *Game) applyFractalDamage(n *spells.FractalNode, cx, cy int) {
 			}
 		}
 	}
-}
-
-func (g *Game) castFractalBloom(centerX, centerY float64, c *spells.Caster) {
-	if g.SpellCtrl == nil {
-		return
-	}
-	info := spells.SpellInfo{Name: "fractalbloom", Level: 1, Cooldown: 4.0, Damage: 6} // :contentReference[oaicite:13]{index=13}
-	if c == nil {
-		c = g.SpellCtrl.Caster
-	}
-	if !c.Ready(info) {
-		return
-	}
-	c.PutOnCooldown(info)
-	bloom := spells.NewFractalBloom(info, centerX, centerY, c, g.spriteSheet.ArcaneBurst, g.currentLevel, 3, 0.7, 0.2) // :contentReference[oaicite:14]{index=14}
-	g.SpellCtrl.Active = append(g.SpellCtrl.Active, bloom)
 }
 
 func (g *Game) applyFractalCanopyHealing(fc *spells.FractalCanopy) {
@@ -337,11 +242,94 @@ func (g *Game) applyFractalCanopyHealing(fc *spells.FractalCanopy) {
 	})
 }
 
+// Casting helpers used by debug tools and menus.
+func (g *Game) castFireball(casterX, casterY, targetX, targetY float64, c *spells.Caster) {
+	if g.SpellCtrl == nil {
+		return
+	}
+	info := spells.SpellInfo{Name: "fireball", DisplayName: "Fireball", Level: 1, Cooldown: 1.0, Damage: 5}
+	if c == nil {
+		c = g.SpellCtrl.Caster
+	}
+	if !c.Ready(info) {
+		return
+	}
+	c.PutOnCooldown(info)
+	fb := spells.NewFireball(info, casterX, casterY, targetX, targetY, g.fireballSprites, g.spriteSheet.FireBurst)
+	g.SpellCtrl.Active = append(g.SpellCtrl.Active, fb)
+}
+
+func (g *Game) castChaosRay(casterX, casterY, targetX, targetY float64, c *spells.Caster) {
+	if g.SpellCtrl == nil {
+		return
+	}
+	info := spells.SpellInfo{Name: "chaosray", DisplayName: "Chaos Ray", Level: 1, Cooldown: 1.0, Damage: 8}
+	if c == nil {
+		c = g.SpellCtrl.Caster
+	}
+	if !c.Ready(info) {
+		return
+	}
+	c.PutOnCooldown(info)
+	cr := spells.NewChaosRay(info, casterX, casterY, targetX, targetY)
+	g.SpellCtrl.Active = append(g.SpellCtrl.Active, cr)
+}
+
+func (g *Game) castLightningStrike(targetX, targetY float64, c *spells.Caster) {
+	if g.SpellCtrl == nil {
+		return
+	}
+	info := spells.SpellInfo{Name: "lightning", DisplayName: "Lightning", Level: 1, Cooldown: 0.01, Damage: 8}
+	if c == nil {
+		c = g.SpellCtrl.Caster
+	}
+	if !c.Ready(info) {
+		return
+	}
+	c.PutOnCooldown(info)
+	ls := spells.NewLightningStrike(info, targetX, targetY, g.spriteSheet.ArcaneBurst)
+	g.SpellCtrl.Active = append(g.SpellCtrl.Active, ls)
+}
+
+func (g *Game) castLightningStorm(centerX, centerY float64, c *spells.Caster) {
+	if g.SpellCtrl == nil {
+		return
+	}
+	info := spells.SpellInfo{Name: "lightningstorm", DisplayName: "Lightning Storm", Level: 1, Cooldown: 3.0, Damage: 8}
+	if c == nil {
+		c = g.SpellCtrl.Caster
+	}
+	if !c.Ready(info) {
+		return
+	}
+	c.PutOnCooldown(info)
+	tx := float64(g.hoverTileX)
+	ty := float64(g.hoverTileY)
+	storm := spells.NewLightningStorm(info, tx, ty, 3, 0.2, 3.0, c, g.spriteSheet.ArcaneBurst, g.currentLevel)
+	g.SpellCtrl.Active = append(g.SpellCtrl.Active, storm)
+}
+
+func (g *Game) castFractalBloom(centerX, centerY float64, c *spells.Caster) {
+	if g.SpellCtrl == nil {
+		return
+	}
+	info := spells.SpellInfo{Name: "fractalbloom", DisplayName: "Fractal Bloom", Level: 1, Cooldown: 4.0, Damage: 6}
+	if c == nil {
+		c = g.SpellCtrl.Caster
+	}
+	if !c.Ready(info) {
+		return
+	}
+	c.PutOnCooldown(info)
+	bloom := spells.NewFractalBloom(info, centerX, centerY, c, g.spriteSheet.ArcaneBurst, g.currentLevel, 3, 0.7, 0.2)
+	g.SpellCtrl.Active = append(g.SpellCtrl.Active, bloom)
+}
+
 func (g *Game) castFractalCanopy(centerX, centerY float64, c *spells.Caster) {
 	if g.SpellCtrl == nil {
 		return
 	}
-	info := spells.SpellInfo{Name: "fractalcanopy", Level: 1, Cooldown: 5.0, Damage: 0} // :contentReference[oaicite:15]{index=15}
+	info := spells.SpellInfo{Name: "fractalcanopy", DisplayName: "Fractal Canopy", Level: 1, Cooldown: 5.0, Damage: 0}
 	if c == nil {
 		c = g.SpellCtrl.Caster
 	}
@@ -357,97 +345,16 @@ func (g *Game) castFractalCanopy(centerX, centerY float64, c *spells.Caster) {
 		HealingMax:  15,
 		X:           centerX,
 		Y:           centerY,
-		Visual:      spells.NewFractalCanopyVisual(centerX, centerY, 10), // :contentReference[oaicite:16]{index=16}
+		Visual:      spells.NewFractalCanopyVisual(centerX, centerY, 10),
 	}
 	g.SpellCtrl.Active = append(g.SpellCtrl.Active, fc)
 }
 
-// mapTomeNameToSpell returns the spell registry key for a tome item name.
-func mapTomeNameToSpell(tome string) string {
-	switch tome {
-	case "Red Tome":
-		return "fireball"
-	case "Teal Tome":
-		return "lightning"
-	case "Crypt Tome":
-		return "chaosray"
-	case "Blue Tome":
-		return "fractalbloom"
-	case "Verdant Tome":
-		return "fractalcanopy"
-	default:
-		return ""
-	}
-}
-
-// syncEquippedTomesToSpells mirrors the player's equipped tomes (any 5) to the spell controller.
-func (g *Game) syncEquippedTomesToSpells() {
-	if g.player == nil || g.player.Equipment == nil || g.SpellCtrl == nil || g.HUD == nil {
+// refreshSpellHUD mirrors controller cooldown state to the HUD each frame.
+func (g *Game) refreshSpellHUD() {
+	if g.SpellCtrl == nil || g.HUD == nil {
 		return
 	}
-
-	// 1) Collect up to 5 tome-derived spell names from Equipment in a stable order.
-	// We don't rely on a specific slot name; any equipped tome counts.
-	keys := make([]string, 0, len(g.player.Equipment))
-	for k := range g.player.Equipment {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	equippedSpells := make([]string, 0, 5)
-	for _, k := range keys {
-		if it := g.player.Equipment[k]; it != nil {
-			if name := mapTomeNameToSpell(it.Name); name != "" {
-				equippedSpells = append(equippedSpells, name)
-				if len(equippedSpells) == 5 {
-					break
-				}
-			}
-		}
-	}
-
-	// 2) Revoke any item-granted spells no longer present.
-	//    (Anything known as SourceItem but not in equippedSpells gets revoked.)
-	isEquipped := map[string]bool{}
-	for _, n := range equippedSpells {
-		isEquipped[n] = true
-	}
-	// controller.known is private, so revoke defensively by checking every slot + “expected” map
-	// Start by clearing all controller slots, then re-equip from equippedSpells.
-	for i := 0; i < spells.SlotCount; i++ {
-		g.SpellCtrl.Unequip(i)
-	}
-	// Revoke any previously item-granted spell that isn't equipped now.
-	// We can discover candidates by asking every registry entry we might have mapped from tomes:
-	for _, candidate := range []string{"fireball", "lightning", "chaosray", "fractalbloom", "fractalcanopy"} {
-		if !isEquipped[candidate] {
-			g.SpellCtrl.RevokeFromItem(candidate)
-		}
-	}
-
-	// 3) Ensure everything currently equipped is granted from item + equip into slots 0..N
-	for i, name := range equippedSpells {
-		g.SpellCtrl.GrantFromItem(name)
-		_ = g.SpellCtrl.Equip(i, name)
-	}
-
-	// 4) Mirror controller → HUD (icons + cooldown)
-	//    Read each equipped slot’s SpellDef and the caster cooldowns.
-	for i := 0; i < 5; i++ {
-		var icon *ebiten.Image
-		var cd float64
-
-		if i < spells.SlotCount {
-			slot := g.SpellCtrl.Slot(i) // add a tiny helper if you don’t have one; see below
-			if slot != "" {
-				if def := g.SpellCtrl.Def(slot); def != nil {
-					icon = def.Icon
-					// cooldown fraction is shown inside HUD; HUD expects raw seconds remaining.
-					cd = g.SpellCtrl.Caster.Cooldowns[def.Name]
-				}
-			}
-		}
-		g.HUD.SkillSlots[i].Icon = icon
-		g.HUD.SkillSlots[i].Cooldown = cd
-	}
+	icons, remaining, totals, infos := g.SpellCtrl.SlotsForHUD()
+	g.HUD.SetSkillSlots(icons, remaining, totals, infos)
 }
