@@ -105,6 +105,19 @@ type Controller struct {
 	now func() time.Time
 }
 
+// EffectResolver applies per-frame spell effects such as damage, healing, or
+// other game-specific interactions. Game implements this interface so the
+// controller can remain agnostic of monsters, HUD, etc.
+type EffectResolver interface {
+	ResolveSpellEffects(sp Spell, level *levels.Level)
+}
+
+// SpawnTaker is implemented by spells that can spawn child spell instances
+// (e.g. lightning storms spawning strikes, fractal blooms spawning nodes).
+type SpawnTaker interface {
+	TakeSpawns() []Spell
+}
+
 // NewController creates a fresh controller.
 func NewController() *Controller {
 	return &Controller{
@@ -148,6 +161,9 @@ func (sc *Controller) RevokeFromItem(spellName string) {
 	}
 	if src == SourceItem {
 		delete(sc.known, spellName)
+		if sc.Caster != nil {
+			delete(sc.Caster.Cooldowns, spellName)
+		}
 		// remove from any slot
 		for i := range sc.slots {
 			if sc.slots[i].Name == spellName {
@@ -204,31 +220,30 @@ func (sc *Controller) Unequip(slot int) {
 // Update should be called once per frame.
 // - ticks global cooldowns on Caster (you already implemented) :contentReference[oaicite:3]{index=3}
 // - updates active spell instances and prunes finished ones
-func (sc *Controller) Update(level *levels.Level, dt float64) {
+func (sc *Controller) Update(level *levels.Level, dt float64, resolver EffectResolver) {
 	// tick cooldowns
 	sc.Caster.Update(dt) // your Ready/PutOnCooldown logic uses this map :contentReference[oaicite:4]{index=4}
 
 	// update active instances
 	dst := sc.Active[:0]
+	var additions []Spell
 	for _, s := range sc.Active {
 		s.Update(level, dt)
-		type spawnTaker[T any] interface{ TakeSpawns() []T }
-
-		if st, ok := any(s).(spawnTaker[*LightningStrike]); ok {
-			children := st.TakeSpawns()
-			for _, ch := range children {
-				sc.Active = append(sc.Active, ch)
-			}
+		if resolver != nil {
+			resolver.ResolveSpellEffects(s, level)
 		}
-		if bt, ok := any(s).(spawnTaker[*FractalNode]); ok {
-			children := bt.TakeSpawns()
-			for _, ch := range children {
-				sc.Active = append(sc.Active, ch)
+		if spawner, ok := s.(SpawnTaker); ok {
+			children := spawner.TakeSpawns()
+			if len(children) > 0 {
+				additions = append(additions, children...)
 			}
 		}
 		if !s.IsFinished() {
 			dst = append(dst, s)
 		}
+	}
+	if len(additions) > 0 {
+		dst = append(dst, additions...)
 	}
 	sc.Active = dst
 }
@@ -254,6 +269,9 @@ func (sc *Controller) TryCast(slot int, ctx CastContext) bool {
 	// Provide spell-specific info to the factory
 	ctx.Info = def.Info
 	ctx.Icon = def.Icon
+	if ctx.Caster == nil {
+		ctx.Caster = sc.Caster
+	}
 
 	inst, err := def.Factory(ctx)
 	if err != nil || inst == nil {
@@ -393,18 +411,20 @@ func (sc *Controller) drawCooldownPie(screen *ebiten.Image, r image.Rectangle, f
 }
 
 // SlotsForHUD returns parallel arrays of icons and cooldowns for the HUD to paint.
-func (sc *Controller) SlotsForHUD() (icons [SlotCount]*ebiten.Image, cds [SlotCount]float64) {
+func (sc *Controller) SlotsForHUD() (icons [SlotCount]*ebiten.Image, remaining [SlotCount]float64, totals [SlotCount]float64, infos [SlotCount]SpellInfo) {
 	for i, s := range sc.slots {
 		if s.Name == "" {
 			continue
 		}
-		if def, ok := sc.registry[s.Name]; ok && def.Icon != nil {
-			icons[i] = def.Icon
+		def, ok := sc.registry[s.Name]
+		if !ok {
+			continue
 		}
+		icons[i] = def.Icon
+		infos[i] = def.Info
+		totals[i] = def.Info.Cooldown
 		if sc.Caster != nil {
-			if cd, ok := sc.Caster.Cooldowns[s.Name]; ok {
-				cds[i] = cd
-			}
+			remaining[i] = sc.Caster.Cooldowns[def.Name]
 		}
 	}
 	return
@@ -419,4 +439,35 @@ func (sc *Controller) Slot(i int) string {
 		return ""
 	}
 	return sc.slots[i].Name
+}
+
+// SlotIndex returns the first quick-slot index containing the given spell.
+func (sc *Controller) SlotIndex(name string) int {
+	for i, slot := range sc.slots {
+		if slot.Name == name {
+			return i
+		}
+	}
+	return -1
+}
+
+// HasEquipped reports whether a spell is equipped in the specified slot.
+func (sc *Controller) HasEquipped(slot int) bool {
+	if slot < 0 || slot >= len(sc.slots) {
+		return false
+	}
+	return sc.slots[slot].Name != ""
+}
+
+// ClearItemSpells removes all item-granted spells and clears their slots.
+func (sc *Controller) ClearItemSpells() {
+	names := make([]string, 0, len(sc.known))
+	for name, src := range sc.known {
+		if src == SourceItem {
+			names = append(names, name)
+		}
+	}
+	for _, name := range names {
+		sc.RevokeFromItem(name)
+	}
 }

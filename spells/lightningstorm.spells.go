@@ -84,10 +84,11 @@ func (ls *LightningStorm) Update(level *levels.Level, dt float64) {
 			if ls.ImpactImg != nil {
 				strike := NewLightningStrike(
 					SpellInfo{
-						Name:     "lightning",
-						Level:    1,
-						Cooldown: 0.01,
-						Damage:   ls.Info.Damage,
+						Name:        "lightning",
+						DisplayName: "Lightning",
+						Level:       1,
+						Cooldown:    0.01,
+						Damage:      ls.Info.Damage,
 					},
 					float64(tile.X), float64(tile.Y), ls.ImpactImg,
 				)
@@ -130,8 +131,14 @@ func abs(x int) int {
 func (ls *LightningStorm) IsFinished() bool { return ls.Finished }
 
 // TakeSpawns returns any LightningStrikes created since the last call.
-func (ls *LightningStorm) TakeSpawns() []*LightningStrike {
-	out := ls.spawned
+func (ls *LightningStorm) TakeSpawns() []Spell {
+	if len(ls.spawned) == 0 {
+		return nil
+	}
+	out := make([]Spell, len(ls.spawned))
+	for i, s := range ls.spawned {
+		out[i] = s
+	}
 	ls.spawned = nil
 	return out
 }
