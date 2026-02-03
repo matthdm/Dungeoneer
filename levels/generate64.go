@@ -39,12 +39,7 @@ var currentCenters []image.Point
 var currentParams GenParams
 var rng *rand.Rand
 var roomMask [][]bool
-
-type doorCandidate struct {
-	X, Y int
-	Dx   int
-	Dy   int
-}
+var corridorMask [][]bool
 
 func Generate64x64(p GenParams) *Level {
 	if p.Width == 0 {
@@ -81,7 +76,9 @@ func Generate64x64(p GenParams) *Level {
 		p.RoomHMax = p.RoomHMin
 	}
 	if p.CorridorWidth == 0 {
-		p.CorridorWidth = 3
+		p.CorridorWidth = 1
+	} else {
+		p.CorridorWidth = 1
 	}
 	if p.DashLaneMinLen == 0 {
 		p.DashLaneMinLen = 8
@@ -125,21 +122,26 @@ func Generate64x64(p GenParams) *Level {
 	for y := range roomMask {
 		roomMask[y] = make([]bool, p.Width)
 	}
+	corridorMask = make([][]bool, p.Height)
+	for y := range corridorMask {
+		corridorMask[y] = make([]bool, p.Width)
+	}
 	rooms := growRooms(l, centers, p, rng)
 	edges := connectKNN(centers, 3)
 	edges = mstPlusExtras(edges, centers, p.Extras, rng)
-	var doorCandidates []doorCandidate
-	carveCorridors(l, edges, p.CorridorWidth, &doorCandidates)
-	widenPinches(l, p.CorridorWidth)
-	optionalPerimeterLoop(l, p.CorridorWidth, p.CorridorWidth/2, true) // 30% chance
+	carveCorridors(l, edges, p.CorridorWidth)
+	// Corridors must remain exactly 1 tile wide; no widening passes.
+	// Do not carve a perimeter loop; it creates a moat between walls and void.
+	optionalPerimeterLoop(l, p.CorridorWidth, corridorHalf(p.CorridorWidth), false)
 	tagDashLanes(l, p.CorridorWidth, p.DashLaneMinLen)
 	placeGrappleAnchors(l, rooms, p.GrappleRange, rng)
 	pruneDeadEnds(l, 3)
 	ensureConnectivity(l)     // Connectivity check ignores doors (treats them as walkable)
 	growToCoverage(l, p, rng) // NEW
 	ensureConnectivity(l)     // Ensure all filler rooms are connected
-	placeDoorsFromCandidates(l, doorCandidates, p, rng) // Place doors after carving
+	sealWalkableEdges(l)
 	if ss != nil {
+		wallMask := buildWallMask(l)
 		// Try to load flavored sheets; fall back to base if unavailable
 		var floorImg, wallImg = ss.Floor, ss.DungeonWall
 
@@ -163,14 +165,20 @@ func Generate64x64(p GenParams) *Level {
 				// If you have layer-aware clears, use them; otherwise this is fine.
 				// t.ClearSprites()
 
+				if t.HasTag(tiles.TagDoor) {
+					// Doors should not get wall sprites; keep floor under the door.
+					t.AddSpriteByID(p.FloorFlavor+"_floor", floorImg)
+					continue
+				}
 				if t.IsWalkable {
 					t.AddSpriteByID(p.FloorFlavor+"_floor", floorImg)
-				} else {
+				} else if wallMask[y][x] {
 					t.AddSpriteByID(p.WallFlavor+"_wall", wallImg)
 				}
 			}
 		}
 	}
+	placeDoorsFromValidatedThroats(l, p)
 	return l
 }
 
@@ -218,7 +226,7 @@ func growToCoverage(L *Level, p GenParams, rng *rand.Rand) {
 	budget := max(p.FillerRoomsMax, estBlobs)
 	maxAttempts := max(50, budget*6) // generous attempt budget
 
-	cw := max(1, p.CorridorWidth/2)
+	cw := corridorHalf(p.CorridorWidth)
 	attempts := 0
 	for coverage(L) < target && attempts < maxAttempts {
 		attempts++
@@ -516,9 +524,11 @@ func bspRegions(w, h, depth int, rng *rand.Rand) []rect {
 }
 
 func poissonInRegions(rs []rect, p GenParams, rng *rand.Rand) []image.Point {
-	minR2 := 100
-	marginX := p.CorridorWidth + p.RoomWMax/2
-	marginY := p.CorridorWidth + p.RoomHMax/2
+	maxRoom := max(p.RoomWMax, p.RoomHMax)
+	minDist := maxRoom + 2
+	minR2 := minDist * minDist
+	marginX := 1 + p.RoomWMax/2
+	marginY := 1 + p.RoomHMax/2
 	var pts []image.Point
 	for _, r := range rs {
 		if rng.IntN(100) < 20 {
@@ -574,7 +584,7 @@ var centerIndexToRoom = map[int]rect{} // add near top (file-scope)
 
 func growRooms(L *Level, centers []image.Point, p GenParams, rng *rand.Rand) []rect {
 	rooms := make([]rect, len(centers))
-	margin := p.CorridorWidth
+	margin := 1
 	for i, c := range centers {
 		w := p.RoomWMin + rng.IntN(p.RoomWMax-p.RoomWMin+1)
 		h := p.RoomHMin + rng.IntN(p.RoomHMax-p.RoomHMin+1)
@@ -693,8 +703,15 @@ func mstPlusExtras(edges []edge, pts []image.Point, extras int, rng *rand.Rand) 
 	return result
 }
 
-func carveCorridors(L *Level, es []edge, W int, doors *[]doorCandidate) {
-	half := max(1, W/2)
+func corridorHalf(w int) int {
+	if w <= 1 {
+		return 0
+	}
+	return w / 2
+}
+
+func carveCorridors(L *Level, es []edge, W int) {
+	half := corridorHalf(W)
 	for _, e := range es {
 		aCenter := currentCenters[e.A]
 		bCenter := currentCenters[e.B]
@@ -702,21 +719,67 @@ func carveCorridors(L *Level, es []edge, W int, doors *[]doorCandidate) {
 		rb := centerIndexToRoom[e.B]
 		sa := doorToward(ra, bCenter)
 		sb := doorToward(rb, aCenter)
-		if doors != nil {
-			dxa := sign(bCenter.X - sa.X)
-			dya := sign(bCenter.Y - sa.Y)
-			dxb := sign(aCenter.X - sb.X)
-			dyb := sign(aCenter.Y - sb.Y)
-			*doors = append(*doors,
-				doorCandidate{X: sa.X, Y: sa.Y, Dx: dxa, Dy: dya},
-				doorCandidate{X: sb.X, Y: sb.Y, Dx: dxb, Dy: dyb},
-			)
-		}
 		// Keep a single-tile doorway at the room edge, then carve the corridor.
-		startX, startY := sa.X+sign(bCenter.X-sa.X), sa.Y+sign(bCenter.Y-sa.Y)
-		endX, endY := sb.X+sign(aCenter.X-sb.X), sb.Y+sign(aCenter.Y-sb.Y)
-		carveL(L, startX, startY, endX, endY, half)
+		if countOverlapL(L, sa.X, sa.Y, sb.X, sb.Y, true) <= countOverlapL(L, sa.X, sa.Y, sb.X, sb.Y, false) {
+			carveLOrdered(L, sa.X, sa.Y, sb.X, sb.Y, half, true)
+		} else {
+			carveLOrdered(L, sa.X, sa.Y, sb.X, sb.Y, half, false)
+		}
 	}
+}
+
+func carveLOrdered(L *Level, x1, y1, x2, y2, half int, horizFirst bool) {
+	if horizFirst {
+		carveCorridorSegment(L, x1, y1, x2, y1, half)
+		carveCorridorSegment(L, x2, y1, x2, y2, half)
+		carveDisk(L, x2, y1, half)
+		return
+	}
+	carveCorridorSegment(L, x1, y1, x1, y2, half)
+	carveCorridorSegment(L, x1, y2, x2, y2, half)
+	carveDisk(L, x1, y2, half)
+}
+
+func countOverlapL(L *Level, x1, y1, x2, y2 int, horizFirst bool) int {
+	count := 0
+	if horizFirst {
+		count += countOverlapSegment(L, x1, y1, x2, y1)
+		count += countOverlapSegment(L, x2, y1, x2, y2)
+		return count
+	}
+	count += countOverlapSegment(L, x1, y1, x1, y2)
+	count += countOverlapSegment(L, x1, y2, x2, y2)
+	return count
+}
+
+func countOverlapSegment(L *Level, x1, y1, x2, y2 int) int {
+	count := 0
+	if x1 == x2 {
+		if y1 > y2 {
+			y1, y2 = y2, y1
+		}
+		for y := y1; y <= y2; y++ {
+			if inBounds(L, x1, y) && len(roomMask) > 0 && !roomMask[y][x1] {
+				if corridorMask[y][x1] {
+					count++
+				}
+			}
+		}
+		return count
+	}
+	if y1 == y2 {
+		if x1 > x2 {
+			x1, x2 = x2, x1
+		}
+		for x := x1; x <= x2; x++ {
+			if inBounds(L, x, y1) && len(roomMask) > 0 && !roomMask[y1][x] {
+				if corridorMask[y1][x] {
+					count++
+				}
+			}
+		}
+	}
+	return count
 }
 
 func carveCorridorSegment(L *Level, x1, y1, x2, y2, half int) {
@@ -729,6 +792,9 @@ func carveCorridorSegment(L *Level, x1, y1, x2, y2, half int) {
 				nx := x1 + dx
 				if nx >= 0 && nx < L.W && y >= 0 && y < L.H {
 					L.Tiles[y][nx].IsWalkable = true
+					if len(corridorMask) > 0 {
+						corridorMask[y][nx] = true
+					}
 				}
 			}
 		}
@@ -741,6 +807,9 @@ func carveCorridorSegment(L *Level, x1, y1, x2, y2, half int) {
 				ny := y1 + dy
 				if x >= 0 && x < L.W && ny >= 0 && ny < L.H {
 					L.Tiles[ny][x].IsWalkable = true
+					if len(corridorMask) > 0 {
+						corridorMask[ny][x] = true
+					}
 				}
 			}
 		}
@@ -878,8 +947,8 @@ func isWideFloor(L *Level, x, y, half int, horiz bool) bool {
 	return true
 }
 
-// placeDoorsFromCandidates places doors at corridor endpoints after carving.
-func placeDoorsFromCandidates(L *Level, candidates []doorCandidate, p GenParams, rng *rand.Rand) {
+// placeDoorsByThroats places doors on "throat" tiles that separate two walkable regions.
+func placeDoorsByThroats(L *Level, p GenParams, rng *rand.Rand) {
 	// Try to load wall sprite sheet for door sprites
 	var wss *sprites.WallSpriteSheet
 	var err error
@@ -894,17 +963,61 @@ func placeDoorsFromCandidates(L *Level, candidates []doorCandidate, p GenParams,
 		}
 	}
 
-	seen := make(map[[2]int]bool)
-	for _, c := range candidates {
-		key := [2]int{c.X, c.Y}
-		if seen[key] {
-			continue
-		}
-		seen[key] = true
-		if !inBounds(L, c.X, c.Y) {
-			continue
-		}
-		if x, y, orient, ok := findDoorNearCandidate(L, c); ok {
+	limit := 18
+	visited := make([][]int, L.H)
+	for y := range visited {
+		visited[y] = make([]int, L.W)
+	}
+	stamp := 0
+
+	for y := 1; y < L.H-1; y++ {
+		for x := 1; x < L.W-1; x++ {
+			t := L.Tile(x, y)
+			if t == nil || !t.IsWalkable || t.HasTag(tiles.TagDoor) {
+				continue
+			}
+
+			up := L.Tiles[y-1][x].IsWalkable
+			down := L.Tiles[y+1][x].IsWalkable
+			left := L.Tiles[y][x-1].IsWalkable
+			right := L.Tiles[y][x+1].IsWalkable
+
+			walkableNeighbors := 0
+			if up {
+				walkableNeighbors++
+			}
+			if down {
+				walkableNeighbors++
+			}
+			if left {
+				walkableNeighbors++
+			}
+			if right {
+				walkableNeighbors++
+			}
+			if walkableNeighbors != 2 {
+				continue
+			}
+
+			var orient string
+			var a, b image.Point
+			if up && down && !left && !right {
+				orient = "nw"
+				a = image.Point{x, y - 1}
+				b = image.Point{x, y + 1}
+			} else if left && right && !up && !down {
+				orient = "ne"
+				a = image.Point{x - 1, y}
+				b = image.Point{x + 1, y}
+			} else {
+				continue
+			}
+
+			stamp++
+			if throatRegionsConnect(L, a, b, x, y, limit, visited, stamp) {
+				continue
+			}
+
 			placeDoorAt(L, x, y, orient, wss, p.WallFlavor, p.DoorLockChance, rng)
 		}
 	}
@@ -914,80 +1027,130 @@ func inBounds(L *Level, x, y int) bool {
 	return x >= 0 && y >= 0 && x < L.W && y < L.H
 }
 
-func findDoorNearCandidate(L *Level, c doorCandidate) (int, int, string, bool) {
-	// Step outward until we leave the room, then try a small window.
-	steps := 8
-	x, y := c.X, c.Y
-	for i := 0; i < steps; i++ {
-		if !inBounds(L, x, y) {
-			return 0, 0, "", false
-		}
-		if len(roomMask) == 0 || !roomMask[y][x] {
-			break
-		}
-		x += c.Dx
-		y += c.Dy
+func sealWalkableEdges(L *Level) {
+	if L.W == 0 || L.H == 0 {
+		return
 	}
-	for i := 0; i <= 2; i++ {
-		tx := x + c.Dx*i
-		ty := y + c.Dy*i
-		if !inBounds(L, tx, ty) {
-			break
-		}
-		if orient, ok := doorOrientationAt(L, tx, ty); ok {
-			return tx, ty, orient, true
-		}
+	for x := 0; x < L.W; x++ {
+		L.Tiles[0][x].IsWalkable = false
+		L.Tiles[L.H-1][x].IsWalkable = false
 	}
-	return 0, 0, "", false
+	for y := 0; y < L.H; y++ {
+		L.Tiles[y][0].IsWalkable = false
+		L.Tiles[y][L.W-1].IsWalkable = false
+	}
 }
 
-// doorOrientationAt returns a valid orientation based on walkable tiles on opposite sides.
-func doorOrientationAt(L *Level, x, y int) (string, bool) {
-	if !inBounds(L, x, y) {
-		return "", false
+func buildWallMask(L *Level) [][]bool {
+	walls := make([][]bool, L.H)
+	for y := range walls {
+		walls[y] = make([]bool, L.W)
 	}
-	t := L.Tile(x, y)
-	if t == nil || t.HasTag(tiles.TagDoor) {
-		return "", false
-	}
-	if !t.IsWalkable {
-		return "", false
-	}
-	if len(roomMask) > 0 && roomMask[y][x] {
-		return "", false
-	}
-	nw := inBounds(L, x-1, y)
-	ne := inBounds(L, x+1, y)
-	nn := inBounds(L, x, y-1)
-	ns := inBounds(L, x, y+1)
-	if !nw || !ne || !nn || !ns {
-		return "", false
-	}
-	left := L.Tiles[y][x-1].IsWalkable
-	right := L.Tiles[y][x+1].IsWalkable
-	up := L.Tiles[y-1][x].IsWalkable
-	down := L.Tiles[y+1][x].IsWalkable
-
-	// Horizontal corridor: walkable left/right, at least one wall above/below.
-	if left && right && (!up || !down) {
-		if len(roomMask) > 0 {
-			if roomMask[y][x-1] == roomMask[y][x+1] {
-				return "", false
+	for y := 0; y < L.H; y++ {
+		for x := 0; x < L.W; x++ {
+			if L.Tiles[y][x].IsWalkable {
+				continue
+			}
+			if hasWalkableNeighbor(L, x, y) {
+				walls[y][x] = true
 			}
 		}
-		return "ne", true
 	}
-	// Vertical corridor: walkable up/down, at least one wall left/right.
-	if up && down && (!left || !right) {
-		if len(roomMask) > 0 {
-			if roomMask[y-1][x] == roomMask[y+1][x] {
-				return "", false
-			}
-		}
-		return "nw", true
-	}
-	return "", false
+	return walls
 }
+
+func hasWalkableNeighbor(L *Level, x, y int) bool {
+	for _, d := range []image.Point{{1, 0}, {-1, 0}, {0, 1}, {0, -1}} {
+		nx, ny := x+d.X, y+d.Y
+		if nx < 0 || ny < 0 || nx >= L.W || ny >= L.H {
+			continue
+		}
+		if L.Tiles[ny][nx].IsWalkable {
+			return true
+		}
+	}
+	return false
+}
+
+func placeDoorsFromValidatedThroats(L *Level, p GenParams) {
+	info := BuildThroatDebug(L, 18, 12)
+	if len(info.ValidThroats) == 0 {
+		return
+	}
+
+	var wss *sprites.WallSpriteSheet
+	var err error
+	if p.WallFlavor != "" {
+		wss, err = sprites.LoadWallSpriteSheet(p.WallFlavor)
+	}
+	if err != nil || wss == nil {
+		wss, err = sprites.LoadWallSpriteSheet("normal")
+		if err != nil {
+			return
+		}
+	}
+
+	for _, t := range info.ValidThroats {
+		if (t.IsRoomA && !t.IsRoomB) || (t.IsRoomB && !t.IsRoomA) {
+			placeUnlockedDoorAt(L, t.X, t.Y, t.Orient, wss, p.WallFlavor)
+		}
+	}
+}
+
+func placeUnlockedDoorAt(L *Level, x, y int, orientation string, wss *sprites.WallSpriteSheet, flavor string) {
+	tile := L.Tile(x, y)
+	if tile == nil || tile.HasTag(tiles.TagDoor) {
+		return
+	}
+
+	var doorImg *ebiten.Image
+	var doorID string
+	if orientation == "nw" {
+		doorImg = wss.UnlockedDoorNW
+		doorID = flavor + "_door_unlocked_nw"
+	} else {
+		doorImg = wss.UnlockedDoorNE
+		doorID = flavor + "_door_unlocked_ne"
+	}
+	if doorImg == nil {
+		return
+	}
+
+	tile.AddSpriteByID(doorID, doorImg)
+	tile.SetTag(tiles.TagDoor)
+	tile.DoorSpriteID = doorID
+	tile.DoorState = 1 // unlocked/open (metadata only; do not change walkability)
+}
+
+func throatRegionsConnect(L *Level, a, b image.Point, blockX, blockY, limit int, visited [][]int, stamp int) bool {
+	queue := []image.Point{a}
+	visited[a.Y][a.X] = stamp
+	steps := 0
+	for len(queue) > 0 && steps < limit {
+		p := queue[0]
+		queue = queue[1:]
+		steps++
+		if p.X == b.X && p.Y == b.Y {
+			return true
+		}
+		for _, d := range []image.Point{{1, 0}, {-1, 0}, {0, 1}, {0, -1}} {
+			nx, ny := p.X+d.X, p.Y+d.Y
+			if nx == blockX && ny == blockY {
+				continue
+			}
+			if !inBounds(L, nx, ny) || visited[ny][nx] == stamp {
+				continue
+			}
+			if !L.Tiles[ny][nx].IsWalkable {
+				continue
+			}
+			visited[ny][nx] = stamp
+			queue = append(queue, image.Point{nx, ny})
+		}
+	}
+	return false
+}
+
 
 // checkDoorPosition checks if a position is valid for placing a door.
 // Returns orientation and validity.
@@ -1394,6 +1557,9 @@ func carveDisk(L *Level, cx, cy, r int) {
 			dx, dy := x-cx, y-cy
 			if x >= 0 && y >= 0 && x < L.W && y < L.H && dx*dx+dy*dy <= r*r {
 				L.Tiles[y][x].IsWalkable = true
+				if len(corridorMask) > 0 {
+					corridorMask[y][x] = true
+				}
 			}
 		}
 	}

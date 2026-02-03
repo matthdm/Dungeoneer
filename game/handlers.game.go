@@ -301,6 +301,18 @@ func (g *Game) handleLevelHotkeys() {
 	if inpututil.IsKeyJustPressed(ebiten.Key0) {
 		g.FullBright = !g.FullBright
 	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyF7) {
+		g.ShowThroatValid = !g.ShowThroatValid
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyF8) {
+		g.ShowThroatInvalid = !g.ShowThroatInvalid
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyF12) {
+		g.ShowRegionDebug = !g.ShowRegionDebug
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyF11) {
+		g.ShowDoorDebug = !g.ShowDoorDebug
+	}
 	if g.State == StateGameOver && ebiten.IsKeyPressed(ebiten.KeyV) {
 		newGame, _ := NewGame()
 		*g = *newGame

@@ -3,8 +3,10 @@ package game
 import (
 	"dungeoneer/constants"
 	"dungeoneer/fov"
+	"dungeoneer/levels"
 	"dungeoneer/menumanager"
 	"dungeoneer/spells"
+	"dungeoneer/tiles"
 	"dungeoneer/ui"
 	"fmt"
 	"image"
@@ -117,6 +119,7 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 	g.drawDamageNumbers(target, scale, cx, cy)
 	g.drawHealNumbers(target, scale, cx, cy)
 	g.drawGrapple(target, scale, cx, cy)
+	g.drawThroatDebug(target, scale, cx, cy)
 
 	if scaleLater {
 		op := &ebiten.DrawImageOptions{}
@@ -226,6 +229,70 @@ func (g *Game) drawHoverTile(target *ebiten.Image, scale, cx, cy float64) {
 	}
 
 	target.DrawImage(g.highlightImage, op)
+}
+
+func (g *Game) drawThroatDebug(target *ebiten.Image, scale, cx, cy float64) {
+	if g.currentLevel == nil {
+		return
+	}
+	if !g.ShowThroatValid && !g.ShowThroatInvalid && !g.ShowRegionDebug {
+		return
+	}
+
+	info := levels.BuildThroatDebug(g.currentLevel, 18, 12)
+	if g.ShowRegionDebug {
+		for y := 0; y < g.currentLevel.H; y++ {
+			for x := 0; x < g.currentLevel.W; x++ {
+				id := info.RegionIDs[y][x]
+				if id <= 0 {
+					continue
+				}
+				isRoom := info.RegionIsRoom[id]
+				baseR, baseG, baseB := uint8(70), uint8(140), uint8(220)
+				if isRoom {
+					baseR, baseG, baseB = 80, 200, 120
+				}
+				r := uint8((int(baseR) + (id*31)%120) % 255)
+				gc := uint8((int(baseG) + (id*47)%120) % 255)
+				b := uint8((int(baseB) + (id*59)%120) % 255)
+				xi, yi := g.cartesianToIso(float64(x), float64(y))
+				op := g.getDrawOp(xi, yi, scale, cx, cy)
+				op.ColorScale.Scale(float32(r)/255.0, float32(gc)/255.0, float32(b)/255.0, 0.35)
+				target.DrawImage(g.highlightImage, op)
+			}
+		}
+	}
+
+	if g.ShowThroatInvalid {
+		for _, p := range info.Invalid {
+			xi, yi := g.cartesianToIso(float64(p.X), float64(p.Y))
+			op := g.getDrawOp(xi, yi, scale, cx, cy)
+			op.ColorScale.Scale(1.0, 0.2, 0.2, 0.6)
+			target.DrawImage(g.highlightImage, op)
+		}
+	}
+	if g.ShowThroatValid {
+		for _, p := range info.Valid {
+			xi, yi := g.cartesianToIso(float64(p.X), float64(p.Y))
+			op := g.getDrawOp(xi, yi, scale, cx, cy)
+			op.ColorScale.Scale(1.0, 0.9, 0.1, 0.7)
+			target.DrawImage(g.highlightImage, op)
+		}
+	}
+
+	if g.ShowDoorDebug {
+		for y := 0; y < g.currentLevel.H; y++ {
+			for x := 0; x < g.currentLevel.W; x++ {
+				if !g.currentLevel.Tiles[y][x].HasTag(tiles.TagDoor) {
+					continue
+				}
+				xi, yi := g.cartesianToIso(float64(x), float64(y))
+				op := g.getDrawOp(xi, yi, scale, cx, cy)
+				op.ColorScale.Scale(0.2, 0.9, 1.0, 0.6)
+				target.DrawImage(g.highlightImage, op)
+			}
+		}
+	}
 }
 
 func (g *Game) drawPathPreview(target *ebiten.Image, scale, cx, cy float64) {

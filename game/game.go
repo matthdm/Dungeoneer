@@ -74,6 +74,10 @@ type Game struct {
 	lastPlayerX, lastPlayerY float64
 	cachedRays               []fov.Line
 	FullBright               bool
+	ShowThroatValid          bool
+	ShowThroatInvalid        bool
+	ShowRegionDebug          bool
+	ShowDoorDebug            bool
 
 	// Visibility tracking
 	VisibleTiles [][]bool // true if currently visible
