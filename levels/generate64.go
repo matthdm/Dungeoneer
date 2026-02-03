@@ -9,6 +9,8 @@ import (
 	"dungeoneer/constants"
 	"dungeoneer/sprites"
 	"dungeoneer/tiles"
+
+	"github.com/hajimehoshi/ebiten/v2"
 )
 
 type GenParams struct {
@@ -23,6 +25,7 @@ type GenParams struct {
 	Extras                     int
 	CoverageTarget             float64 // e.g., 0.40–0.55 desired walkable ratio
 	FillerRoomsMax             int     // hard cap on post-pass filler rooms
+	DoorLockChance             float64 // 0.0-1.0 chance for locked doors
 	// Visual/theme
 	WallFlavor  string // e.g., "crypt", "moss", "normal"
 	FloorFlavor string // usually same list as wall flavors
@@ -35,6 +38,13 @@ type edge struct{ A, B int }
 var currentCenters []image.Point
 var currentParams GenParams
 var rng *rand.Rand
+var roomMask [][]bool
+
+type doorCandidate struct {
+	X, Y int
+	Dx   int
+	Dy   int
+}
 
 func Generate64x64(p GenParams) *Level {
 	if p.Width == 0 {
@@ -85,6 +95,9 @@ func Generate64x64(p GenParams) *Level {
 	if p.FillerRoomsMax == 0 {
 		p.FillerRoomsMax = 6
 	} // a few extra pockets
+	if p.DoorLockChance <= 0 {
+		p.DoorLockChance = 0.35
+	}
 	if p.WallFlavor == "" {
 		p.WallFlavor = "crypt"
 	}
@@ -108,17 +121,24 @@ func Generate64x64(p GenParams) *Level {
 	regions := bspRegions(p.Width, p.Height, depth, rng)
 	centers := poissonInRegions(regions, p, rng)
 	currentCenters = centers
+	roomMask = make([][]bool, p.Height)
+	for y := range roomMask {
+		roomMask[y] = make([]bool, p.Width)
+	}
 	rooms := growRooms(l, centers, p, rng)
 	edges := connectKNN(centers, 3)
 	edges = mstPlusExtras(edges, centers, p.Extras, rng)
-	carveCorridors(l, edges, p.CorridorWidth)
+	var doorCandidates []doorCandidate
+	carveCorridors(l, edges, p.CorridorWidth, &doorCandidates)
 	widenPinches(l, p.CorridorWidth)
 	optionalPerimeterLoop(l, p.CorridorWidth, p.CorridorWidth/2, true) // 30% chance
 	tagDashLanes(l, p.CorridorWidth, p.DashLaneMinLen)
 	placeGrappleAnchors(l, rooms, p.GrappleRange, rng)
 	pruneDeadEnds(l, 3)
-	ensureConnectivity(l)
+	ensureConnectivity(l)     // Connectivity check ignores doors (treats them as walkable)
 	growToCoverage(l, p, rng) // NEW
+	ensureConnectivity(l)     // Ensure all filler rooms are connected
+	placeDoorsFromCandidates(l, doorCandidates, p, rng) // Place doors after carving
 	if ss != nil {
 		// Try to load flavored sheets; fall back to base if unavailable
 		var floorImg, wallImg = ss.Floor, ss.DungeonWall
@@ -211,11 +231,31 @@ func growToCoverage(L *Level, p GenParams, rng *rand.Rand) {
 		// carve a compact blob based on min room sizes, with a little randomness
 		rw := clampi(p.RoomWMin-2, 4, 9) + rng.IntN(3) // 4–11
 		rh := clampi(p.RoomHMin-2, 4, 9) + rng.IntN(3)
-		carveRect(L, sx-rw/2, sy-rh/2, rw, rh)
+		rx := max(1, sx-rw/2)
+		ry := max(1, sy-rh/2)
+		rw = min(rw, L.W-rx-1)
+		rh = min(rh, L.H-ry-1)
+		if rw < 3 || rh < 3 {
+			continue // skip too-small rooms
+		}
+		carveRect(L, rx, ry, rw, rh)
 
-		// connect to closest existing walkable to avoid isolated islands
-		if tx, ty, ok2 := nearestWalkable(L, sx, sy); ok2 {
-			carveL(L, sx, sy, tx, ty, cw)
+		// Find best connection point on the new room's edge
+		roomCenterX := rx + rw/2
+		roomCenterY := ry + rh/2
+		roomEdgeX, roomEdgeY := findRoomEdgeConnectionPoint(L, rx, ry, rw, rh)
+
+		// Connect to closest existing walkable using room edge point
+		if tx, ty, ok2 := nearestWalkable(L, roomEdgeX, roomEdgeY); ok2 {
+			carveL(L, roomEdgeX, roomEdgeY, tx, ty, cw)
+			// Verify connection was successful by checking if room is now connected
+			comps := floodComponents(L)
+			if len(comps) > 1 {
+				// Connection failed, try direct path from room center
+				if tx2, ty2, ok3 := nearestWalkable(L, roomCenterX, roomCenterY); ok3 {
+					carveL(L, roomCenterX, roomCenterY, tx2, ty2, cw)
+				}
+			}
 		}
 	}
 }
@@ -272,9 +312,37 @@ func nearestWalkableDist(L *Level, x, y, window int) int {
 	return best
 }
 
+// nearestWalkable finds the nearest walkable tile to the given point.
+// It first searches locally (within a window) for efficiency, then falls back to full search.
 func nearestWalkable(L *Level, x, y int) (int, int, bool) {
+	// First try local window search (much faster)
+	window := 20
+	x0, x1 := max(0, x-window), min(L.W-1, x+window)
+	y0, y1 := max(0, y-window), min(L.H-1, y+window)
+
 	best := 1 << 30
 	bx, by := 0, 0
+	found := false
+
+	for yy := y0; yy <= y1; yy++ {
+		for xx := x0; xx <= x1; xx++ {
+			if !L.Tiles[yy][xx].IsWalkable {
+				continue
+			}
+			d := (xx-x)*(xx-x) + (yy-y)*(yy-y)
+			if d < best {
+				best, bx, by = d, xx, yy
+				found = true
+			}
+		}
+	}
+
+	if found {
+		return bx, by, true
+	}
+
+	// Fall back to full grid search if nothing found locally
+	best = 1 << 30
 	for yy := 0; yy < L.H; yy++ {
 		for xx := 0; xx < L.W; xx++ {
 			if !L.Tiles[yy][xx].IsWalkable {
@@ -290,6 +358,78 @@ func nearestWalkable(L *Level, x, y int) (int, int, bool) {
 		return 0, 0, false
 	}
 	return bx, by, true
+}
+
+// findRoomEdgeConnectionPoint finds the best point on a room's edge to connect from.
+// It tries to find a point that faces the nearest existing walkable area.
+func findRoomEdgeConnectionPoint(L *Level, rx, ry, rw, rh int) (int, int) {
+	cx := rx + rw/2
+	cy := ry + rh/2
+
+	// Try to find nearest walkable to determine best edge
+	if tx, ty, ok := nearestWalkableLocal(L, cx, cy, 15); ok {
+		dx := tx - cx
+		dy := ty - cy
+
+		// Determine which edge to use based on direction to nearest walkable
+		if abs(dx) > abs(dy) {
+			// Horizontal connection
+			if dx > 0 {
+				// Connect from right edge
+				return rx + rw - 1, clamp(ty, ry, ry+rh-1)
+			} else {
+				// Connect from left edge
+				return rx, clamp(ty, ry, ry+rh-1)
+			}
+		} else {
+			// Vertical connection
+			if dy > 0 {
+				// Connect from bottom edge
+				return clamp(tx, rx, rx+rw-1), ry + rh - 1
+			} else {
+				// Connect from top edge
+				return clamp(tx, rx, rx+rw-1), ry
+			}
+		}
+	}
+
+	// Fallback: use center of closest edge to level center
+	levelCenterX := L.W / 2
+	levelCenterY := L.H / 2
+	if cx < levelCenterX {
+		return rx + rw - 1, cy // right edge
+	} else if cx > levelCenterX {
+		return rx, cy // left edge
+	} else if cy < levelCenterY {
+		return cx, ry + rh - 1 // bottom edge
+	} else {
+		return cx, ry // top edge
+	}
+}
+
+// nearestWalkableLocal searches for the nearest walkable tile within a local window.
+func nearestWalkableLocal(L *Level, x, y, window int) (int, int, bool) {
+	x0, x1 := max(0, x-window), min(L.W-1, x+window)
+	y0, y1 := max(0, y-window), min(L.H-1, y+window)
+
+	best := 1 << 30
+	bx, by := 0, 0
+	found := false
+
+	for yy := y0; yy <= y1; yy++ {
+		for xx := x0; xx <= x1; xx++ {
+			if !L.Tiles[yy][xx].IsWalkable {
+				continue
+			}
+			d := (xx-x)*(xx-x) + (yy-y)*(yy-y)
+			if d < best {
+				best, bx, by = d, xx, yy
+				found = true
+			}
+		}
+	}
+
+	return bx, by, found
 }
 
 func carveRect(L *Level, x, y, w, h int) {
@@ -458,6 +598,9 @@ func growRooms(L *Level, centers []image.Point, p GenParams, rng *rand.Rand) []r
 		for yy := y; yy < y+h; yy++ {
 			for xx := x; xx < x+w; xx++ {
 				L.Tiles[yy][xx].IsWalkable = true
+				if yy >= 0 && yy < len(roomMask) && xx >= 0 && xx < len(roomMask[yy]) {
+					roomMask[yy][xx] = true
+				}
 			}
 		}
 	}
@@ -550,7 +693,7 @@ func mstPlusExtras(edges []edge, pts []image.Point, extras int, rng *rand.Rand) 
 	return result
 }
 
-func carveCorridors(L *Level, es []edge, W int) {
+func carveCorridors(L *Level, es []edge, W int, doors *[]doorCandidate) {
 	half := max(1, W/2)
 	for _, e := range es {
 		aCenter := currentCenters[e.A]
@@ -559,10 +702,20 @@ func carveCorridors(L *Level, es []edge, W int) {
 		rb := centerIndexToRoom[e.B]
 		sa := doorToward(ra, bCenter)
 		sb := doorToward(rb, aCenter)
-		carveL(L, sa.X, sa.Y, sb.X, sb.Y, half)
-		// widen door mouths slightly
-		carveDisk(L, sa.X, sa.Y, half)
-		carveDisk(L, sb.X, sb.Y, half)
+		if doors != nil {
+			dxa := sign(bCenter.X - sa.X)
+			dya := sign(bCenter.Y - sa.Y)
+			dxb := sign(aCenter.X - sb.X)
+			dyb := sign(aCenter.Y - sb.Y)
+			*doors = append(*doors,
+				doorCandidate{X: sa.X, Y: sa.Y, Dx: dxa, Dy: dya},
+				doorCandidate{X: sb.X, Y: sb.Y, Dx: dxb, Dy: dyb},
+			)
+		}
+		// Keep a single-tile doorway at the room edge, then carve the corridor.
+		startX, startY := sa.X+sign(bCenter.X-sa.X), sa.Y+sign(bCenter.Y-sa.Y)
+		endX, endY := sb.X+sign(aCenter.X-sb.X), sb.Y+sign(aCenter.Y-sb.Y)
+		carveL(L, startX, startY, endX, endY, half)
 	}
 }
 
@@ -725,6 +878,251 @@ func isWideFloor(L *Level, x, y, half int, horiz bool) bool {
 	return true
 }
 
+// placeDoorsFromCandidates places doors at corridor endpoints after carving.
+func placeDoorsFromCandidates(L *Level, candidates []doorCandidate, p GenParams, rng *rand.Rand) {
+	// Try to load wall sprite sheet for door sprites
+	var wss *sprites.WallSpriteSheet
+	var err error
+	if p.WallFlavor != "" {
+		wss, err = sprites.LoadWallSpriteSheet(p.WallFlavor)
+	}
+	if err != nil || wss == nil {
+		// Fall back to normal flavor
+		wss, err = sprites.LoadWallSpriteSheet("normal")
+		if err != nil {
+			return // Can't place doors without door sprites
+		}
+	}
+
+	seen := make(map[[2]int]bool)
+	for _, c := range candidates {
+		key := [2]int{c.X, c.Y}
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+		if !inBounds(L, c.X, c.Y) {
+			continue
+		}
+		if x, y, orient, ok := findDoorNearCandidate(L, c); ok {
+			placeDoorAt(L, x, y, orient, wss, p.WallFlavor, p.DoorLockChance, rng)
+		}
+	}
+}
+
+func inBounds(L *Level, x, y int) bool {
+	return x >= 0 && y >= 0 && x < L.W && y < L.H
+}
+
+func findDoorNearCandidate(L *Level, c doorCandidate) (int, int, string, bool) {
+	// Step outward until we leave the room, then try a small window.
+	steps := 8
+	x, y := c.X, c.Y
+	for i := 0; i < steps; i++ {
+		if !inBounds(L, x, y) {
+			return 0, 0, "", false
+		}
+		if len(roomMask) == 0 || !roomMask[y][x] {
+			break
+		}
+		x += c.Dx
+		y += c.Dy
+	}
+	for i := 0; i <= 2; i++ {
+		tx := x + c.Dx*i
+		ty := y + c.Dy*i
+		if !inBounds(L, tx, ty) {
+			break
+		}
+		if orient, ok := doorOrientationAt(L, tx, ty); ok {
+			return tx, ty, orient, true
+		}
+	}
+	return 0, 0, "", false
+}
+
+// doorOrientationAt returns a valid orientation based on walkable tiles on opposite sides.
+func doorOrientationAt(L *Level, x, y int) (string, bool) {
+	if !inBounds(L, x, y) {
+		return "", false
+	}
+	t := L.Tile(x, y)
+	if t == nil || t.HasTag(tiles.TagDoor) {
+		return "", false
+	}
+	if !t.IsWalkable {
+		return "", false
+	}
+	if len(roomMask) > 0 && roomMask[y][x] {
+		return "", false
+	}
+	nw := inBounds(L, x-1, y)
+	ne := inBounds(L, x+1, y)
+	nn := inBounds(L, x, y-1)
+	ns := inBounds(L, x, y+1)
+	if !nw || !ne || !nn || !ns {
+		return "", false
+	}
+	left := L.Tiles[y][x-1].IsWalkable
+	right := L.Tiles[y][x+1].IsWalkable
+	up := L.Tiles[y-1][x].IsWalkable
+	down := L.Tiles[y+1][x].IsWalkable
+
+	// Horizontal corridor: walkable left/right, at least one wall above/below.
+	if left && right && (!up || !down) {
+		if len(roomMask) > 0 {
+			if roomMask[y][x-1] == roomMask[y][x+1] {
+				return "", false
+			}
+		}
+		return "ne", true
+	}
+	// Vertical corridor: walkable up/down, at least one wall left/right.
+	if up && down && (!left || !right) {
+		if len(roomMask) > 0 {
+			if roomMask[y-1][x] == roomMask[y+1][x] {
+				return "", false
+			}
+		}
+		return "nw", true
+	}
+	return "", false
+}
+
+// checkDoorPosition checks if a position is valid for placing a door.
+// Returns orientation and validity.
+// A valid door position must:
+// 1. Be in a corridor (walkable tile) or can replace a wall between walkable areas
+// 2. Have walkable tiles on both sides (opposite directions)
+// 3. Have at least 2 adjacent walkable tiles total
+// 4. Have appropriate orientation based on the corridor/wall direction
+func checkDoorPosition(L *Level, x, y int) (string, bool) {
+	tile := L.Tile(x, y)
+	if tile == nil {
+		return "", false
+	}
+
+	// Don't place doors on tiles that already have doors
+	if tile.HasTag(tiles.TagDoor) {
+		return "", false
+	}
+
+	// Check all four cardinal directions to find positions with walkable tiles on both sides
+	dirs := []struct {
+		dx, dy int
+		orient string
+	}{
+		{1, 0, "ne"},  // Right/East - NE orientation
+		{-1, 0, "nw"}, // Left/West - NW orientation
+		{0, 1, "ne"},  // Down/South - NE orientation
+		{0, -1, "nw"}, // Up/North - NW orientation
+	}
+
+	for _, d := range dirs {
+		// Check if there are walkable tiles on both sides of this position
+		side1x, side1y := x+d.dx, y+d.dy // Side 1 (one direction)
+		side2x, side2y := x-d.dx, y-d.dy // Side 2 (opposite direction)
+
+		// Bounds check
+		if side1x < 0 || side1y < 0 || side1x >= L.W || side1y >= L.H {
+			continue
+		}
+		if side2x < 0 || side2y < 0 || side2x >= L.W || side2y >= L.H {
+			continue
+		}
+
+		tile1 := L.Tile(side1x, side1y)
+		tile2 := L.Tile(side2x, side2y)
+
+		if tile1 == nil || tile2 == nil {
+			continue
+		}
+
+		// Both sides must have walkable tiles (door connects two walkable areas)
+		if !tile1.IsWalkable || !tile2.IsWalkable {
+			continue
+		}
+
+		// Count total adjacent walkable tiles (should have at least 2)
+		adjacentCount := 0
+		adjDirs := []image.Point{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}
+		for _, adj := range adjDirs {
+			ax, ay := x+adj.X, y+adj.Y
+			if ax >= 0 && ay >= 0 && ax < L.W && ay < L.H {
+				at := L.Tile(ax, ay)
+				if at != nil && at.IsWalkable && !at.HasTag(tiles.TagDoor) {
+					adjacentCount++
+				}
+			}
+		}
+
+		if adjacentCount < 2 {
+			continue // Need at least 2 adjacent walkable tiles
+		}
+
+		// Door can be placed on either:
+		// 1. A walkable tile (in a corridor) - common case
+		// 2. A non-walkable tile (wall) if it has walkable tiles on both sides
+		// Both cases require walkable tiles on both sides (already verified above)
+
+		// If it's a wall tile, we'll make it walkable when placing the door
+		// This position is valid for a door
+		return d.orient, true
+	}
+
+	return "", false
+}
+
+// placeDoorAt places a door at the specified tile position with the given orientation.
+func placeDoorAt(L *Level, x, y int, orientation string, wss *sprites.WallSpriteSheet, flavor string, lockChance float64, rng *rand.Rand) {
+	tile := L.Tile(x, y)
+	if tile == nil {
+		return // Invalid tile
+	}
+
+	if lockChance < 0 {
+		lockChance = 0
+	}
+	if lockChance > 1 {
+		lockChance = 1
+	}
+	locked := rng.Float64() < lockChance
+
+	var doorImg *ebiten.Image
+	var doorID string
+
+	// Choose door sprite based on orientation and lock state
+	if orientation == "nw" {
+		if locked {
+			doorImg = wss.LockedDoorNW
+			doorID = flavor + "_door_locked_nw"
+			tile.DoorState = 3 // locked
+		} else {
+			doorImg = wss.LockedDoorNW
+			doorID = flavor + "_door_locked_nw"
+			tile.DoorState = 2 // closed but unlocked
+		}
+	} else { // orientation == "ne"
+		if locked {
+			doorImg = wss.LockedDoorNE
+			doorID = flavor + "_door_locked_ne"
+			tile.DoorState = 3 // locked
+		} else {
+			doorImg = wss.LockedDoorNE
+			doorID = flavor + "_door_locked_ne"
+			tile.DoorState = 2 // closed but unlocked
+		}
+	}
+
+	// Place door sprite and mark tile
+	tile.AddSpriteByID(doorID, doorImg)
+	tile.SetTag(tiles.TagDoor)
+	tile.DoorSpriteID = doorID
+
+	// Closed/locked doors block movement.
+	tile.IsWalkable = false
+}
+
 func placeGrappleAnchors(L *Level, rooms []rect, rangeTiles int, rng *rand.Rand) {
 	dirs := []image.Point{{-1, 0}, {1, 0}, {0, -1}, {0, 1}}
 	for _, r := range rooms {
@@ -839,7 +1237,9 @@ func pruneDeadEnds(L *Level, minLen int) {
 }
 
 func ensureConnectivity(L *Level) {
-	for comps := floodComponents(L); len(comps) > 1; comps = floodComponents(L) {
+	// For connectivity check, treat closed doors as walkable so we can verify
+	// all areas are reachable (doors will be opened by player)
+	for comps := floodComponentsIgnoreDoors(L); len(comps) > 1; comps = floodComponentsIgnoreDoors(L) {
 		a, b := comps[0], comps[1]
 		best := 1 << 30
 		var pa, pb image.Point
@@ -865,6 +1265,7 @@ func floodComponents(L *Level) [][]image.Point {
 	var comps [][]image.Point
 	for y := 0; y < L.H; y++ {
 		for x := 0; x < L.W; x++ {
+			// Check actual walkability (doors block movement)
 			if visited[y][x] || !L.Tiles[y][x].IsWalkable {
 				continue
 			}
@@ -889,6 +1290,48 @@ func floodComponents(L *Level) [][]image.Point {
 	return comps
 }
 
+// floodComponentsIgnoreDoors treats closed doors as walkable for connectivity checking.
+// This ensures all rooms are connected even if doors block movement initially.
+func floodComponentsIgnoreDoors(L *Level) [][]image.Point {
+	visited := make([][]bool, L.H)
+	for i := range visited {
+		visited[i] = make([]bool, L.W)
+	}
+	dirs := []image.Point{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}
+	var comps [][]image.Point
+	for y := 0; y < L.H; y++ {
+		for x := 0; x < L.W; x++ {
+			tile := L.Tiles[y][x]
+			// Treat closed doors as walkable for connectivity check
+			isReachable := tile.IsWalkable || (tile.HasTag(tiles.TagDoor) && tile.DoorState >= 2)
+			if visited[y][x] || !isReachable {
+				continue
+			}
+			queue := []image.Point{{x, y}}
+			visited[y][x] = true
+			var comp []image.Point
+			for len(queue) > 0 {
+				p := queue[0]
+				queue = queue[1:]
+				comp = append(comp, p)
+				for _, d := range dirs {
+					nx, ny := p.X+d.X, p.Y+d.Y
+					if nx >= 0 && ny >= 0 && nx < L.W && ny < L.H && !visited[ny][nx] {
+						nt := L.Tiles[ny][nx]
+						isReachable = nt.IsWalkable || (nt.HasTag(tiles.TagDoor) && nt.DoorState >= 2)
+						if isReachable {
+							visited[ny][nx] = true
+							queue = append(queue, image.Point{nx, ny})
+						}
+					}
+				}
+			}
+			comps = append(comps, comp)
+		}
+	}
+	return comps
+}
+
 func abs(x int) int {
 	if x < 0 {
 		return -x
@@ -904,6 +1347,16 @@ func clamp(v, lo, hi int) int {
 		return hi
 	}
 	return v
+}
+
+func sign(n int) int {
+	if n < 0 {
+		return -1
+	}
+	if n > 0 {
+		return 1
+	}
+	return 0
 }
 
 func doorToward(r rect, target image.Point) image.Point {

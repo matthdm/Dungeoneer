@@ -1,6 +1,9 @@
 package pathing
 
-import "dungeoneer/levels"
+import (
+	"dungeoneer/levels"
+	"dungeoneer/tiles"
+)
 
 type Node struct {
 	X, Y   int
@@ -81,6 +84,12 @@ func AStar(level *levels.Level, startX, startY, goalX, goalY int) []PathNode {
 
 			if !level.IsWalkable(nx, ny) || closed[[2]int{nx, ny}] {
 				continue
+			}
+			
+			// Check for closed/locked doors (they block movement even if tile is walkable)
+			tile := level.Tile(nx, ny)
+			if tile != nil && tile.HasTag(tiles.TagDoor) && (tile.DoorState == 2 || tile.DoorState == 3) {
+				continue // Closed/locked doors block movement
 			}
 
 			// Check if in open list

@@ -210,6 +210,10 @@ func (l Level) IsWalkable(x, y int) bool {
 	if t == nil {
 		return false
 	}
+	// Closed/locked doors block movement even if tile is walkable
+	if t.HasTag(tiles.TagDoor) && (t.DoorState == 2 || t.DoorState == 3) {
+		return false
+	}
 	return t.IsWalkable
 }
 

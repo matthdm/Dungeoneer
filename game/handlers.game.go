@@ -7,9 +7,11 @@ import (
 	"dungeoneer/menumanager"
 	"dungeoneer/movement"
 	"dungeoneer/pathing"
+	"dungeoneer/tiles"
 	"dungeoneer/ui"
 	"math"
 	"os"
+	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -150,7 +152,7 @@ func (g *Game) handleClicks() {
 		}
 	}
 
-	// Handle player attacking monster
+	// Handle player attacking monster or opening doors
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		mx, my := ebiten.CursorPosition()
 		worldX := (float64(mx)-float64(g.w/2))/g.camScale + g.camX
@@ -160,6 +162,25 @@ func (g *Game) handleClicks() {
 		cx := int(math.Floor(tx - 1.5))
 		cy := int(math.Floor(ty - 0.5))
 
+		// Check if clicking on a door first
+		if g.currentLevel != nil && g.isValidTile(cx, cy) {
+			tile := g.currentLevel.Tile(cx, cy)
+			if tile != nil && tile.HasTag(tiles.TagDoor) {
+				if entities.IsAdjacentRanged(g.player.TileX, g.player.TileY, cx, cy, 2) {
+					if tile.DoorState == 1 {
+						if g.closeDoor(cx, cy) {
+							return // Door closed, skip monster attack check
+						}
+					} else {
+						if g.openDoor(cx, cy) {
+							return // Door opened, skip monster attack check
+						}
+					}
+				}
+			}
+		}
+
+		// Handle monster attack
 		for _, m := range g.Monsters {
 			if m.IsDead {
 				continue
@@ -219,6 +240,16 @@ func (g *Game) handleLevelHotkeys() {
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyF10) {
 		g.ShowHUD = !g.ShowHUD
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyF3) {
+		if g.editor != nil {
+			g.editor.Active = !g.editor.Active
+			if g.editor.Active {
+				g.ShowHint("Editor enabled")
+			} else {
+				g.ShowHint("Editor disabled")
+			}
+		}
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyH) {
 		if g.HeroPanel != nil {
@@ -339,9 +370,64 @@ func (g *Game) handleInputPlaying() {
 	g.handleGrapple()
 	g.handlePlayerVelocity()
 	g.handleHoverTile()
+	g.handleDoorInteract()
 	g.handleClicks()
 	g.handleLevelHotkeys()
 	ui.HandleItemPaletteInput(g.player, g.ShowHint)
+}
+
+func (g *Game) handleDoorInteract() {
+	if g.player == nil || g.currentLevel == nil {
+		return
+	}
+	if !g.isValidTile(g.hoverTileX, g.hoverTileY) {
+		return
+	}
+	tile := g.currentLevel.Tile(g.hoverTileX, g.hoverTileY)
+	if tile == nil || !tile.HasTag(tiles.TagDoor) {
+		return
+	}
+	if tile.DoorState == 0 {
+		lower := ""
+		for _, s := range tile.Sprites {
+			if isDoorSpriteID(s.ID) {
+				lower = strings.ToLower(s.ID)
+				break
+			}
+		}
+		if strings.Contains(lower, "unlockeddoor") || strings.Contains(lower, "door_unlocked") {
+			tile.DoorState = 1
+			tile.IsWalkable = true
+		} else if strings.Contains(lower, "door_locked") || strings.Contains(lower, "lockeddoor") {
+			tile.DoorState = 3
+			tile.IsWalkable = false
+		}
+	}
+	if !entities.IsAdjacentRanged(g.player.TileX, g.player.TileY, g.hoverTileX, g.hoverTileY, 2) {
+		return
+	}
+
+	isoX, isoY := g.cartesianToIso(float64(g.hoverTileX), float64(g.hoverTileY))
+	hx := int((isoX-g.camX)*g.camScale + float64(g.w/2))
+	hy := int((isoY+g.camY)*g.camScale + float64(g.h/2) - 18)
+
+	if g.hintTimer == 0 {
+		switch tile.DoorState {
+		case 3:
+			g.ShowHintAt("Locked door. Press Q to unlock", hx, hy)
+		case 2:
+			g.ShowHintAt("Closed door. Click to open", hx, hy)
+		case 1:
+			g.ShowHintAt("Open door. Click to close", hx, hy)
+		default:
+			g.ShowHintAt("Closed door. Click to open", hx, hy)
+		}
+	}
+	if tile.DoorState == 3 && inpututil.IsKeyJustPressed(ebiten.KeyQ) {
+		if g.unlockDoor(g.hoverTileX, g.hoverTileY) {
+			g.ShowHintAt("Door unlocked", hx, hy)
+		}
+	}
 }
 
 func (g *Game) handlePlayerVelocity() {

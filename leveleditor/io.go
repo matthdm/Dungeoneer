@@ -18,6 +18,9 @@ type SpriteMetadata struct {
 type TileData struct {
 	SpriteIndexes []int `json:"sprite_indexes"`
 	IsWalkable    bool  `json:"is_walkable"`
+	Tags          uint8 `json:"tags"`
+	DoorState     uint8 `json:"door_state"`
+	DoorSpriteID  string `json:"door_sprite_id"`
 }
 
 type LevelData struct {
@@ -844,6 +847,9 @@ func ConvertToLevelData(level *levels.Level) *LevelData {
 			data.Tiles[y][x] = TileData{
 				SpriteIndexes: indexes,
 				IsWalkable:    t.IsWalkable,
+				Tags:          t.Tags,
+				DoorState:     t.DoorState,
+				DoorSpriteID:  t.DoorSpriteID,
 			}
 		}
 	}
@@ -868,6 +874,9 @@ func ConvertToLevel(data *LevelData) *levels.Level {
 			td := data.Tiles[y][x]
 			t := &tiles.Tile{
 				IsWalkable: td.IsWalkable,
+				Tags:       td.Tags,
+				DoorState:  td.DoorState,
+				DoorSpriteID: td.DoorSpriteID,
 			}
 
 			for _, index := range td.SpriteIndexes {

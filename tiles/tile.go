@@ -10,6 +10,7 @@ const (
 	TagNone          = 0
 	TagDashLane      = 1 << 0
 	TagGrappleAnchor = 1 << 1
+	TagDoor          = 1 << 2
 )
 
 // Tile represents a space with an x,y coordinate within a Level. Any number of
@@ -18,6 +19,9 @@ type Tile struct {
 	Sprites    []SpriteRef
 	IsWalkable bool
 	Tags       uint8
+	// Door state: 0 = no door, 1 = open, 2 = closed, 3 = locked
+	DoorState  uint8
+	DoorSpriteID string // ID of door sprite (for removal/changing)
 }
 
 type SpriteRef struct {

@@ -66,7 +66,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 
 	if g.hintTimer > 0 {
-		ebitenutil.DebugPrintAt(screen, g.hint, g.w/2-50, g.h-20)
+		ebitenutil.DebugPrintAt(screen, g.hint, g.hintX, g.hintY)
 	}
 
 }

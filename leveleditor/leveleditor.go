@@ -3,6 +3,7 @@ package leveleditor
 import (
 	"dungeoneer/levels"
 	"dungeoneer/sprites"
+	"dungeoneer/tiles"
 	"fmt"
 	"image"
 	"image/color"
@@ -206,11 +207,48 @@ func (e *Editor) PlaceSelectedSpriteAt(tx, ty int) {
 
 	tile.AddSpriteByID(id, meta.Image)
 	tile.IsWalkable = meta.IsWalkable
+	// If placing a door sprite, enforce door state and clear other door sprites.
+	if isDoorSpriteID(id) {
+		// Remove any existing door sprites so there is only one active state.
+		pruned := tile.Sprites[:0]
+		for _, s := range tile.Sprites {
+			if !isDoorSpriteID(s.ID) {
+				pruned = append(pruned, s)
+			}
+		}
+		pruned = append(pruned, tiles.SpriteRef{ID: id, Image: meta.Image})
+		tile.Sprites = pruned
+		applyDoorState(tile, id)
+	}
 	lower := strings.ToLower(id)
 	if strings.Contains(lower, "stairsascending") || strings.Contains(lower, "stairsdecending") || strings.Contains(lower, "stairsdescending") {
 		if e.OnStairPlaced != nil {
 			e.OnStairPlaced(tx, ty, id)
 		}
+	}
+}
+
+func isDoorSpriteID(id string) bool {
+	lower := strings.ToLower(id)
+	return strings.Contains(lower, "door_locked") || strings.Contains(lower, "door_unlocked") ||
+		strings.Contains(lower, "lockeddoor") || strings.Contains(lower, "unlockeddoor")
+}
+
+func applyDoorState(tile *tiles.Tile, id string) {
+	if tile == nil {
+		return
+	}
+	lower := strings.ToLower(id)
+	tile.SetTag(tiles.TagDoor)
+	tile.DoorSpriteID = id
+	if strings.Contains(lower, "door_unlocked") || strings.Contains(lower, "unlockeddoor") {
+		tile.DoorState = 1 // open
+		tile.IsWalkable = true
+		return
+	}
+	if strings.Contains(lower, "door_locked") || strings.Contains(lower, "lockeddoor") {
+		tile.DoorState = 3 // locked
+		tile.IsWalkable = false
 	}
 }
 

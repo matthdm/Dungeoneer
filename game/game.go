@@ -13,6 +13,7 @@ import (
 	"dungeoneer/progression"
 	"dungeoneer/spells"
 	"dungeoneer/sprites"
+	"dungeoneer/tiles"
 	"dungeoneer/ui"
 	"fmt"
 	"image"
@@ -84,6 +85,8 @@ type Game struct {
 
 	hintTimer int
 	hint      string
+	hintX     int
+	hintY     int
 
 	lastPlayerTileX int
 	lastPlayerTileY int
@@ -193,16 +196,19 @@ func NewGame() (*Game, error) {
 		Seed:           1,
 		Width:          64,
 		Height:         64,
-		RoomCountMin:   8,
+		RoomCountMin:   9,
 		RoomCountMax:   14,
-		RoomWMin:       6,
-		RoomWMax:       12,
-		RoomHMin:       6,
-		RoomHMax:       12,
-		CorridorWidth:  3,
-		DashLaneMinLen: 8,
-		GrappleRange:   12,
+		RoomWMin:       8,
+		RoomWMax:       14,
+		RoomHMin:       8,
+		RoomHMax:       14,
+		CorridorWidth:  1,
+		DashLaneMinLen: 7,
+		GrappleRange:   10,
 		Extras:         2,
+		CoverageTarget: 0.42,
+		FillerRoomsMax: 5,
+		DoorLockChance: 0.35,
 	}
 	g.ProcGenMenu = ui.NewProcGenMenu(g.w, g.h, defaultParams, func(p levels.GenParams) {
 		lvl := levels.Generate64x64(p)
@@ -337,7 +343,17 @@ func NewGame() (*Game, error) {
 // ShowHint displays a temporary on-screen message.
 func (g *Game) ShowHint(msg string) {
 	g.hint = msg
-	g.hintTimer = 180
+	g.hintTimer = 60
+	g.hintX = g.w/2 - 50
+	g.hintY = g.h - 20
+}
+
+// ShowHintAt displays a temporary on-screen message at a screen position.
+func (g *Game) ShowHintAt(msg string, x, y int) {
+	g.hint = msg
+	g.hintTimer = 60
+	g.hintX = x
+	g.hintY = y
 }
 
 // AddItemToPlayer tries to add an item to the player's inventory.
@@ -817,4 +833,167 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 }
 func (g *Game) isValidTile(x, y int) bool {
 	return x >= 0 && x < g.currentLevel.W && y >= 0 && y < g.currentLevel.H
+}
+
+// openDoor attempts to open a door at the specified tile coordinates.
+// Returns true if the door was opened, false if it couldn't be opened (locked or already open).
+func (g *Game) openDoor(x, y int) bool {
+	if g.currentLevel == nil {
+		return false
+	}
+	tile := g.currentLevel.Tile(x, y)
+	if tile == nil || !tile.HasTag(tiles.TagDoor) {
+		return false
+	}
+
+	// Locked doors require keys (future: check player inventory for key)
+	if tile.DoorState == 0 {
+		id := tile.DoorSpriteID
+		if id == "" {
+			for _, s := range tile.Sprites {
+				if isDoorSpriteID(s.ID) {
+					id = s.ID
+					break
+				}
+			}
+		}
+		lower := strings.ToLower(id)
+		if strings.Contains(lower, "unlockeddoor") || strings.Contains(lower, "door_unlocked") {
+			tile.DoorState = 1
+			tile.IsWalkable = true
+			g.setDoorSprite(tile, false)
+		} else {
+			tile.DoorState = 2
+			tile.IsWalkable = false
+			g.setDoorSprite(tile, true)
+		}
+	}
+	if tile.DoorState == 3 {
+		g.ShowHint("Door is locked")
+		return false
+	}
+
+	// Already open
+	if tile.DoorState == 1 {
+		return false
+	}
+
+	// Open the door (only unlocked doors can be opened)
+	if tile.DoorState == 2 {
+		tile.DoorState = 1
+		tile.IsWalkable = true
+		g.setDoorSprite(tile, false)
+
+		g.ShowHint("Door opened")
+		return true
+	}
+
+	return false
+}
+
+// unlockDoor attempts to unlock a locked door and open it.
+// Returns true if the door was unlocked/opened.
+func (g *Game) unlockDoor(x, y int) bool {
+	if g.currentLevel == nil {
+		return false
+	}
+	tile := g.currentLevel.Tile(x, y)
+	if tile == nil || !tile.HasTag(tiles.TagDoor) {
+		return false
+	}
+	if tile.DoorState != 3 {
+		return false
+	}
+	tile.DoorState = 2 // unlock (closed)
+	tile.IsWalkable = false
+	g.setDoorSprite(tile, true)
+	return g.openDoor(x, y)
+}
+
+// closeDoor closes an open door and restores collision.
+func (g *Game) closeDoor(x, y int) bool {
+	if g.currentLevel == nil {
+		return false
+	}
+	tile := g.currentLevel.Tile(x, y)
+	if tile == nil || !tile.HasTag(tiles.TagDoor) {
+		return false
+	}
+	if tile.DoorState != 1 {
+		return false
+	}
+	tile.DoorState = 2
+	tile.IsWalkable = false
+	g.setDoorSprite(tile, true)
+	g.ShowHint("Door closed")
+	return true
+}
+
+func (g *Game) setDoorSprite(tile *tiles.Tile, closed bool) {
+	if tile == nil {
+		return
+	}
+	id := tile.DoorSpriteID
+	if id == "" {
+		for _, s := range tile.Sprites {
+			if isDoorSpriteID(s.ID) {
+				id = s.ID
+				break
+			}
+		}
+		if id == "" {
+			return
+		}
+	}
+	if closed {
+		id = swapDoorSpriteID(id, true)
+	} else {
+		id = swapDoorSpriteID(id, false)
+	}
+	meta, ok := leveleditor.SpriteRegistry[id]
+	if !ok {
+		return
+	}
+	updated := false
+	for i, s := range tile.Sprites {
+		if s.ID == tile.DoorSpriteID {
+			tile.Sprites[i] = tiles.SpriteRef{ID: id, Image: meta.Image}
+			updated = true
+			break
+		}
+	}
+	if !updated {
+		tile.Sprites = append(tile.Sprites, tiles.SpriteRef{ID: id, Image: meta.Image})
+	}
+	tile.DoorSpriteID = id
+}
+
+func isDoorSpriteID(id string) bool {
+	lower := strings.ToLower(id)
+	return strings.Contains(lower, "door_locked") || strings.Contains(lower, "door_unlocked") ||
+		strings.Contains(lower, "lockeddoor") || strings.Contains(lower, "unlockeddoor")
+}
+
+// swapDoorSpriteID maps locked/unlocked variants for both flavored and base door IDs.
+// closed=true selects the locked/closed sprite; closed=false selects unlocked/open sprite.
+func swapDoorSpriteID(id string, closed bool) string {
+	if strings.Contains(id, "_door_locked_") || strings.Contains(id, "_door_unlocked_") {
+		if closed {
+			return strings.Replace(id, "_door_unlocked_", "_door_locked_", 1)
+		}
+		return strings.Replace(id, "_door_locked_", "_door_unlocked_", 1)
+	}
+	if strings.Contains(id, "LockedDoorNW") || strings.Contains(id, "UnlockedDoorNW") {
+		if closed {
+			return strings.Replace(id, "UnlockedDoorNW", "LockedDoorNW", 1)
+		}
+		return strings.Replace(id, "LockedDoorNW", "UnlockedDoorNW", 1)
+	}
+	if strings.Contains(id, "LockedDoorNE") || strings.Contains(id, "UnlockedDoorNE") {
+		if closed {
+			return strings.Replace(id, "UnlockedDoorNE", "LockedDoorNE", 1)
+		}
+		return strings.Replace(id, "LockedDoorNE", "UnlockedDoorNE", 1)
+	}
+	return id
 }
