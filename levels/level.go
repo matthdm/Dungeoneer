@@ -26,6 +26,7 @@ type Level struct {
 	Tiles    [][]*tiles.Tile // (Y,X) array of tiles
 	TileSize int
 	Entities []PlacedEntity
+	DoorDensity DoorDensityConfig
 }
 
 // NewEmptyLevel creates a Level filled entirely with non-walkable tiles.
@@ -36,6 +37,7 @@ func NewEmptyLevel(w, h int) *Level {
 		TileSize: constants.DefaultTileSize,
 		Tiles:    make([][]*tiles.Tile, h),
 		Entities: []PlacedEntity{},
+		DoorDensity: DefaultDoorDensityConfig(),
 	}
 	for y := 0; y < h; y++ {
 		row := make([]*tiles.Tile, w)
@@ -83,6 +85,7 @@ func NewDungeonLevel() (*Level, error) {
 		H:        64, //64,
 		TileSize: 64, //64,
 		Entities: []PlacedEntity{},
+		DoorDensity: DefaultDoorDensityConfig(),
 	}
 
 	// Load embedded SpriteSheet.
@@ -158,6 +161,7 @@ func NewForestLevel() (*Level, error) {
 		H:        64, //64,
 		TileSize: 64, //64,
 		Entities: []PlacedEntity{},
+		DoorDensity: DefaultDoorDensityConfig(),
 	}
 
 	// Load embedded SpriteSheet.
@@ -225,6 +229,7 @@ func CreateNewBlankLevel(width, height, tileSize int, ss *sprites.SpriteSheet) *
 		TileSize: tileSize,
 		Tiles:    make([][]*tiles.Tile, height),
 		Entities: []PlacedEntity{},
+		DoorDensity: DefaultDoorDensityConfig(),
 	}
 
 	for y := 0; y < height; y++ {
@@ -250,6 +255,7 @@ func CreateNewBlankLevelWithFloor(width, height, tileSize int, floorID string, i
 		TileSize: tileSize,
 		Tiles:    make([][]*tiles.Tile, height),
 		Entities: []PlacedEntity{},
+		DoorDensity: DefaultDoorDensityConfig(),
 	}
 	for y := 0; y < height; y++ {
 		row := make([]*tiles.Tile, width)

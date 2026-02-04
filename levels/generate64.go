@@ -27,6 +27,7 @@ type GenParams struct {
 	CoverageTarget             float64 // e.g., 0.40–0.55 desired walkable ratio
 	FillerRoomsMax             int     // hard cap on post-pass filler rooms
 	DoorLockChance             float64 // 0.0-1.0 chance for locked doors
+	DoorDensity                DoorDensityConfig
 	// Visual/theme
 	WallFlavor  string // e.g., "crypt", "moss", "normal"
 	FloorFlavor string // usually same list as wall flavors
@@ -96,6 +97,7 @@ func Generate64x64(p GenParams) *Level {
 	if p.DoorLockChance <= 0 {
 		p.DoorLockChance = 0.35
 	}
+	p.DoorDensity = normalizeDoorDensity(p.DoorDensity)
 	if p.WallFlavor == "" {
 		p.WallFlavor = "crypt"
 	}
@@ -107,6 +109,8 @@ func Generate64x64(p GenParams) *Level {
 	rng = rand.New(rand.NewPCG(uint64(p.Seed), uint64(p.Seed^0xface)))
 
 	l := NewEmptyLevel(p.Width, p.Height)
+	l.DoorDensity = p.DoorDensity
+	fmt.Printf("DoorDensityConfig: %+v\n", l.DoorDensity)
 	ss, err := sprites.LoadSpriteSheet(constants.DefaultTileSize)
 	if err != nil {
 		ss = nil
@@ -1162,6 +1166,47 @@ func hasAdjacentDoor(L *Level, x, y int) bool {
 	return false
 }
 
+func hasDoorWithinDistance(L *Level, x, y, dist int) bool {
+	for dy := -dist; dy <= dist; dy++ {
+		for dx := -dist; dx <= dist; dx++ {
+			if abs(dx)+abs(dy) > dist {
+				continue
+			}
+			nx, ny := x+dx, y+dy
+			if nx < 0 || ny < 0 || nx >= L.W || ny >= L.H {
+				continue
+			}
+			if L.Tiles[ny][nx].HasTag(tiles.TagDoor) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func roomRegionCentroids(regionIDs [][]int, regionSizes map[int]int) map[int]image.Point {
+	sumX := map[int]int{}
+	sumY := map[int]int{}
+	for y := 0; y < len(regionIDs); y++ {
+		for x := 0; x < len(regionIDs[y]); x++ {
+			id := regionIDs[y][x]
+			if id == 0 {
+				continue
+			}
+			sumX[id] += x
+			sumY[id] += y
+		}
+	}
+	centroids := map[int]image.Point{}
+	for id, size := range regionSizes {
+		if size <= 0 {
+			continue
+		}
+		centroids[id] = image.Point{X: sumX[id] / size, Y: sumY[id] / size}
+	}
+	return centroids
+}
+
 func doorwayScore(L *Level, t ThroatInfo) int {
 	score := 0
 	if t.Orient == "nw" {
@@ -1184,11 +1229,36 @@ func doorSolidScoreAt(L *Level, x, y int) int {
 	return 0
 }
 
+func throatCentroidDist(t ThroatInfo, roomRegionIDs [][]int, roomCentroids map[int]image.Point) int {
+	dist := 1 << 30
+	if t.IsRoomA {
+		id := roomRegionIDs[t.NeighborA.Y][t.NeighborA.X]
+		if id != 0 {
+			c := roomCentroids[id]
+			dist = min(dist, manhattan(t.X, t.Y, c.X, c.Y))
+		}
+	}
+	if t.IsRoomB {
+		id := roomRegionIDs[t.NeighborB.Y][t.NeighborB.X]
+		if id != 0 {
+			c := roomCentroids[id]
+			dist = min(dist, manhattan(t.X, t.Y, c.X, c.Y))
+		}
+	}
+	if dist == 1<<30 {
+		return 0
+	}
+	return dist
+}
+
 func placeDoorsFromValidatedThroats(L *Level, p GenParams) {
 	info := BuildThroatDebug(L, 18, 12)
 	if len(info.ValidThroats) == 0 {
 		return
 	}
+
+	cfg := normalizeDoorDensity(L.DoorDensity)
+	L.DoorDensity = cfg
 
 	var wss *sprites.WallSpriteSheet
 	var err error
@@ -1202,8 +1272,8 @@ func placeDoorsFromValidatedThroats(L *Level, p GenParams) {
 		}
 	}
 
-	doorChanceRoomCorridor := 0.60
-	doorChanceRoomRoom := 0.25
+	doorChanceRoomCorridor := cfg.RoomCorridorChance
+	doorChanceRoomRoom := cfg.RoomRoomChance
 	lockChance := p.DoorLockChance
 	if lockChance <= 0 {
 		lockChance = 0.20
@@ -1217,15 +1287,17 @@ func placeDoorsFromValidatedThroats(L *Level, p GenParams) {
 	rngLocal := rand.New(rand.NewPCG(seedA, seedB))
 
 	roomMask, corridorMask := buildRoomCorridorMasks(L)
-	roomRegionIDs, _, _ := buildMaskedRegions(L, roomMask)
+	roomRegionIDs, roomRegionSizes, _ := buildMaskedRegions(L, roomMask)
 	corridorRegionIDs, _, _ := buildMaskedRegions(L, corridorMask)
 	corridorRoomDist := corridorDistanceToRooms(L, corridorMask, roomMask)
+	roomCentroids := roomRegionCentroids(roomRegionIDs, roomRegionSizes)
 
 	type throatChoice struct {
 		info     ThroatInfo
 		priority int
 		score    int
 		roomAdj  bool
+		centerDist int
 	}
 	type corridorKey struct {
 		corridor int
@@ -1260,11 +1332,13 @@ func placeDoorsFromValidatedThroats(L *Level, p GenParams) {
 		}
 		score := doorwayScore(L, t)
 		roomAdj := roomMask[roomNeighbor.Y][roomNeighbor.X]
+		centerDist := manhattan(t.X, t.Y, roomCentroids[roomID].X, roomCentroids[roomID].Y)
 		byCorridor[corridorKey{corridor: comp, room: roomID}] = append(byCorridor[corridorKey{corridor: comp, room: roomID}], throatChoice{
 			info:     t,
 			priority: dist,
 			score:    score,
 			roomAdj:  roomAdj,
+			centerDist: centerDist,
 		})
 	}
 
@@ -1278,6 +1352,10 @@ func placeDoorsFromValidatedThroats(L *Level, p GenParams) {
 			}
 			if arr[i].score == best.score {
 				if arr[i].roomAdj && !best.roomAdj {
+					best = arr[i]
+					continue
+				}
+				if arr[i].centerDist < best.centerDist {
 					best = arr[i]
 					continue
 				}
@@ -1297,14 +1375,25 @@ func placeDoorsFromValidatedThroats(L *Level, p GenParams) {
 
 	chosen = append(chosen, roomRoomThroats...)
 	sort.Slice(chosen, func(i, j int) bool {
+		di := throatCentroidDist(chosen[i], roomRegionIDs, roomCentroids)
+		dj := throatCentroidDist(chosen[j], roomRegionIDs, roomCentroids)
+		if di != dj {
+			return di < dj
+		}
 		if chosen[i].Y == chosen[j].Y {
 			return chosen[i].X < chosen[j].X
 		}
 		return chosen[i].Y < chosen[j].Y
 	})
 
+	doorCountByRoom := map[int]int{}
+	maxDoorsPerRoom := cfg.MaxDoorsPerRoom
+
 	for _, t := range chosen {
 		if hasAdjacentDoor(L, t.X, t.Y) {
+			continue
+		}
+		if cfg.MinThroatSpacing > 0 && hasDoorWithinDistance(L, t.X, t.Y, cfg.MinThroatSpacing) {
 			continue
 		}
 		chance := doorChanceRoomCorridor
@@ -1314,8 +1403,44 @@ func placeDoorsFromValidatedThroats(L *Level, p GenParams) {
 		if rngLocal.Float64() > chance {
 			continue
 		}
+		roomIDs := []int{}
+		if t.IsRoomA {
+			roomIDs = append(roomIDs, roomRegionIDs[t.NeighborA.Y][t.NeighborA.X])
+		}
+		if t.IsRoomB {
+			roomID := roomRegionIDs[t.NeighborB.Y][t.NeighborB.X]
+			if roomID != 0 {
+				dup := false
+				for _, id := range roomIDs {
+					if id == roomID {
+						dup = true
+						break
+					}
+				}
+				if !dup {
+					roomIDs = append(roomIDs, roomID)
+				}
+			}
+		}
+		if maxDoorsPerRoom > 0 {
+			blocked := false
+			for _, id := range roomIDs {
+				if id != 0 && doorCountByRoom[id] >= maxDoorsPerRoom {
+					blocked = true
+					break
+				}
+			}
+			if blocked {
+				continue
+			}
+		}
 		locked := rngLocal.Float64() < lockChance
 		placeClosedDoorAt(L, t.X, t.Y, t.Orient, wss, p.WallFlavor, locked)
+		for _, id := range roomIDs {
+			if id != 0 {
+				doorCountByRoom[id]++
+			}
+		}
 	}
 }
 
@@ -1728,6 +1853,10 @@ func abs(x int) int {
 		return -x
 	}
 	return x
+}
+
+func manhattan(x1, y1, x2, y2 int) int {
+	return abs(x1-x2) + abs(y1-y2)
 }
 
 func clamp(v, lo, hi int) int {

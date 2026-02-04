@@ -30,6 +30,7 @@ type LevelData struct {
 	Tiles         [][]TileData          `json:"tiles"`
 	SpritePalette []string              `json:"sprite_palette"`
 	Entities      []levels.PlacedEntity `json:"entities"`
+	DoorDensity   levels.DoorDensityConfig `json:"door_density,omitempty"`
 }
 
 var SpriteRegistry = map[string]SpriteMetadata{}
@@ -831,6 +832,7 @@ func ConvertToLevelData(level *levels.Level) *LevelData {
 		Tiles:         make([][]TileData, level.H),
 		SpritePalette: palette,
 		Entities:      level.Entities,
+		DoorDensity:   level.DoorDensity,
 	}
 
 	for y := 0; y < level.H; y++ {
@@ -866,6 +868,12 @@ func ConvertToLevel(data *LevelData) *levels.Level {
 		TileSize: data.TileSize,
 		Tiles:    make([][]*tiles.Tile, data.Height),
 		Entities: data.Entities,
+	}
+	if data.DoorDensity.RoomCorridorChance == 0 && data.DoorDensity.RoomRoomChance == 0 &&
+		data.DoorDensity.MaxDoorsPerRoom == 0 && data.DoorDensity.MinThroatSpacing == 0 {
+		level.DoorDensity = levels.DefaultDoorDensityConfig()
+	} else {
+		level.DoorDensity = data.DoorDensity
 	}
 
 	for y := 0; y < data.Height; y++ {
