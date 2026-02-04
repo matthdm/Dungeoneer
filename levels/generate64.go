@@ -1,6 +1,7 @@
 package levels
 
 import (
+	"fmt"
 	"image"
 	"sort"
 
@@ -1072,6 +1073,117 @@ func hasWalkableNeighbor(L *Level, x, y int) bool {
 	return false
 }
 
+func buildRoomCorridorMasks(L *Level) ([][]bool, [][]bool) {
+	roomMask := make([][]bool, L.H)
+	corridorMask := make([][]bool, L.H)
+	for y := 0; y < L.H; y++ {
+		roomMask[y] = make([]bool, L.W)
+		corridorMask[y] = make([]bool, L.W)
+		for x := 0; x < L.W; x++ {
+			if !L.Tiles[y][x].IsWalkable {
+				continue
+			}
+			n := 0
+			for _, d := range []image.Point{{1, 0}, {-1, 0}, {0, 1}, {0, -1}} {
+				nx, ny := x+d.X, y+d.Y
+				if nx < 0 || ny < 0 || nx >= L.W || ny >= L.H {
+					continue
+				}
+				if L.Tiles[ny][nx].IsWalkable {
+					n++
+				}
+			}
+			if n >= 3 {
+				roomMask[y][x] = true
+			}
+			if n <= 2 {
+				corridorMask[y][x] = true
+			}
+		}
+	}
+	return roomMask, corridorMask
+}
+
+func corridorDistanceToRooms(L *Level, corridorMask, roomMask [][]bool) [][]int {
+	dist := make([][]int, L.H)
+	for y := range dist {
+		dist[y] = make([]int, L.W)
+		for x := range dist[y] {
+			dist[y][x] = -1
+		}
+	}
+	queue := []image.Point{}
+	for y := 0; y < L.H; y++ {
+		for x := 0; x < L.W; x++ {
+			if !corridorMask[y][x] {
+				continue
+			}
+			for _, d := range []image.Point{{1, 0}, {-1, 0}, {0, 1}, {0, -1}} {
+				nx, ny := x+d.X, y+d.Y
+				if nx < 0 || ny < 0 || nx >= L.W || ny >= L.H {
+					continue
+				}
+				if roomMask[ny][nx] {
+					dist[y][x] = 0
+					queue = append(queue, image.Point{X: x, Y: y})
+					break
+				}
+			}
+		}
+	}
+	for len(queue) > 0 {
+		p := queue[0]
+		queue = queue[1:]
+		for _, d := range []image.Point{{1, 0}, {-1, 0}, {0, 1}, {0, -1}} {
+			nx, ny := p.X+d.X, p.Y+d.Y
+			if nx < 0 || ny < 0 || nx >= L.W || ny >= L.H {
+				continue
+			}
+			if !corridorMask[ny][nx] || dist[ny][nx] >= 0 {
+				continue
+			}
+			dist[ny][nx] = dist[p.Y][p.X] + 1
+			queue = append(queue, image.Point{X: nx, Y: ny})
+		}
+	}
+	return dist
+}
+
+func hasAdjacentDoor(L *Level, x, y int) bool {
+	for _, d := range []image.Point{{1, 0}, {-1, 0}, {0, 1}, {0, -1}} {
+		nx, ny := x+d.X, y+d.Y
+		if nx < 0 || ny < 0 || nx >= L.W || ny >= L.H {
+			continue
+		}
+		if L.Tiles[ny][nx].HasTag(tiles.TagDoor) {
+			return true
+		}
+	}
+	return false
+}
+
+func doorwayScore(L *Level, t ThroatInfo) int {
+	score := 0
+	if t.Orient == "nw" {
+		score += doorSolidScoreAt(L, t.X-1, t.Y)
+		score += doorSolidScoreAt(L, t.X+1, t.Y)
+	} else {
+		score += doorSolidScoreAt(L, t.X, t.Y-1)
+		score += doorSolidScoreAt(L, t.X, t.Y+1)
+	}
+	return score
+}
+
+func doorSolidScoreAt(L *Level, x, y int) int {
+	if x < 0 || y < 0 || x >= L.W || y >= L.H {
+		return 1
+	}
+	if !L.Tiles[y][x].IsWalkable {
+		return 1
+	}
+	return 0
+}
+
 func placeDoorsFromValidatedThroats(L *Level, p GenParams) {
 	info := BuildThroatDebug(L, 18, 12)
 	if len(info.ValidThroats) == 0 {
@@ -1090,14 +1202,124 @@ func placeDoorsFromValidatedThroats(L *Level, p GenParams) {
 		}
 	}
 
+	doorChanceRoomCorridor := 0.60
+	doorChanceRoomRoom := 0.25
+	lockChance := p.DoorLockChance
+	if lockChance <= 0 {
+		lockChance = 0.20
+	}
+	if lockChance > 1 {
+		lockChance = 1
+	}
+
+	seedA := uint64(p.Seed) ^ 0x9e3779b97f4a7c15
+	seedB := uint64(p.Seed) ^ 0x85ebca6b
+	rngLocal := rand.New(rand.NewPCG(seedA, seedB))
+
+	roomMask, corridorMask := buildRoomCorridorMasks(L)
+	roomRegionIDs, _, _ := buildMaskedRegions(L, roomMask)
+	corridorRegionIDs, _, _ := buildMaskedRegions(L, corridorMask)
+	corridorRoomDist := corridorDistanceToRooms(L, corridorMask, roomMask)
+
+	type throatChoice struct {
+		info     ThroatInfo
+		priority int
+		score    int
+		roomAdj  bool
+	}
+	type corridorKey struct {
+		corridor int
+		room     int
+	}
+	byCorridor := map[corridorKey][]throatChoice{}
+	var roomRoomThroats []ThroatInfo
+
 	for _, t := range info.ValidThroats {
-		if (t.IsRoomA && !t.IsRoomB) || (t.IsRoomB && !t.IsRoomA) {
-			placeUnlockedDoorAt(L, t.X, t.Y, t.Orient, wss, p.WallFlavor)
+		if t.IsRoomA == t.IsRoomB {
+			roomRoomThroats = append(roomRoomThroats, t)
+			continue
 		}
+		var corridorNeighbor image.Point
+		var roomNeighbor image.Point
+		if t.IsRoomA {
+			roomNeighbor = t.NeighborA
+			corridorNeighbor = t.NeighborB
+		} else {
+			roomNeighbor = t.NeighborB
+			corridorNeighbor = t.NeighborA
+		}
+		comp := corridorRegionIDs[corridorNeighbor.Y][corridorNeighbor.X]
+		roomID := roomRegionIDs[roomNeighbor.Y][roomNeighbor.X]
+		if comp == 0 || roomID == 0 {
+			roomRoomThroats = append(roomRoomThroats, t)
+			continue
+		}
+		dist := corridorRoomDist[corridorNeighbor.Y][corridorNeighbor.X]
+		if dist < 0 {
+			dist = 1 << 30
+		}
+		score := doorwayScore(L, t)
+		roomAdj := roomMask[roomNeighbor.Y][roomNeighbor.X]
+		byCorridor[corridorKey{corridor: comp, room: roomID}] = append(byCorridor[corridorKey{corridor: comp, room: roomID}], throatChoice{
+			info:     t,
+			priority: dist,
+			score:    score,
+			roomAdj:  roomAdj,
+		})
+	}
+
+	var chosen []ThroatInfo
+	for _, arr := range byCorridor {
+		best := arr[0]
+		for i := 1; i < len(arr); i++ {
+			if arr[i].score > best.score {
+				best = arr[i]
+				continue
+			}
+			if arr[i].score == best.score {
+				if arr[i].roomAdj && !best.roomAdj {
+					best = arr[i]
+					continue
+				}
+				if arr[i].priority < best.priority {
+					best = arr[i]
+					continue
+				}
+				if arr[i].priority == best.priority {
+					if arr[i].info.Y < best.info.Y || (arr[i].info.Y == best.info.Y && arr[i].info.X < best.info.X) {
+						best = arr[i]
+					}
+				}
+			}
+		}
+		chosen = append(chosen, best.info)
+	}
+
+	chosen = append(chosen, roomRoomThroats...)
+	sort.Slice(chosen, func(i, j int) bool {
+		if chosen[i].Y == chosen[j].Y {
+			return chosen[i].X < chosen[j].X
+		}
+		return chosen[i].Y < chosen[j].Y
+	})
+
+	for _, t := range chosen {
+		if hasAdjacentDoor(L, t.X, t.Y) {
+			continue
+		}
+		chance := doorChanceRoomCorridor
+		if t.IsRoomA && t.IsRoomB {
+			chance = doorChanceRoomRoom
+		}
+		if rngLocal.Float64() > chance {
+			continue
+		}
+		locked := rngLocal.Float64() < lockChance
+		placeClosedDoorAt(L, t.X, t.Y, t.Orient, wss, p.WallFlavor, locked)
 	}
 }
 
-func placeUnlockedDoorAt(L *Level, x, y int, orientation string, wss *sprites.WallSpriteSheet, flavor string) {
+func placeClosedDoorAt(L *Level, x, y int, orientation string, wss *sprites.WallSpriteSheet, flavor string, locked bool) {
 	tile := L.Tile(x, y)
 	if tile == nil || tile.HasTag(tiles.TagDoor) {
 		return
@@ -1106,11 +1328,11 @@ func placeUnlockedDoorAt(L *Level, x, y int, orientation string, wss *sprites.Wa
 	var doorImg *ebiten.Image
 	var doorID string
 	if orientation == "nw" {
-		doorImg = wss.UnlockedDoorNW
-		doorID = flavor + "_door_unlocked_nw"
+		doorImg = wss.LockedDoorNE
+		doorID = flavor + "_door_locked_ne"
 	} else {
-		doorImg = wss.UnlockedDoorNE
-		doorID = flavor + "_door_unlocked_ne"
+		doorImg = wss.LockedDoorNW
+		doorID = flavor + "_door_locked_nw"
 	}
 	if doorImg == nil {
 		return
@@ -1119,7 +1341,13 @@ func placeUnlockedDoorAt(L *Level, x, y int, orientation string, wss *sprites.Wa
 	tile.AddSpriteByID(doorID, doorImg)
 	tile.SetTag(tiles.TagDoor)
 	tile.DoorSpriteID = doorID
-	tile.DoorState = 1 // unlocked/open (metadata only; do not change walkability)
+	if locked {
+		tile.DoorState = 3
+	} else {
+		tile.DoorState = 2
+	}
+	tile.IsWalkable = false
+	fmt.Printf("door axis=%s sprite=%s at %d,%d\n", orientation, doorID, x, y)
 }
 
 func throatRegionsConnect(L *Level, a, b image.Point, blockX, blockY, limit int, visited [][]int, stamp int) bool {

@@ -55,18 +55,22 @@ func BuildThroatDebug(L *Level, floodLimit, minRegionSize int) ThroatDebugInfo {
 		}
 	}
 
-	regionSizes, regionAllLinear := buildRegions(L, info.RegionIDs)
-	regionIsRoom := map[int]bool{}
-	for id, size := range regionSizes {
-		allLinear := regionAllLinear[id]
-		// Corridor regions remain corridors even if large, if they are purely linear.
-		if allLinear {
-			regionIsRoom[id] = false
-			continue
+	roomRegionIDs, roomRegionSizes, roomRegionCount := buildMaskedRegions(L, roomMask)
+	corridorRegionIDs, corridorRegionSizes, _ := buildMaskedRegions(L, corridorMask)
+	offset := roomRegionCount + 1
+	for y := 0; y < L.H; y++ {
+		for x := 0; x < L.W; x++ {
+			if roomMask[y][x] && roomRegionIDs[y][x] > 0 {
+				info.RegionIDs[y][x] = roomRegionIDs[y][x]
+				info.RegionIsRoom[roomRegionIDs[y][x]] = true
+				continue
+			}
+			if corridorMask[y][x] && corridorRegionIDs[y][x] > 0 {
+				info.RegionIDs[y][x] = corridorRegionIDs[y][x] + offset
+				info.RegionIsRoom[corridorRegionIDs[y][x]+offset] = false
+			}
 		}
-		regionIsRoom[id] = size >= minRegionSize || !allLinear
 	}
-	info.RegionIsRoom = regionIsRoom
 	loopMask := corridorLoops(L, corridorMask)
 
 	for y := 1; y < L.H-1; y++ {
@@ -78,39 +82,27 @@ func BuildThroatDebug(L *Level, floodLimit, minRegionSize int) ThroatDebugInfo {
 				info.Invalid = append(info.Invalid, image.Point{X: x, Y: y})
 				continue
 			}
-			if !corridorMask[y][x] {
-				continue
-			}
-
 			up := L.Tiles[y-1][x].IsWalkable
 			down := L.Tiles[y+1][x].IsWalkable
 			left := L.Tiles[y][x-1].IsWalkable
 			right := L.Tiles[y][x+1].IsWalkable
 
-			walkableCount := 0
-			if up {
-				walkableCount++
-			}
-			if down {
-				walkableCount++
-			}
-			if left {
-				walkableCount++
-			}
-			if right {
-				walkableCount++
-			}
-			if walkableCount != 2 {
-				continue
-			}
-
 			var a, b image.Point
 			orient := ""
-			if up && down && !left && !right {
+			hasNS := up && down
+			hasEW := left && right
+			if !(hasNS || hasEW) {
+				continue
+			}
+			if hasNS && hasEW {
+				info.Invalid = append(info.Invalid, image.Point{X: x, Y: y})
+				continue
+			}
+			if hasNS {
 				a = image.Point{X: x, Y: y - 1}
 				b = image.Point{X: x, Y: y + 1}
 				orient = "nw"
-			} else if left && right && !up && !down {
+			} else if hasEW {
 				a = image.Point{X: x - 1, Y: y}
 				b = image.Point{X: x + 1, Y: y}
 				orient = "ne"
@@ -124,13 +116,60 @@ func BuildThroatDebug(L *Level, floodLimit, minRegionSize int) ThroatDebugInfo {
 				continue
 			}
 
-			ra := info.RegionIDs[a.Y][a.X]
-			rb := info.RegionIDs[b.Y][b.X]
-			if ra == 0 || rb == 0 || ra == rb {
+			isRoomA := roomMask[a.Y][a.X]
+			isRoomB := roomMask[b.Y][b.X]
+			if !isRoomA && !corridorMask[a.Y][a.X] {
 				info.Invalid = append(info.Invalid, image.Point{X: x, Y: y})
 				continue
 			}
-			if !(regionIsRoom[ra] || regionSizes[ra] >= minRegionSize) || !(regionIsRoom[rb] || regionSizes[rb] >= minRegionSize) {
+			if !isRoomB && !corridorMask[b.Y][b.X] {
+				info.Invalid = append(info.Invalid, image.Point{X: x, Y: y})
+				continue
+			}
+
+			ra := 0
+			rb := 0
+			if isRoomA {
+				ra = roomRegionIDs[a.Y][a.X]
+			} else {
+				ra = corridorRegionIDs[a.Y][a.X]
+			}
+			if isRoomB {
+				rb = roomRegionIDs[b.Y][b.X]
+			} else {
+				rb = corridorRegionIDs[b.Y][b.X]
+			}
+			if ra == 0 || rb == 0 {
+				info.Invalid = append(info.Invalid, image.Point{X: x, Y: y})
+				continue
+			}
+			if isRoomA {
+				if roomRegionSizes[ra] < 2 {
+					info.Invalid = append(info.Invalid, image.Point{X: x, Y: y})
+					continue
+				}
+			} else {
+				if corridorRegionSizes[ra] < 2 {
+					info.Invalid = append(info.Invalid, image.Point{X: x, Y: y})
+					continue
+				}
+			}
+			if isRoomB {
+				if roomRegionSizes[rb] < 2 {
+					info.Invalid = append(info.Invalid, image.Point{X: x, Y: y})
+					continue
+				}
+			} else {
+				if corridorRegionSizes[rb] < 2 {
+					info.Invalid = append(info.Invalid, image.Point{X: x, Y: y})
+					continue
+				}
+			}
+			if !isRoomA && !isRoomB {
+				info.Invalid = append(info.Invalid, image.Point{X: x, Y: y})
+				continue
+			}
+			if isRoomA == isRoomB && ra == rb {
 				info.Invalid = append(info.Invalid, image.Point{X: x, Y: y})
 				continue
 			}
@@ -146,8 +185,8 @@ func BuildThroatDebug(L *Level, floodLimit, minRegionSize int) ThroatDebugInfo {
 				Orient:    orient,
 				RegionA:   ra,
 				RegionB:   rb,
-				IsRoomA:   regionIsRoom[ra],
-				IsRoomB:   regionIsRoom[rb],
+				IsRoomA:   isRoomA,
+				IsRoomB:   isRoomB,
 				NeighborA: a,
 				NeighborB: b,
 			})
@@ -173,6 +212,44 @@ func walkableNeighbors(L *Level, x, y int) int {
 
 func isBoundaryAdjacent(L *Level, x, y int) bool {
 	return x <= 1 || y <= 1 || x >= L.W-2 || y >= L.H-2
+}
+
+func buildMaskedRegions(L *Level, mask [][]bool) ([][]int, map[int]int, int) {
+	regionIDs := make([][]int, L.H)
+	for y := range regionIDs {
+		regionIDs[y] = make([]int, L.W)
+	}
+	regionSizes := map[int]int{}
+	region := 0
+	for y := 0; y < L.H; y++ {
+		for x := 0; x < L.W; x++ {
+			if !mask[y][x] || regionIDs[y][x] != 0 {
+				continue
+			}
+			region++
+			queue := []image.Point{{X: x, Y: y}}
+			regionIDs[y][x] = region
+			size := 0
+			for len(queue) > 0 {
+				p := queue[0]
+				queue = queue[1:]
+				size++
+				for _, d := range []image.Point{{1, 0}, {-1, 0}, {0, 1}, {0, -1}} {
+					nx, ny := p.X+d.X, p.Y+d.Y
+					if nx < 0 || ny < 0 || nx >= L.W || ny >= L.H {
+						continue
+					}
+					if !mask[ny][nx] || regionIDs[ny][nx] != 0 {
+						continue
+					}
+					regionIDs[ny][nx] = region
+					queue = append(queue, image.Point{X: nx, Y: ny})
+				}
+			}
+			regionSizes[region] = size
+		}
+	}
+	return regionIDs, regionSizes, region
 }
 
 func buildRegions(L *Level, regionIDs [][]int) (map[int]int, map[int]bool) {

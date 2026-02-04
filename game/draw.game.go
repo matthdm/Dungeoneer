@@ -283,12 +283,17 @@ func (g *Game) drawThroatDebug(target *ebiten.Image, scale, cx, cy float64) {
 	if g.ShowDoorDebug {
 		for y := 0; y < g.currentLevel.H; y++ {
 			for x := 0; x < g.currentLevel.W; x++ {
-				if !g.currentLevel.Tiles[y][x].HasTag(tiles.TagDoor) {
+				tile := g.currentLevel.Tiles[y][x]
+				if tile == nil || !tile.HasTag(tiles.TagDoor) {
 					continue
 				}
 				xi, yi := g.cartesianToIso(float64(x), float64(y))
 				op := g.getDrawOp(xi, yi, scale, cx, cy)
-				op.ColorScale.Scale(0.2, 0.9, 1.0, 0.6)
+				if tile.DoorState == 3 {
+					op.ColorScale.Scale(1.0, 0.2, 0.2, 0.7)
+				} else {
+					op.ColorScale.Scale(0.2, 0.9, 1.0, 0.6)
+				}
 				target.DrawImage(g.highlightImage, op)
 			}
 		}
