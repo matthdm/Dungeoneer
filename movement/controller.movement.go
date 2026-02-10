@@ -1,3 +1,17 @@
+// Package movement provides a MovementController abstraction used by both
+// players and monsters.
+//
+// Notes:
+//   - The MovementController supports two modes: velocity-based (continuous)
+//     and pathing-based (discrete per-tile interpolation). The code assumes a
+//     fixed-tick game loop (Ebiten 60 TPS) and uses integer tick counts for
+//     deterministic interpolation between tiles.
+//   - `Duration` is expressed in ticks per tile; if the game tick rate changes,
+//     this value should be adjusted accordingly.
+//   - Rapid reissue of paths (e.g., repeated right-clicking) can create race
+//     conditions where the controller is mid-interpolation. Consumers should
+//     either debounce path requests or cancel/resync interpolation when a new
+//     path is set.
 package movement
 
 import (

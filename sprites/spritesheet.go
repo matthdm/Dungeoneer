@@ -1,3 +1,10 @@
+// Package sprites provides helpers to load and index the game's spritesheet.
+//
+// Conventions:
+//   - Spritesheet tiles are expected to use a fixed tile size (typically 64×64).
+//   - Sprite coordinates in this loader use `spriteAt(x,y)` where `x` is column
+//     and `y` is row. The SubImage rectangle uses integer math to extract the
+//     pixel region — changes to `tileSize` must be kept in sync with assets.
 package sprites
 
 import (
@@ -231,6 +238,11 @@ func LoadSpriteSheet(tileSize int) (*SpriteSheet, error) {
 	}
 
 	// spriteAt returns a sprite at the provided coordinates.
+	// Note: the SubImage rect uses (x*tileSize, (y+1)*tileSize, (x+1)*tileSize, y*tileSize).
+	// This ordering accounts for the image row layout and the coordinate system
+	// used by the embedded image loader. If you change the tile packing or
+	// image orientation, review this math carefully — off-by-one or inverted
+	// Y ranges will crop sprites incorrectly.
 	spriteAt := func(x, y int) *ebiten.Image {
 		return sheet.SubImage(image.Rect(x*tileSize, (y+1)*tileSize, (x+1)*tileSize, y*tileSize)).(*ebiten.Image)
 	}

@@ -1,3 +1,13 @@
+// Package game orchestrates the main game loop, rendering, and high-level
+// world updates.
+//
+// Rendering notes and conventions:
+//   - The project uses an isometric/cartesian conversion (`cartesianToIso`) and
+//     draws sprites anchored by the character's "feet center". This anchoring
+//     affects rendering order and overlap; keep sprite offsets consistent.
+//   - Offscreen targets are reused for scaled rendering to avoid allocating
+//     temporary images each frame. getOrCreateOffscreen controls the lifetime of
+//     these buffers; prefer reuse rather than creating new images in hot paths.
 package game
 
 import (
@@ -370,6 +380,9 @@ func (g *Game) drawMainMenuLabels(screen *ebiten.Image, cx, cy float64) {
 // Converts world coordinates to screen-space DrawImageOptions.
 func (g *Game) getDrawOp(worldX, worldY, scale, cx, cy float64) *ebiten.DrawImageOptions {
 	op := &ebiten.DrawImageOptions{}
+	// GeoM transform ordering is important: translate to world position,
+	// apply camera transform, scale, then translate to screen center. This
+	// ordering preserves the isometric anchor semantics (feet-centered sprites).
 	op.GeoM.Translate(worldX, worldY)
 	op.GeoM.Translate(-g.camX, g.camY)
 	op.GeoM.Scale(scale, scale)

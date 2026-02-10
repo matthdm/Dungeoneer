@@ -1,3 +1,14 @@
+// Package pathing implements grid-based A* pathfinding used by entities.
+//
+// Implementation notes:
+//   - The current heuristic is Manhattan distance (abs(dx)+abs(dy)) which is
+//     admissible for 4-way grid movement and fast to compute. If diagonal
+//     movement or different costs are added, update the heuristic to remain
+//     admissible.
+//   - The A* here uses simple slices and maps for open/closed lists. For large
+//     maps or frequent queries, replacing `open` with a binary heap and
+//     reusing node objects from a pool will reduce allocations and improve
+//     performance (expected O(N log N) with a heap).
 package pathing
 
 import (
@@ -47,6 +58,10 @@ func AStar(level *levels.Level, startX, startY, goalX, goalY int) []PathNode {
 	if goalX < 0 || goalY < 0 || goalX >= level.W || goalY >= level.H {
 		return nil
 	}
+	// Note: `open` is a simple slice of *Node. This code scans the slice to
+	// find the smallest FCost which is O(n) per extraction. Switching to a
+	// priority queue (binary heap) avoids this linear scan and is recommended
+	// for production workloads.
 	open := []*Node{}
 	closed := map[[2]int]bool{}
 
@@ -85,7 +100,7 @@ func AStar(level *levels.Level, startX, startY, goalX, goalY int) []PathNode {
 			if !level.IsWalkable(nx, ny) || closed[[2]int{nx, ny}] {
 				continue
 			}
-			
+
 			// Check for closed/locked doors (they block movement even if tile is walkable)
 			tile := level.Tile(nx, ny)
 			if tile != nil && tile.HasTag(tiles.TagDoor) && (tile.DoorState == 2 || tile.DoorState == 3) {

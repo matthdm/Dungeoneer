@@ -105,3 +105,45 @@ This game is being built with love, madness, and pixelated shadows. If you're in
 
 ---
 
+## Development Setup
+
+Prerequisites:
+- Go 1.20+ (module-aware)
+- Git
+
+Quick start (Windows):
+
+```powershell
+git clone <repo-url>
+cd Dungeoneer
+.\build_and_run.bat
+```
+
+Or build manually:
+
+```powershell
+go build ./...
+.
+```
+
+Run tests and linters:
+
+```powershell
+go test ./...
+# (optional) golangci-lint run
+```
+
+Where to look first
+- Rendering and game loop: `game/` (e.g., `game/draw.game.go`)
+- Field-of-view & fog: `fov/`
+- Pathfinding: `pathing/astar.go`
+- Movement controller: `movement/controller.movement.go`
+- Menus & UI: `ui/`
+
+
+
+Contributing
+- Open an issue describing proposed changes before large refactors.
+- Keep commits small and focused. Add tests for logic-heavy changes (pathing, movement, FOV).
+
+

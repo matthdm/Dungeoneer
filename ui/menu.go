@@ -1,3 +1,9 @@
+// Package ui contains menu and HUD components used by the game.
+//
+// Menu behavior notes:
+//   - Menus provide both keyboard and mouse navigation. Mouse hover logic maps
+//     cursor coordinates into menu option regions; if menu layout changes, the
+//     hover math must be updated.
 package ui
 
 import (
@@ -74,7 +80,9 @@ func (m *Menu) Draw(screen *ebiten.Image) {
 	DrawMenuTitleText(screen, m.title, menuX, menuY, menuW, menuH)
 	DrawMenuOptions(screen, m, menuX, menuY, menuW)
 
-	// Draw instructions
+	// Draw instructions (optional): uses a simple fixed line spacing. If you
+	// need localized or variable-height instructions, replace this with a
+	// proper text-measure/layout routine.
 	if len(m.instructions) > 0 {
 		instructionPosY := menuY + menuH - m.style.instructionTextHeight
 		instructionPosX := menuX + m.style.optionPaddingX
@@ -104,7 +112,10 @@ func (m *Menu) Update() {
 		}
 	}
 
-	// Mouse navigation and selection
+	// Mouse navigation and selection. The code converts the cursor position
+	// into each option's hover region; clicking triggers the option's action.
+	// Note: this uses simple rectangular hit regions and a fixed vertical
+	// spacing based on `optionTextHeight` and `optionInternalPaddingY`.
 	mouseX, mouseY := ebiten.CursorPosition()
 	optionsContentStartY := float32(m.rect.Min.Y) + m.style.titleHeight
 	clickableRegionXStart := float32(m.rect.Min.X) + m.style.optionPaddingX/2.0

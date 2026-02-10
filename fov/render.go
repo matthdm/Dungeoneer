@@ -1,3 +1,13 @@
+// Package fov contains field-of-vision and fog-of-war helpers.
+//
+// Notes:
+//   - Shadow and triangle images are reused offscreen buffers to avoid per-frame
+//     allocations. ResizeShadowBuffer should be called when the screen dimensions
+//     change.
+//   - BuildShadowImage composes a screen-space shadow mask by drawing triangles
+//     (light wedges) using a source-out blend against a pre-filled darkness layer.
+//   - Coordinate conversion from world to screen happens in worldToScreen; any
+//     changes to tileSize or camera math should be reflected there.
 package fov
 
 import (
