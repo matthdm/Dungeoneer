@@ -1,6 +1,7 @@
 package game
 
 import (
+	"dungeoneer/controls"
 	"dungeoneer/entities"
 	"dungeoneer/items"
 	"dungeoneer/levels"
@@ -29,10 +30,15 @@ func (g *Game) handleMainMenuInput() {
 			g.Menu.SelectedIndex = i
 			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 				switch g.Menu.Options[i] {
+				case "Continue":
+					// Load last save or resume
+					g.State = StatePlaying
 				case "New Game":
 					g.State = StatePlaying
+				case "Load Game":
+					// TODO: Show load game menu
 				case "Options":
-					// Implement later
+					// TODO: Show options menu
 				case "Exit Game":
 					os.Exit(2)
 				}
@@ -45,16 +51,14 @@ func (g *Game) handleMainMenuInput() {
 	// Confirm selection
 	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) || inpututil.IsKeyJustPressed(ebiten.KeySpace) {
 		switch g.Menu.Options[g.Menu.SelectedIndex] {
-		case "New Game":
-			//newGame, _ := NewGame()
-			//*g = *newGame
-
-			//TODO to add character creation sequence?
-			//TODO to add intro cinematic
-			//Game object already created
+		case "Continue":
 			g.State = StatePlaying
+		case "New Game":
+			g.State = StatePlaying
+		case "Load Game":
+			// TODO: Show load game menu
 		case "Options":
-			// Implement later
+			// TODO: Show options menu
 		case "Exit Game":
 			os.Exit(2)
 		}
@@ -219,6 +223,17 @@ func (g *Game) handleHoverTile() {
 }
 
 func (g *Game) handleLevelHotkeys() {
+	// Check if controls menu should be shown using the controls system
+	if inpututil.IsKeyJustPressed(g.Controls.GetBinding(controls.ActionToggleKeybind).Primary) {
+		if g.ControlsMenu != nil {
+			if g.ControlsMenu.IsVisible() {
+				g.ControlsMenu.Hide()
+			} else {
+				g.ControlsMenu.Show()
+			}
+		}
+	}
+
 	if inpututil.IsKeyJustPressed(ebiten.KeyM) {
 		if l, err := levels.NewMazeLevel(); err == nil {
 			g.currentLevel = l

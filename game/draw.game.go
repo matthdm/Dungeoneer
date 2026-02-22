@@ -68,8 +68,15 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if g.editor.Active && g.editor.EntityPaletteOpen {
 		g.editor.EntitiesPalette.Draw(screen)
 	}
+	// Draw mode buttons whenever entity palette is active
+	if g.editor.Active && (g.editor.PaletteOpen || g.editor.EntityPaletteOpen) {
+		g.editor.DrawModeButtons(screen)
+	}
 	if g.LinkPrompt != nil && g.LinkPrompt.IsVisible() {
 		g.LinkPrompt.Draw(screen)
+	}
+	if g.ControlsMenu != nil && g.ControlsMenu.IsVisible() {
+		g.ControlsMenu.Draw(screen)
 	}
 	if !controlToggle {
 		ebitenutil.DebugPrint(screen, fmt.Sprintf(constants.DEBUG_TEMPLATE, ebiten.ActualFPS(), ebiten.ActualTPS(), g.camScale, g.camX, g.camY))
@@ -90,6 +97,58 @@ func (g *Game) drawMainMenu(screen *ebiten.Image, cx, cy float64) {
 func (g *Game) drawGameOver(screen *ebiten.Image) {
 	msg := "GAME OVER - Press V to Restart"
 	ebitenutil.DebugPrintAt(screen, msg, g.w/2-100, g.h/2)
+}
+
+func (g *Game) drawMainMenuLabels(screen *ebiten.Image, cx, cy float64) {
+
+	var spacing = constants.MenuLabelHeightPixels*constants.MainMenuLabelScale + constants.MenuLabelVerticalPadding
+
+	if g.Menu.Background != nil {
+		sw, sh := g.Menu.Background.Size()
+		scaleX := float64(g.w) / float64(sw)
+		scaleY := float64(g.h) / float64(sh)
+		bgOp := &ebiten.DrawImageOptions{}
+		bgOp.GeoM.Scale(scaleX, scaleY)
+		screen.DrawImage(g.Menu.Background, bgOp)
+	}
+	labels := []*ebiten.Image{
+		g.Menu.ContinueGameLabel,
+		g.Menu.NewGameLabel,
+		g.Menu.LoadGameLabel,
+		g.Menu.OptionsLabel,
+		g.Menu.ExitGameLabel,
+	}
+	if len(g.Menu.EntryRects) != len(labels) {
+		g.Menu.EntryRects = make([]image.Rectangle, len(labels))
+	}
+
+	totalHeight := spacing * float64(len(labels)-1)
+	startY := cy - totalHeight/2
+
+	for i, img := range labels {
+		x := constants.MenuLabelOffsetX
+		y := startY + float64(i)*spacing
+
+		op := &ebiten.DrawImageOptions{}
+
+		op.GeoM.Scale(constants.MainMenuLabelScale, constants.MainMenuLabelScale)
+		op.GeoM.Translate(x, y)
+
+		w, h := img.Size()
+		rect := image.Rect(int(x), int(y), int(x+float64(w)*constants.MainMenuLabelScale), int(y+float64(h)*constants.MainMenuLabelScale))
+		g.Menu.EntryRects[i] = rect
+
+		// Only apply glow to the selected label
+		if i == g.Menu.SelectedIndex {
+			elapsed := time.Since(menuStart).Seconds()
+			pulse := constants.GlowAlphaMin + constants.GlowAlphaRange*math.Abs(math.Sin(elapsed*math.Pi))
+
+			// Slight glow tint + pulse
+			op.ColorScale.Scale(1.2, 1.1, 1.3, float32(pulse))
+		}
+
+		screen.DrawImage(img, op)
+	}
 }
 
 func (g *Game) drawSpells(target *ebiten.Image, scale, cx, cy float64) {
@@ -324,56 +383,6 @@ func (g *Game) drawPathPreview(target *ebiten.Image, scale, cx, cy float64) {
 		op := g.getDrawOp(xi, yi, scale, cx, cy)
 		op.ColorScale.Scale(1, 1, 1, constants.PathPreviewAlpha)
 		target.DrawImage(g.spriteSheet.Cursor, op)
-	}
-}
-
-func (g *Game) drawMainMenuLabels(screen *ebiten.Image, cx, cy float64) {
-
-	var spacing = constants.MenuLabelHeightPixels*constants.MainMenuLabelScale + constants.MenuLabelVerticalPadding
-
-	if g.Menu.Background != nil {
-		sw, sh := g.Menu.Background.Size()
-		scaleX := float64(g.w) / float64(sw)
-		scaleY := float64(g.h) / float64(sh)
-		bgOp := &ebiten.DrawImageOptions{}
-		bgOp.GeoM.Scale(scaleX, scaleY)
-		screen.DrawImage(g.Menu.Background, bgOp)
-	}
-	labels := []*ebiten.Image{
-		g.Menu.NewGameLabel,
-		g.Menu.OptionsLabel,
-		g.Menu.ExitGameLabel,
-	}
-	if len(g.Menu.EntryRects) != len(labels) {
-		g.Menu.EntryRects = make([]image.Rectangle, len(labels))
-	}
-
-	totalHeight := spacing * float64(len(labels)-1)
-	startY := cy - totalHeight/2
-
-	for i, img := range labels {
-		x := constants.MenuLabelOffsetX
-		y := startY + float64(i)*spacing
-
-		op := &ebiten.DrawImageOptions{}
-
-		op.GeoM.Scale(constants.MainMenuLabelScale, constants.MainMenuLabelScale)
-		op.GeoM.Translate(x, y)
-
-		w, h := img.Size()
-		rect := image.Rect(int(x), int(y), int(x+float64(w)*constants.MainMenuLabelScale), int(y+float64(h)*constants.MainMenuLabelScale))
-		g.Menu.EntryRects[i] = rect
-
-		// Only apply glow to the selected label
-		if i == g.Menu.SelectedIndex {
-			elapsed := time.Since(menuStart).Seconds()
-			pulse := constants.GlowAlphaMin + constants.GlowAlphaRange*math.Abs(math.Sin(elapsed*math.Pi))
-
-			// Slight glow tint + pulse
-			op.ColorScale.Scale(1.2, 1.1, 1.3, float32(pulse))
-		}
-
-		screen.DrawImage(img, op)
 	}
 }
 

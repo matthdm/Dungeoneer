@@ -42,15 +42,22 @@ func (g *Game) DebugLevelEditor() {
 
 	// Tile painting
 	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) &&
-		!g.editor.JustSelectedSprite && !g.editor.JustSelectedEntity {
-		if g.editor.SelectedEntityID != "" {
+		!g.editor.JustSelectedSprite && !g.editor.JustSelectedEntity && !g.editor.IsMenuOpen() {
+		if g.editor.EntityMode == leveleditor.ModeDelete {
+			// Delete mode - remove entities from tiles
+			g.editor.DeleteEntityAt(g.hoverTileX, g.hoverTileY)
+			g.spawnEntitiesFromLevel()
+		} else if g.editor.SelectedEntityID != "" && g.editor.EntityMode == leveleditor.ModeSpawner {
+			// Spawner mode - place entities
 			g.editor.PlaceSelectedEntityAt(g.hoverTileX, g.hoverTileY)
 			g.spawnEntitiesFromLevel()
-		} else {
+		} else if g.editor.SelectedID != "" {
+			// Sprite mode - place sprites
 			g.editor.PlaceSelectedSpriteAt(g.hoverTileX, g.hoverTileY)
 		}
 	}
 
+	// Middle click - remove top sprite from tile (works in all modes)
 	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonMiddle) {
 		tx, ty := g.hoverTileX, g.hoverTileY
 		if g.isValidTile(tx, ty) {

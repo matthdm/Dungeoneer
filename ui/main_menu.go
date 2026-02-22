@@ -8,18 +8,28 @@ import (
 )
 
 type MainMenu struct {
-	Options       []string
-	SelectedIndex int
-	NewGameLabel  *ebiten.Image
-	OptionsLabel  *ebiten.Image
-	ExitGameLabel *ebiten.Image
-	Background    *ebiten.Image
-	FrameTick     int
-	EntryRects    []image.Rectangle
+	Options           []string
+	SelectedIndex     int
+	ContinueGameLabel *ebiten.Image
+	NewGameLabel      *ebiten.Image
+	LoadGameLabel     *ebiten.Image
+	OptionsLabel      *ebiten.Image
+	ExitGameLabel     *ebiten.Image
+	Background        *ebiten.Image
+	FrameTick         int
+	EntryRects        []image.Rectangle
 }
 
 func NewMainMenu() (*MainMenu, error) {
+	continueGameLabel, err := images.LoadEmbeddedImage(images.Continue_Game_png)
+	if err != nil {
+		return nil, err
+	}
 	newGameLabel, err := images.LoadEmbeddedImage(images.New_Game_png)
+	if err != nil {
+		return nil, err
+	}
+	loadGameLabel, err := images.LoadEmbeddedImage(images.Load_Game_png)
 	if err != nil {
 		return nil, err
 	}
@@ -37,13 +47,14 @@ func NewMainMenu() (*MainMenu, error) {
 		return nil, err
 	}
 	return &MainMenu{
-		Options:       []string{"New Game", "Options", "Exit Game"},
-		SelectedIndex: 0,
-		NewGameLabel:  newGameLabel,
-		OptionsLabel:  optionsLabel,
-		ExitGameLabel: exitGameLabel,
-		Background:    castleFG,
-		EntryRects:    make([]image.Rectangle, 3),
+		Options:           []string{"Continue", "New Game", "Load Game", "Options", "Exit Game"},
+		ContinueGameLabel: continueGameLabel,
+		NewGameLabel:      newGameLabel,
+		LoadGameLabel:     loadGameLabel,
+		OptionsLabel:      optionsLabel,
+		ExitGameLabel:     exitGameLabel,
+		Background:        castleFG,
+		EntryRects:        make([]image.Rectangle, 5),
 	}, nil
 }
 

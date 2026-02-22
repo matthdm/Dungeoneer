@@ -10,8 +10,16 @@ import (
 	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/vector"
+)
+
+type EditorMode int
+
+const (
+	ModeSpawner EditorMode = iota
+	ModeDelete
 )
 
 type Editor struct {
@@ -30,6 +38,10 @@ type Editor struct {
 	JustSelectedSprite bool
 	JustSelectedEntity bool
 	SelectedEntityID   string
+	EntityMode         EditorMode
+	spawnerButtonRect  image.Rectangle
+	deleteButtonRect   image.Rectangle
+	clearButtonRect    image.Rectangle
 	// OnLayerChange is called whenever the active layer changes.
 	OnLayerChange func(*levels.Level)
 	// OnStairPlaced is called when a stairwell sprite is placed.
@@ -42,13 +54,63 @@ func NewEditor(level *levels.Level, screenWidth, screenHeight int) *Editor {
 		SelectedID:        "",
 		PaletteOpen:       false,
 		EntityPaletteOpen: false,
+		EntityMode:        ModeSpawner,
 		level:             level,
 	}
 
 	// Create the palette with a callback to set the selected sprite
 	editor.Palette = NewSpritePalette(screenWidth, screenHeight, editor.SetSelectedSprite)
 	// Entities palette with some default monster sprites
-	entries := []string{"Statue", "BlueMan"}
+	entries := []string{
+		"GreyKnight",
+		"Chimera",
+		"Sentinel",
+		"Sorcerer",
+		"Duchess",
+		"Absolem",
+		"Death",
+		"Oracle",
+		"Jester",
+		"GreaterDemon",
+		"DemonKnight",
+		"Abomination",
+		"QueenOfDarkness",
+		"LesserDemon",
+		"TheTerror",
+		"Celestial",
+		"Demon",
+		"Apparition",
+		"Griffon",
+		"Manticore",
+		"Minotaur",
+		"TorturedSoul",
+		"ChaosTotem",
+		"HydraBase",
+		"Hydra2",
+		"Hydra3",
+		"Hydra4",
+		"Hydra5",
+		"Hydra6",
+		"HydraFinal",
+		"LesserDragon",
+		"GoldenDragon",
+		"Wyvern",
+		"LesserCaveDragon",
+		"GhostWyvern",
+		"AncientDragonRed",
+		"AncientDragonBlack",
+		"AncientDragon",
+		"PetrifiedDragon",
+		"GreaterDragon",
+		"GreaterRedDragon",
+		"BlueMan",
+		"Cyclops",
+		"TwoHeadedOgre",
+		"RedChampion",
+		"BlueChampion",
+		"Caveman",
+		"RockCollector",
+		"RedMan"}
 	editor.EntitiesPalette = NewEntitiesPalette(screenWidth, screenHeight, entries, editor.SetSelectedEntity)
 
 	return editor
@@ -151,6 +213,23 @@ func (e *Editor) Update(screenToTile func() (int, int)) {
 		e.ToggleEntityPalette()
 	}
 
+	// Handle mode button clicks
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+		mx, my := ebiten.CursorPosition()
+		if PointInRect(mx, my, e.spawnerButtonRect) {
+			e.EntityMode = ModeSpawner
+			return
+		}
+		if PointInRect(mx, my, e.deleteButtonRect) {
+			e.EntityMode = ModeDelete
+			return
+		}
+		if PointInRect(mx, my, e.clearButtonRect) {
+			e.SelectedEntityID = ""
+			return
+		}
+	}
+
 	if e.PaletteOpen {
 		e.Palette.Update()
 		return
@@ -164,6 +243,12 @@ func (e *Editor) Update(screenToTile func() (int, int)) {
 	e.JustSelectedSprite = false
 	e.JustSelectedEntity = false
 }
+
+// IsMenuOpen returns true if any palette menu is currently visible
+func (e *Editor) IsMenuOpen() bool {
+	return e.PaletteOpen || e.EntityPaletteOpen || e.Palette.Visible || e.EntitiesPalette.Visible
+}
+
 func (e *Editor) Draw(screen *ebiten.Image, tileSize int, camX, camY float64, camScale float64) {
 	if !e.Active {
 		return
@@ -284,6 +369,22 @@ func (e *Editor) PlaceSelectedEntityAt(tx, ty int) {
 	}
 }
 
+// DeleteEntityAt removes an entity at the given tile coordinates if one exists.
+func (e *Editor) DeleteEntityAt(tx, ty int) {
+	if e.level == nil || e.level.Entities == nil {
+		return
+	}
+
+	// Find and remove entity at this position
+	for i, ent := range e.level.Entities {
+		if ent.X == tx && ent.Y == ty {
+			// Remove this entity by slicing
+			e.level.Entities = append(e.level.Entities[:i], e.level.Entities[i+1:]...)
+			return
+		}
+	}
+}
+
 // NextLayer switches the editor to the next layer if a layered level is loaded.
 func (e *Editor) NextLayer() {
 	if e.layered == nil || len(e.layered.Layers) == 0 {
@@ -349,4 +450,53 @@ func (e *Editor) SetActiveLayerSilently(idx int) {
 	e.layerIndex = idx
 	e.layered.ActiveIndex = idx
 	e.level = e.layered.ActiveLayer()
+}
+
+// DrawModeButtons draws the entity mode buttons at the top-left of the screen
+func (e *Editor) DrawModeButtons(screen *ebiten.Image) {
+	buttonY := 5
+	buttonSpacing := 5
+	buttonW := 80
+	buttonH := 20
+	x := 5
+
+	// Spawner Mode button
+	spawnerRect := image.Rect(x, buttonY, x+buttonW, buttonY+buttonH)
+	spawnerColor := color.RGBA{100, 100, 100, 200}
+	if e.EntityMode == ModeSpawner {
+		spawnerColor = color.RGBA{0, 200, 0, 200}
+	}
+	vector.DrawFilledRect(screen, float32(spawnerRect.Min.X), float32(spawnerRect.Min.Y),
+		float32(spawnerRect.Dx()), float32(spawnerRect.Dy()), spawnerColor, false)
+	ebitenutil.DebugPrintAt(screen, "Spawn", spawnerRect.Min.X+10, spawnerRect.Min.Y+4)
+
+	x += buttonW + buttonSpacing
+
+	// Delete Mode button
+	deleteRect := image.Rect(x, buttonY, x+buttonW, buttonY+buttonH)
+	deleteColor := color.RGBA{100, 100, 100, 200}
+	if e.EntityMode == ModeDelete {
+		deleteColor = color.RGBA{200, 0, 0, 200}
+	}
+	vector.DrawFilledRect(screen, float32(deleteRect.Min.X), float32(deleteRect.Min.Y),
+		float32(deleteRect.Dx()), float32(deleteRect.Dy()), deleteColor, false)
+	ebitenutil.DebugPrintAt(screen, "Delete", deleteRect.Min.X+5, deleteRect.Min.Y+4)
+
+	x += buttonW + buttonSpacing*3
+
+	// Clear Selection button
+	clearRect := image.Rect(x, buttonY, x+90, buttonY+buttonH)
+	vector.DrawFilledRect(screen, float32(clearRect.Min.X), float32(clearRect.Min.Y),
+		float32(clearRect.Dx()), float32(clearRect.Dy()), color.RGBA{50, 50, 50, 200}, false)
+
+	if e.SelectedEntityID != "" {
+		ebitenutil.DebugPrintAt(screen, "Clear ["+e.SelectedEntityID+"]", clearRect.Min.X+5, clearRect.Min.Y+4)
+	} else {
+		ebitenutil.DebugPrintAt(screen, "Clear", clearRect.Min.X+30, clearRect.Min.Y+4)
+	}
+
+	// Store button rects on editor for click detection in Update
+	e.spawnerButtonRect = spawnerRect
+	e.deleteButtonRect = deleteRect
+	e.clearButtonRect = clearRect
 }

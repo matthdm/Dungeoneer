@@ -2,6 +2,7 @@ package game
 
 import (
 	"dungeoneer/constants"
+	"dungeoneer/controls"
 	"dungeoneer/entities"
 	"dungeoneer/fov"
 	"dungeoneer/hud"
@@ -63,6 +64,9 @@ type Game struct {
 	ShowHUD         bool
 	HeroPanel       *ui.HeroPanel
 	InventoryScreen *ui.InventoryScreen
+	ControlsMenu    *ui.ControlsMenu
+
+	Controls *controls.Controls
 
 	ActiveSpells    []spells.Spell
 	fireballSprites [][]*ebiten.Image
@@ -165,8 +169,14 @@ func NewGame() (*Game, error) {
 		DeltaTime:       1.0 / 60.0,
 		camSmooth:       0.1,
 		SpellDebug:      true,
+		Controls:        controls.New(),
+	}
+	// Load saved control bindings if they exist
+	if err := g.Controls.LoadBindings(); err == nil {
+		fmt.Println("Loaded saved control bindings")
 	}
 	g.DevMenu = ui.NewDevMenu(640, 480, g.player, g.ShowHint)
+	g.ControlsMenu = ui.NewControlsMenu(640, 480, g.Controls, func() {})
 	g.editor.OnLayerChange = g.editorLayerChanged
 	g.editor.OnStairPlaced = g.stairPlaced
 	g.spawnEntitiesFromLevel()
@@ -243,7 +253,7 @@ func NewGame() (*Game, error) {
 		func() { menumanager.Manager().CloseActiveMenu() },
 	)
 	// Pause Menu
-	pm := ui.NewPauseMenu(l.W, l.H, ui.PauseMenuCallbacks{
+	pm := ui.NewPauseMenu(l.W, l.H, g.Controls, ui.PauseMenuCallbacks{
 		OnResume:     func() { g.resumeGame() },
 		OnExit:       func() { os.Exit(0) },
 		OnLoadLevel:  func() { menumanager.Manager().Open(g.LoadLevelMenu) },
@@ -762,6 +772,10 @@ func (g *Game) updatePlaying() error {
 
 	if g.DevMenu != nil {
 		g.DevMenu.Update()
+	}
+
+	if g.ControlsMenu != nil && g.ControlsMenu.IsVisible() {
+		g.ControlsMenu.Update()
 	}
 
 	// Debugging / editor / effects

@@ -81,6 +81,12 @@ var (
 	//go:embed new_game.png
 	New_Game_png []byte
 
+	//go:embed load_game.png
+	Load_Game_png []byte
+
+	//go:embed continue_game.png
+	Continue_Game_png []byte
+
 	//go:embed exit_game.png
 	Exit_Game_png []byte
 
