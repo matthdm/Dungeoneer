@@ -73,7 +73,7 @@ func (cm *ControlsMenu) Update() {
 		// Get any key pressed
 		for key := ebiten.Key(0); key <= ebiten.KeyMax; key++ {
 			if inpututil.IsKeyJustPressed(key) {
-				if key != ebiten.KeyEscape { // Don't allow Escape as a binding
+				if key != ebiten.KeyEscape && key != ebiten.KeyMeta { // Don't allow Escape or Meta/Win as a binding
 					action := cm.actions[cm.remappingIndex]
 					cm.ctrl.SetBinding(action, key)
 					// Save bindings to file immediately

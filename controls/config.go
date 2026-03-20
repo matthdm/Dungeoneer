@@ -71,6 +71,18 @@ func init() {
 	for key, name := range keyToName {
 		nameToKey[name] = key
 	}
+	// Auto-populate any keys not in the explicit list using ebiten's String().
+	// This ensures every pressable key (e.g. KeyF, KeyT, KeyMeta) can round-trip
+	// through save/load without corrupting to KeyMax.
+	for key := ebiten.Key(0); key < ebiten.KeyMax; key++ {
+		if _, ok := keyToName[key]; !ok {
+			s := key.String()
+			if s != "" {
+				keyToName[key] = s
+				nameToKey[s] = key
+			}
+		}
+	}
 }
 
 // SavedBinding represents a binding in JSON format

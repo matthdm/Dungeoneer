@@ -35,7 +35,6 @@ func ResizeShadowBuffer(w, h int) {
 // it for rendering. The returned image is reused across calls to avoid
 // allocations.
 func BuildShadowImage(rays []Line, camX, camY, camScale float64, cx, cy float64, tileSize int) *ebiten.Image {
-	var offSetX float64 = 1
 	if len(rays) < 3 {
 		shadowImage.Clear()
 		return shadowImage
@@ -57,9 +56,9 @@ func BuildShadowImage(rays []Line, camX, camY, camScale float64, cx, cy float64,
 		r1 := rays[i]
 		r2 := rays[(i+1)%len(rays)]
 
-		x0, y0 := worldToScreen(r1.X1+offSetX, r1.Y1, camX, camY, camScale, cx, cy, tileSize)
-		x1, y1 := worldToScreen(r1.X2+offSetX, r1.Y2, camX, camY, camScale, cx, cy, tileSize)
-		x2, y2 := worldToScreen(r2.X2+offSetX, r2.Y2, camX, camY, camScale, cx, cy, tileSize)
+		x0, y0 := worldToScreen(r1.X1, r1.Y1, camX, camY, camScale, cx, cy, tileSize)
+		x1, y1 := worldToScreen(r1.X2, r1.Y2, camX, camY, camScale, cx, cy, tileSize)
+		x2, y2 := worldToScreen(r2.X2, r2.Y2, camX, camY, camScale, cx, cy, tileSize)
 
 		verts := []ebiten.Vertex{
 			{DstX: float32(x0), DstY: float32(y0), ColorA: 1},
@@ -73,10 +72,9 @@ func BuildShadowImage(rays []Line, camX, camY, camScale float64, cx, cy float64,
 	return shadowImage
 }
 func DebugDrawRays(screen *ebiten.Image, rays []Line, camX, camY, camScale float64, cx, cy float64, tileSize int) {
-	var offSetX float64 = 1
 	for _, r := range rays {
-		x1, y1 := worldToScreen(r.X1+offSetX, r.Y1, camX, camY, camScale, cx, cy, tileSize)
-		x2, y2 := worldToScreen(r.X2+offSetX, r.Y2, camX, camY, camScale, cx, cy, tileSize)
+		x1, y1 := worldToScreen(r.X1, r.Y1, camX, camY, camScale, cx, cy, tileSize)
+		x2, y2 := worldToScreen(r.X2, r.Y2, camX, camY, camScale, cx, cy, tileSize)
 
 		vector.StrokeLine(screen,
 			float32(x1), float32(y1),

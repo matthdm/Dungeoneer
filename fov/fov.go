@@ -99,11 +99,13 @@ func isWall(x, y int, level *levels.Level) bool {
 	return t == nil || !t.IsWalkable
 }
 
-// TraceLineToTiles returns a list of tile coordinates the ray crosses
+// TraceLineToTiles returns every tile the line geometrically touches,
+// including tiles only grazed at a corner. Standard Bresenham picks one
+// tile at each corner crossing and skips the other; this supercover variant
+// emits both, eliminating the "dark corner tile" gaps in radial FOV.
 func TraceLineToTiles(x1, y1, x2, y2 float64) []Point {
 	var points []Point
 
-	// Convert float coordinates to tile grid
 	startX := int(math.Floor(x1))
 	startY := int(math.Floor(y1))
 	endX := int(math.Floor(x2))
@@ -131,6 +133,9 @@ func TraceLineToTiles(x1, y1, x2, y2 float64) []Point {
 			x += stepX
 			err -= dy
 			if err < 0 {
+				// Line crosses a tile corner: include the tile we were in
+				// before the Y step so the corner tile is never skipped.
+				points = append(points, Point{X: x, Y: y})
 				y += stepY
 				err += dx
 			}
@@ -142,6 +147,8 @@ func TraceLineToTiles(x1, y1, x2, y2 float64) []Point {
 			y += stepY
 			err -= dx
 			if err < 0 {
+				// Same supercover treatment for the X-step case.
+				points = append(points, Point{X: x, Y: y})
 				x += stepX
 				err += dy
 			}
