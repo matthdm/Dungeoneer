@@ -2,6 +2,7 @@ package game
 
 import (
 	"dungeoneer/leveleditor"
+	"dungeoneer/levels"
 	"dungeoneer/tiles"
 	"fmt"
 	"strings"
@@ -32,7 +33,12 @@ func (g *Game) DebugLevelEditor() {
 		if err != nil {
 			fmt.Println("Load failed:", err)
 		} else {
+			newWorld := levels.NewLayeredLevel(level)
+			g.currentWorld = newWorld
 			g.currentLevel = level
+			g.editor = leveleditor.NewLayeredEditor(newWorld, g.w, g.h)
+			g.editor.OnLayerChange = g.editorLayerChanged
+			g.editor.OnStairPlaced = g.stairPlaced
 			g.UpdateSeenTiles(*level)
 			g.spawnEntitiesFromLevel()
 			fmt.Println("Level loaded from test_level.json")

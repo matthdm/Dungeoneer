@@ -190,7 +190,12 @@ func NewGame() (*Game, error) {
 	// Load Level Menu
 	g.LoadLevelMenu = ui.NewLoadLevelMenu(g.w, g.h,
 		func(loaded *levels.Level) {
+			newWorld := levels.NewLayeredLevel(loaded)
+			g.currentWorld = newWorld
 			g.currentLevel = loaded
+			g.editor = leveleditor.NewLayeredEditor(newWorld, g.w, g.h)
+			g.editor.OnLayerChange = g.editorLayerChanged
+			g.editor.OnStairPlaced = g.stairPlaced
 			g.UpdateSeenTiles(*loaded)
 			g.spawnEntitiesFromLevel()
 		},
@@ -272,15 +277,7 @@ func NewGame() (*Game, error) {
 						fmt.Println("Error saving player:", err)
 					} else {
 						fmt.Println("Saved player to:", path)
-						g.SavePrompt = ui.NewTextInputMenu(
-							menuRect,
-							"Success",
-							"Saved player to: "+filename,
-							nil,
-							nil,
-						)
-						g.SavePrompt.Instructions = []string{"Press Esc to close"}
-						menumanager.Manager().Open(g.SavePrompt)
+						menumanager.Manager().CloseActiveMenu()
 					}
 				},
 				func() {
@@ -303,15 +300,7 @@ func NewGame() (*Game, error) {
 						fmt.Println("Error saving level:", err)
 					} else {
 						fmt.Println("Saved to:", path)
-						g.SavePrompt = ui.NewTextInputMenu(
-							menuRect,
-							"Success",
-							"Saved level to: "+filename,
-							nil,
-							nil,
-						)
-						g.SavePrompt.Instructions = []string{"Press Esc to close"}
-						menumanager.Manager().Open(g.SavePrompt)
+						menumanager.Manager().CloseActiveMenu()
 					}
 				},
 				func() {

@@ -221,6 +221,20 @@ func (l Level) IsWalkable(x, y int) bool {
 	return t.IsWalkable
 }
 
+func blankLevelCenterFloor(currentFloorID string, currentFloor *ebiten.Image) (string, *ebiten.Image) {
+	centerFlavor := "gallery"
+	if currentFloorID == "gallery_floor" {
+		centerFlavor = "crypt"
+	}
+
+	wss, err := sprites.LoadWallSpriteSheet(centerFlavor)
+	if err != nil || wss == nil || wss.Floor == nil {
+		return currentFloorID, currentFloor
+	}
+
+	return centerFlavor + "_floor", wss.Floor
+}
+
 // CreateNewBlankLevel creates a new level filled with floor tiles
 func CreateNewBlankLevel(width, height, tileSize int, ss *sprites.SpriteSheet) *Level {
 	l := &Level{
@@ -231,6 +245,7 @@ func CreateNewBlankLevel(width, height, tileSize int, ss *sprites.SpriteSheet) *
 		Entities: []PlacedEntity{},
 		DoorDensity: DefaultDoorDensityConfig(),
 	}
+	centerFloorID, centerFloor := blankLevelCenterFloor("Floor", ss.Floor)
 
 	for y := 0; y < height; y++ {
 		row := make([]*tiles.Tile, width)
@@ -238,7 +253,12 @@ func CreateNewBlankLevel(width, height, tileSize int, ss *sprites.SpriteSheet) *
 			t := &tiles.Tile{
 				IsWalkable: true,
 			}
-			t.AddSpriteByID("Floor", ss.Floor) // You can assign a real image from the sprite sheet later
+			if x == width/2 && y == height/2 {
+				t.AddSpriteByID(centerFloorID, centerFloor)
+				t.AddSpriteByID("Glyph", ss.Glyph)
+			} else {
+				t.AddSpriteByID("Floor", ss.Floor)
+			}
 			row[x] = t
 		}
 		l.Tiles[y] = row
@@ -257,11 +277,16 @@ func CreateNewBlankLevelWithFloor(width, height, tileSize int, floorID string, i
 		Entities: []PlacedEntity{},
 		DoorDensity: DefaultDoorDensityConfig(),
 	}
+	centerFloorID, centerFloor := blankLevelCenterFloor(floorID, img)
 	for y := 0; y < height; y++ {
 		row := make([]*tiles.Tile, width)
 		for x := 0; x < width; x++ {
 			t := &tiles.Tile{IsWalkable: true}
-			t.AddSpriteByID(floorID, img)
+			if x == width/2 && y == height/2 {
+				t.AddSpriteByID(centerFloorID, centerFloor)
+			} else {
+				t.AddSpriteByID(floorID, img)
+			}
 			row[x] = t
 		}
 		l.Tiles[y] = row
