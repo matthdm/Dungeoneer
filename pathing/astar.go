@@ -37,6 +37,12 @@ func reconstructPath(end *Node) []PathNode {
 	for n := end; n != nil; n = n.Parent {
 		path = append([]PathNode{{X: n.X, Y: n.Y}}, path...)
 	}
+	// Drop the start node — callers are already at that position.
+	// Including it caused the controller to interpolate back to the start
+	// tile when a new path was issued mid-step.
+	if len(path) > 0 {
+		path = path[1:]
+	}
 	return path
 }
 

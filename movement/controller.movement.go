@@ -83,10 +83,18 @@ func (c *MovementController) SetVelocityFromInput(dx, dy float64) {
 	c.Moving = true
 }
 
-// SetPathingMode assigns a path and begins movement
+// SetPath assigns a path and begins movement. If the controller is already
+// interpolating toward the same tile as the new path's first node, the current
+// step is preserved and only the remaining path is updated. This prevents
+// spam-clicking from stalling movement while still redirecting correctly.
 func (c *MovementController) SetPath(path []pathing.PathNode) {
-	c.Path = path
 	c.Mode = PathingMode
+	if c.Moving && len(path) > 0 &&
+		float64(path[0].X) == c.TargetX && float64(path[0].Y) == c.TargetY {
+		c.Path = path[1:]
+		return
+	}
+	c.Path = path
 	c.Moving = false
 }
 
@@ -119,6 +127,15 @@ func (c *MovementController) Update(dt float64) {
 				c.Moving = false
 				c.InterpX = c.TargetX
 				c.InterpY = c.TargetY
+				// Fire OnStep on arrival so TileX/TileY reflects where the
+				// player actually IS, not where they are headed. Firing early
+				// caused TileX/TileY to run ahead of InterpX/InterpY, which
+				// produced both the stutter (VelocityMode reverted TileX/TileY
+				// via int(InterpX)) and the speed exploit (new A* paths started
+				// from the phantom-advanced tile while InterpX/InterpY lagged).
+				if c.OnStep != nil {
+					c.OnStep(int(c.TargetX), int(c.TargetY))
+				}
 			}
 		} else if len(c.Path) > 0 {
 			next := c.Path[0]
@@ -129,10 +146,6 @@ func (c *MovementController) Update(dt float64) {
 			c.TargetY = float64(next.Y)
 			c.InterpTicks = 0
 			c.Moving = true
-
-			if c.OnStep != nil {
-				c.OnStep(next.X, next.Y)
-			}
 		}
 
 	}
