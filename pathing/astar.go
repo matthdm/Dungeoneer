@@ -1,10 +1,9 @@
 // Package pathing implements grid-based A* pathfinding used by entities.
 //
 // Implementation notes:
-//   - The current heuristic is Manhattan distance (abs(dx)+abs(dy)) which is
-//     admissible for 4-way grid movement and fast to compute. If diagonal
-//     movement or different costs are added, update the heuristic to remain
-//     admissible.
+//   - Movement supports 8 directions (4 orthogonal + 4 diagonal). Orthogonal
+//     steps cost 10, diagonal steps cost 14 (≈ 10√2). The heuristic is octile
+//     distance, which is admissible under these costs.
 //   - The A* here uses simple slices and maps for open/closed lists. For large
 //     maps or frequent queries, replacing `open` with a binary heap and
 //     reusing node objects from a pool will reduce allocations and improve
@@ -29,7 +28,14 @@ type PathNode struct {
 }
 
 func heuristic(x1, y1, x2, y2 int) int {
-	return abs(x1-x2) + abs(y1-y2)
+	dx := abs(x1 - x2)
+	dy := abs(y1 - y2)
+	// Octile distance scaled to match movement costs (orthogonal=10, diagonal=14).
+	// Formula: 10*max + 4*min  (derived from 10*(dx+dy) + (14-20)*min)
+	if dx > dy {
+		return 10*dx + 4*dy
+	}
+	return 10*dy + 4*dx
 }
 
 func reconstructPath(end *Node) []PathNode {
@@ -99,9 +105,14 @@ func AStar(level *levels.Level, startX, startY, goalX, goalY int) []PathNode {
 			return reconstructPath(current)
 		}
 
-		// Explore neighbors
-		for _, dir := range [][2]int{{0, 1}, {1, 0}, {0, -1}, {-1, 0}} {
-			nx, ny := current.X+dir[0], current.Y+dir[1]
+		// Explore neighbors: 4 orthogonal (cost 10) + 4 diagonal (cost 14).
+		// [dx, dy, cost]
+		for _, dir := range [8][3]int{
+			{0, 1, 10}, {1, 0, 10}, {0, -1, 10}, {-1, 0, 10},
+			{1, 1, 14}, {1, -1, 14}, {-1, 1, 14}, {-1, -1, 14},
+		} {
+			dx, dy, moveCost := dir[0], dir[1], dir[2]
+			nx, ny := current.X+dx, current.Y+dy
 
 			if !level.IsWalkable(nx, ny) || closed[[2]int{nx, ny}] {
 				continue
@@ -110,25 +121,41 @@ func AStar(level *levels.Level, startX, startY, goalX, goalY int) []PathNode {
 			// Check for closed/locked doors (they block movement even if tile is walkable)
 			tile := level.Tile(nx, ny)
 			if tile != nil && tile.HasTag(tiles.TagDoor) && (tile.DoorState == 2 || tile.DoorState == 3) {
-				continue // Closed/locked doors block movement
+				continue
 			}
 
-			// Check if in open list
-			inOpen := false
-			for _, n := range open {
-				if n.X == nx && n.Y == ny {
-					inOpen = true
+			// Corner-cutting prevention: a diagonal step is only valid when both
+			// orthogonal neighbours are clear. This stops the player squeezing
+			// through the gap between two touching walls.
+			if dx != 0 && dy != 0 {
+				if !level.IsWalkable(current.X+dx, current.Y) || !level.IsWalkable(current.X, current.Y+dy) {
+					continue
+				}
+			}
+
+			newGCost := current.GCost + moveCost
+
+			// If already in the open list, only update if we found a cheaper path.
+			updated := false
+			for _, existing := range open {
+				if existing.X == nx && existing.Y == ny {
+					if newGCost < existing.GCost {
+						existing.GCost = newGCost
+						existing.FCost = newGCost + existing.HCost
+						existing.Parent = current
+					}
+					updated = true
 					break
 				}
 			}
-			if inOpen {
+			if updated {
 				continue
 			}
 
 			n := &Node{
 				X:      nx,
 				Y:      ny,
-				GCost:  current.GCost + 1,
+				GCost:  newGCost,
 				HCost:  heuristic(nx, ny, goalX, goalY),
 				Parent: current,
 			}
