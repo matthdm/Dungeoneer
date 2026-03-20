@@ -2,7 +2,7 @@
   "version": 1,
   "bindings": {
     "dash": {
-      "primary": "",
+      "primary": "Space",
       "secondary": "A"
     },
     "gen_forest": {

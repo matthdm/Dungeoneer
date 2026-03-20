@@ -397,9 +397,15 @@ func (g *Game) getDrawOp(worldX, worldY, scale, cx, cy float64) *ebiten.DrawImag
 	return op
 }
 
+// fovDecayFrames is how many frames a tile stays "visible" after the last
+// ray hit it. This window absorbs the per-frame jitter in TraceLineToTiles
+// caused by the sub-tile origin shift, eliminating boundary flicker without
+// any perceptible lag (3 frames ≈ 50 ms at 60 TPS).
+const fovDecayFrames = 3
+
 func (g *Game) isTileVisible(x, y int) bool {
-	if y < 0 || y >= len(g.VisibleTiles) || x < 0 || x >= len(g.VisibleTiles[y]) {
+	if y < 0 || y >= len(g.visibleTick) || x < 0 || x >= len(g.visibleTick[y]) {
 		return false
 	}
-	return g.FullBright || g.VisibleTiles[y][x]
+	return g.FullBright || g.gameTick-g.visibleTick[y][x] <= fovDecayFrames
 }

@@ -84,9 +84,14 @@ type Game struct {
 	ShowDoorDebug            bool
 
 	// Visibility tracking
-	VisibleTiles [][]bool // true if currently visible
-	SeenTiles    [][]bool // true if ever seen
-	camSmooth    float64
+	// visibleTick[y][x] stores the gameTick when a tile was last hit by a ray.
+	// isTileVisible compares against (gameTick - fovDecayFrames) so edge tiles
+	// stay lit for a few frames after the ray set shifts, eliminating the
+	// clear-then-rebuild flicker from sub-tile origin movement.
+	visibleTick [][]int
+	gameTick    int
+	SeenTiles   [][]bool // true if ever seen
+	camSmooth   float64
 
 	// cooldown timer to prevent immediate re-triggering of stair links
 	layerSwitchCooldown float64
@@ -315,10 +320,10 @@ func NewGame() (*Game, error) {
 	g.PauseMenu = pm
 	menumanager.Init(pm)
 
-	g.VisibleTiles = make([][]bool, g.currentLevel.H)
+	g.visibleTick = make([][]int, g.currentLevel.H)
 	g.SeenTiles = make([][]bool, g.currentLevel.H)
-	for y := range g.VisibleTiles {
-		g.VisibleTiles[y] = make([]bool, g.currentLevel.W)
+	for y := range g.visibleTick {
+		g.visibleTick[y] = make([]int, g.currentLevel.W)
 		g.SeenTiles[y] = make([]bool, g.currentLevel.W)
 	}
 
@@ -470,13 +475,13 @@ func (g *Game) screenToTile() (int, int) {
 
 func (g *Game) UpdateSeenTiles(level levels.Level) {
 	seen := make([][]bool, level.H)
-	vis := make([][]bool, level.H)
+	tick := make([][]int, level.H)
 	for y := range seen {
 		seen[y] = make([]bool, level.W)
-		vis[y] = make([]bool, level.W)
+		tick[y] = make([]int, level.W)
 	}
 	g.SeenTiles = seen
-	g.VisibleTiles = vis
+	g.visibleTick = tick
 }
 
 // spawnEntitiesFromLevel creates monsters based on the placed entities in the
@@ -668,7 +673,8 @@ func (g *Game) updatePlaying() error {
 	// Rebuild raycast walls (in case the level changed)
 	g.RaycastWalls = fov.LevelToWalls(g.currentLevel)
 
-	// Determine if we should update rays:
+	// Recast whenever the player's interpolated position changes (sub-tile
+	// continuous updates for smooth shadow movement).
 	shouldRecast := len(g.cachedRays) == 0 ||
 		g.player.MoveController.InterpX != g.lastPlayerX ||
 		g.player.MoveController.InterpY != g.lastPlayerY
@@ -681,27 +687,26 @@ func (g *Game) updatePlaying() error {
 		g.lastPlayerX = originX
 		g.lastPlayerY = originY
 
-		// Clear visibility map
-		for y := range g.VisibleTiles {
-			for x := range g.VisibleTiles[y] {
-				g.VisibleTiles[y][x] = false
-			}
-		}
+		// Advance the recast counter only when the visible set actually changes.
+		// gameTick is a "recast counter", not a wall-clock frame counter.
+		// Keeping it still when the player is stationary means visibleTick[y][x]
+		// stays within the fovDecayFrames window and tiles never go gray at rest.
+		g.gameTick++
 
-		// Update visibility from ray paths
+		// Stamp the current tick on each tile hit by a ray.
+		// No full-array clear needed — tiles decay naturally once gameTick
+		// advances fovDecayFrames beyond their last stamp.
 		for _, ray := range g.cachedRays {
 			for _, pt := range ray.Path {
 				if g.isValidTile(pt.X, pt.Y) {
-					g.VisibleTiles[pt.Y][pt.X] = true
+					g.visibleTick[pt.Y][pt.X] = g.gameTick
 					g.SeenTiles[pt.Y][pt.X] = true
 				}
 			}
-
-			// Final ray endpoint tile
 			tx := int(ray.X2)
 			ty := int(ray.Y2)
 			if g.isValidTile(tx, ty) {
-				g.VisibleTiles[ty][tx] = true
+				g.visibleTick[ty][tx] = g.gameTick
 				g.SeenTiles[ty][tx] = true
 			}
 		}
