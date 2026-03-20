@@ -1,0 +1,109 @@
+{
+  "version": 1,
+  "bindings": {
+    "dash": {
+      "primary": "Space",
+      "secondary": "A"
+    },
+    "gen_forest": {
+      "primary": "N",
+      "secondary": "A"
+    },
+    "gen_maze": {
+      "primary": "M",
+      "secondary": "A"
+    },
+    "grapple": {
+      "primary": "",
+      "secondary": "A"
+    },
+    "hero_panel": {
+      "primary": "H",
+      "secondary": "A"
+    },
+    "inventory": {
+      "primary": "Tab",
+      "secondary": "A"
+    },
+    "menu_cancel": {
+      "primary": "Escape",
+      "secondary": "A"
+    },
+    "menu_confirm": {
+      "primary": "Enter",
+      "secondary": "Space"
+    },
+    "menu_down": {
+      "primary": "S",
+      "secondary": "ArrowDown"
+    },
+    "menu_up": {
+      "primary": "W",
+      "secondary": "ArrowUp"
+    },
+    "move_down": {
+      "primary": "S",
+      "secondary": "ArrowDown"
+    },
+    "move_left": {
+      "primary": "A",
+      "secondary": "ArrowLeft"
+    },
+    "move_right": {
+      "primary": "D",
+      "secondary": "ArrowRight"
+    },
+    "move_up": {
+      "primary": "W",
+      "secondary": "ArrowUp"
+    },
+    "show_hud": {
+      "primary": "F10",
+      "secondary": "A"
+    },
+    "show_rays": {
+      "primary": "9",
+      "secondary": "A"
+    },
+    "spell_1": {
+      "primary": "1",
+      "secondary": "A"
+    },
+    "spell_2": {
+      "primary": "2",
+      "secondary": "A"
+    },
+    "spell_3": {
+      "primary": "3",
+      "secondary": "A"
+    },
+    "spell_4": {
+      "primary": "4",
+      "secondary": "A"
+    },
+    "spell_5": {
+      "primary": "5",
+      "secondary": "A"
+    },
+    "spell_6": {
+      "primary": "6",
+      "secondary": "A"
+    },
+    "spell_debug": {
+      "primary": "8",
+      "secondary": "A"
+    },
+    "toggle_editor": {
+      "primary": "F3",
+      "secondary": "A"
+    },
+    "toggle_keybind": {
+      "primary": "F1",
+      "secondary": "A"
+    },
+    "toggle_pause": {
+      "primary": "Escape",
+      "secondary": "A"
+    }
+  }
+}

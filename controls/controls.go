@@ -28,6 +28,10 @@ const (
 	ActionSpell5 ActionID = "spell_5"
 	ActionSpell6 ActionID = "spell_6"
 
+	// Player abilities
+	ActionDash   ActionID = "dash"
+	ActionGrapple ActionID = "grapple"
+
 	// Game
 	ActionInventory     ActionID = "inventory"
 	ActionHeroPanel     ActionID = "hero_panel"
@@ -57,17 +61,21 @@ type Controls struct {
 }
 
 var defaultBindings = map[ActionID]KeyBinding{
-	// Movement
-	ActionMoveLeft:  {Primary: ebiten.KeyArrowLeft},
-	ActionMoveRight: {Primary: ebiten.KeyArrowRight},
-	ActionMoveUp:    {Primary: ebiten.KeyArrowUp},
-	ActionMoveDown:  {Primary: ebiten.KeyArrowDown},
+	// Movement — WASD maps to isometric directions; arrows as secondary
+	ActionMoveLeft:  {Primary: ebiten.KeyA, Secondary: ebiten.KeyArrowLeft},
+	ActionMoveRight: {Primary: ebiten.KeyD, Secondary: ebiten.KeyArrowRight},
+	ActionMoveUp:    {Primary: ebiten.KeyW, Secondary: ebiten.KeyArrowUp},
+	ActionMoveDown:  {Primary: ebiten.KeyS, Secondary: ebiten.KeyArrowDown},
 
 	// UI Navigation
 	ActionMenuUp:      {Primary: ebiten.KeyW, Secondary: ebiten.KeyArrowUp},
 	ActionMenuDown:    {Primary: ebiten.KeyS, Secondary: ebiten.KeyArrowDown},
 	ActionMenuConfirm: {Primary: ebiten.KeyEnter, Secondary: ebiten.KeySpace},
 	ActionMenuCancel:  {Primary: ebiten.KeyEscape},
+
+	// Player abilities
+	ActionDash:   {Primary: ebiten.KeyShift},
+	ActionGrapple: {Primary: ebiten.KeyF},
 
 	// Combat Spells
 	ActionSpell1: {Primary: ebiten.Key1},
@@ -78,7 +86,7 @@ var defaultBindings = map[ActionID]KeyBinding{
 	ActionSpell6: {Primary: ebiten.Key6},
 
 	// Game
-	ActionInventory:     {Primary: ebiten.KeyI},
+	ActionInventory:     {Primary: ebiten.KeyTab},
 	ActionHeroPanel:     {Primary: ebiten.KeyH},
 	ActionTogglePause:   {Primary: ebiten.KeyEscape},
 	ActionShowHUD:       {Primary: ebiten.KeyF10},
@@ -152,6 +160,8 @@ func GetAllActionIDs() []ActionID {
 		ActionMoveRight,
 		ActionMoveUp,
 		ActionMoveDown,
+		ActionDash,
+		ActionGrapple,
 		ActionMenuUp,
 		ActionMenuDown,
 		ActionMenuConfirm,
@@ -182,6 +192,8 @@ func GetActionLabel(action ActionID) string {
 		ActionMoveRight:     "Move Right",
 		ActionMoveUp:        "Move Up",
 		ActionMoveDown:      "Move Down",
+		ActionDash:          "Dash",
+		ActionGrapple:       "Grapple",
 		ActionMenuUp:        "Menu Up",
 		ActionMenuDown:      "Menu Down",
 		ActionMenuConfirm:   "Menu Confirm",
@@ -209,43 +221,25 @@ func GetActionLabel(action ActionID) string {
 	return string(action)
 }
 
-// GetKeyName returns a user-friendly name for a key
+// GetKeyName returns a user-friendly name for a key.
+// Overrides are defined for keys that benefit from a short display name
+// (arrows as symbols, common modifiers). Everything else falls back to
+// ebiten's own String() method so newly-added keys display correctly.
 func GetKeyName(key ebiten.Key) string {
-	names := map[ebiten.Key]string{
+	overrides := map[ebiten.Key]string{
 		ebiten.KeyArrowLeft:  "←",
 		ebiten.KeyArrowRight: "→",
 		ebiten.KeyArrowUp:    "↑",
 		ebiten.KeyArrowDown:  "↓",
-		ebiten.KeyW:          "W",
-		ebiten.KeyA:          "A",
-		ebiten.KeyS:          "S",
-		ebiten.KeyD:          "D",
-		ebiten.KeyEnter:      "Enter",
-		ebiten.KeySpace:      "Space",
 		ebiten.KeyEscape:     "Esc",
-		ebiten.KeyTab:        "Tab",
-		ebiten.KeyShift:      "Shift",
 		ebiten.KeyControl:    "Ctrl",
-		ebiten.KeyAlt:        "Alt",
-		ebiten.KeyH:          "H",
-		ebiten.KeyI:          "I",
-		ebiten.KeyM:          "M",
-		ebiten.KeyN:          "N",
-		ebiten.KeyF1:         "F1",
-		ebiten.KeyF2:         "F2",
-		ebiten.KeyF3:         "F3",
-		ebiten.KeyF10:        "F10",
-		ebiten.Key1:          "1",
-		ebiten.Key2:          "2",
-		ebiten.Key3:          "3",
-		ebiten.Key4:          "4",
-		ebiten.Key5:          "5",
-		ebiten.Key6:          "6",
-		ebiten.Key8:          "8",
-		ebiten.Key9:          "9",
 	}
-	if name, ok := names[key]; ok {
+	if name, ok := overrides[key]; ok {
 		return name
+	}
+	s := key.String()
+	if s != "" {
+		return s
 	}
 	return "?"
 }

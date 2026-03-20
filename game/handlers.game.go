@@ -18,6 +18,16 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
+// isActionPressed returns true while the bound key is held down.
+func (g *Game) isActionPressed(action controls.ActionID) bool {
+	return ebiten.IsKeyPressed(g.Controls.GetBinding(action).Primary)
+}
+
+// isActionJustPressed returns true on the first frame the bound key is pressed.
+func (g *Game) isActionJustPressed(action controls.ActionID) bool {
+	return inpututil.IsKeyJustPressed(g.Controls.GetBinding(action).Primary)
+}
+
 func (g *Game) handleMainMenuInput() {
 	if g.State != StateMainMenu || g.Menu == nil {
 		return
@@ -223,8 +233,7 @@ func (g *Game) handleHoverTile() {
 }
 
 func (g *Game) handleLevelHotkeys() {
-	// Check if controls menu should be shown using the controls system
-	if inpututil.IsKeyJustPressed(g.Controls.GetBinding(controls.ActionToggleKeybind).Primary) {
+	if g.isActionJustPressed(controls.ActionToggleKeybind) {
 		if g.ControlsMenu != nil {
 			if g.ControlsMenu.IsVisible() {
 				g.ControlsMenu.Hide()
@@ -234,29 +243,25 @@ func (g *Game) handleLevelHotkeys() {
 		}
 	}
 
-	if inpututil.IsKeyJustPressed(ebiten.KeyM) {
+	if g.isActionJustPressed(controls.ActionGenMaze) {
 		if l, err := levels.NewMazeLevel(); err == nil {
 			g.currentLevel = l
 			g.UpdateSeenTiles(*l)
 		}
 	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyN) {
+	if g.isActionJustPressed(controls.ActionGenForest) {
 		if l, err := levels.NewForestLevel(); err == nil {
 			g.currentLevel = l
 			g.UpdateSeenTiles(*l)
 		}
 	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyF1) {
-		if !controlToggle {
-			controlToggle = true
-		} else {
-			controlToggle = false
-		}
+	if g.isActionJustPressed(controls.ActionToggleKeybind) {
+		controlToggle = !controlToggle
 	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyF10) {
+	if g.isActionJustPressed(controls.ActionShowHUD) {
 		g.ShowHUD = !g.ShowHUD
 	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyF3) {
+	if g.isActionJustPressed(controls.ActionToggleEditor) {
 		if g.editor != nil {
 			g.editor.Active = !g.editor.Active
 			if g.editor.Active {
@@ -266,51 +271,49 @@ func (g *Game) handleLevelHotkeys() {
 			}
 		}
 	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyH) {
+	if g.isActionJustPressed(controls.ActionHeroPanel) {
 		if g.HeroPanel != nil {
 			g.HeroPanel.Toggle()
 		}
 	}
-	if inpututil.IsKeyJustPressed(ebiten.Key1) {
+	if g.isActionJustPressed(controls.ActionSpell1) {
 		if g.player != nil {
 			gx := g.player.MoveController.InterpX
 			gy := g.player.MoveController.InterpY
 			g.castFireball(gx, gy, float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
 		}
 	}
-	if inpututil.IsKeyJustPressed(ebiten.Key2) {
+	if g.isActionJustPressed(controls.ActionSpell2) {
 		if g.player != nil {
 			gx := g.player.MoveController.InterpX
 			gy := g.player.MoveController.InterpY
 			g.castChaosRay(gx, gy, float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
 		}
 	}
-
-	if inpututil.IsKeyJustPressed(ebiten.Key6) {
-		if g.player != nil {
-			g.castFractalCanopy(float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
-		}
-	}
-	if inpututil.IsKeyJustPressed(ebiten.Key3) {
+	if g.isActionJustPressed(controls.ActionSpell3) {
 		if g.player != nil {
 			g.castLightningStrike(float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
 		}
 	}
-	if inpututil.IsKeyJustPressed(ebiten.Key4) {
+	if g.isActionJustPressed(controls.ActionSpell4) {
 		if g.player != nil {
 			g.castLightningStorm(float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
 		}
 	}
-	if inpututil.IsKeyJustPressed(ebiten.Key5) {
+	if g.isActionJustPressed(controls.ActionSpell5) {
 		if g.player != nil {
 			g.castFractalBloom(float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
 		}
 	}
-
-	if inpututil.IsKeyJustPressed(ebiten.Key8) {
+	if g.isActionJustPressed(controls.ActionSpell6) {
+		if g.player != nil {
+			g.castFractalCanopy(float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
+		}
+	}
+	if g.isActionJustPressed(controls.ActionSpellDebug) {
 		g.SpellDebug = !g.SpellDebug
 	}
-	if inpututil.IsKeyJustPressed(ebiten.Key9) {
+	if g.isActionJustPressed(controls.ActionShowRays) {
 		g.ShowRays = !g.ShowRays
 	}
 	if inpututil.IsKeyJustPressed(ebiten.Key0) {
@@ -386,7 +389,7 @@ func (g *Game) handleInputPlaying() {
 		})
 		return
 	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyTab) {
+	if g.isActionJustPressed(controls.ActionInventory) {
 		g.InventoryScreen.Open()
 		return
 	}
@@ -463,20 +466,20 @@ func (g *Game) handlePlayerVelocity() {
 	}
 	dx, dy := 0.0, 0.0
 
-	// In isometric view, WASD keys map to diagonal movement.
-	if ebiten.IsKeyPressed(ebiten.KeyA) {
+	// In isometric view each action maps to a diagonal tile-space direction.
+	if g.isActionPressed(controls.ActionMoveLeft) {
 		dx -= 1
 		dy += 1
 	}
-	if ebiten.IsKeyPressed(ebiten.KeyD) {
+	if g.isActionPressed(controls.ActionMoveRight) {
 		dx += 1
 		dy -= 1
 	}
-	if ebiten.IsKeyPressed(ebiten.KeyW) {
+	if g.isActionPressed(controls.ActionMoveUp) {
 		dx -= 1
 		dy -= 1
 	}
-	if ebiten.IsKeyPressed(ebiten.KeyS) {
+	if g.isActionPressed(controls.ActionMoveDown) {
 		dx += 1
 		dy += 1
 	}
@@ -507,7 +510,7 @@ func (g *Game) handleGrapple() {
 	if g.player == nil {
 		return
 	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyF) {
+	if g.isActionJustPressed(controls.ActionGrapple) {
 		if g.player.Grapple.Active {
 			g.player.CancelGrapple()
 		} else {
@@ -523,7 +526,7 @@ func (g *Game) handleDash() {
 	if g.player.Grapple.Active {
 		return
 	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyShift) {
+	if g.isActionJustPressed(controls.ActionDash) {
 		if g.player.DashCharges > 0 && !g.player.IsDashing {
 			dirX, dirY := 0.0, 0.0
 			if g.player.MoveController.Mode == movement.VelocityMode {

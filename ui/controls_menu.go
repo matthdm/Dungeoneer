@@ -54,6 +54,15 @@ func (cm *ControlsMenu) Show()           { cm.visible = true }
 func (cm *ControlsMenu) Hide()           { cm.visible = false }
 func (cm *ControlsMenu) IsVisible() bool { return cm.visible }
 
+// Resize recomputes the menu rect based on current screen dimensions.
+// Call this from Layout() whenever the window is resized.
+func (cm *ControlsMenu) Resize(w, h int) {
+	mw, mh := 600, 500
+	mx := (w - mw) / 2
+	my := (h - mh) / 2
+	cm.rect = image.Rect(mx, my, mx+mw, my+mh)
+}
+
 func (cm *ControlsMenu) Update() {
 	if !cm.visible {
 		return

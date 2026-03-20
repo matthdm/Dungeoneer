@@ -257,8 +257,9 @@ func NewGame() (*Game, error) {
 		func() { menumanager.Manager().Open(g.ProcGenMenu) },
 		func() { menumanager.Manager().CloseActiveMenu() },
 	)
-	// Pause Menu
-	pm := ui.NewPauseMenu(l.W, l.H, g.Controls, ui.PauseMenuCallbacks{
+	// Pause Menu — use 640x480 as the initial size; Layout() will resize correctly
+	// on the first tick. We must not use l.W/l.H here (those are tile counts, not pixels).
+	pm := ui.NewPauseMenu(640, 480, g.Controls, ui.PauseMenuCallbacks{
 		OnResume:     func() { g.resumeGame() },
 		OnExit:       func() { os.Exit(0) },
 		OnLoadLevel:  func() { menumanager.Manager().Open(g.LoadLevelMenu) },
@@ -828,6 +829,14 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	if g.HeroPanel != nil {
 		panel := image.Rect(g.w/2-150, g.h/2-150, g.w/2+150, g.h/2+150)
 		g.HeroPanel.SetRect(panel)
+	}
+
+	// Keep both ControlsMenu instances sized to the actual screen
+	if g.ControlsMenu != nil {
+		g.ControlsMenu.Resize(g.w, g.h)
+	}
+	if g.PauseMenu != nil && g.PauseMenu.ControlsMenu != nil {
+		g.PauseMenu.ControlsMenu.Resize(g.w, g.h)
 	}
 
 	if g.editor == nil {
