@@ -9,7 +9,6 @@ import (
 	"dungeoneer/movement"
 	"dungeoneer/pathing"
 	"dungeoneer/tiles"
-	"dungeoneer/ui"
 	"math"
 	"os"
 	"strings"
@@ -403,7 +402,6 @@ func (g *Game) handleInputPlaying() {
 	g.handleDoorInteract()
 	g.handleClicks()
 	g.handleLevelHotkeys()
-	ui.HandleItemPaletteInput(g.player, g.ShowHint)
 }
 
 func (g *Game) handleDoorInteract() {

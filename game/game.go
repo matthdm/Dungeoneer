@@ -791,21 +791,27 @@ func (g *Game) getOrCreateOffscreen(size image.Point) *ebiten.Image {
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	g.w, g.h = outsideWidth, outsideHeight
 	fov.ResizeShadowBuffer(g.w, g.h) // Ensures buffer is always the correct size
+
+	// Compact fixed rect for pause/settings menus
+	pauseW, pauseH := 300, 400
+	pauseX := (g.w - pauseW) / 2
+	pauseY := (g.h - pauseH) / 2
+	pauseRect := image.Rect(pauseX, pauseY, pauseX+pauseW, pauseY+pauseH)
+	if g.PauseMenu != nil {
+		if g.PauseMenu.MainMenu != nil {
+			g.PauseMenu.MainMenu.SetRect(pauseRect)
+		}
+		if g.PauseMenu.SettingsMenu != nil {
+			g.PauseMenu.SettingsMenu.SetRect(pauseRect)
+		}
+	}
+
+	// Larger rect for content menus (load/save/generate)
 	menuWidth := max(300, g.w/2)
 	menuHeight := max(300, g.h/2)
 	menuX := (g.w - menuWidth) / 2
 	menuY := (g.h - menuHeight) / 2
 	newRect := image.Rect(menuX, menuY, menuX+menuWidth, menuY+menuHeight)
-	// Update menu size to grow with screen size
-	if g.PauseMenu != nil {
-
-		if g.PauseMenu.MainMenu != nil {
-			g.PauseMenu.MainMenu.SetRect(newRect)
-		}
-		if g.PauseMenu.SettingsMenu != nil {
-			g.PauseMenu.SettingsMenu.SetRect(newRect)
-		}
-	}
 
 	if g.LoadLevelMenu != nil {
 		g.LoadLevelMenu.SetRect(newRect)

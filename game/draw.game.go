@@ -17,7 +17,6 @@ import (
 	"dungeoneer/menumanager"
 	"dungeoneer/spells"
 	"dungeoneer/tiles"
-	"dungeoneer/ui"
 	"fmt"
 	"image"
 	"image/color"
@@ -210,7 +209,6 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 	if g.InventoryScreen != nil && g.InventoryScreen.Active {
 		g.InventoryScreen.Draw(screen, g.player)
 	}
-	ui.DrawItemPalette(screen)
 	if g.DevMenu != nil {
 		g.DevMenu.Draw(screen)
 	}
