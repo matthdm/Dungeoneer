@@ -60,6 +60,7 @@ type Game struct {
 	HealNumbers            []entities.DamageNumber
 
 	DevMenu         *ui.DevMenu
+	DevTools        *ui.DevOverlay
 	HUD             *hud.HUD
 	ShowHUD         bool
 	HeroPanel       *ui.HeroPanel
@@ -181,6 +182,7 @@ func NewGame() (*Game, error) {
 		fmt.Println("Loaded saved control bindings")
 	}
 	g.DevMenu = ui.NewDevMenu(640, 480, g.player, g.ShowHint)
+	g.DevTools = ui.NewDevOverlay(640, 480, g.buildDevEntries())
 	g.ControlsMenu = ui.NewControlsMenu(640, 480, g.Controls, func() {})
 	g.editor.OnLayerChange = g.editorLayerChanged
 	g.editor.OnStairPlaced = g.stairPlaced
@@ -768,7 +770,9 @@ func (g *Game) updatePlaying() error {
 	if g.DevMenu != nil {
 		g.DevMenu.Update()
 	}
-
+	if g.DevTools != nil {
+		g.DevTools.Update()
+	}
 	if g.ControlsMenu != nil && g.ControlsMenu.IsVisible() {
 		g.ControlsMenu.Update()
 	}
@@ -845,6 +849,9 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	// Keep both ControlsMenu instances sized to the actual screen
 	if g.ControlsMenu != nil {
 		g.ControlsMenu.Resize(g.w, g.h)
+	}
+	if g.DevTools != nil {
+		g.DevTools.Resize(g.w, g.h)
 	}
 	if g.PauseMenu != nil && g.PauseMenu.ControlsMenu != nil {
 		g.PauseMenu.ControlsMenu.Resize(g.w, g.h)

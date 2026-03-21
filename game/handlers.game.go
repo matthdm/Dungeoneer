@@ -4,7 +4,6 @@ import (
 	"dungeoneer/controls"
 	"dungeoneer/entities"
 	"dungeoneer/items"
-	"dungeoneer/levels"
 	"dungeoneer/menumanager"
 	"dungeoneer/movement"
 	"dungeoneer/pathing"
@@ -242,32 +241,22 @@ func (g *Game) handleLevelHotkeys() {
 		}
 	}
 
-	if g.isActionJustPressed(controls.ActionGenMaze) {
-		if l, err := levels.NewMazeLevel(); err == nil {
-			g.currentLevel = l
-			g.UpdateSeenTiles(*l)
-		}
-	}
-	if g.isActionJustPressed(controls.ActionGenForest) {
-		if l, err := levels.NewForestLevel(); err == nil {
-			g.currentLevel = l
-			g.UpdateSeenTiles(*l)
-		}
-	}
 	if g.isActionJustPressed(controls.ActionToggleKeybind) {
 		controlToggle = !controlToggle
 	}
 	if g.isActionJustPressed(controls.ActionShowHUD) {
 		g.ShowHUD = !g.ShowHUD
 	}
-	if g.isActionJustPressed(controls.ActionToggleEditor) {
+	// F3 — toggle level editor (hardcoded dev shortcut, not in player controls)
+	if inpututil.IsKeyJustPressed(ebiten.KeyF3) {
 		if g.editor != nil {
 			g.editor.Active = !g.editor.Active
-			if g.editor.Active {
-				g.ShowHint("Editor enabled")
-			} else {
-				g.ShowHint("Editor disabled")
-			}
+		}
+	}
+	// F12 — open/close dev tools overlay
+	if inpututil.IsKeyJustPressed(ebiten.KeyF12) {
+		if g.DevTools != nil {
+			g.DevTools.Toggle()
 		}
 	}
 	if g.isActionJustPressed(controls.ActionHeroPanel) {
@@ -308,27 +297,6 @@ func (g *Game) handleLevelHotkeys() {
 		if g.player != nil {
 			g.castFractalCanopy(float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
 		}
-	}
-	if g.isActionJustPressed(controls.ActionSpellDebug) {
-		g.SpellDebug = !g.SpellDebug
-	}
-	if g.isActionJustPressed(controls.ActionShowRays) {
-		g.ShowRays = !g.ShowRays
-	}
-	if inpututil.IsKeyJustPressed(ebiten.Key0) {
-		g.FullBright = !g.FullBright
-	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyF7) {
-		g.ShowThroatValid = !g.ShowThroatValid
-	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyF8) {
-		g.ShowThroatInvalid = !g.ShowThroatInvalid
-	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyF12) {
-		g.ShowRegionDebug = !g.ShowRegionDebug
-	}
-	if inpututil.IsKeyJustPressed(ebiten.KeyF11) {
-		g.ShowDoorDebug = !g.ShowDoorDebug
 	}
 	if g.State == StateGameOver && ebiten.IsKeyPressed(ebiten.KeyV) {
 		newGame, _ := NewGame()

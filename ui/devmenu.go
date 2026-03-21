@@ -36,6 +36,12 @@ func (dm *DevMenu) Update() {
 	dm.palette.Update()
 }
 
+// IsVisible reports whether the item palette is currently open.
+func (dm *DevMenu) IsVisible() bool { return dm.palette.visible }
+
+// TogglePalette opens the palette if closed, or closes it if open.
+func (dm *DevMenu) TogglePalette() { dm.palette.Toggle() }
+
 // Draw renders the dev menu.
 func (dm *DevMenu) Draw(screen *ebiten.Image) {
 	if !constants.DebugMode {

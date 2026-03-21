@@ -37,16 +37,8 @@ const (
 	ActionHeroPanel     ActionID = "hero_panel"
 	ActionTogglePause   ActionID = "toggle_pause"
 	ActionShowHUD       ActionID = "show_hud"
-	ActionToggleEditor  ActionID = "toggle_editor"
 	ActionToggleKeybind ActionID = "toggle_keybind"
 
-	// Level generation
-	ActionGenMaze   ActionID = "gen_maze"
-	ActionGenForest ActionID = "gen_forest"
-
-	// Spells Debug
-	ActionSpellDebug ActionID = "spell_debug"
-	ActionShowRays   ActionID = "show_rays"
 )
 
 // KeyBinding stores primary and secondary keys for an action
@@ -90,16 +82,7 @@ var defaultBindings = map[ActionID]KeyBinding{
 	ActionHeroPanel:     {Primary: ebiten.KeyH},
 	ActionTogglePause:   {Primary: ebiten.KeyEscape},
 	ActionShowHUD:       {Primary: ebiten.KeyF10},
-	ActionToggleEditor:  {Primary: ebiten.KeyF3},
 	ActionToggleKeybind: {Primary: ebiten.KeyF1},
-
-	// Level generation
-	ActionGenMaze:   {Primary: ebiten.KeyM},
-	ActionGenForest: {Primary: ebiten.KeyN},
-
-	// Debug
-	ActionSpellDebug: {Primary: ebiten.Key8},
-	ActionShowRays:   {Primary: ebiten.Key9},
 }
 
 // New creates a new Controls manager with default bindings
@@ -176,12 +159,7 @@ func GetAllActionIDs() []ActionID {
 		ActionHeroPanel,
 		ActionTogglePause,
 		ActionShowHUD,
-		ActionToggleEditor,
 		ActionToggleKeybind,
-		ActionGenMaze,
-		ActionGenForest,
-		ActionSpellDebug,
-		ActionShowRays,
 	}
 }
 
@@ -208,12 +186,7 @@ func GetActionLabel(action ActionID) string {
 		ActionHeroPanel:     "Toggle Hero Panel",
 		ActionTogglePause:   "Pause Game",
 		ActionShowHUD:       "Toggle HUD",
-		ActionToggleEditor:  "Toggle Level Editor",
 		ActionToggleKeybind: "Toggle Controls Info",
-		ActionGenMaze:       "Generate Maze Level",
-		ActionGenForest:     "Generate Forest Level",
-		ActionSpellDebug:    "Spell Debug",
-		ActionShowRays:      "Show Rays",
 	}
 	if label, ok := labels[action]; ok {
 		return label
