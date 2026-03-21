@@ -58,6 +58,14 @@ type Game struct {
 	HitMarkers             []entities.HitMarker
 	DamageNumbers          []entities.DamageNumber
 	HealNumbers            []entities.DamageNumber
+	ExitEntity             *entities.ExitEntity
+
+	// Run loop
+	RunState    *RunState
+	Meta        *MetaSave
+	IsInHub     bool
+	hubPortalX  int
+	hubPortalY  int
 
 	DevMenu         *ui.DevMenu
 	DevTools        *ui.DevOverlay
@@ -126,6 +134,8 @@ const (
 	StateMainMenu GameState = iota
 	StatePlaying
 	StateGameOver
+	StateDeathScreen
+	StateVictoryScreen
 )
 
 func NewGame() (*Game, error) {
@@ -328,6 +338,9 @@ func NewGame() (*Game, error) {
 		g.visibleTick[y] = make([]int, g.currentLevel.W)
 		g.SeenTiles[y] = make([]bool, g.currentLevel.W)
 	}
+
+	// Load meta progression
+	g.Meta = LoadMeta()
 
 	g.editor.Active = true // or toggle with key
 
@@ -581,9 +594,17 @@ func (g *Game) Update() error {
 		return g.updateMainMenu()
 	case StateGameOver:
 		return g.updateGameOver()
+	case StateDeathScreen:
+		return g.updateDeathScreen()
+	case StateVictoryScreen:
+		return g.updateVictoryScreen()
 	case StatePlaying:
 		if g.player != nil && g.player.IsDead {
-			g.State = StateGameOver
+			if g.RunState != nil && g.RunState.Active {
+				g.endRunDeath()
+			} else {
+				g.State = StateGameOver
+			}
 			return nil
 		}
 		return g.updatePlaying()
@@ -775,6 +796,29 @@ func (g *Game) updatePlaying() error {
 	}
 	if g.ControlsMenu != nil && g.ControlsMenu.IsVisible() {
 		g.ControlsMenu.Update()
+	}
+
+	// Exit entity interaction (run loop)
+	if g.ExitEntity != nil && g.RunState != nil && g.RunState.Active {
+		g.ExitEntity.Update()
+		if g.ExitEntity.IsPlayerNear(g.player.TileX, g.player.TileY) {
+			g.ShowHint("Press E to descend")
+			if g.isActionJustPressed(controls.ActionInteract) {
+				g.advanceFloor()
+			}
+		}
+	}
+
+	// Hub portal interaction
+	if g.IsInHub && g.hubPortalX >= 0 && g.hubPortalY >= 0 {
+		dx := g.player.TileX - g.hubPortalX
+		dy := g.player.TileY - g.hubPortalY
+		if dx*dx+dy*dy <= 2 {
+			g.ShowHint("Press E to enter the Dungeon")
+			if g.isActionJustPressed(controls.ActionInteract) {
+				g.StartRun()
+			}
+		}
 	}
 
 	// Debugging / editor / effects

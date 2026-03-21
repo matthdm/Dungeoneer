@@ -39,10 +39,9 @@ func (g *Game) handleMainMenuInput() {
 			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 				switch g.Menu.Options[i] {
 				case "Continue":
-					// Load last save or resume
-					g.State = StatePlaying
+					g.loadHub()
 				case "New Game":
-					g.State = StatePlaying
+					g.loadHub()
 				case "Load Game":
 					// TODO: Show load game menu
 				case "Options":
@@ -60,9 +59,9 @@ func (g *Game) handleMainMenuInput() {
 	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) || inpututil.IsKeyJustPressed(ebiten.KeySpace) {
 		switch g.Menu.Options[g.Menu.SelectedIndex] {
 		case "Continue":
-			g.State = StatePlaying
+			g.loadHub()
 		case "New Game":
-			g.State = StatePlaying
+			g.loadHub()
 		case "Load Game":
 			// TODO: Show load game menu
 		case "Options":
@@ -204,6 +203,9 @@ func (g *Game) handleClicks() {
 				g.player.AttackTick = 0
 				if died {
 					g.awardEXP(m)
+					if g.RunState != nil && g.RunState.Active {
+						g.RunState.KillCount++
+					}
 				}
 			}
 		}
@@ -299,8 +301,7 @@ func (g *Game) handleLevelHotkeys() {
 		}
 	}
 	if g.State == StateGameOver && ebiten.IsKeyPressed(ebiten.KeyV) {
-		newGame, _ := NewGame()
-		*g = *newGame
+		g.returnToHub()
 	}
 }
 

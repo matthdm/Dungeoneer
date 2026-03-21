@@ -31,6 +31,7 @@ func (g *Game) collectRenderables(scale, cx, cy float64) []Renderable {
 	var r []Renderable
 	r = append(r, g.collectTileRenderables(scale, cx, cy)...)
 	r = append(r, g.collectItemDropRenderables(scale, cx, cy)...)
+	r = append(r, g.collectExitEntityRenderables(scale, cx, cy)...)
 	if g.player != nil && len(g.cachedRays) > 0 && !g.FullBright {
 		r = append(r, g.collectShadowRenderables(scale, cx, cy)...)
 	}
@@ -143,6 +144,43 @@ func (g *Game) collectItemDropRenderables(scale, cx, cy float64) []Renderable {
 		}
 	}
 	return out
+}
+
+func (g *Game) collectExitEntityRenderables(scale, cx, cy float64) []Renderable {
+	if g.ExitEntity == nil || g.ExitEntity.Sprite == nil {
+		return nil
+	}
+	e := g.ExitEntity
+	if e.TileX < 0 || e.TileY < 0 || e.TileX >= g.currentLevel.W || e.TileY >= g.currentLevel.H {
+		return nil
+	}
+	inFOV := g.isTileVisible(e.TileX, e.TileY)
+	wasSeen := g.SeenTiles[e.TileY][e.TileX]
+	if !inFOV && !wasSeen {
+		return nil
+	}
+	xi, yi := g.cartesianToIso(float64(e.TileX), float64(e.TileY))
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(0, e.BobOffset)
+	op.GeoM.Translate(xi, yi)
+	op.GeoM.Translate(-g.camX, g.camY)
+	op.GeoM.Scale(scale, scale)
+	op.GeoM.Translate(cx, cy)
+	if inFOV {
+		p := e.PulseAlpha()
+		op.ColorScale.Scale(p, p, p, 1)
+	} else {
+		op.ColorScale.Scale(0.4, 0.4, 0.4, 1)
+	}
+	return []Renderable{
+		{
+			Image:       e.Sprite,
+			Options:     op,
+			TileX:       float64(e.TileX),
+			TileY:       float64(e.TileY),
+			DepthWeight: 0.3,
+		},
+	}
 }
 
 func (g *Game) collectPlayerRenderables(scale, cx, cy float64) []Renderable {

@@ -40,6 +40,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		g.drawMainMenu(screen, cx, cy)
 	case StateGameOver:
 		g.drawGameOver(screen)
+	case StateDeathScreen:
+		g.drawDeathScreen(screen)
+	case StateVictoryScreen:
+		g.drawVictoryScreen(screen)
 	case StatePlaying:
 		g.drawPlaying(screen, cx, cy)
 	}

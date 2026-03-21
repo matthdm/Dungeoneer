@@ -32,6 +32,9 @@ const (
 	ActionDash   ActionID = "dash"
 	ActionGrapple ActionID = "grapple"
 
+	// Interaction
+	ActionInteract ActionID = "interact"
+
 	// Game
 	ActionInventory     ActionID = "inventory"
 	ActionHeroPanel     ActionID = "hero_panel"
@@ -66,8 +69,9 @@ var defaultBindings = map[ActionID]KeyBinding{
 	ActionMenuCancel:  {Primary: ebiten.KeyEscape},
 
 	// Player abilities
-	ActionDash:   {Primary: ebiten.KeyShift},
-	ActionGrapple: {Primary: ebiten.KeyF},
+	ActionDash:     {Primary: ebiten.KeyShift},
+	ActionGrapple:  {Primary: ebiten.KeyF},
+	ActionInteract: {Primary: ebiten.KeyE},
 
 	// Combat Spells
 	ActionSpell1: {Primary: ebiten.Key1},
@@ -157,6 +161,7 @@ func GetAllActionIDs() []ActionID {
 		ActionSpell6,
 		ActionInventory,
 		ActionHeroPanel,
+		ActionInteract,
 		ActionTogglePause,
 		ActionShowHUD,
 		ActionToggleKeybind,
@@ -182,6 +187,7 @@ func GetActionLabel(action ActionID) string {
 		ActionSpell4:        "Spell 4 - Lightning Storm",
 		ActionSpell5:        "Spell 5 - Fractal Bloom",
 		ActionSpell6:        "Spell 6 - Fractal Canopy",
+		ActionInteract:      "Interact",
 		ActionInventory:     "Open Inventory",
 		ActionHeroPanel:     "Toggle Hero Panel",
 		ActionTogglePause:   "Pause Game",
