@@ -1,0 +1,152 @@
+// Package movement provides a MovementController abstraction used by both
+// players and monsters.
+//
+// Notes:
+//   - The MovementController supports two modes: velocity-based (continuous)
+//     and pathing-based (discrete per-tile interpolation). The code assumes a
+//     fixed-tick game loop (Ebiten 60 TPS) and uses integer tick counts for
+//     deterministic interpolation between tiles.
+//   - `Duration` is expressed in ticks per tile; if the game tick rate changes,
+//     this value should be adjusted accordingly.
+//   - Rapid reissue of paths (e.g., repeated right-clicking) can create race
+//     conditions where the controller is mid-interpolation. Consumers should
+//     either debounce path requests or cancel/resync interpolation when a new
+//     path is set.
+package movement
+
+import (
+	"dungeoneer/pathing"
+	"math"
+)
+
+type MovementMode int
+
+const (
+	PathingMode MovementMode = iota
+	VelocityMode
+)
+
+type MovementController struct {
+	// Shared
+	Mode   MovementMode
+	Speed  float64
+	Moving bool
+
+	// A* Pathing
+	Path             []pathing.PathNode
+	InterpTicks      int
+	Duration         int // ticks per tile
+	StartX, StartY   float64
+	TargetX, TargetY float64
+	OnStep           func(x, y int)
+
+	// Velocity-based
+	VelocityX float64
+	VelocityY float64
+
+	// Position
+	InterpX float64
+	InterpY float64
+}
+
+// NewMovementController creates a new controller with a given movement speed.
+func NewMovementController(speed float64) *MovementController {
+	return &MovementController{
+		Speed:    speed,
+		Duration: 15, // default tile interpolation time
+	}
+}
+
+// SetVelocityMode activates velocity movement
+func (c *MovementController) SetVelocityMode(dx, dy float64) {
+	c.Mode = VelocityMode
+	mag := math.Hypot(dx, dy)
+	if mag > 0 {
+		c.VelocityX = dx / mag * c.Speed
+		c.VelocityY = dy / mag * c.Speed
+		c.Moving = true
+	} else {
+		c.Stop()
+	}
+}
+
+// SetVelocityFromInput sets velocity based on input vector and switches to velocity mode.
+func (c *MovementController) SetVelocityFromInput(dx, dy float64) {
+	if dx == 0 && dy == 0 {
+		c.Stop()
+		return
+	}
+	c.Mode = VelocityMode
+	mag := math.Hypot(dx, dy)
+	c.VelocityX = dx / mag * c.Speed
+	c.VelocityY = dy / mag * c.Speed
+	c.Moving = true
+}
+
+// SetPath assigns a path and begins movement. If the controller is already
+// interpolating toward the same tile as the new path's first node, the current
+// step is preserved and only the remaining path is updated. This prevents
+// spam-clicking from stalling movement while still redirecting correctly.
+func (c *MovementController) SetPath(path []pathing.PathNode) {
+	c.Mode = PathingMode
+	if c.Moving && len(path) > 0 &&
+		float64(path[0].X) == c.TargetX && float64(path[0].Y) == c.TargetY {
+		c.Path = path[1:]
+		return
+	}
+	c.Path = path
+	c.Moving = false
+}
+
+// Stop halts movement
+func (c *MovementController) Stop() {
+	c.VelocityX = 0
+	c.VelocityY = 0
+	c.Moving = false
+}
+
+// Update moves the entity based on the selected mode.
+func (c *MovementController) Update(dt float64) {
+	switch c.Mode {
+	case VelocityMode:
+		c.InterpX += c.VelocityX * dt
+		c.InterpY += c.VelocityY * dt
+		// Optional: clamp to bounds here or use collision system
+
+	case PathingMode:
+		if c.Moving {
+			c.InterpTicks++
+			t := float64(c.InterpTicks) / float64(c.Duration)
+			if t > 1 {
+				t = 1
+			}
+			c.InterpX = c.StartX + (c.TargetX-c.StartX)*t
+			c.InterpY = c.StartY + (c.TargetY-c.StartY)*t
+
+			if t >= 1 {
+				c.Moving = false
+				c.InterpX = c.TargetX
+				c.InterpY = c.TargetY
+				// Fire OnStep on arrival so TileX/TileY reflects where the
+				// player actually IS, not where they are headed. Firing early
+				// caused TileX/TileY to run ahead of InterpX/InterpY, which
+				// produced both the stutter (VelocityMode reverted TileX/TileY
+				// via int(InterpX)) and the speed exploit (new A* paths started
+				// from the phantom-advanced tile while InterpX/InterpY lagged).
+				if c.OnStep != nil {
+					c.OnStep(int(c.TargetX), int(c.TargetY))
+				}
+			}
+		} else if len(c.Path) > 0 {
+			next := c.Path[0]
+			c.Path = c.Path[1:]
+			c.StartX = c.InterpX
+			c.StartY = c.InterpY
+			c.TargetX = float64(next.X)
+			c.TargetY = float64(next.Y)
+			c.InterpTicks = 0
+			c.Moving = true
+		}
+
+	}
+}
