@@ -202,7 +202,12 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 	}
 
 	if g.ShowRays && len(g.cachedRays) > 0 {
-		fov.DebugDrawRays(screen, g.cachedRays, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
+		mc := g.player.MoveController
+		isoX, isoY := g.cartesianToIso(mc.InterpX, mc.InterpY)
+		ts := float64(g.currentLevel.TileSize)
+		apexX := (isoX + ts/2 - g.camX) * g.camScale + cx
+		apexY := (isoY + ts/4 + g.camY) * g.camScale + cy
+		fov.DebugDrawRays(screen, g.cachedRays, apexX, apexY, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
 	}
 	if g.HUD != nil && g.ShowHUD {
 		g.HUD.Draw(screen, g.w, g.h)
@@ -275,7 +280,7 @@ func (g *Game) drawFloorTiles(target *ebiten.Image, scale, cx, cy float64) {
 				}
 				op := g.getDrawOp(xi, yi, scale, cx, cy)
 				if !inFOV && wasSeen {
-					op.ColorScale.Scale(0.4, 0.4, 0.4, 1.0)
+					op.ColorScale.Scale(0.2, 0.2, 0.2, 1.0)
 				}
 				target.DrawImage(s.Image, op)
 			}

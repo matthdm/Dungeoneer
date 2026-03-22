@@ -36,7 +36,7 @@ func (e *ExitEntity) Update() {
 func (e *ExitEntity) IsPlayerNear(px, py int) bool {
 	dx := e.TileX - px
 	dy := e.TileY - py
-	return dx*dx+dy*dy <= 2 // within ~1.4 tiles
+	return dx*dx+dy*dy <= 9 // within ~3 tiles
 }
 
 // PulseAlpha returns a 0.6–1.0 pulsing alpha value for rendering.

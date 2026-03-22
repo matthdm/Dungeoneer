@@ -76,7 +76,9 @@ func (g *Game) loadHub() {
 	g.hubPortalX = portalX
 	g.hubPortalY = portalY
 	g.FullBright = true
-	g.camX, g.camY = 0, 0
+	snapIsoX, snapIsoY := g.cartesianToIso(float64(spawnX), float64(spawnY))
+	g.camX = snapIsoX
+	g.camY = -snapIsoY
 	g.cachedRays = nil
 	g.RaycastWalls = fov.LevelToWalls(g.currentLevel)
 	g.State = StatePlaying
@@ -186,8 +188,8 @@ func (g *Game) startFloor(floorNum int) {
 	g.editor.Active = false
 	g.UpdateSeenTiles(*lvl)
 
-	// Find spawn point and place player
-	spawnX, spawnY := levels.FindSpawnPoint(lvl)
+	// Find spawn and exit using two-pass BFS (guarantees max separation)
+	spawnX, spawnY, exitX, exitY := levels.FindSpawnAndExit(lvl)
 	g.player.TileX = spawnX
 	g.player.TileY = spawnY
 	g.player.MoveController.InterpX = float64(spawnX)
@@ -196,9 +198,6 @@ func (g *Game) startFloor(floorNum int) {
 	g.player.MoveController.Stop()
 	g.player.CollisionBox.X = float64(spawnX)
 	g.player.CollisionBox.Y = float64(spawnY)
-
-	// Place exit at farthest walkable point
-	exitX, exitY := levels.FindFarthestWalkable(lvl, spawnX, spawnY)
 	g.ExitEntity = entities.NewExitEntity(exitX, exitY, g.spriteSheet.Portal, "Portal")
 
 	// Spawn entities from level data
@@ -208,7 +207,9 @@ func (g *Game) startFloor(floorNum int) {
 	g.spawnFloorMonsters(ctx)
 
 	// Reset camera and FOV
-	g.camX, g.camY = 0, 0
+	snapIsoX, snapIsoY := g.cartesianToIso(float64(spawnX), float64(spawnY))
+	g.camX = snapIsoX
+	g.camY = -snapIsoY
 	g.cachedRays = nil
 	g.RaycastWalls = fov.LevelToWalls(g.currentLevel)
 }

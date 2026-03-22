@@ -34,7 +34,9 @@ func ResizeShadowBuffer(w, h int) {
 // BuildShadowImage constructs the shadow mask for the current frame and returns
 // it for rendering. The returned image is reused across calls to avoid
 // allocations.
-func BuildShadowImage(rays []Line, camX, camY, camScale float64, cx, cy float64, tileSize int) *ebiten.Image {
+// BuildShadowImage constructs the shadow mask for the current frame.
+// apexScreenX/Y is the screen-space position of the light source (player head).
+func BuildShadowImage(rays []Line, apexScreenX, apexScreenY float64, camX, camY, camScale float64, cx, cy float64, tileSize int) *ebiten.Image {
 	if len(rays) < 3 {
 		shadowImage.Clear()
 		return shadowImage
@@ -56,7 +58,7 @@ func BuildShadowImage(rays []Line, camX, camY, camScale float64, cx, cy float64,
 		r1 := rays[i]
 		r2 := rays[(i+1)%len(rays)]
 
-		x0, y0 := worldToScreen(r1.X1, r1.Y1, camX, camY, camScale, cx, cy, tileSize)
+		x0, y0 := apexScreenX, apexScreenY
 		x1, y1 := worldToScreen(r1.X2, r1.Y2, camX, camY, camScale, cx, cy, tileSize)
 		x2, y2 := worldToScreen(r2.X2, r2.Y2, camX, camY, camScale, cx, cy, tileSize)
 
@@ -71,9 +73,9 @@ func BuildShadowImage(rays []Line, camX, camY, camScale float64, cx, cy float64,
 
 	return shadowImage
 }
-func DebugDrawRays(screen *ebiten.Image, rays []Line, camX, camY, camScale float64, cx, cy float64, tileSize int) {
+func DebugDrawRays(screen *ebiten.Image, rays []Line, apexScreenX, apexScreenY float64, camX, camY, camScale float64, cx, cy float64, tileSize int) {
 	for _, r := range rays {
-		x1, y1 := worldToScreen(r.X1, r.Y1, camX, camY, camScale, cx, cy, tileSize)
+		x1, y1 := apexScreenX, apexScreenY
 		x2, y2 := worldToScreen(r.X2, r.Y2, camX, camY, camScale, cx, cy, tileSize)
 
 		vector.StrokeLine(screen,

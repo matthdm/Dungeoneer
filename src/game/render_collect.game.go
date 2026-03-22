@@ -32,9 +32,7 @@ func (g *Game) collectRenderables(scale, cx, cy float64) []Renderable {
 	r = append(r, g.collectTileRenderables(scale, cx, cy)...)
 	r = append(r, g.collectItemDropRenderables(scale, cx, cy)...)
 	r = append(r, g.collectExitEntityRenderables(scale, cx, cy)...)
-	if g.player != nil && len(g.cachedRays) > 0 && !g.FullBright {
-		r = append(r, g.collectShadowRenderables(scale, cx, cy)...)
-	}
+
 	r = append(r, g.collectMonsterRenderables(scale, cx, cy)...)
 	if g.player != nil {
 		r = append(r, g.collectPlayerRenderables(scale, cx, cy)...)
@@ -73,7 +71,7 @@ func (g *Game) collectTileRenderables(scale, cx, cy float64) []Renderable {
 				}
 				op := g.getDrawOp(xi, yi, scale, cx, cy)
 				if !inFOV && wasSeen {
-					op.ColorScale.Scale(0.4, 0.4, 0.4, 1.0)
+					op.ColorScale.Scale(0.2, 0.2, 0.2, 1.0)
 				}
 				weight := depthWeightForSprite(s.ID)
 				out = append(out, Renderable{
@@ -117,7 +115,7 @@ func (g *Game) collectItemDropRenderables(scale, cx, cy float64) []Renderable {
 			p := float32(phase)
 			op.ColorScale.Scale(p, p, p, 1)
 		} else if wasSeen {
-			op.ColorScale.Scale(0.4, 0.4, 0.4, 1)
+			op.ColorScale.Scale(0.2, 0.2, 0.2, 1)
 		}
 		out = append(out, Renderable{
 			Image:       d.Item.Icon,
@@ -170,7 +168,7 @@ func (g *Game) collectExitEntityRenderables(scale, cx, cy float64) []Renderable 
 		p := e.PulseAlpha()
 		op.ColorScale.Scale(p, p, p, 1)
 	} else {
-		op.ColorScale.Scale(0.4, 0.4, 0.4, 1)
+		op.ColorScale.Scale(0.2, 0.2, 0.2, 1)
 	}
 	return []Renderable{
 		{
@@ -251,10 +249,18 @@ func (g *Game) collectMonsterRenderables(scale, cx, cy float64) []Renderable {
 }
 
 func (g *Game) collectShadowRenderables(scale, cx, cy float64) []Renderable {
-	img := fov.BuildShadowImage(g.cachedRays, g.camX, g.camY, scale, cx, cy, g.currentLevel.TileSize)
+	// Place the shadow apex at the player's head — sprite pixel (tileSize/2, tileSize/4)
+	// from the sprite's iso anchor, which aligns with the character's visual position.
+	mc := g.player.MoveController
+	isoX, isoY := g.cartesianToIso(mc.InterpX, mc.InterpY)
+	ts := float64(g.currentLevel.TileSize)
+	apexX := (isoX + ts/2 - g.camX) * scale + cx
+	apexY := (isoY + ts/4 + g.camY) * scale + cy
+
+	img := fov.BuildShadowImage(g.cachedRays, apexX, apexY, g.camX, g.camY, scale, cx, cy, g.currentLevel.TileSize)
 	op := &ebiten.DrawImageOptions{}
-	tx := g.player.MoveController.InterpX
-	ty := g.player.MoveController.InterpY
+	tx := mc.InterpX
+	ty := mc.InterpY
 	return []Renderable{
 		{
 			Image:       img,

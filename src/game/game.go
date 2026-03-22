@@ -528,6 +528,9 @@ func (g *Game) spawnEntitiesFromLevel() {
 
 // stairPlaced is triggered by the editor when a stairwell sprite is placed.
 func (g *Game) stairPlaced(x, y int, spriteID string) {
+	if !g.editor.Active {
+		return
+	}
 	if g.LinkPrompt != nil && g.LinkPrompt.IsVisible() {
 		return
 	}
@@ -703,12 +706,15 @@ func (g *Game) updatePlaying() error {
 		g.player.MoveController.InterpY != g.lastPlayerY
 
 	if g.player != nil && shouldRecast {
-		originX := g.player.MoveController.InterpX
-		originY := g.player.MoveController.InterpY
+		// Offset by +0.5 to centre the ray origin on the player's tile rather
+		// than at its top-left iso corner.  In iso space this shifts the shadow
+		// apex +16 px in Y (diamond centre), aligning it with the character sprite.
+		originX := g.player.MoveController.InterpX + 0.5
+		originY := g.player.MoveController.InterpY + 0.5
 
 		g.cachedRays = fov.RayCasting(originX, originY, g.RaycastWalls, g.currentLevel)
-		g.lastPlayerX = originX
-		g.lastPlayerY = originY
+		g.lastPlayerX = g.player.MoveController.InterpX
+		g.lastPlayerY = g.player.MoveController.InterpY
 
 		// Advance the recast counter only when the visible set actually changes.
 		// gameTick is a "recast counter", not a wall-clock frame counter.
@@ -719,18 +725,17 @@ func (g *Game) updatePlaying() error {
 		// Stamp the current tick on each tile hit by a ray.
 		// No full-array clear needed — tiles decay naturally once gameTick
 		// advances fovDecayFrames beyond their last stamp.
+		// Stop at the first wall tile in each path so rays that slip through
+		// diagonal corner gaps don't illuminate tiles on the far side.
 		for _, ray := range g.cachedRays {
 			for _, pt := range ray.Path {
 				if g.isValidTile(pt.X, pt.Y) {
 					g.visibleTick[pt.Y][pt.X] = g.gameTick
 					g.SeenTiles[pt.Y][pt.X] = true
+					if !g.currentLevel.IsWalkable(pt.X, pt.Y) {
+						break
+					}
 				}
-			}
-			tx := int(ray.X2)
-			ty := int(ray.Y2)
-			if g.isValidTile(tx, ty) {
-				g.visibleTick[ty][tx] = g.gameTick
-				g.SeenTiles[ty][tx] = true
 			}
 		}
 	}
@@ -802,7 +807,10 @@ func (g *Game) updatePlaying() error {
 	if g.ExitEntity != nil && g.RunState != nil && g.RunState.Active {
 		g.ExitEntity.Update()
 		if g.ExitEntity.IsPlayerNear(g.player.TileX, g.player.TileY) {
-			g.ShowHint("Press E to descend")
+			isoX, isoY := g.cartesianToIso(float64(g.ExitEntity.TileX), float64(g.ExitEntity.TileY))
+			hx := int((isoX-g.camX)*g.camScale + float64(g.w/2))
+			hy := int((isoY+g.camY)*g.camScale + float64(g.h/2) - 32)
+			g.ShowHintAt("[E] Descend", hx, hy)
 			if g.isActionJustPressed(controls.ActionInteract) {
 				g.advanceFloor()
 			}
@@ -813,8 +821,11 @@ func (g *Game) updatePlaying() error {
 	if g.IsInHub && g.hubPortalX >= 0 && g.hubPortalY >= 0 {
 		dx := g.player.TileX - g.hubPortalX
 		dy := g.player.TileY - g.hubPortalY
-		if dx*dx+dy*dy <= 2 {
-			g.ShowHint("Press E to enter the Dungeon")
+		if dx*dx+dy*dy <= 9 {
+			isoX, isoY := g.cartesianToIso(float64(g.hubPortalX), float64(g.hubPortalY))
+			hx := int((isoX-g.camX)*g.camScale + float64(g.w/2))
+			hy := int((isoY+g.camY)*g.camScale + float64(g.h/2) - 32)
+			g.ShowHintAt("[E] Enter the Dungeon", hx, hy)
 			if g.isActionJustPressed(controls.ActionInteract) {
 				g.StartRun()
 			}
