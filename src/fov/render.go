@@ -87,12 +87,10 @@ func DebugDrawRays(screen *ebiten.Image, rays []Line, apexScreenX, apexScreenY f
 }
 
 func DebugDrawWalls(screen *ebiten.Image, walls []Line, camX, camY, camScale, cx, cy float64, tileSize int) {
-	var offSetX float64 = 1
-	//var offsetY float64 = float64(tileSize) * 0.01 // Shift down visually in isometric space
 	for _, wall := range walls {
 		// Transform world coords to screen coords using isometric logic
-		x1, y1 := worldToScreen(wall.X1+offSetX, wall.Y1, camX, camY, camScale, cx, cy, tileSize)
-		x2, y2 := worldToScreen(wall.X2+offSetX, wall.Y2, camX, camY, camScale, cx, cy, tileSize)
+		x1, y1 := worldToScreen(wall.X1, wall.Y1, camX, camY, camScale, cx, cy, tileSize)
+		x2, y2 := worldToScreen(wall.X2, wall.Y2, camX, camY, camScale, cx, cy, tileSize)
 
 		// Draw red line
 		vector.StrokeLine(

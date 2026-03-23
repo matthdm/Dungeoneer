@@ -1,0 +1,206 @@
+{
+  "scan_metadata": {
+    "scan_timestamp": "2026-03-22T00:00:00Z",
+    "scan_duration_ms": 0,
+    "scan_phases_completed": [
+      "code_module_indexing",
+      "design_doc_validation",
+      "feature_status_cross_check",
+      "bug_tracking",
+      "data_file_inventory",
+      "git_signals"
+    ]
+  },
+  "code_modules": {
+    "src_game": {
+      "status": "WIP",
+      "total_lines": 4250,
+      "key_files": [
+        {
+          "name": "game.go",
+          "lines": 850,
+          "status": "Active",
+          "last_modified": "2026-03-22",
+          "todos_found": 3
+        },
+        {
+          "name": "progression.game.go",
+          "lines": 50,
+          "status": "Basic",
+          "todos_found": 0
+        },
+        {
+          "name": "metasave.go",
+          "lines": 180,
+          "status": "Partial (TODO: full save state)",
+          "todos_found": 2
+        },
+        {
+          "name": "runstate.go",
+          "lines": 120,
+          "status": "Active",
+          "todos_found": 0
+        }
+      ],
+      "drifts_detected": []
+    },
+    "src_entities": {
+      "status": "WIP",
+      "total_lines": 3200,
+      "key_files": [
+        {
+          "name": "player.go",
+          "lines": 450,
+          "status": "Active",
+          "notes": "Movement stutter bug (Bug #1)"
+        },
+        {
+          "name": "monster.go",
+          "lines": 350,
+          "status": "Basic AI"
+        },
+        {
+          "name": "npc.go",
+          "lines": 0,
+          "status": "NOT STARTED (Phase 3)"
+        }
+      ]
+    },
+    "src_levels": {
+      "status": "Prototype",
+      "total_lines": 2100,
+      "key_files": [
+        {
+          "name": "generate64.go",
+          "lines": 650,
+          "status": "Procedural generation works"
+        }
+      ]
+    },
+    "src_items": {
+      "status": "Partial",
+      "total_lines": 280,
+      "item_count": 42,
+      "notes": "Item registry functional; missing some effects descriptions"
+    },
+    "src_ui": {
+      "status": "WIP",
+      "total_lines": 1800,
+      "implemented_menus": [
+        "dev_menu",
+        "inventory_ui",
+        "heropanel",
+        "death_screen"
+      ],
+      "pending_menus": [
+        "pause_menu",
+        "dialogue_system"
+      ]
+    },
+    "src_controls": {
+      "status": "Complete",
+      "hotkeys_defined": 15,
+      "hotkeys_in_readme": 15,
+      "hotkeys_match": true
+    }
+  },
+  "design_docs": {
+    "design_docs_count": 15,
+    "validated_files": [
+      {
+        "name": "roadmap.md",
+        "status": "Up to date with code",
+        "phases_defined": 7,
+        "current_phase": "Phase 1-2",
+        "phase_1_progress": "85%"
+      },
+      {
+        "name": "enemy-placement.md",
+        "status": "Design ahead of code",
+        "reason": "Biome config not yet fully implemented"
+      }
+    ]
+  },
+  "feature_checklist": {
+    "status": "DRIFT DETECTED",
+    "items_checked": 24,
+    "items_need_update": 5,
+    "drifts": [
+      {
+        "feature": "Save/load system",
+        "readme_status": " [ ] (not started)",
+        "actual_status": "[~] (60% done, metasave.go active)",
+        "evidence": "src/game/metasave.go: 180 lines"
+      },
+      {
+        "feature": "Inventory system",
+        "readme_status": " [ ] (not started)",
+        "actual_status": "[~] Partial (inventory_ops.go exists)",
+        "evidence": "src/entities/inventory_ops.go: 120 lines"
+      }
+    ]
+  },
+  "bugs": {
+    "open_bugs": 2,
+    "in_progress": 0,
+    "blocked": 0,
+    "fixed_bugs": 3,
+    "bug_tracker_location": ".github/skills/dungeoneer-expert/BUG_TRACKER.md",
+    "new_todos_found_in_code": [
+      {
+        "file": "src/movement/controller.movement.go",
+        "line": 145,
+        "comment": "TODO: Fix pathfinding queue overflow on rapid RMB spam",
+        "severity": "HIGH (matches Bug #1)"
+      },
+      {
+        "file": "src/game/metasave.go",
+        "line": 87,
+        "comment": "TODO: Implement full run state serialization",
+        "severity": "MEDIUM (blocks Phase 1.7 completion)"
+      }
+    ]
+  },
+  "data_files": {
+    "src_items_structured_effects_json": {
+      "total_items": 42,
+      "categories": 8,
+      "last_updated": "2026-03-22",
+      "sync_status": "In sync with registry.go"
+    },
+    "src_meta_json": {
+      "status": "Valid",
+      "fields": ["remnants", "run_count", "unlocked_features"],
+      "save_load_implemented": false
+    },
+    "src_controls_json": {
+      "status": "Valid",
+      "hotkey_entries": 15,
+      "matches_code": true
+    }
+  },
+  "readme_sync_suggestions": {
+    "feature_checklist_updates_needed": 5,
+    "known_issues_sync_status": "Bug #1 still Open, Bug #2-4 are Fixed and should be removed from Known Issues",
+    "hotkeys_validation": "All 15 hotkeys validated ✓",
+    "phase_progress_update": "Phase 1: 85% (was estimated 80%). Suggest updating README.",
+    "suggested_readme_changes": [
+      "Line 45: Update 'Save/load system' checkbox from [ ] to [~]",
+      "Line 50: Remove fixed bugs from 'Known Issues' section",
+      "Line 23: Update phase progress note to reflect current 85% completion",
+      "Line 60: Add new bugs found (TODO BLOCKER in controller.movement.go)"
+    ]
+  },
+  "git_signals": {
+    "recent_commits_to_game": 4,
+    "recent_commits_to_entities": 3,
+    "recent_commits_to_levels": 1,
+    "last_major_commit": "2026-03-22 (active development)"
+  },
+  "recommendations": [
+    "URGENT: Update README.md feature checklist — 5 items have status drift",
+    "Consider adding Performance TODO to BUG_TRACKER (corner-casting rays)",
+    "Phase progress: 85% → consider locking Phase 1 when save/load completes",
+    "Design doc 'enemy-placement.md' describes biome features not yet coded — either implement or move to Phase 2 roadmap"
+  ]
+}

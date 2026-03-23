@@ -1,0 +1,165 @@
+{
+  "project": "Dungeoneer",
+  "last_sync": "2026-03-22T00:00:00Z",
+  "last_comprehensive_scan": "2026-03-22T00:00:00Z",
+  "phase": "Phase 1 (95%+ Complete, No Active Blockers)",
+  "phase_completion": {
+    "phase_1_run_loop": "95%+ (23/24 features complete; Full state serialization TODO)",
+    "phase_2_combat": "0% (Ready to start; design approved)",
+    "phase_3_npcs": "0%",
+    "phase_4_ascension": "0%",
+    "phase_5_persistence": "0%",
+    "phase_6_polish": "0%",
+    "phase_7_narrative": "0%"
+  },
+  "roadmap_current_focus": [
+    "Complete Phase 1.7: Full run state serialization (metasave.go)",
+    "Implement load/options menus (4 TODOs in handlers.game.go)",
+    "Investigate Bug #3 corner ray edge case (visual polish)",
+    "Phase 2 prep: Enemy variety, biome configs, loot tables"
+  ],
+  "blockers": [],
+  "known_bugs": [
+    {
+      "id": 3,
+      "title": "Corner Ray Light Leak",
+      "status": "Open",
+      "priority": "MEDIUM"
+    },
+    {
+      "id": "perf",
+      "title": "Corner-Casting Ray Performance",
+      "status": "Open",
+      "priority": "MEDIUM"
+    }
+  ],
+  "fixed_bugs": [
+    { "id": 1, "title": "Right-click movement stutter" },
+    { "id": 2, "title": "Crash on player death" },
+    { "id": 4, "title": "UI unresponsive after Game Over" }
+  ],
+  "feature_checklist": {
+    "core_rendering": "✓ Done",
+    "player_movement": "✓ Done (Bug #1 fixed)",
+    "monster_ai_basic": "✓ Done",
+    "real_time_combat": "✓ Done",
+    "fov_system": "✓ Done (Bug #3 open — edge case)",
+    "level_editor": "✓ Done",
+    "procedural_generation": "✓ Done (Mature)",
+    "save_load": "~ Partial (run-level metasave, full state TODO)",
+    "ui_system": "✓ Done",
+    "menu_system": "✓ Done (load/options TODOs)",
+    "boss_mechanics": "✓ Done (basic)",
+    "spell_system": "✓ Done (6 spells)",
+    "inventory_system": "✓ Done",
+    "npc_system": "⚠ Planned (Phase 3)",
+    "dialogue_system": "⚠ Planned (Phase 3)",
+    "quest_system": "⚠ Planned (Phase 3-4)",
+    "audio": "✓ Done"
+  },
+  "game_systems": {
+    "fov": { "status": "Complete", "location": "src/fov/" },
+    "collision": { "status": "Complete", "location": "src/collision/" },
+    "pathfinding": { "status": "Complete (A*)", "location": "src/pathing/" },
+    "movement": { "status": "Complete (Bug #1 fixed)", "location": "src/movement/" },
+    "entity_system": { "status": "Complete (13 types)", "location": "src/entities/" },
+    "level_generation": { "status": "Complete (Mature)", "location": "src/levels/" },
+    "ui": { "status": "Complete", "location": "src/ui/" },
+    "items": { "status": "Complete (128+ items)", "location": "src/items/" },
+    "progression": { "status": "Complete", "location": "src/progression/" },
+    "spells": { "status": "Complete (6 types)", "location": "src/spells/" },
+    "saves": { "status": "Partial (metasave ~80%, full state TODO)", "location": "src/game/metasave.go" }
+  },
+  "controls_count": 22,
+  "hotkeys": [
+    { "key": "A / ←", "action": "Move left", "category": "Movement" },
+    { "key": "D / →", "action": "Move right", "category": "Movement" },
+    { "key": "W / ↑", "action": "Move up", "category": "Movement" },
+    { "key": "S / ↓", "action": "Move down", "category": "Movement" },
+    { "key": "1", "action": "Cast Fireball spell", "category": "Spell" },
+    { "key": "2", "action": "Cast Chaos Ray spell", "category": "Spell" },
+    { "key": "3", "action": "Cast Lightning spell", "category": "Spell" },
+    { "key": "4", "action": "Cast Lightning Storm spell", "category": "Spell" },
+    { "key": "5", "action": "Cast Fractal Bloom spell", "category": "Spell" },
+    { "key": "6", "action": "Cast Fractal Canopy spell", "category": "Spell" },
+    { "key": "Shift", "action": "Dash ability (short burst movement)", "category": "Ability" },
+    { "key": "F", "action": "Grapple ability (interact/grab)", "category": "Ability" },
+    { "key": "E", "action": "Interact with objects (doors, NPCs)", "category": "Ability" },
+    { "key": "Tab", "action": "Open/close inventory", "category": "UI" },
+    { "key": "H", "action": "Open hero panel (stats/progression)", "category": "UI" },
+    { "key": "ESC", "action": "Open pause menu", "category": "UI" },
+    { "key": "F1", "action": "Open controls menu", "category": "UI" },
+    { "key": "F10", "action": "Toggle HUD visibility", "category": "Debug" },
+    { "key": "Q", "action": "Generate random forest level", "category": "Debug" },
+    { "key": "R", "action": "Generate random dungeon level", "category": "Debug" },
+    { "key": "T", "action": "Load developer test level", "category": "Debug" },
+    { "key": "Y", "action": "Toggle full-bright rendering (disables FOV)", "category": "Debug" }
+  ],
+  "design_docs": [
+    "biome-system.md",
+    "boss-system.md",
+    "dialogue-system.md",
+    "echoes-of-self.md",
+    "enemy-placement.md",
+    "hub-world.md",
+    "inventory-system.md",
+    "items-system.md",
+    "layered-world-system.md",
+    "living-dungeon-ai.md",
+    "meta-progression.md",
+    "npc-system.md",
+    "player-stats.md",
+    "quest-system.md",
+    "run-loop.md"
+  ],
+  "code_modules": [
+    "collision",
+    "constants",
+    "controls",
+    "entities",
+    "fov",
+    "game",
+    "hud",
+    "images",
+    "inventory",
+    "items",
+    "leveleditor",
+    "levels",
+    "menumanager",
+    "movement",
+    "pathing",
+    "players",
+    "progression",
+    "shaders",
+    "spells",
+    "sprites",
+    "tiles",
+    "ui"
+  ],
+  "data_files": {
+    "meta.json": "Meta-progression state (Remnants, run count, unlocks)",
+    "test_level.json": "Developer test level (hotkey: T)",
+    "items_structured_effects.json": "Item catalog with stats and effects",
+    "hub.json": "Hub world level layout",
+    "controls.json": "Control bindings"
+  },
+  "scan_targets": {
+    "code_modules": "src/",
+    "design_docs": "design-docs/",
+    "data_files": "src/*.json",
+    "config": "src/controls.json, src/meta.json"
+  },
+  "readme_sync_status": {
+    "feature_checklist_drifts": 0,
+    "known_issues_pending": 0,
+    "hotkeys_verified": true,
+    "last_readme_update": "2026-03-22T12:00:00Z"
+  },
+  "team_notes": "Single developer. Phase 1 is 95%+ complete with no active blockers. Ready for Phase 2 prep or Phase 1 final polish.",
+  "next_session_focus": [
+    "Complete Phase 1.7: Full run state serialization (finish metasave.go)",
+    "Implement load game and options menus (4 TODOs in handlers.game.go)",
+    "Phase 2 planning: Enemy variety, biome configurations, loot tables",
+    "Bug #3 investigation (corner ray FOV edge case) — visual polish only"
+  ]
+}

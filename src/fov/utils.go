@@ -11,6 +11,12 @@ func NewRay(x, y, length, angle float64) Line {
 	}
 }
 
+// eps is the tolerance applied to the wall-segment parameter u.
+// Wall boundary segments share endpoints at every tile corner, so a ray aimed
+// exactly at a corner computes u = 1 ± floating-point noise. Without tolerance
+// the intersection is rejected and the ray leaks through the corner.
+const intersectEps = 1e-9
+
 func Intersection(l1, l2 Line) (float64, float64, bool) {
 	denom := (l1.X1-l1.X2)*(l2.Y1-l2.Y2) - (l1.Y1-l1.Y2)*(l2.X1-l2.X2)
 	if denom == 0 {
@@ -20,7 +26,7 @@ func Intersection(l1, l2 Line) (float64, float64, bool) {
 	t := ((l1.X1-l2.X1)*(l2.Y1-l2.Y2) - (l1.Y1-l2.Y1)*(l2.X1-l2.X2)) / denom
 	u := -((l1.X1-l1.X2)*(l1.Y1-l2.Y1) - (l1.Y1-l1.Y2)*(l1.X1-l2.X1)) / denom
 
-	if t < 0 || t > 1 || u < 0 || u > 1 {
+	if t < 0 || t > 1 || u < -intersectEps || u > 1+intersectEps {
 		return 0, 0, false
 	}
 

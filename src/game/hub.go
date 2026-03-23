@@ -81,6 +81,7 @@ func (g *Game) loadHub() {
 	g.camY = -snapIsoY
 	g.cachedRays = nil
 	g.RaycastWalls = fov.LevelToWalls(g.currentLevel)
+	fov.InvalidateCache()
 	g.State = StatePlaying
 }
 
@@ -212,6 +213,7 @@ func (g *Game) startFloor(floorNum int) {
 	g.camY = -snapIsoY
 	g.cachedRays = nil
 	g.RaycastWalls = fov.LevelToWalls(g.currentLevel)
+	fov.InvalidateCache()
 }
 
 // advanceFloor moves to the next floor or triggers victory.

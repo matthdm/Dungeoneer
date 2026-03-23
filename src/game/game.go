@@ -84,6 +84,7 @@ type Game struct {
 
 	RaycastWalls             []fov.Line
 	ShowRays                 bool
+	ShowWalls                bool
 	lastPlayerX, lastPlayerY float64
 	cachedRays               []fov.Line
 	FullBright               bool
@@ -725,16 +726,11 @@ func (g *Game) updatePlaying() error {
 		// Stamp the current tick on each tile hit by a ray.
 		// No full-array clear needed — tiles decay naturally once gameTick
 		// advances fovDecayFrames beyond their last stamp.
-		// Stop at the first wall tile in each path so rays that slip through
-		// diagonal corner gaps don't illuminate tiles on the far side.
 		for _, ray := range g.cachedRays {
 			for _, pt := range ray.Path {
 				if g.isValidTile(pt.X, pt.Y) {
 					g.visibleTick[pt.Y][pt.X] = g.gameTick
 					g.SeenTiles[pt.Y][pt.X] = true
-					if !g.currentLevel.IsWalkable(pt.X, pt.Y) {
-						break
-					}
 				}
 			}
 		}

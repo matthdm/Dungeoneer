@@ -224,7 +224,9 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 	if g.DevTools != nil {
 		g.DevTools.Draw(screen)
 	}
-	//fov.DebugDrawWalls(screen, g.RaycastWalls, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
+	if g.ShowWalls && len(g.RaycastWalls) > 0 {
+		fov.DebugDrawWalls(screen, g.RaycastWalls, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
+	}
 }
 
 func (g *Game) drawGrapple(target *ebiten.Image, scale, cx, cy float64) {

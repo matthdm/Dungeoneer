@@ -44,5 +44,42 @@ func LevelToWalls(level *levels.Level) []Line {
 			}
 		}
 	}
+	// Diagonal corner anti-peek segments.
+	//
+	// When two wall tiles share only a corner point (e.g. NW+SE are walls,
+	// NE+SW are open), geometric rays can slip through that zero-width gap:
+	// the ray passes exactly through the shared corner without intersecting
+	// any boundary face, because the faces only cover the cardinal edges.
+	//
+	// Fix: for each such diagonal pair, add a short segment that spans the
+	// corner and lies along the wall diagonal, so gap-rays hit it instead
+	// of passing through.  The segment runs from the centre of one wall tile
+	// to the centre of the other (half-length = 0.5 each side of the corner)
+	// which is long enough to catch any ray that enters the gap region.
+	//
+	//   '\' gap (NW+SE walls, NE+SW open) → segment goes NW↔SE
+	//   '/' gap (NE+SW walls, NW+SE open) → segment goes NE↔SW
+	const dc = 0.5
+	for gy := 1; gy < level.H; gy++ {
+		for gx := 1; gx < level.W; gx++ {
+			// Corner at grid point (gx, gy), bordered by four tiles:
+			//   NW=(gx-1,gy-1)  NE=(gx,gy-1)
+			//   SW=(gx-1,gy)    SE=(gx,gy)
+			nw := !isOpen(level, gx-1, gy-1)
+			ne := !isOpen(level, gx, gy-1)
+			sw := !isOpen(level, gx-1, gy)
+			se := !isOpen(level, gx, gy)
+			px, py := float64(gx), float64(gy)
+			if nw && se && !ne && !sw {
+				// '\' gap
+				walls = append(walls, Line{X1: px - dc, Y1: py - dc, X2: px + dc, Y2: py + dc})
+			}
+			if ne && sw && !nw && !se {
+				// '/' gap
+				walls = append(walls, Line{X1: px + dc, Y1: py - dc, X2: px - dc, Y2: py + dc})
+			}
+		}
+	}
+
 	return walls
 }

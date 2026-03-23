@@ -22,20 +22,63 @@ type RayCache struct {
 
 var cached RayCache
 
+// InvalidateCache forces the next RayCasting call to recompute rays.
+// Must be called whenever the wall geometry changes (e.g. on level load).
+func InvalidateCache() {
+	cached.Rays = nil
+}
+
 func RayCasting(cx, cy float64, walls []Line, level *levels.Level) []Line {
 	if cx == cached.PlayerX && cy == cached.PlayerY && cached.Rays != nil {
 		return cached.Rays
 	}
+
+	// Store original position for cache key (before any clamping/shifting).
+	origCX, origCY := cx, cy
 
 	const rayLength = 1000
 	const numRays = 360
 	var rays []Line
 
 	// Offset to avoid standing "inside" a wall
-	const epsilon = 0.01
+	const epsilon = 0.02
 	// get the tile the player is standing on
 	tx := int(math.Floor(cx))
 	ty := int(math.Floor(cy))
+
+	// The collision system's visual offsets (XWallVisualOffset, box width)
+	// allow InterpX+0.5 to cross into a wall tile when the player is pressed
+	// against a wall on their right (cartesian east).  If the ray origin lands
+	// inside a wall tile, rays aimed in that direction start past the wall face
+	// and miss it entirely, lighting up the next room.
+	//
+	// Fix: detect the case and snap the origin back to just outside the
+	// nearest walkable tile boundary.
+	if isWall(tx, ty, level) {
+		fracX := cx - float64(tx)
+		fracY := cy - float64(ty)
+
+		// Pull back on the axis closest to a tile boundary first.
+		pulled := false
+		if fracX < 0.5 && !isWall(tx-1, ty, level) {
+			cx = float64(tx) - epsilon
+			pulled = true
+		} else if fracX >= 0.5 && !isWall(tx+1, ty, level) {
+			cx = float64(tx+1) + epsilon
+			pulled = true
+		}
+		if fracY < 0.5 && !isWall(tx, ty-1, level) {
+			cy = float64(ty) - epsilon
+			pulled = true
+		} else if fracY >= 0.5 && !isWall(tx, ty+1, level) {
+			cy = float64(ty+1) + epsilon
+			pulled = true
+		}
+		if pulled {
+			tx = int(math.Floor(cx))
+			ty = int(math.Floor(cy))
+		}
+	}
 
 	// check neighbors and shift slightly
 	if isWall(tx, ty-1, level) { // wall to the north
@@ -86,7 +129,7 @@ func RayCasting(cx, cy float64, walls []Line, level *levels.Level) []Line {
 		}
 	}
 
-	cached = RayCache{PlayerX: cx, PlayerY: cy, Rays: rays}
+	cached = RayCache{PlayerX: origCX, PlayerY: origCY, Rays: rays}
 
 	return rays
 }

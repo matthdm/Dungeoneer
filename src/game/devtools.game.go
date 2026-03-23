@@ -22,6 +22,11 @@ func (g *Game) buildDevEntries() []ui.DevEntry {
 			Toggle:   func() { g.ShowRays = !g.ShowRays },
 		},
 		{
+			Label:    "Debug Walls",
+			IsActive: func() bool { return g.ShowWalls },
+			Toggle:   func() { g.ShowWalls = !g.ShowWalls },
+		},
+		{
 			Label:    "Spell Debug",
 			IsActive: func() bool { return g.SpellDebug },
 			Toggle:   func() { g.SpellDebug = !g.SpellDebug },
