@@ -2,21 +2,25 @@
   "project": "Dungeoneer",
   "last_sync": "2026-03-22T00:00:00Z",
   "last_comprehensive_scan": "2026-03-22T00:00:00Z",
-  "phase": "Phase 1 (95%+ Complete, No Active Blockers)",
+  "phase": "Phase 1 (98% Complete — Run Loop Fully Functional)",
   "phase_completion": {
-    "phase_1_run_loop": "95%+ (23/24 features complete; Full state serialization TODO)",
-    "phase_2_combat": "0% (Ready to start; design approved)",
-    "phase_3_npcs": "0%",
+    "phase_1_run_loop": "98% (Full run loop implemented: hub, floor sequencer, exit entity, death/victory screens, meta save, biome-aware generation. Remaining: Load Game menu, Options menu, mid-run state persistence)",
+    "phase_2_combat": "5% pre-staged (BiomeSystem + FloorContext already in runstate.go; 4 monster types scaling with floor; no boss.go yet)",
+    "phase_3_npcs": "0% (no npc.go exists)",
     "phase_4_ascension": "0%",
     "phase_5_persistence": "0%",
     "phase_6_polish": "0%",
     "phase_7_narrative": "0%"
   },
   "roadmap_current_focus": [
-    "Complete Phase 1.7: Full run state serialization (metasave.go)",
-    "Implement load/options menus (4 TODOs in handlers.game.go)",
-    "Investigate Bug #3 corner ray edge case (visual polish)",
-    "Phase 2 prep: Enemy variety, biome configs, loot tables"
+    "DONE: Full run loop (StartRun, startFloor, advanceFloor, endRunDeath, endRunVictory in hub.go)",
+    "DONE: Death + Victory screens with run stats in deathscreen.go",
+    "DONE: Meta save (Remnants, RunCount, BestFloor, TotalKills) in metasave.go",
+    "DONE: Biome-aware floor generation (runstate.go: availableBiomes, FloorContext, BuildFloorContext)",
+    "TODO: Load Game menu (handlers.game.go:46, 66)",
+    "TODO: Options menu (handlers.game.go:48, 68)",
+    "TODO: Mid-run state persistence (RunState not serialized; if game quits mid-run, run is lost)",
+    "TODO (minor): Expose procgen params via editor UI (leveleditor/procgen.go:6)"
   ],
   "blockers": [],
   "known_bugs": [
@@ -41,34 +45,59 @@
   "feature_checklist": {
     "core_rendering": "✓ Done",
     "player_movement": "✓ Done (Bug #1 fixed)",
-    "monster_ai_basic": "✓ Done",
+    "monster_ai_basic": "✓ Done (4 types: Grey Knight, Sentinel, Chimera, Lesser Demon)",
     "real_time_combat": "✓ Done",
     "fov_system": "✓ Done (Bug #3 open — edge case)",
     "level_editor": "✓ Done",
-    "procedural_generation": "✓ Done (Mature)",
-    "save_load": "~ Partial (run-level metasave, full state TODO)",
+    "procedural_generation": "✓ Done (Mature, biome-aware)",
+    "floor_sequencer": "✓ Done (FloorContext, BuildFloorContext, difficulty scaling)",
+    "run_loop": "✓ Done (StartRun → startFloor → advanceFloor → endRunDeath/Victory)",
+    "death_screen": "✓ Done (run stats display in deathscreen.go)",
+    "victory_screen": "✓ Done (x2 Remnant bonus, stats display)",
+    "hub_world": "✓ Done (hub.json + fallback procedural hub)",
+    "exit_entity": "✓ Done (exit_entity.go, portal sprite, farthest BFS placement)",
+    "meta_save": "✓ Done (Remnants, RunCount, BestFloor, TotalKills saved to meta.json)",
+    "mid_run_save": "✗ Not done (RunState not serialized to disk)",
+    "save_load_menu": "~ Partial (TODO: Load Game + Options menus in handlers.game.go)",
+    "biome_system": "✓ Done Phase 1 scope (5 biomes defined; availableBiomes[4] used in generation)",
     "ui_system": "✓ Done",
-    "menu_system": "✓ Done (load/options TODOs)",
-    "boss_mechanics": "✓ Done (basic)",
+    "menu_system": "✓ Done (load/options TODOs are cosmetic stubs)",
     "spell_system": "✓ Done (6 spells)",
     "inventory_system": "✓ Done",
-    "npc_system": "⚠ Planned (Phase 3)",
+    "audio": "✓ Done",
+    "boss_mechanics": "✗ Not done (Phase 2.6 — entities/boss.go does not exist)",
+    "npc_system": "⚠ Planned (Phase 3 — entities/npc.go does not exist)",
     "dialogue_system": "⚠ Planned (Phase 3)",
-    "quest_system": "⚠ Planned (Phase 3-4)",
-    "audio": "✓ Done"
+    "quest_system": "⚠ Planned (Phase 3-4)"
   },
   "game_systems": {
     "fov": { "status": "Complete", "location": "src/fov/" },
     "collision": { "status": "Complete", "location": "src/collision/" },
     "pathfinding": { "status": "Complete (A*)", "location": "src/pathing/" },
     "movement": { "status": "Complete (Bug #1 fixed)", "location": "src/movement/" },
-    "entity_system": { "status": "Complete (13 types)", "location": "src/entities/" },
-    "level_generation": { "status": "Complete (Mature)", "location": "src/levels/" },
+    "entity_system": { "status": "Complete (13 files in entities/)", "location": "src/entities/" },
+    "level_generation": { "status": "Complete (Biome-aware, mature)", "location": "src/levels/" },
+    "run_loop": { "status": "Complete (hub → floors → death/victory → hub)", "location": "src/game/hub.go, runstate.go" },
+    "biome_system": { "status": "Complete Phase 1 scope (5 biomes, difficulty scaling)", "location": "src/game/runstate.go" },
+    "meta_save": { "status": "Complete (39 lines, clean)", "location": "src/game/metasave.go" },
+    "death_victory_screens": { "status": "Complete", "location": "src/game/deathscreen.go" },
     "ui": { "status": "Complete", "location": "src/ui/" },
     "items": { "status": "Complete (128+ items)", "location": "src/items/" },
     "progression": { "status": "Complete", "location": "src/progression/" },
     "spells": { "status": "Complete (6 types)", "location": "src/spells/" },
-    "saves": { "status": "Partial (metasave ~80%, full state TODO)", "location": "src/game/metasave.go" }
+    "boss": { "status": "Not started (Phase 2.6)", "location": "entities/boss.go (does not exist)" },
+    "npcs": { "status": "Not started (Phase 3)", "location": "entities/npc.go (does not exist)" }
+  },
+  "todo_scan": {
+    "handlers.game.go": [
+      "line 46: TODO: Show load game menu",
+      "line 48: TODO: Show options menu",
+      "line 66: TODO: Show load game menu",
+      "line 68: TODO: Show options menu"
+    ],
+    "leveleditor/procgen.go": [
+      "line 6: TODO: expose parameters via editor UI (minor editor enhancement)"
+    ]
   },
   "controls_count": 22,
   "hotkeys": [
@@ -89,11 +118,17 @@
     { "key": "H", "action": "Open hero panel (stats/progression)", "category": "UI" },
     { "key": "ESC", "action": "Open pause menu", "category": "UI" },
     { "key": "F1", "action": "Open controls menu", "category": "UI" },
+    { "key": "F3", "action": "Toggle level editor (dev hardcoded, not in player controls)", "category": "Debug" },
     { "key": "F10", "action": "Toggle HUD visibility", "category": "Debug" },
+    { "key": "F12", "action": "Open/close dev tools overlay", "category": "Debug" },
     { "key": "Q", "action": "Generate random forest level", "category": "Debug" },
     { "key": "R", "action": "Generate random dungeon level", "category": "Debug" },
     { "key": "T", "action": "Load developer test level", "category": "Debug" },
     { "key": "Y", "action": "Toggle full-bright rendering (disables FOV)", "category": "Debug" }
+  ],
+  "hotkey_drift": [
+    "F3 (toggle level editor) is in code (handlers.game.go:253) but NOT in README hotkey table — minor omission",
+    "F12 (dev tools overlay) is in code (handlers.game.go:259) but NOT in README hotkey table — minor omission"
   ],
   "design_docs": [
     "biome-system.md",
@@ -113,53 +148,33 @@
     "run-loop.md"
   ],
   "code_modules": [
-    "collision",
-    "constants",
-    "controls",
-    "entities",
-    "fov",
-    "game",
-    "hud",
-    "images",
-    "inventory",
-    "items",
-    "leveleditor",
-    "levels",
-    "menumanager",
-    "movement",
-    "pathing",
-    "players",
-    "progression",
-    "shaders",
-    "spells",
-    "sprites",
-    "tiles",
-    "ui"
+    "collision", "constants", "controls", "entities", "fov",
+    "game", "hud", "images", "inventory", "items",
+    "leveleditor", "levels", "menumanager", "movement", "pathing",
+    "players", "progression", "shaders", "spells", "sprites",
+    "tiles", "ui"
   ],
   "data_files": {
-    "meta.json": "Meta-progression state (Remnants, run count, unlocks)",
+    "meta.json": "Meta-progression state (Remnants, RunCount, BestFloor, TotalKills)",
     "test_level.json": "Developer test level (hotkey: T)",
     "items_structured_effects.json": "Item catalog with stats and effects",
     "hub.json": "Hub world level layout",
     "controls.json": "Control bindings"
   },
-  "scan_targets": {
-    "code_modules": "src/",
-    "design_docs": "design-docs/",
-    "data_files": "src/*.json",
-    "config": "src/controls.json, src/meta.json"
-  },
   "readme_sync_status": {
-    "feature_checklist_drifts": 0,
-    "known_issues_pending": 0,
+    "feature_checklist_drifts": 1,
+    "drift_details": [
+      "README does not list 'boss_mechanics' as a feature — snapshot had it as Done (incorrect). Boss is Phase 2.6, not implemented."
+    ],
     "hotkeys_verified": true,
+    "hotkey_drifts": ["F3 and F12 are dev hotkeys in code but not in README (minor — intentionally omitted as dev-only)"],
     "last_readme_update": "2026-03-22T12:00:00Z"
   },
-  "team_notes": "Single developer. Phase 1 is 95%+ complete with no active blockers. Ready for Phase 2 prep or Phase 1 final polish.",
+  "team_notes": "Single developer. Phase 1 run loop is functionally complete — you can run dungeons, die, win, earn Remnants, and return to hub. Remaining items are cosmetic menus and mid-run save. Phase 2 is well-prepared: biome system and floor difficulty scaling are already live.",
   "next_session_focus": [
-    "Complete Phase 1.7: Full run state serialization (finish metasave.go)",
-    "Implement load game and options menus (4 TODOs in handlers.game.go)",
-    "Phase 2 planning: Enemy variety, biome configurations, loot tables",
-    "Bug #3 investigation (corner ray FOV edge case) — visual polish only"
+    "Phase 2 kickoff: Start with 2.1 (Enemy Variety: ranged, patrol, swarm behaviors)",
+    "OR: Complete Phase 1 polish: Load Game + Options menus in handlers.game.go",
+    "OR: Implement mid-run state persistence (serialize RunState to disk)",
+    "Bug #3 (corner ray FOV edge case) remains — visual polish only, not a blocker"
   ]
 }
