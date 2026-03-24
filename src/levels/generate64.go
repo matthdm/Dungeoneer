@@ -143,6 +143,11 @@ func Generate64x64(p GenParams) *Level {
 	pruneDeadEnds(l, 3)
 	ensureConnectivity(l)     // Connectivity check ignores doors (treats them as walkable)
 	growToCoverage(l, p, rng) // NEW
+
+	// Populate Room metadata from carved rooms (primary + filler).
+	l.Rooms = rectsToRooms(rooms)
+	// Append filler rooms by scanning for walkable clusters not in primary rooms.
+	l.Rooms = append(l.Rooms, detectFillerRooms(l, l.Rooms)...)
 	ensureConnectivity(l)     // Ensure all filler rooms are connected
 	sealWalkableEdges(l)
 	if ss != nil {
@@ -185,6 +190,99 @@ func Generate64x64(p GenParams) *Level {
 	}
 	placeDoorsFromValidatedThroats(l, p)
 	return l
+}
+
+// rectsToRooms converts the raw rect slice from growRooms into Room metadata.
+func rectsToRooms(rects []rect) []Room {
+	rooms := make([]Room, len(rects))
+	for i, r := range rects {
+		rooms[i] = Room{
+			X: r.X, Y: r.Y, W: r.W, H: r.H,
+			CenterX: r.X + r.W/2,
+			CenterY: r.Y + r.H/2,
+			Size:    ClassifyRoomSize(r.W, r.H),
+			Index:   i,
+		}
+	}
+	return rooms
+}
+
+// detectFillerRooms finds walkable rectangular clusters that don't overlap any
+// known room. These are the blobs carved by growToCoverage. We detect them by
+// flood-filling walkable tiles that aren't inside any existing room.
+func detectFillerRooms(l *Level, existing []Room) []Room {
+	visited := make([][]bool, l.H)
+	for y := range visited {
+		visited[y] = make([]bool, l.W)
+	}
+	// Mark all tiles inside existing rooms as visited.
+	for _, r := range existing {
+		for y := r.Y; y < r.Y+r.H; y++ {
+			for x := r.X; x < r.X+r.W; x++ {
+				if y >= 0 && y < l.H && x >= 0 && x < l.W {
+					visited[y][x] = true
+				}
+			}
+		}
+	}
+
+	var fillers []Room
+	nextIdx := len(existing)
+
+	for y := 0; y < l.H; y++ {
+		for x := 0; x < l.W; x++ {
+			if visited[y][x] || !l.Tiles[y][x].IsWalkable {
+				continue
+			}
+			// BFS to find the connected walkable cluster.
+			minX, minY, maxX, maxY := x, y, x, y
+			queue := []image.Point{{x, y}}
+			visited[y][x] = true
+			count := 0
+			for len(queue) > 0 {
+				p := queue[0]
+				queue = queue[1:]
+				count++
+				if p.X < minX {
+					minX = p.X
+				}
+				if p.Y < minY {
+					minY = p.Y
+				}
+				if p.X > maxX {
+					maxX = p.X
+				}
+				if p.Y > maxY {
+					maxY = p.Y
+				}
+				for _, d := range [][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}} {
+					nx, ny := p.X+d[0], p.Y+d[1]
+					if nx < 0 || ny < 0 || nx >= l.W || ny >= l.H {
+						continue
+					}
+					if visited[ny][nx] || !l.Tiles[ny][nx].IsWalkable {
+						continue
+					}
+					visited[ny][nx] = true
+					queue = append(queue, image.Point{nx, ny})
+				}
+			}
+			// Only count clusters large enough to be meaningful rooms.
+			w := maxX - minX + 1
+			h := maxY - minY + 1
+			if count >= 9 {
+				fillers = append(fillers, Room{
+					X: minX, Y: minY, W: w, H: h,
+					CenterX: minX + w/2,
+					CenterY: minY + h/2,
+					Size:    ClassifyRoomSize(w, h),
+					Index:   nextIdx,
+				})
+				nextIdx++
+			}
+		}
+	}
+	return fillers
 }
 
 func optionalPerimeterLoop(L *Level, inset, half int, enable bool) {

@@ -41,6 +41,8 @@ type Monster struct {
 	TickCount        int
 	MovementDuration int // ticks per tile
 	RecalcCooldown   int
+	PathTargetX      int // player position when path was computed
+	PathTargetY      int
 
 	// Combat
 	Behavior       MonsterBehavior
@@ -56,6 +58,14 @@ type Monster struct {
 	Level int
 
 	Caster *spells.Caster
+
+	// Phase 2 additions
+	Role               string              // "melee", "ranged", "elite", "swarm", "caster", "ambush"
+	Siblings           []*Monster           // for swarm coordination
+	PendingProjectiles []*MonsterProjectile // ranged attacks to be processed by game loop
+	PendingSpells      []PendingSpellCast   // spell casts to be processed by game loop
+	Effects            EffectHolder         // active buffs/debuffs
+	OnHitEffect        *StatusEffect        // if non-nil, applied to player on melee hit
 }
 
 func NewMonster(ss *sprites.SpriteSheet) []*Monster {
@@ -87,6 +97,13 @@ func (m *Monster) Update(player *Player, level *levels.Level) {
 	if m.Caster != nil {
 		m.Caster.Update(1.0 / 60.0)
 	}
+	// Tick status effects.
+	m.Effects.UpdateEffects(1.0/60.0, func(dmg int) {
+		m.HP -= dmg
+		if m.HP <= 0 {
+			m.IsDead = true
+		}
+	})
 	if m.Behavior != nil {
 		m.Behavior.Update(m, player, level)
 	}
@@ -144,13 +161,23 @@ func (m *Monster) BasicChaseLogic(p *Player, level *levels.Level) {
 
 	if m.RecalcCooldown > 0 {
 		m.RecalcCooldown--
-		return
 	}
 
-	// Check for path recompute, pathfinding
-	needRecalc := len(m.Path) == 0 || !level.IsWalkable(m.Path[0].X, m.Path[0].Y)
+	// Recalculate when: path exhausted, next step blocked, or player moved
+	// significantly from where the path was targeting.
+	playerMoved := false
+	dx := m.PathTargetX - p.TileX
+	dy := m.PathTargetY - p.TileY
+	if dx*dx+dy*dy > 4 { // player moved >2 tiles from original target
+		playerMoved = true
+	}
+
+	needRecalc := len(m.Path) == 0 ||
+		!level.IsWalkable(m.Path[0].X, m.Path[0].Y) ||
+		(playerMoved && m.RecalcCooldown <= 0)
+
 	if needRecalc {
-		// Find a walkable adjacent tile near the player
+		// Find a walkable adjacent tile near the player.
 		adjTargets := []struct{ X, Y int }{
 			{p.TileX + 1, p.TileY},
 			{p.TileX - 1, p.TileY},
@@ -168,10 +195,11 @@ func (m *Monster) BasicChaseLogic(p *Player, level *levels.Level) {
 		}
 
 		if !found {
-			// Nowhere to go
 			m.Path = nil
 		}
-		m.RecalcCooldown = 30
+		m.PathTargetX = p.TileX
+		m.PathTargetY = p.TileY
+		m.RecalcCooldown = 15
 		if len(m.Path) > 0 && m.Path[0].X == m.TileX && m.Path[0].Y == m.TileY {
 			m.Path = m.Path[1:]
 		}
@@ -210,7 +238,13 @@ func (m *Monster) CombatCheck(player *Player) {
 		IsAdjacent(m.TileX, m.TileY, player.TileX, player.TileY) {
 		m.AttackTick++
 		if m.AttackTick >= m.AttackRate {
-			player.TakeDamage(m.Damage)
+			dmg := int(float64(m.Damage) * m.Effects.DamageModifier())
+			player.TakeDamage(dmg)
+			// Apply on-hit status effect to the player if defined.
+			if m.OnHitEffect != nil {
+				clone := *m.OnHitEffect
+				player.Effects.AddEffect(&clone)
+			}
 			m.AttackTick = 0
 		}
 	}

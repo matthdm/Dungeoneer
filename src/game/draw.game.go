@@ -181,6 +181,7 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 		target.DrawImage(r.Image, r.Options)
 	}
 	g.drawSpells(target, scale, cx, cy)
+	g.drawMonsterProjectiles(target, scale, cx, cy)
 
 	//g.drawTiles(target, scale, cx, cy)
 	//g.drawPathPreview(target, scale, cx, cy)
@@ -211,6 +212,9 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 	}
 	if g.HUD != nil && g.ShowHUD {
 		g.HUD.Draw(screen, g.w, g.h)
+	}
+	if g.BossBar != nil {
+		g.BossBar.Draw(screen, g.w)
 	}
 	if g.HeroPanel != nil && g.HeroPanel.IsVisible() {
 		g.HeroPanel.Draw(screen)

@@ -202,10 +202,7 @@ func (g *Game) handleClicks() {
 				died := m.TakeDamage(g.player.Damage, &g.HitMarkers, &g.DamageNumbers)
 				g.player.AttackTick = 0
 				if died {
-					g.awardEXP(m)
-					if g.RunState != nil && g.RunState.Active {
-						g.RunState.KillCount++
-					}
+					g.handleMonsterDeath(m)
 				}
 			}
 		}

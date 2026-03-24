@@ -14,25 +14,36 @@ func (g *Game) updateSpells() {
 		sp.Update(g.currentLevel, g.DeltaTime)
 		if fb, ok := sp.(*spells.Fireball); ok {
 			if !fb.Impact {
-				for _, m := range g.Monsters {
-					if m.IsDead {
-						continue
+				if fb.MonsterCast {
+					// Monster-cast fireball: check player collision.
+					if g.player != nil && !g.player.IsDead {
+						dx := g.player.MoveController.InterpX - fb.X
+						dy := g.player.MoveController.InterpY - fb.Y
+						if dx*dx+dy*dy <= fb.Radius*fb.Radius {
+							fb.Impact = true
+							g.player.TakeDamage(fb.Info.Damage)
+						}
 					}
+				} else {
+					// Player-cast fireball: check monster collision.
+					for _, m := range g.Monsters {
+						if m.IsDead {
+							continue
+						}
 
-					dx := m.InterpX - fb.X
-					dy := m.InterpY - fb.Y
-					distSq := dx*dx + dy*dy
+						dx := m.InterpX - fb.X
+						dy := m.InterpY - fb.Y
+						distSq := dx*dx + dy*dy
 
-					if distSq <= fb.Radius*fb.Radius {
-						fb.Impact = true
-						tx := int(math.Floor(fb.X))
-						ty := int(math.Floor(fb.Y))
-						g.applyFireballDamage(fb, tx, ty)
-						break
+						if distSq <= fb.Radius*fb.Radius {
+							fb.Impact = true
+							tx := int(math.Floor(fb.X))
+							ty := int(math.Floor(fb.Y))
+							g.applyFireballDamage(fb, tx, ty)
+							break
+						}
 					}
 				}
-			} else if fb.IsFinished() {
-				// impact done
 			}
 		}
 		if ls, ok := sp.(*spells.LightningStrike); ok {
@@ -96,7 +107,7 @@ func (g *Game) applyFireballDamage(fb *spells.Fireball, cx, cy int) {
 		if dx <= radius && dy <= radius {
 			if g.hasLineOfSight(cx, cy, m.TileX, m.TileY) {
                                if m.TakeDamage(dmg, &g.HitMarkers, &g.DamageNumbers) {
-                                       g.awardEXP(m)
+                                       g.handleMonsterDeath(m)
                                }
                        }
                }
@@ -142,7 +153,7 @@ func (g *Game) applyChaosRayDamage(cr *spells.ChaosRay) {
 			p2 := cr.Path[i+1]
 			if pointSegmentDistance(px, py, p1.X, p1.Y, p2.X, p2.Y) <= radius {
                                if m.TakeDamage(cr.Info.Damage, &g.HitMarkers, &g.DamageNumbers) {
-                                       g.awardEXP(m)
+                                       g.handleMonsterDeath(m)
                                }
                                break
                        }
@@ -190,7 +201,7 @@ func (g *Game) applyLightningDamage(l *spells.LightningStrike, cx, cy int) {
 		if dx <= radius && dy <= radius {
 			if g.hasLineOfSight(cx, cy, m.TileX, m.TileY) {
                                if m.TakeDamage(dmg, &g.HitMarkers, &g.DamageNumbers) {
-                                       g.awardEXP(m)
+                                       g.handleMonsterDeath(m)
                                }
                        }
                }
@@ -234,7 +245,7 @@ func (g *Game) applyFractalDamage(n *spells.FractalNode, cx, cy int) {
 		if dx <= radius && dy <= radius {
 			if g.hasLineOfSight(cx, cy, m.TileX, m.TileY) {
                                if m.TakeDamage(dmg, &g.HitMarkers, &g.DamageNumbers) {
-                                       g.awardEXP(m)
+                                       g.handleMonsterDeath(m)
                                }
                        }
                }

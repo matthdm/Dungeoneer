@@ -113,6 +113,14 @@ type Game struct {
 
 	lastPlayerTileX int
 	lastPlayerTileY int
+
+	// Phase 2
+	MonsterProjectiles []*entities.MonsterProjectile
+	SpriteMap          map[string]*ebiten.Image
+	FloorCtx           *FloorContext // current floor context for loot/biome access
+	CurrentBoss        *entities.Boss
+	BossBar            *hud.BossHealthBar
+	BossRoom           *levels.Room // arena room on boss floor
 }
 
 // editorLayerChanged updates the game when the level editor switches layers.
@@ -197,6 +205,7 @@ func NewGame() (*Game, error) {
 	g.ControlsMenu = ui.NewControlsMenu(640, 480, g.Controls, func() {})
 	g.editor.OnLayerChange = g.editorLayerChanged
 	g.editor.OnStairPlaced = g.stairPlaced
+	g.SpriteMap = BuildSpriteMap(ss)
 	g.spawnEntitiesFromLevel()
 	g.lastPlayerTileX, g.lastPlayerTileY = g.player.TileX, g.player.TileY
 	mm, err := ui.NewMainMenu()
@@ -785,6 +794,26 @@ func (g *Game) updatePlaying() error {
 	// Monsters
 	for _, m := range g.Monsters {
 		m.Update(g.player, g.currentLevel)
+	}
+
+	// Monster projectiles
+	g.updateMonsterProjectiles()
+
+	// Boss arena activation: seal doors when player enters the boss room.
+	if g.CurrentBoss != nil && !g.CurrentBoss.IsActive && g.BossRoom != nil {
+		if g.BossRoom.Contains(g.player.TileX, g.player.TileY) {
+			g.activateBoss()
+			g.sealBossRoom()
+		}
+	}
+
+	// Boss health bar sync.
+	if g.CurrentBoss != nil && g.BossBar != nil && g.CurrentBoss.IsActive {
+		g.BossBar.CurrentHP = g.CurrentBoss.Monster.HP
+		g.BossBar.Visible = true
+		if g.CurrentBoss.Monster.IsDead {
+			g.onBossDefeated()
+		}
 	}
 
 	g.updateSpells()

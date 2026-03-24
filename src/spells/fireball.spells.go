@@ -53,10 +53,11 @@ type Fireball struct {
 	dirIndex   int
 	frame      int
 	tick       int
-	Impact     bool
-	impactTick int
-	ImpactImg  *ebiten.Image
-	Finished   bool
+	Impact      bool
+	impactTick  int
+	ImpactImg   *ebiten.Image
+	Finished    bool
+	MonsterCast bool // true if cast by a monster (hits player, not monsters)
 }
 
 func NewFireball(info SpellInfo, startX, startY, targetX, targetY float64, sprites [][]*ebiten.Image, impact *ebiten.Image) *Fireball {

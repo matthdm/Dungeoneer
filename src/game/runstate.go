@@ -30,6 +30,7 @@ type FloorContext struct {
 	Biome       Biome
 	Difficulty  float64 // 0.0–1.0
 	GenParams   levels.GenParams
+	BiomeConfig *BiomeConfig
 }
 
 // RunState tracks all state for a single dungeon run.
@@ -100,11 +101,12 @@ func (rs *RunState) BuildFloorContext(floorNum int) FloorContext {
 		flavor = "crypt"
 	}
 
-	return FloorContext{
+	ctx := FloorContext{
 		FloorNumber: floorNum,
 		TotalFloors: rs.TotalFloors,
 		Biome:       biome,
 		Difficulty:  difficulty,
+		BiomeConfig: BiomeConfigs[biome],
 		GenParams: levels.GenParams{
 			Seed:           rand.Int64(),
 			Width:          64,
@@ -126,6 +128,34 @@ func (rs *RunState) BuildFloorContext(floorNum int) FloorContext {
 			FloorFlavor:    flavor,
 		},
 	}
+
+	// Apply biome-specific generation overrides if defined.
+	if ctx.BiomeConfig != nil && ctx.BiomeConfig.GenOverrides != nil {
+		o := ctx.BiomeConfig.GenOverrides
+		if o.RoomCountMin != nil {
+			ctx.GenParams.RoomCountMin = *o.RoomCountMin
+		}
+		if o.RoomCountMax != nil {
+			ctx.GenParams.RoomCountMax = *o.RoomCountMax
+		}
+		if o.RoomWMin != nil {
+			ctx.GenParams.RoomWMin = *o.RoomWMin
+		}
+		if o.RoomWMax != nil {
+			ctx.GenParams.RoomWMax = *o.RoomWMax
+		}
+		if o.CorridorWidth != nil {
+			ctx.GenParams.CorridorWidth = *o.CorridorWidth
+		}
+		if o.DoorLockChance != nil {
+			ctx.GenParams.DoorLockChance = *o.DoorLockChance
+		}
+		if o.CoverageTarget != nil {
+			ctx.GenParams.CoverageTarget = *o.CoverageTarget
+		}
+	}
+
+	return ctx
 }
 
 // IsLastFloor returns true if the current floor is the final floor.

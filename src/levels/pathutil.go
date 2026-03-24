@@ -2,9 +2,9 @@ package levels
 
 type bfsCell struct{ x, y int }
 
-// bfsFarthest runs BFS from (fromX, fromY) and returns the walkable tile
-// farthest from the start, plus its BFS distance.
-func bfsFarthest(l *Level, fromX, fromY int) (bestX, bestY, dist int) {
+// bfsFarthest runs BFS from (fromX, fromY) using the given passability check
+// and returns the tile farthest from the start, plus its BFS distance.
+func bfsFarthest(l *Level, fromX, fromY int, passable func(x, y int) bool) (bestX, bestY, dist int) {
 	visited := make([][]int, l.H)
 	for y := range visited {
 		visited[y] = make([]int, l.W)
@@ -31,7 +31,7 @@ func bfsFarthest(l *Level, fromX, fromY int) (bestX, bestY, dist int) {
 			if nx < 0 || ny < 0 || nx >= l.W || ny >= l.H {
 				continue
 			}
-			if visited[ny][nx] >= 0 || !l.IsWalkable(nx, ny) {
+			if visited[ny][nx] >= 0 || !passable(nx, ny) {
 				continue
 			}
 			visited[ny][nx] = d + 1
@@ -41,9 +41,9 @@ func bfsFarthest(l *Level, fromX, fromY int) (bestX, bestY, dist int) {
 	return
 }
 
-// bfsDistMap runs BFS from (fromX, fromY) and returns the full distance map.
-// Unreachable or non-walkable tiles have value -1.
-func bfsDistMap(l *Level, fromX, fromY int) [][]int {
+// bfsDistMap runs BFS from (fromX, fromY) using the given passability check
+// and returns the full distance map. Unreachable tiles have value -1.
+func bfsDistMap(l *Level, fromX, fromY int, passable func(x, y int) bool) [][]int {
 	dist := make([][]int, l.H)
 	for y := range dist {
 		dist[y] = make([]int, l.W)
@@ -63,7 +63,7 @@ func bfsDistMap(l *Level, fromX, fromY int) [][]int {
 			if nx < 0 || ny < 0 || nx >= l.W || ny >= l.H {
 				continue
 			}
-			if dist[ny][nx] >= 0 || !l.IsWalkable(nx, ny) {
+			if dist[ny][nx] >= 0 || !passable(nx, ny) {
 				continue
 			}
 			dist[ny][nx] = d + 1
@@ -73,8 +73,8 @@ func bfsDistMap(l *Level, fromX, fromY int) [][]int {
 	return dist
 }
 
-// anyWalkable returns the first walkable tile found, scanning from the centre.
-func anyWalkable(l *Level) (int, int) {
+// anyPassable returns the first passable tile found, scanning from the centre.
+func anyPassable(l *Level, passable func(x, y int) bool) (int, int) {
 	cx, cy := l.W/2, l.H/2
 	for radius := 0; radius < l.W; radius++ {
 		for dy := -radius; dy <= radius; dy++ {
@@ -83,7 +83,7 @@ func anyWalkable(l *Level) (int, int) {
 					continue
 				}
 				x, y := cx+dx, cy+dy
-				if l.IsWalkable(x, y) {
+				if passable(x, y) {
 					return x, y
 				}
 			}
@@ -104,12 +104,22 @@ func anyWalkable(l *Level) (int, int) {
 //  Pass 2: BFS from spawn → score every reachable tile as
 //          bfsDist + euclidean(spawn, tile) and pick the highest.
 func FindSpawnAndExit(l *Level) (spawnX, spawnY, exitX, exitY int) {
-	sx, sy := anyWalkable(l)
+	// Use IsPassable so the BFS can path through closed/locked doors,
+	// placing the exit behind doors to force exploration.
+	passable := l.IsPassable
+	sx, sy := anyPassable(l, passable)
 	// Pass 1: establish the spawn at one extreme of the dungeon.
-	ax, ay, _ := bfsFarthest(l, sx, sy)
+	ax, ay, _ := bfsFarthest(l, sx, sy, passable)
+
+	// Ensure spawn lands on a truly walkable tile, not a door.
+	if !l.IsWalkable(ax, ay) {
+		if nx, ny, ok := nearestWalkable(l, ax, ay); ok {
+			ax, ay = nx, ny
+		}
+	}
 
 	// Pass 2: full distance map from spawn, pick exit via combined score.
-	distMap := bfsDistMap(l, ax, ay)
+	distMap := bfsDistMap(l, ax, ay, passable)
 
 	// Require the exit to be at least this many tiles from spawn (Euclidean).
 	// Prevents the exit from landing in a corridor that winds back near spawn.
@@ -123,6 +133,10 @@ func FindSpawnAndExit(l *Level) (spawnX, spawnY, exitX, exitY int) {
 				d := distMap[y][x]
 				if d < 0 {
 					continue // unreachable
+				}
+				// Only place spawn/exit on truly walkable tiles, not on doors.
+				if !l.IsWalkable(x, y) {
+					continue
 				}
 				dx, dy := x-ax, y-ay
 				euclid := dx*dx + dy*dy
@@ -151,12 +165,12 @@ func FindSpawnAndExit(l *Level) (spawnX, spawnY, exitX, exitY int) {
 // FindFarthestWalkable returns the walkable tile farthest from (fromX, fromY).
 // Kept for hub portal placement; prefer FindSpawnAndExit for dungeon floors.
 func FindFarthestWalkable(l *Level, fromX, fromY int) (int, int) {
-	x, y, _ := bfsFarthest(l, fromX, fromY)
+	x, y, _ := bfsFarthest(l, fromX, fromY, l.IsWalkable)
 	return x, y
 }
 
 // FindSpawnPoint returns a walkable tile near the centre of the level.
 // Prefer FindSpawnAndExit for dungeon floors.
 func FindSpawnPoint(l *Level) (int, int) {
-	return anyWalkable(l)
+	return anyPassable(l, l.IsWalkable)
 }

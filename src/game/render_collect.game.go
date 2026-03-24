@@ -218,8 +218,8 @@ func (g *Game) collectMonsterRenderables(scale, cx, cy float64) []Renderable {
 		if m.IsDead || m.TileX < 0 || m.TileY < 0 || m.TileX >= g.currentLevel.W || m.TileY >= g.currentLevel.H {
 			continue
 		}
-		if !g.isTileVisible(m.TileX, m.TileY) && !g.SeenTiles[m.TileY][m.TileX] {
-			continue
+		if !g.isTileVisible(m.TileX, m.TileY) {
+			continue // monsters only render when actively in FOV, not fog-of-war
 		}
 		x, y := g.cartesianToIso(m.InterpX, m.InterpY)
 		op := &ebiten.DrawImageOptions{}

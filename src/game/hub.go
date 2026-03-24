@@ -4,6 +4,7 @@ import (
 	"dungeoneer/constants"
 	"dungeoneer/entities"
 	"dungeoneer/fov"
+	"dungeoneer/inventory"
 	"dungeoneer/leveleditor"
 	"dungeoneer/levels"
 	"dungeoneer/spells"
@@ -70,8 +71,13 @@ func (g *Game) loadHub() {
 	g.Monsters = []*entities.Monster{}
 	g.ItemDrops = []*entities.ItemDrop{}
 	g.ActiveSpells = []spells.Spell{}
+	g.MonsterProjectiles = nil
 	g.ExitEntity = nil
 	g.RunState = nil
+	g.FloorCtx = nil
+	g.CurrentBoss = nil
+	g.BossBar = nil
+	g.BossRoom = nil
 	g.IsInHub = true
 	g.hubPortalX = portalX
 	g.hubPortalY = portalY
@@ -154,11 +160,37 @@ func (g *Game) returnToHub() {
 }
 
 // resetPlayerForHub restores the player to a fresh state for the hub.
+// Per design: full death reset — player loses all items, equipment, gold,
+// stats, and levels. Only meta-progression (Remnants) survives.
 func (g *Game) resetPlayerForHub() {
 	if g.player == nil {
 		return
 	}
 	g.player.IsDead = false
+
+	// Reset level and progression.
+	g.player.Level = 1
+	g.player.EXP = 0
+	g.player.UnspentPoints = 0
+	g.player.Gold = 0
+
+	// Reset stats to defaults.
+	g.player.Stats = entities.BaseStats{
+		Strength: 1, Dexterity: 1, Vitality: 1, Intelligence: 1, Luck: 1,
+	}
+	g.player.TempModifiers = entities.StatModifiers{}
+
+	// Clear inventory and equipment.
+	g.player.Inventory = inventory.New(inventory.Width, inventory.Height)
+	for slot := range g.player.Equipment {
+		g.player.Equipment[slot] = nil
+	}
+
+	// Clear status effects.
+	g.player.Effects = entities.EffectHolder{}
+
+	// Recalculate derived stats (HP, mana, etc.) from base values.
+	g.player.RecalculateStats()
 	g.player.HP = g.player.MaxHP
 	g.player.Mana = g.player.MaxMana
 }
@@ -177,6 +209,8 @@ func (g *Game) StartRun() {
 func (g *Game) startFloor(floorNum int) {
 	ctx := g.RunState.BuildFloorContext(floorNum)
 	g.RunState.CurrentFloor = floorNum
+	g.FloorCtx = &ctx
+	g.MonsterProjectiles = nil
 
 	// Generate the level
 	lvl := levels.Generate64x64(ctx.GenParams)
@@ -204,8 +238,16 @@ func (g *Game) startFloor(floorNum int) {
 	// Spawn entities from level data
 	g.spawnEntitiesFromLevel()
 
-	// Spawn additional scaled monsters for the floor
-	g.spawnFloorMonsters(ctx)
+	// Boss floor: spawn boss in the largest room instead of a normal exit.
+	g.CurrentBoss = nil
+	g.BossBar = nil
+	g.BossRoom = nil
+	if g.RunState.IsLastFloor() && len(lvl.Rooms) > 0 {
+		g.setupBossFloor(lvl)
+	}
+
+	// Spawn monsters using encounter template system (falls back to legacy if needed)
+	g.spawnEncounterMonsters(ctx)
 
 	// Reset camera and FOV
 	snapIsoX, snapIsoY := g.cartesianToIso(float64(spawnX), float64(spawnY))

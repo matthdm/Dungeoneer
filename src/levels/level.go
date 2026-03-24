@@ -19,14 +19,59 @@ type PlacedEntity struct {
 	SpriteID string
 }
 
+// RoomSize classifies a room by area.
+type RoomSize string
+
+const (
+	RoomSmall  RoomSize = "small"  // area < 49
+	RoomMedium RoomSize = "medium" // area 49–99
+	RoomLarge  RoomSize = "large"  // area >= 100
+)
+
+// Room holds metadata for a single room in a generated level.
+type Room struct {
+	X, Y, W, H       int
+	CenterX, CenterY int
+	Size              RoomSize
+	Index             int
+}
+
+// Contains reports whether tile (tx, ty) falls inside the room.
+func (r *Room) Contains(tx, ty int) bool {
+	return tx >= r.X && tx < r.X+r.W && ty >= r.Y && ty < r.Y+r.H
+}
+
+// ClassifyRoomSize returns a size category based on room area.
+func ClassifyRoomSize(w, h int) RoomSize {
+	area := w * h
+	if area < 49 {
+		return RoomSmall
+	}
+	if area < 100 {
+		return RoomMedium
+	}
+	return RoomLarge
+}
+
 // Level represents a Game level.
 type Level struct {
 	W, H int
 
-	Tiles    [][]*tiles.Tile // (Y,X) array of tiles
-	TileSize int
-	Entities []PlacedEntity
+	Tiles       [][]*tiles.Tile // (Y,X) array of tiles
+	TileSize    int
+	Entities    []PlacedEntity
 	DoorDensity DoorDensityConfig
+	Rooms       []Room
+}
+
+// RoomAt returns the room containing tile (x, y), or nil if not in any room.
+func (l *Level) RoomAt(x, y int) *Room {
+	for i := range l.Rooms {
+		if l.Rooms[i].Contains(x, y) {
+			return &l.Rooms[i]
+		}
+	}
+	return nil
 }
 
 // NewEmptyLevel creates a Level filled entirely with non-walkable tiles.
@@ -217,6 +262,23 @@ func (l Level) IsWalkable(x, y int) bool {
 	// Closed/locked doors block movement even if tile is walkable
 	if t.HasTag(tiles.TagDoor) && (t.DoorState == 2 || t.DoorState == 3) {
 		return false
+	}
+	return t.IsWalkable
+}
+
+// IsPassable returns true if a tile can be traversed, treating closed and
+// locked doors as passable. Used by spawn/exit placement so the BFS can
+// path through doors and place objectives behind them.
+func (l Level) IsPassable(x, y int) bool {
+	if x < 0 || y < 0 || x >= l.W || y >= l.H {
+		return false
+	}
+	t := l.Tiles[y][x]
+	if t == nil {
+		return false
+	}
+	if t.HasTag(tiles.TagDoor) {
+		return true // doors are passable for placement purposes
 	}
 	return t.IsWalkable
 }

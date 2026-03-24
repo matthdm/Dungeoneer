@@ -82,6 +82,8 @@ type Player struct {
 
 	LastMoveDirX float64
 	LastMoveDirY float64
+
+	Effects EffectHolder // active buffs/debuffs
 }
 
 func NewPlayer(ss *sprites.SpriteSheet) *Player {
@@ -220,6 +222,11 @@ func (p *Player) Update(level *levels.Level, dt float64) {
 	p.TickCount++
 	p.AttackTick++
 	p.BobOffset = math.Sin(float64(p.TickCount)*bobFreq) * bobAmp
+
+	// Tick status effects.
+	p.Effects.UpdateEffects(dt, func(dmg int) {
+		p.TakeDamage(dmg)
+	})
 
 	p.updateGrapple(level, dt)
 	if p.Caster != nil {
