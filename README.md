@@ -2,15 +2,15 @@
 
 **Dungeoneer** is a 2D isometric dark fantasy game built using Go and the Ebiten engine. Set in a world of crumbling castles, haunted forests, and cursed ruins, the player must navigate procedurally generated dungeons filled with monsters, secrets, and mystery.
 
-This project is a technical and artistic love letter to games like *Diablo* and *Stardew Valleys* dungeon sections  with a focus on real-time combat, tile-based navigation, and rich pixel art.
+This project is a technical and artistic love letter to games like *Diablo* and *Stardew Valley's* dungeon sections  with a focus on real-time combat, tile-based navigation, and rich pixel art.
 
 ---
 
-##  Developer Notes: Phase 1 Nearing Completion
+##  Developer Notes
 
-**Status:** Phase 1 is 95%+ complete with no active blockers. Core loop, combat, and FOV systems are production-ready.
+**Status:** Phase 1 complete. Phase 2 (Enemy & Combat Depth) complete. Next up: Phase 3 (NPCs & Dialogue).
 
-_Remaining Phase 1 Tasks:_
+_Remaining polish from earlier phases:_
 
 - [ ] Complete full run state serialization (Remnants save working, full state TODO)
 - [ ] Implement load game menu (cosmetic)
@@ -25,7 +25,7 @@ _Remaining Phase 1 Tasks:_
 |------------------------------------------------------|----------|
 | Isometric tile-based rendering engine                | ✅       |
 | Smooth tile-based player movement (mouse + keyboard) | ✅       |
-| Monster pathfinding & AI                             | ✅       |
+| Monster pathfinding & AI (6 behaviors)               | ✅       |
 | Real-time combat system                              | ✅       |
 | Health bars, damage numbers, and hit markers         | ✅       |
 | Monster death animations                             | ✅       |
@@ -48,6 +48,17 @@ _Remaining Phase 1 Tasks:_
 | Game state handling (Game Over, Restart)             | ✅       |
 | Inventory system                                     | ✅       |
 | 6 spell types (Fireball, Chaos, Lightning ×2, Fractals ×2) | ✅ |
+| Biome-aware floor generation (4 biomes)              | ✅       |
+| Room metadata and encounter templates (8 templates)  | ✅       |
+| Enemy variety: Roaming, Ambush, Patrol, Ranged, Swarm, Caster | ✅ |
+| Monster projectile system                            | ✅       |
+| Caster enemies (cast fireballs at player)            | ✅       |
+| Status effects (Poison, Burn, Slow, Shield, Weaken, Haste) | ✅ |
+| Biome-aware loot tables with floor scaling           | ✅       |
+| Boss entity with multi-phase combat                  | ✅       |
+| Boss health bar HUD                                  | ✅       |
+| Boss arena with sealed room mechanics                | ✅       |
+| Full death reset (items, equipment, stats, gold)     | ✅       |
 
 ---
 
@@ -57,6 +68,11 @@ _Remaining Phase 1 Tasks:_
 - [x] **Bug #2**: Crash when player character dies without proper state handling. ***(Fixed)***
 - [ ] **Bug #3**: Corner ray leaks light in some rare edge cases. ***(In Progress)*** — Needs epsilon tolerance refinement in ray-wall intersection.
 - [x] **Bug #4**: UI input not responsive after Game Over screen. ***(Fixed)***
+- [x] **Bug #5**: Monsters visible through walls on previously-seen tiles. ***(Fixed)*** — Render only when in active FOV.
+- [x] **Bug #6**: Boss could spawn inside a wall. ***(Fixed)*** — BFS walkability check for boss placement.
+- [x] **Bug #7**: Player items persisted after run death/victory. ***(Fixed)*** — Full reset in resetPlayerForHub.
+- [x] **Bug #8**: Monster AI followed breadcrumbs to player's old position. ***(Fixed)*** — Path recalc on player movement.
+- [x] **Bug #9**: Exit always reachable without opening doors. ***(Fixed)*** — BFS now uses IsPassable to cross doors.
 - [ ] [Performance] Corner-casting rays may impact performance with 500+ tiles.
 
 ---
@@ -99,10 +115,7 @@ _Remaining Phase 1 Tasks:_
 | **ESC**              | Open pause menu                                                        |
 | **F1**               | Open controls menu                                                     |
 | **F10**              | Toggle HUD visibility                                                 |
-| **Q**                | Generate random forest level *(debug)*                                |
-| **R**                | Generate random dungeon level *(debug)*                               |
-| **T**                | Load developer test level *(debug)*                                   |
-| **Y**                | Toggle full-bright rendering (disables FOV) *(debug)*                 |
+| **Q**                | Unlock Door *(debug)*                                |               |
 
 ---
 

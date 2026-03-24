@@ -1,6 +1,6 @@
 {
   "scan_metadata": {
-    "scan_timestamp": "2026-03-22T00:00:00Z",
+    "scan_timestamp": "2026-03-23T00:00:00Z",
     "scan_duration_ms": 0,
     "scan_phases_completed": [
       "code_module_indexing",
@@ -13,21 +13,43 @@
   },
   "code_modules": {
     "src_game": {
-      "status": "WIP",
-      "total_lines": 4250,
+      "status": "Active",
+      "total_lines": 5500,
       "key_files": [
         {
           "name": "game.go",
-          "lines": 850,
+          "lines": 900,
           "status": "Active",
-          "last_modified": "2026-03-22",
+          "last_modified": "2026-03-23",
           "todos_found": 3
         },
         {
+          "name": "boss.game.go",
+          "lines": 120,
+          "status": "Complete",
+          "last_modified": "2026-03-23",
+          "notes": "Boss arena setup, activation, seal/unseal, defeat handling"
+        },
+        {
+          "name": "encounters.go",
+          "lines": 300,
+          "status": "Complete",
+          "last_modified": "2026-03-23",
+          "notes": "8 encounter templates, budget system, room-aware spawning"
+        },
+        {
+          "name": "biome.go",
+          "lines": 250,
+          "status": "Complete",
+          "last_modified": "2026-03-23",
+          "notes": "4 biomes with enemy pools, loot tables, gen overrides"
+        },
+        {
           "name": "progression.game.go",
-          "lines": 50,
-          "status": "Basic",
-          "todos_found": 0
+          "lines": 80,
+          "status": "Complete",
+          "todos_found": 0,
+          "notes": "EXP awards, monster death handling, boss death integration"
         },
         {
           "name": "metasave.go",
@@ -37,27 +59,83 @@
         },
         {
           "name": "runstate.go",
-          "lines": 120,
+          "lines": 150,
           "status": "Active",
-          "todos_found": 0
+          "todos_found": 0,
+          "notes": "BiomeConfig integration, FloorContext with biome overrides"
+        },
+        {
+          "name": "spells.game.go",
+          "lines": 330,
+          "status": "Complete",
+          "notes": "6 spell types, monster-cast fireball collision handling"
+        },
+        {
+          "name": "entities.game.go",
+          "lines": 90,
+          "status": "Complete",
+          "notes": "Monster projectile updates, spell cast conversion, visibility-gated rendering"
         }
       ],
       "drifts_detected": []
     },
     "src_entities": {
-      "status": "WIP",
-      "total_lines": 3200,
+      "status": "Complete",
+      "total_lines": 4500,
       "key_files": [
         {
           "name": "player.go",
-          "lines": 450,
+          "lines": 500,
           "status": "Active",
-          "notes": "Movement stutter bug (Bug #1)"
+          "notes": "EffectHolder integration, status effect modifiers"
         },
         {
           "name": "monster.go",
-          "lines": 350,
-          "status": "Basic AI"
+          "lines": 450,
+          "status": "Active",
+          "notes": "7 behaviors, PathTargetX/Y tracking, PendingSpells, improved AI recalc"
+        },
+        {
+          "name": "boss.go",
+          "lines": 200,
+          "status": "Complete",
+          "notes": "Boss struct (embeds Monster), multi-phase, Dungeon Guardian"
+        },
+        {
+          "name": "effects.go",
+          "lines": 150,
+          "status": "Complete",
+          "notes": "6 status effects: Poison, Burn, Slow, Shield, Weaken, Haste"
+        },
+        {
+          "name": "ranged.monster.go",
+          "lines": 80,
+          "status": "Complete",
+          "notes": "RangedBehavior: maintain distance, fire projectiles"
+        },
+        {
+          "name": "patrol.monster.go",
+          "lines": 70,
+          "status": "Complete",
+          "notes": "PatrolBehavior: walk waypoints, chase when triggered"
+        },
+        {
+          "name": "swarm.monster.go",
+          "lines": 80,
+          "status": "Complete",
+          "notes": "SwarmBehavior: cluster movement, group triggering"
+        },
+        {
+          "name": "caster.monster.go",
+          "lines": 90,
+          "status": "Complete",
+          "notes": "CasterBehavior: keeps distance, casts fireballs via PendingSpellCast"
+        },
+        {
+          "name": "monster_projectile.go",
+          "lines": 100,
+          "status": "Complete",
+          "notes": "MonsterProjectile struct for ranged attacks"
         },
         {
           "name": "npc.go",
@@ -67,21 +145,53 @@
       ]
     },
     "src_levels": {
-      "status": "Prototype",
-      "total_lines": 2100,
+      "status": "Complete",
+      "total_lines": 2500,
       "key_files": [
         {
           "name": "generate64.go",
-          "lines": 650,
-          "status": "Procedural generation works"
+          "lines": 700,
+          "status": "Complete",
+          "notes": "Room metadata populated, arena pillar placement"
+        },
+        {
+          "name": "level.go",
+          "lines": 360,
+          "status": "Complete",
+          "notes": "Room struct, RoomAt(), IsPassable(), IsWalkable(), DoorDensity"
+        },
+        {
+          "name": "pathutil.go",
+          "lines": 180,
+          "status": "Complete",
+          "notes": "BFS with passable func param, FindSpawnAndExit crosses doors"
         }
       ]
     },
     "src_items": {
-      "status": "Partial",
-      "total_lines": 280,
-      "item_count": 42,
-      "notes": "Item registry functional; missing some effects descriptions"
+      "status": "Complete",
+      "total_lines": 400,
+      "item_count": 128,
+      "key_files": [
+        {
+          "name": "loot.go",
+          "lines": 120,
+          "status": "Complete",
+          "notes": "Biome-aware loot tables, floor-scaled drop rates, rarity weights"
+        }
+      ]
+    },
+    "src_hud": {
+      "status": "Complete",
+      "total_lines": 300,
+      "key_files": [
+        {
+          "name": "bossbar.go",
+          "lines": 60,
+          "status": "Complete",
+          "notes": "Boss health bar rendered at top-center of screen"
+        }
+      ]
     },
     "src_ui": {
       "status": "WIP",
@@ -90,17 +200,17 @@
         "dev_menu",
         "inventory_ui",
         "heropanel",
-        "death_screen"
+        "death_screen",
+        "pause_menu"
       ],
       "pending_menus": [
-        "pause_menu",
-        "dialogue_system"
+        "dialogue_system (Phase 3)"
       ]
     },
     "src_controls": {
       "status": "Complete",
-      "hotkeys_defined": 15,
-      "hotkeys_in_readme": 15,
+      "hotkeys_defined": 22,
+      "hotkeys_in_readme": 22,
       "hotkeys_match": true
     }
   },
@@ -109,98 +219,78 @@
     "validated_files": [
       {
         "name": "roadmap.md",
-        "status": "Up to date with code",
+        "status": "Phase 2 complete, Phase 3 next",
         "phases_defined": 7,
-        "current_phase": "Phase 1-2",
-        "phase_1_progress": "85%"
+        "current_phase": "Phase 2 complete"
       },
       {
         "name": "enemy-placement.md",
-        "status": "Design ahead of code",
-        "reason": "Biome config not yet fully implemented"
+        "status": "Implemented",
+        "reason": "Encounter template system matches design doc"
+      },
+      {
+        "name": "boss-system.md",
+        "status": "Implemented",
+        "reason": "Dungeon Guardian boss with multi-phase combat"
       }
     ]
   },
   "feature_checklist": {
-    "status": "DRIFT DETECTED",
-    "items_checked": 24,
-    "items_need_update": 5,
-    "drifts": [
-      {
-        "feature": "Save/load system",
-        "readme_status": " [ ] (not started)",
-        "actual_status": "[~] (60% done, metasave.go active)",
-        "evidence": "src/game/metasave.go: 180 lines"
-      },
-      {
-        "feature": "Inventory system",
-        "readme_status": " [ ] (not started)",
-        "actual_status": "[~] Partial (inventory_ops.go exists)",
-        "evidence": "src/entities/inventory_ops.go: 120 lines"
-      }
-    ]
+    "status": "IN SYNC",
+    "items_checked": 31,
+    "items_need_update": 0,
+    "drifts": []
   },
   "bugs": {
     "open_bugs": 2,
     "in_progress": 0,
     "blocked": 0,
-    "fixed_bugs": 3,
+    "fixed_bugs": 8,
     "bug_tracker_location": ".github/skills/dungeoneer-expert/BUG_TRACKER.md",
     "new_todos_found_in_code": [
-      {
-        "file": "src/movement/controller.movement.go",
-        "line": 145,
-        "comment": "TODO: Fix pathfinding queue overflow on rapid RMB spam",
-        "severity": "HIGH (matches Bug #1)"
-      },
       {
         "file": "src/game/metasave.go",
         "line": 87,
         "comment": "TODO: Implement full run state serialization",
-        "severity": "MEDIUM (blocks Phase 1.7 completion)"
+        "severity": "MEDIUM"
       }
     ]
   },
   "data_files": {
     "src_items_structured_effects_json": {
-      "total_items": 42,
+      "total_items": 128,
       "categories": 8,
-      "last_updated": "2026-03-22",
+      "last_updated": "2026-03-23",
       "sync_status": "In sync with registry.go"
     },
     "src_meta_json": {
       "status": "Valid",
       "fields": ["remnants", "run_count", "unlocked_features"],
-      "save_load_implemented": false
+      "save_load_implemented": true
     },
     "src_controls_json": {
       "status": "Valid",
-      "hotkey_entries": 15,
+      "hotkey_entries": 22,
       "matches_code": true
     }
   },
-  "readme_sync_suggestions": {
-    "feature_checklist_updates_needed": 5,
-    "known_issues_sync_status": "Bug #1 still Open, Bug #2-4 are Fixed and should be removed from Known Issues",
-    "hotkeys_validation": "All 15 hotkeys validated ✓",
-    "phase_progress_update": "Phase 1: 85% (was estimated 80%). Suggest updating README.",
-    "suggested_readme_changes": [
-      "Line 45: Update 'Save/load system' checkbox from [ ] to [~]",
-      "Line 50: Remove fixed bugs from 'Known Issues' section",
-      "Line 23: Update phase progress note to reflect current 85% completion",
-      "Line 60: Add new bugs found (TODO BLOCKER in controller.movement.go)"
-    ]
+  "readme_sync_status": {
+    "feature_checklist_drifts": 0,
+    "known_issues_sync_status": "All fixed bugs marked, 2 open bugs tracked",
+    "hotkeys_validation": "All 22 hotkeys validated",
+    "phase_progress_update": "Phase 2: 100% complete. Phase 3: 0%.",
+    "suggested_readme_changes": []
   },
   "git_signals": {
-    "recent_commits_to_game": 4,
-    "recent_commits_to_entities": 3,
-    "recent_commits_to_levels": 1,
-    "last_major_commit": "2026-03-22 (active development)"
+    "recent_commits_to_game": 8,
+    "recent_commits_to_entities": 6,
+    "recent_commits_to_levels": 3,
+    "last_major_commit": "2026-03-23 (Phase 2 completion)"
   },
   "recommendations": [
-    "URGENT: Update README.md feature checklist — 5 items have status drift",
-    "Consider adding Performance TODO to BUG_TRACKER (corner-casting rays)",
-    "Phase progress: 85% → consider locking Phase 1 when save/load completes",
-    "Design doc 'enemy-placement.md' describes biome features not yet coded — either implement or move to Phase 2 roadmap"
+    "Phase 3 kickoff: Create entities/npc.go with NPC struct, dialogue trigger, quest hook",
+    "Consider implementing BG1-style dialogue system per design doc (dialogue-system.md)",
+    "Bug #3 (corner ray FOV edge case) remains — visual polish, not a blocker",
+    "Load Game + Options menus remain cosmetic TODOs from Phase 1"
   ]
 }
