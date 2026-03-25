@@ -348,6 +348,12 @@ func (g *Game) handleInputPlaying() {
 		g.PauseMenu.Update()
 		return
 	}
+	// Dialogue panel blocks all other input when active
+	if g.DialoguePanel != nil && g.DialoguePanel.Active {
+		g.DialoguePanel.Update()
+		return
+	}
+
 	if g.InventoryScreen != nil && g.InventoryScreen.Active {
 		g.InventoryScreen.Update(g.player, g.ShowHint, func(it *items.Item) {
 			g.spawnItemDrop(it, g.player.TileX, g.player.TileY)
@@ -357,6 +363,14 @@ func (g *Game) handleInputPlaying() {
 	if g.isActionJustPressed(controls.ActionInventory) {
 		g.InventoryScreen.Open()
 		return
+	}
+
+	// NPC interaction (E key) — check before other E-key handlers
+	if g.isActionJustPressed(controls.ActionInteract) {
+		if npc := g.findNearbyNPC(); npc != nil {
+			g.openDialogue(npc)
+			return
+		}
 	}
 
 	g.handleZoom()

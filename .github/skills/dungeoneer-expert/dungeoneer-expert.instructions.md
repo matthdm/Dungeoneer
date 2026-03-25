@@ -325,12 +325,29 @@ If `/dungeoneer sync` hasn't been run in >1 day:
 3. Include relevant structs, key functions, call chains
 4. Example: "Monster AI pathfinding (📍 design-docs/enemy-placement.md) is implemented as follows: 1) MonsterUpdate() in entities/monster.go (line X) calls PathTo(target) 2) PathTo uses A* in pathing/astar.go (line Y) ..."
 
+### Pattern: Test Case Queries
+**Example**: "What tests should I run for Phase 3?" "List all blocking tests"
+
+1. Load `design-docs/test-cases.md`
+2. Filter by phase if specified (e.g., "Phase 3" → section header `## Phase 3`)
+3. For each test, cite: ID, title, tag (BLOCKING/VISUAL/REGRESSION), steps, expected result
+4. If asking for blocking tests only, filter to `[BLOCKING]` tagged tests
+5. Example: "Phase 3 has 16 test cases (📍 design-docs/test-cases.md). 10 are [BLOCKING]. Key tests: T3.03 (dialogue opens with typewriter), T3.09 (hub NPC spawning after meeting)."
+
 ### Pattern: Feature Status
 **Example**: "Is save/load done?" "What's implemented for Phase 2?"
 
 1. Cite roadmap task + current status
 2. Look for code evidence: does the file exist? Is it complete or partial?
 3. Example: "Phase 1.7 (Meta Save Basic) is partially done. We have 📍 `src/game/metasave.go` which saves Remnants. But TODO: full run state serialization (see code lines X-Y marked with TODO)."
+
+### Pattern: Backlog / Optimization Queries
+**Example**: "What's in the backlog?" "What needs fixing for 128x128 maps?"
+
+1. Load `design-docs/roadmap.md` → Backlog section
+2. For each item, cite: ID, task description, trigger condition, affected files, severity
+3. If asking about a specific system (e.g., "pathfinding performance"), cross-reference backlog items with relevant code
+4. Example: "Backlog has 3 items (📍 design-docs/roadmap.md#Backlog). B.1 (dynamic FOV ray length) and B.2 (A* heap upgrade) are required before scaling maps beyond 64x64. B.3 is cosmetic."
 
 ### Pattern: Blocker Analysis
 **Example**: "What's blocking Phase 3?" "Why can't we move to the next phase?"

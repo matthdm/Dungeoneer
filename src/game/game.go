@@ -3,6 +3,7 @@ package game
 import (
 	"dungeoneer/constants"
 	"dungeoneer/controls"
+	"dungeoneer/dialogue"
 	"dungeoneer/entities"
 	"dungeoneer/fov"
 	"dungeoneer/hud"
@@ -121,6 +122,10 @@ type Game struct {
 	CurrentBoss        *entities.Boss
 	BossBar            *hud.BossHealthBar
 	BossRoom           *levels.Room // arena room on boss floor
+
+	// Phase 3
+	NPCs          []*entities.NPC
+	DialoguePanel *ui.DialoguePanel
 }
 
 // editorLayerChanged updates the game when the level editor switches layers.
@@ -172,6 +177,9 @@ func NewGame() (*Game, error) {
 		return nil, err
 	}
 
+	// Load dialogue trees from JSON files (non-fatal if directory missing).
+	_ = dialogue.LoadAll("dialogues")
+
 	g := &Game{
 		currentWorld:    world,
 		currentLevel:    l,
@@ -187,6 +195,7 @@ func NewGame() (*Game, error) {
 		FullBright:      true,
 		player:          entities.NewPlayer(ss),
 		Monsters:        []*entities.Monster{},
+		NPCs:            []*entities.NPC{},
 		fireballSprites: fbSprites,
 		ActiveSpells:    []spells.Spell{},
 		RaycastWalls:    fov.LevelToWalls(l),
@@ -799,6 +808,13 @@ func (g *Game) updatePlaying() error {
 	// Monster projectiles
 	g.updateMonsterProjectiles()
 
+	// NPCs
+	if g.player != nil {
+		for _, npc := range g.NPCs {
+			npc.Update(g.player.TileX, g.player.TileY, g.DeltaTime)
+		}
+	}
+
 	// Boss arena activation: seal doors when player enters the boss room.
 	if g.CurrentBoss != nil && !g.CurrentBoss.IsActive && g.BossRoom != nil {
 		if g.BossRoom.Contains(g.player.TileX, g.player.TileY) {
@@ -827,6 +843,9 @@ func (g *Game) updatePlaying() error {
 	if g.ControlsMenu != nil && g.ControlsMenu.IsVisible() {
 		g.ControlsMenu.Update()
 	}
+
+	// NPC interaction hints
+	g.updateNPCHints()
 
 	// Exit entity interaction (run loop)
 	if g.ExitEntity != nil && g.RunState != nil && g.RunState.Active {
@@ -935,6 +954,9 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	}
 	if g.PauseMenu != nil && g.PauseMenu.ControlsMenu != nil {
 		g.PauseMenu.ControlsMenu.Resize(g.w, g.h)
+	}
+	if g.DialoguePanel != nil {
+		g.DialoguePanel.Resize(g.w, g.h)
 	}
 
 	if g.editor == nil {

@@ -28,17 +28,84 @@ const (
 	RoomLarge  RoomSize = "large"  // area >= 100
 )
 
+// RoomTag represents a semantic role or modifier assigned to a room.
+type RoomTag string
+
+const (
+	// Primary roles (mutually exclusive).
+	TagSpawn      RoomTag = "spawn"
+	TagExit       RoomTag = "exit"
+	TagBossArena  RoomTag = "boss_arena"
+	TagSanctuary  RoomTag = "sanctuary"
+	TagTreasure   RoomTag = "treasure"
+	TagGuardPost  RoomTag = "guard_post"
+	TagBarracks   RoomTag = "barracks"
+	TagAmbush     RoomTag = "ambush"
+	TagCrossroads RoomTag = "crossroads"
+	TagDeadEnd    RoomTag = "dead_end"
+	TagCommon     RoomTag = "common"
+
+	// Modifier tags (stackable).
+	TagDecorated RoomTag = "decorated"
+	TagLoot      RoomTag = "loot"
+	TagCleared   RoomTag = "cleared"
+	TagDark      RoomTag = "dark"
+	TagOptional  RoomTag = "optional"
+)
+
 // Room holds metadata for a single room in a generated level.
 type Room struct {
 	X, Y, W, H       int
 	CenterX, CenterY int
 	Size              RoomSize
 	Index             int
+	Tags              []RoomTag
 }
 
 // Contains reports whether tile (tx, ty) falls inside the room.
 func (r *Room) Contains(tx, ty int) bool {
 	return tx >= r.X && tx < r.X+r.W && ty >= r.Y && ty < r.Y+r.H
+}
+
+// HasTag returns true if the room has the given tag.
+func (r *Room) HasTag(tag RoomTag) bool {
+	for _, t := range r.Tags {
+		if t == tag {
+			return true
+		}
+	}
+	return false
+}
+
+// AddTag appends a tag if not already present.
+func (r *Room) AddTag(tag RoomTag) {
+	if !r.HasTag(tag) {
+		r.Tags = append(r.Tags, tag)
+	}
+}
+
+// PrimaryTag returns the first non-modifier tag, or TagCommon if none found.
+func (r *Room) PrimaryTag() RoomTag {
+	for _, t := range r.Tags {
+		switch t {
+		case TagDecorated, TagLoot, TagCleared, TagDark, TagOptional:
+			continue
+		default:
+			return t
+		}
+	}
+	return TagCommon
+}
+
+// RoomsByTag returns pointers to all rooms with the given tag.
+func RoomsByTag(rooms []Room, tag RoomTag) []*Room {
+	var out []*Room
+	for i := range rooms {
+		if rooms[i].HasTag(tag) {
+			out = append(out, &rooms[i])
+		}
+	}
+	return out
 }
 
 // ClassifyRoomSize returns a size category based on room area.

@@ -78,6 +78,7 @@ func (g *Game) loadHub() {
 	g.CurrentBoss = nil
 	g.BossBar = nil
 	g.BossRoom = nil
+	g.NPCs = []*entities.NPC{}
 	g.IsInHub = true
 	g.hubPortalX = portalX
 	g.hubPortalY = portalY
@@ -88,6 +89,7 @@ func (g *Game) loadHub() {
 	g.cachedRays = nil
 	g.RaycastWalls = fov.LevelToWalls(g.currentLevel)
 	fov.InvalidateCache()
+	g.spawnHubNPCs()
 	g.State = StatePlaying
 }
 
@@ -242,12 +244,20 @@ func (g *Game) startFloor(floorNum int) {
 	g.CurrentBoss = nil
 	g.BossBar = nil
 	g.BossRoom = nil
-	if g.RunState.IsLastFloor() && len(lvl.Rooms) > 0 {
+	isBossFloor := g.RunState.IsLastFloor() && len(lvl.Rooms) > 0
+	if isBossFloor {
 		g.setupBossFloor(lvl)
 	}
 
+	// Tag rooms for semantic placement (must run after boss setup).
+	levels.TagRooms(lvl, spawnX, spawnY, exitX, exitY, isBossFloor)
+
 	// Spawn monsters using encounter template system (falls back to legacy if needed)
 	g.spawnEncounterMonsters(ctx)
+
+	// Spawn minor NPCs on this floor
+	g.NPCs = []*entities.NPC{}
+	g.spawnFloorNPCs(ctx)
 
 	// Reset camera and FOV
 	snapIsoX, snapIsoY := g.cartesianToIso(float64(spawnX), float64(spawnY))

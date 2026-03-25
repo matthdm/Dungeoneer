@@ -43,6 +43,7 @@ type RunState struct {
 	FloorsCleared int
 	RemnantEarned int
 	StartTime     time.Time
+	QuestFlags    map[string]int // per-run NPC/quest state; resets each run
 }
 
 // DefaultRunFloors is the starting number of floors for a new run.
@@ -52,11 +53,12 @@ const DefaultRunFloors = 3
 func NewRunState(totalFloors int) *RunState {
 	biomes := assignBiomes(totalFloors)
 	return &RunState{
-		Active:      true,
+		Active:       true,
 		CurrentFloor: 1,
-		TotalFloors: totalFloors,
-		Biomes:      biomes,
-		StartTime:   time.Now(),
+		TotalFloors:  totalFloors,
+		Biomes:       biomes,
+		StartTime:    time.Now(),
+		QuestFlags:   make(map[string]int),
 	}
 }
 

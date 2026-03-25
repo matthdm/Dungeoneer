@@ -222,6 +222,9 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 	if g.InventoryScreen != nil && g.InventoryScreen.Active {
 		g.InventoryScreen.Draw(screen, g.player)
 	}
+	if g.DialoguePanel != nil && g.DialoguePanel.Active {
+		g.DialoguePanel.Draw(screen)
+	}
 	if g.DevMenu != nil {
 		g.DevMenu.Draw(screen)
 	}

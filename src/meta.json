@@ -1,6 +1,26 @@
 {
-  "remnants": 756,
-  "run_count": 36,
+  "remnants": 992,
+  "run_count": 42,
   "best_floor": 3,
-  "total_kills": 32
+  "total_kills": 78,
+  "npc_meta": {
+    "forgotten_soldier": {
+      "met": true,
+      "defeat_count": 0,
+      "highest_phase": 0,
+      "total_trust": 0
+    },
+    "hollow_monk": {
+      "met": true,
+      "defeat_count": 0,
+      "highest_phase": 0,
+      "total_trust": 0
+    },
+    "scavenger": {
+      "met": true,
+      "defeat_count": 0,
+      "highest_phase": 0,
+      "total_trust": 0
+    }
+  }
 }

@@ -269,6 +269,9 @@ func (g *Game) spawnEncounterMonsters(ctx FloorContext) {
 		if playerRoom != nil && room.Index == playerRoom.Index {
 			continue // don't populate spawn room
 		}
+		if room.HasTag(levels.TagCleared) {
+			continue // sanctuary / NPC rooms are monster-free
+		}
 
 		eligible := eligibleTemplates(ctx.FloorNumber, room.Size)
 		tmpl := pickTemplate(eligible)

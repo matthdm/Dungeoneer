@@ -102,6 +102,18 @@ func TryStack(inv *Inventory, it items.Item) bool {
 	return false
 }
 
+// HasItem returns true if the inventory contains at least one item with the given ID.
+func (inv *Inventory) HasItem(id string) bool {
+	for y := 0; y < inv.Height; y++ {
+		for x := 0; x < inv.Width; x++ {
+			if slot := inv.Grid[y][x]; slot != nil && slot.ID == id {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // FirstEmpty returns the coordinates of the first empty grid cell.
 func FirstEmpty(inv *Inventory) (x, y int, ok bool) {
 	for y = 0; y < inv.Height; y++ {

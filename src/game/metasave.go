@@ -5,12 +5,21 @@ import (
 	"os"
 )
 
+// NPCMetaState tracks persistent cross-run state for a single NPC.
+type NPCMetaState struct {
+	Met          bool `json:"met"`
+	DefeatCount  int  `json:"defeat_count"`
+	HighestPhase int  `json:"highest_phase"`
+	TotalTrust   int  `json:"total_trust"`
+}
+
 // MetaSave holds persistent cross-run progression data.
 type MetaSave struct {
-	Remnants   int `json:"remnants"`
-	RunCount   int `json:"run_count"`
-	BestFloor  int `json:"best_floor"`
-	TotalKills int `json:"total_kills"`
+	Remnants   int                       `json:"remnants"`
+	RunCount   int                       `json:"run_count"`
+	BestFloor  int                       `json:"best_floor"`
+	TotalKills int                       `json:"total_kills"`
+	NPCMeta    map[string]*NPCMetaState  `json:"npc_meta,omitempty"`
 }
 
 const metaSavePath = "meta.json"
@@ -19,11 +28,14 @@ const metaSavePath = "meta.json"
 func LoadMeta() *MetaSave {
 	data, err := os.ReadFile(metaSavePath)
 	if err != nil {
-		return &MetaSave{}
+		return &MetaSave{NPCMeta: make(map[string]*NPCMetaState)}
 	}
 	var m MetaSave
 	if err := json.Unmarshal(data, &m); err != nil {
-		return &MetaSave{}
+		return &MetaSave{NPCMeta: make(map[string]*NPCMetaState)}
+	}
+	if m.NPCMeta == nil {
+		m.NPCMeta = make(map[string]*NPCMetaState)
 	}
 	return &m
 }

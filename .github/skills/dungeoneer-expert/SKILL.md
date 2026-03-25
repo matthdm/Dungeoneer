@@ -20,6 +20,7 @@ Your one-stop shop for all Dungeoneer project knowledge: roadmap phases, active 
 | **Save/Progression** | "How is meta-progression saved?" | `src/game/metasave.go` + `src/meta.json` |
 | **NPCs & Quest** | "What NPC dialogue trees exist?" | `design-docs/dialogue-system.md` + quest/dialogue data |
 | **Level Editor** | "How to access the tile editor?" | `README.md` Hotkeys + `src/leveleditor/` |
+| **Test Cases** | "What tests should I run for Phase 3?" | `design-docs/test-cases.md` |
 | **Blockers** | "What's preventing next phase?" | `BUG_TRACKER.md` (skill local) + roadmap dependencies |
 
 ---
@@ -35,6 +36,8 @@ Use any of these to invoke this skill in chat:
 - `/dungeoneer item <name>` (item lookup)
 - `/dungeoneer controls` (hotkeys reference)
 - `/dungeoneer architecture` (code structure Q&A)
+- `/dungeoneer tests` (list test cases for current or specified phase)
+- `/dungeoneer tests phase3` (list Phase 3 test cases)
 
 ---
 
@@ -72,10 +75,15 @@ The skill draws from these canonical sources:
 - `design-docs/quest-system.md`
 - `design-docs/npc-system.md`
 - `design-docs/enemy-placement.md`
+- `design-docs/room-tagging.md`
+- `design-docs/spawn-placement.md`
 - `design-docs/living-dungeon-ai.md`
 - `design-docs/meta-progression.md`
 - `design-docs/player-stats.md`
 - `design-docs/layered-world-system.md`
+
+### Quality
+- `design-docs/test-cases.md` (manual test scenarios by phase, blocking/visual/regression)
 
 ### Code Structure
 - `src/main.go` (entry point, game loop bootstrap)
@@ -127,6 +135,8 @@ This prompts the skill to:
 | System deep-dive | "How does pathfinding work?" | Cite design doc + code locations, explain flow |
 | Bug diagnosis | "Why does right-click spam cause stutter?" | Cite `BUG_TRACKER.md`, link movement/input code |
 | Roadmap timeline | "What's blocking Phase 3?" | Cite roadmap dependencies, list pre-requisites |
+| Backlog / optimization | "What's in the backlog?" | Cite `design-docs/roadmap.md` Backlog section, list items with severity |
+| Test cases | "What tests for Phase 3?" | Cite `design-docs/test-cases.md`, filter by phase/tag |
 | Item lookup | "What does Sword of Chaos do?" | Cite `items_structured_effects.json`, stat block, effects |
 | Control reference | "How do I spawn a monster?" | Cite `README.md` Hotkeys, link `src/leveleditor/` or spawn logic |
 | Architecture query | "Where is NPC dialogue handled?" | Cite `src/ui/`, `dialogue/` files, explain state flow |

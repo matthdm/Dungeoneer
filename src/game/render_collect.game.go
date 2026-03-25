@@ -34,6 +34,7 @@ func (g *Game) collectRenderables(scale, cx, cy float64) []Renderable {
 	r = append(r, g.collectExitEntityRenderables(scale, cx, cy)...)
 
 	r = append(r, g.collectMonsterRenderables(scale, cx, cy)...)
+	r = append(r, g.collectNPCRenderables(scale, cx, cy)...)
 	if g.player != nil {
 		r = append(r, g.collectPlayerRenderables(scale, cx, cy)...)
 	}
@@ -242,6 +243,42 @@ func (g *Game) collectMonsterRenderables(scale, cx, cy float64) []Renderable {
 			Options:     op,
 			TileX:       m.InterpX,
 			TileY:       m.InterpY,
+			DepthWeight: 0.5,
+		})
+	}
+	return out
+}
+
+func (g *Game) collectNPCRenderables(scale, cx, cy float64) []Renderable {
+	var out []Renderable
+	for _, n := range g.NPCs {
+		if n.Sprite == nil {
+			continue
+		}
+		if n.TileX < 0 || n.TileY < 0 || n.TileX >= g.currentLevel.W || n.TileY >= g.currentLevel.H {
+			continue
+		}
+		if !g.isTileVisible(n.TileX, n.TileY) {
+			continue
+		}
+		x, y := g.cartesianToIso(n.InterpX, n.InterpY)
+		op := &ebiten.DrawImageOptions{}
+		const verticalOffset = 1.0
+		op.GeoM.Translate(0, -verticalOffset+n.BobOffset)
+		if !n.LeftFacing {
+			op.GeoM.Scale(-1, 1)
+			w := float64(n.Sprite.Bounds().Dx())
+			op.GeoM.Translate(w, 0)
+		}
+		op.GeoM.Translate(x, y)
+		op.GeoM.Translate(-g.camX, g.camY)
+		op.GeoM.Scale(scale, scale)
+		op.GeoM.Translate(cx, cy)
+		out = append(out, Renderable{
+			Image:       n.Sprite,
+			Options:     op,
+			TileX:       n.InterpX,
+			TileY:       n.InterpY,
 			DepthWeight: 0.5,
 		})
 	}
