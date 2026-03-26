@@ -91,7 +91,8 @@ func LoadItemSheet(img *ebiten.Image, entries []sheetEntry) {
 	}
 }
 
-// LoadDefaultItems loads the bundled item sheet and mapping.
+// LoadDefaultItems loads the bundled item sheet and mapping, then applies
+// ability overrides to starter/quest items.
 func LoadDefaultItems() error {
 	img, err := images.LoadEmbeddedImage(images.Item_subset_png)
 	if err != nil {
@@ -102,5 +103,41 @@ func LoadDefaultItems() error {
 		return err
 	}
 	LoadItemSheet(img, entries)
+	applyAbilityOverrides()
 	return nil
+}
+
+// abilityOverride patches a registered item with ability-granting fields.
+type abilityOverride struct {
+	ID            string
+	GrantsAbility string
+	AbilitySlot   AbilitySlotType
+	ItemType      ItemType // override generic Misc type
+}
+
+// applyAbilityOverrides patches known items with their ability grants.
+// Called once after LoadItemSheet so the items already exist in the registry.
+func applyAbilityOverrides() {
+	overrides := []abilityOverride{
+		// Knight starters
+		{ID: "item_0_1", GrantsAbility: "slash_combo", AbilitySlot: AbilitySlotPrimary, ItemType: ItemWeapon},   // Iron Emblem → melee combo
+		{ID: "item_0_60", GrantsAbility: "dash", AbilitySlot: AbilitySlotDash, ItemType: ItemArmor},              // Leather Boots → dash
+
+		// Mage starters
+		{ID: "item_2_44", GrantsAbility: "arcane_bolt", AbilitySlot: AbilitySlotPrimary, ItemType: ItemWeapon},   // Grey Wizard Hat → arcane bolt
+		{ID: "item_0_2", GrantsAbility: "arcane_spray", AbilitySlot: AbilitySlotSpell, ItemType: ItemWeapon},      // Arcane Emblem → arcane spray
+		{ID: "item_0_9", GrantsAbility: "blink", AbilitySlot: AbilitySlotDash, ItemType: ItemArmor},               // Sapphire Amulet → blink
+	}
+	for _, o := range overrides {
+		tmpl, ok := Registry[o.ID]
+		if !ok {
+			continue
+		}
+		tmpl.GrantsAbility = o.GrantsAbility
+		tmpl.AbilitySlot = o.AbilitySlot
+		if o.ItemType != "" {
+			tmpl.Type = o.ItemType
+		}
+		tmpl.Equippable = true
+	}
 }

@@ -16,17 +16,24 @@ import (
 type SkillSlot struct {
 	Icon     *ebiten.Image
 	Cooldown float64
+	ManaCost int
+	Active   bool // true if this slot has an ability assigned
+	Enabled  bool // false if player lacks mana to cast
+	Name     string
 }
 
 // HUD renders a bottom-screen interface similar to classic action RPGs.
 type HUD struct {
 	HealthPercent float64
 	ManaPercent   float64
+	PlayerMana    int
 	DashCharges   int
 	DashCooldown  float64
+	DashEnabled   bool // true if player has dash ability
+	GrappleEnabled bool // true if player has grapple ability
 	ExpCurrent    int
 	ExpNeeded     int
-	SkillSlots    [5]SkillSlot
+	SkillSlots    [6]SkillSlot
 	ActiveSkill   int
 
 	OrbFrame      *ebiten.Image
@@ -90,23 +97,37 @@ func (h *HUD) Draw(screen *ebiten.Image, w, hgt int) {
 func (h *HUD) drawSkillBar(screen *ebiten.Image, w, hgt int) {
 	slot := 64
 	pad := 6
-	barW := slot*5 + pad*4
+	barW := slot*6 + pad*5
 	x := (w - barW) / 2
 	y := hgt - slot - 20
 
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 6; i++ {
 		sx := x + i*(slot+pad)
+		s := h.SkillSlots[i]
+
+		if !s.Active {
+			// Empty slot: dark border, dimmed.
+			vector.StrokeRect(screen, float32(sx), float32(y), float32(slot), float32(slot), 2, color.RGBA{80, 80, 80, 180}, false)
+			text.Draw(screen, fmt.Sprintf("%d", i+1), basicfont.Face7x13, sx+slot/2-4, y+slot+12, color.RGBA{80, 80, 80, 180})
+			continue
+		}
+
+		// Active slot border.
 		vector.StrokeRect(screen, float32(sx), float32(y), float32(slot), float32(slot), 2, color.White, false)
 
-		if ic := h.SkillSlots[i].Icon; ic != nil {
+		if ic := s.Icon; ic != nil {
 			iw, ih := ic.Size()
 			op := &ebiten.DrawImageOptions{}
 			op.GeoM.Scale(float64(slot)/float64(iw), float64(slot)/float64(ih))
 			op.GeoM.Translate(float64(sx), float64(y))
+			if !s.Enabled {
+				// Gray out when insufficient mana.
+				op.ColorScale.Scale(0.4, 0.4, 0.4, 1)
+			}
 			screen.DrawImage(ic, op)
 		}
 
-		if cd := h.SkillSlots[i].Cooldown; cd > 0 {
+		if cd := s.Cooldown; cd > 0 {
 			overlay := float32(slot) * float32(cd) / 5
 			vector.DrawFilledRect(screen, float32(sx), float32(y)+float32(slot)-overlay, float32(slot), overlay, color.RGBA{0, 0, 0, 150}, false)
 		}
@@ -115,10 +136,23 @@ func (h *HUD) drawSkillBar(screen *ebiten.Image, w, hgt int) {
 			vector.StrokeRect(screen, float32(sx-2), float32(y-2), float32(slot+4), float32(slot+4), 2, color.RGBA{255, 220, 60, 255}, false)
 		}
 
+		// Key number.
 		text.Draw(screen, fmt.Sprintf("%d", i+1), basicfont.Face7x13, sx+slot/2-4, y+slot+12, color.White)
+
+		// Mana cost below key number.
+		if s.ManaCost > 0 {
+			costClr := color.RGBA{100, 160, 255, 255}
+			if !s.Enabled {
+				costClr = color.RGBA{255, 80, 80, 255}
+			}
+			costTxt := fmt.Sprintf("%d", s.ManaCost)
+			text.Draw(screen, costTxt, basicfont.Face7x13, sx+slot/2-4, y+slot+24, costClr)
+		}
 	}
 
-	h.drawDashCharges(screen, x, barW, y)
+	if h.DashEnabled {
+		h.drawDashCharges(screen, x, barW, y)
+	}
 	h.drawEXPBar(screen, x, barW, y)
 }
 

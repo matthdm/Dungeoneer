@@ -19,6 +19,14 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+// PlayerClass determines starting equipment and primary attack style.
+type PlayerClass string
+
+const (
+	ClassKnight PlayerClass = "knight"
+	ClassMage   PlayerClass = "mage"
+)
+
 // BaseStats are the fundamental RPG attributes.
 type BaseStats struct {
 	Strength     int `json:"strength"`
@@ -78,12 +86,23 @@ type Player struct {
 	Mana, MaxMana int
 	Gold          int
 
-	Name string
+	Name  string
+	Class PlayerClass
 
 	LastMoveDirX float64
 	LastMoveDirY float64
 
 	Effects EffectHolder // active buffs/debuffs
+
+	// Ability gating: abilities come from equipped items, not innate.
+	// SpellSlots holds the ordered ability IDs for keys 1-6.
+	// Abilities tracks all granted abilities (spells + dash + grapple).
+	SpellSlots []string
+	Abilities  map[string]bool
+
+	// Melee combo state.
+	ComboHit   int     // current combo hit (0, 1, 2)
+	ComboTimer float64 // time remaining in combo window (resets on hit)
 }
 
 func NewPlayer(ss *sprites.SpriteSheet) *Player {
@@ -124,6 +143,7 @@ func NewPlayer(ss *sprites.SpriteSheet) *Player {
 			"Chest":   nil,
 			"Weapon":  nil,
 			"Offhand": nil,
+			"Feet":    nil,
 			"Ring1":   nil,
 			"Ring2":   nil,
 		},
@@ -134,6 +154,7 @@ func NewPlayer(ss *sprites.SpriteSheet) *Player {
 		MaxMana:       20,
 		Gold:          0,
 		Name:          "Hero",
+		Class:         ClassMage,
 		LastMoveDirX:  -1,
 		LastMoveDirY:  0,
 	}
@@ -144,7 +165,11 @@ func NewPlayer(ss *sprites.SpriteSheet) *Player {
 		p.TileY = y
 	}
 
+	p.SpellSlots = nil
+	p.Abilities = map[string]bool{}
+
 	p.RecalculateStats()
+	p.EquipStarter()
 	return p
 }
 
@@ -227,6 +252,15 @@ func (p *Player) Update(level *levels.Level, dt float64) {
 	p.Effects.UpdateEffects(dt, func(dmg int) {
 		p.TakeDamage(dmg)
 	})
+
+	// Tick melee combo window.
+	if p.ComboTimer > 0 {
+		p.ComboTimer -= dt
+		if p.ComboTimer <= 0 {
+			p.ComboTimer = 0
+			p.ComboHit = 0
+		}
+	}
 
 	p.updateGrapple(level, dt)
 	if p.Caster != nil {
@@ -541,4 +575,73 @@ func (p *Player) AddEXP(amount int) {
 		p.Level++
 		p.UnspentPoints += 3
 	}
+}
+
+// HasAbility returns true if the player currently has the named ability
+// (from an equipped item or permanent unlock).
+func (p *Player) HasAbility(id string) bool {
+	return p.Abilities[id]
+}
+
+// RefreshAbilities rebuilds SpellSlots and Abilities from currently equipped items.
+// Call this whenever equipment changes.
+func (p *Player) RefreshAbilities() {
+	p.Abilities = map[string]bool{}
+	p.SpellSlots = nil
+
+	for _, it := range p.Equipment {
+		if it == nil || it.GrantsAbility == "" {
+			continue
+		}
+		p.Abilities[it.GrantsAbility] = true
+		if it.AbilitySlot == items.AbilitySlotSpell {
+			// Add to spell bar if not already present (prevent duplicates).
+			found := false
+			for _, s := range p.SpellSlots {
+				if s == it.GrantsAbility {
+					found = true
+					break
+				}
+			}
+			if !found && len(p.SpellSlots) < 6 {
+				p.SpellSlots = append(p.SpellSlots, it.GrantsAbility)
+			}
+		}
+	}
+}
+
+// ClearAbilities removes all learned abilities and spell slots.
+func (p *Player) ClearAbilities() {
+	p.Abilities = map[string]bool{}
+	p.SpellSlots = nil
+}
+
+// EquipStarter equips class-appropriate starting items and refreshes abilities.
+// Call at the start of each run after equipment has been cleared.
+func (p *Player) EquipStarter() {
+	type starter struct {
+		Slot   string
+		ItemID string
+	}
+	var loadout []starter
+	switch p.Class {
+	case ClassKnight:
+		loadout = []starter{
+			{"Weapon", "item_0_1"},  // Iron Emblem → slash_combo
+			{"Feet", "item_0_60"},   // Leather Boots → dash
+		}
+	case ClassMage:
+		loadout = []starter{
+			{"Head", "item_2_44"},   // Grey Wizard Hat → arcane_bolt
+			{"Weapon", "item_0_2"},  // Arcane Emblem → arcane_spray
+			{"Ring1", "item_0_9"},   // Sapphire Amulet → blink
+		}
+	}
+	for _, s := range loadout {
+		if _, ok := items.Registry[s.ItemID]; ok {
+			p.Equipment[s.Slot] = items.NewItem(s.ItemID)
+		}
+	}
+	p.RefreshAbilities()
+	p.RecalculateStats()
 }

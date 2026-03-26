@@ -32,6 +32,7 @@ func (p *Player) Equip(slot string, gx, gy int) bool {
 		it.OnEquip(p)
 	}
 	p.RecalculateStats()
+	p.RefreshAbilities()
 	return true
 }
 
@@ -56,6 +57,7 @@ func (p *Player) Unequip(slot string) bool {
 	}
 	p.Equipment[slot] = nil
 	p.RecalculateStats()
+	p.RefreshAbilities()
 	return true
 }
 
@@ -73,6 +75,7 @@ func (p *Player) DropEquipped(slot string) *items.Item {
 	}
 	p.Equipment[slot] = nil
 	p.RecalculateStats()
+	p.RefreshAbilities()
 	return it
 }
 

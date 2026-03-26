@@ -79,9 +79,12 @@ type Game struct {
 	Controls *controls.Controls
 
 	ActiveSpells    []spells.Spell
+	ActiveSpray     *spells.ArcaneSpray // currently channeled spray (nil if none)
 	fireballSprites [][]*ebiten.Image
 
 	SpellDebug bool
+	GodMode    bool // infinite HP
+	InfMana    bool // infinite mana
 
 	RaycastWalls             []fov.Line
 	ShowRays                 bool
@@ -368,17 +371,6 @@ func NewGame() (*Game, error) {
 	panelRect := image.Rect(g.w/2-150, g.h/2-150, g.w/2+150, g.h/2+150)
 	g.HeroPanel = ui.NewHeroPanel(panelRect, g.player)
 	g.InventoryScreen = ui.NewInventoryScreen()
-	tomeNames := []string{"Red Tome", "Teal Tome", "Blue Tome", "Verdant Tome", "Crypt Tome"}
-	for i, name := range tomeNames {
-		for _, tmpl := range items.Registry {
-			if tmpl.Name == name {
-				if i < len(g.HUD.SkillSlots) {
-					g.HUD.SkillSlots[i].Icon = tmpl.Icon
-				}
-				break
-			}
-		}
-	}
 
 	return g, nil
 }
@@ -771,10 +763,21 @@ func (g *Game) updatePlaying() error {
 		}
 		g.updateCameraFollow()
 
+		// Dev cheats.
+		if g.GodMode {
+			g.player.HP = g.player.MaxHP
+		}
+		if g.InfMana {
+			g.player.Mana = g.player.MaxMana
+		}
+
 		if g.HUD != nil {
 			g.HUD.HealthPercent = float64(g.player.HP) / float64(g.player.MaxHP)
 			g.HUD.ManaPercent = float64(g.player.Mana) / float64(g.player.MaxMana)
+			g.HUD.PlayerMana = g.player.Mana
 			g.HUD.DashCharges = g.player.DashCharges
+			g.HUD.DashEnabled = g.player.HasAbility("dash")
+			g.HUD.GrappleEnabled = g.player.HasAbility("grapple")
 			maxCD := 0.0
 			for _, cd := range g.player.DashCooldowns {
 				if cd > maxCD {
@@ -784,6 +787,7 @@ func (g *Game) updatePlaying() error {
 			g.HUD.DashCooldown = maxCD
 			g.HUD.ExpCurrent = g.player.EXP
 			g.HUD.ExpNeeded = progression.EXPToLevel(g.player.Level)
+			g.syncHUDSpellSlots()
 		}
 		if g.HeroPanel != nil {
 			g.HeroPanel.Update()

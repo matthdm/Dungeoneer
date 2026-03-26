@@ -7,6 +7,7 @@ import (
 	"dungeoneer/menumanager"
 	"dungeoneer/movement"
 	"dungeoneer/pathing"
+	"dungeoneer/spells"
 	"dungeoneer/tiles"
 	"math"
 	"os"
@@ -191,21 +192,8 @@ func (g *Game) handleClicks() {
 			}
 		}
 
-		// Handle monster attack
-		for _, m := range g.Monsters {
-			if m.IsDead {
-				continue
-			}
-			if m.TileX == cx && m.TileY == cy &&
-				entities.IsAdjacentRanged(g.player.TileX, g.player.TileY, m.TileX, m.TileY, 2) &&
-				g.player.CanAttack() {
-				died := m.TakeDamage(g.player.Damage, &g.HitMarkers, &g.DamageNumbers)
-				g.player.AttackTick = 0
-				if died {
-					g.handleMonsterDeath(m)
-				}
-			}
-		}
+		// Primary attack dispatch — ability determines attack type.
+		g.handlePrimaryAttack(tx, ty, cx, cy)
 	}
 }
 
@@ -263,38 +251,14 @@ func (g *Game) handleLevelHotkeys() {
 			g.HeroPanel.Toggle()
 		}
 	}
-	if g.isActionJustPressed(controls.ActionSpell1) {
-		if g.player != nil {
-			gx := g.player.MoveController.InterpX
-			gy := g.player.MoveController.InterpY
-			g.castFireball(gx, gy, float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
-		}
+	// Spell casting: dispatch through player's SpellSlots (ability-gated).
+	spellActions := []controls.ActionID{
+		controls.ActionSpell1, controls.ActionSpell2, controls.ActionSpell3,
+		controls.ActionSpell4, controls.ActionSpell5, controls.ActionSpell6,
 	}
-	if g.isActionJustPressed(controls.ActionSpell2) {
-		if g.player != nil {
-			gx := g.player.MoveController.InterpX
-			gy := g.player.MoveController.InterpY
-			g.castChaosRay(gx, gy, float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
-		}
-	}
-	if g.isActionJustPressed(controls.ActionSpell3) {
-		if g.player != nil {
-			g.castLightningStrike(float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
-		}
-	}
-	if g.isActionJustPressed(controls.ActionSpell4) {
-		if g.player != nil {
-			g.castLightningStorm(float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
-		}
-	}
-	if g.isActionJustPressed(controls.ActionSpell5) {
-		if g.player != nil {
-			g.castFractalBloom(float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
-		}
-	}
-	if g.isActionJustPressed(controls.ActionSpell6) {
-		if g.player != nil {
-			g.castFractalCanopy(float64(g.hoverTileX), float64(g.hoverTileY), g.player.Caster)
+	for i, action := range spellActions {
+		if g.isActionJustPressed(action) && g.player != nil {
+			g.castSpellSlot(i)
 		}
 	}
 	if g.State == StateGameOver && ebiten.IsKeyPressed(ebiten.KeyV) {
@@ -491,7 +455,7 @@ func (g *Game) handleGrapple() {
 	if g.isActionJustPressed(controls.ActionGrapple) {
 		if g.player.Grapple.Active {
 			g.player.CancelGrapple()
-		} else {
+		} else if g.player.HasAbility("grapple") {
 			g.player.StartGrapple(float64(g.hoverTileX), float64(g.hoverTileY))
 		}
 	}
@@ -504,28 +468,44 @@ func (g *Game) handleDash() {
 	if g.player.Grapple.Active {
 		return
 	}
-	if g.isActionJustPressed(controls.ActionDash) {
-		if g.player.DashCharges > 0 && !g.player.IsDashing {
-			dirX, dirY := 0.0, 0.0
-			if g.player.MoveController.Mode == movement.VelocityMode {
-				dirX = g.player.MoveController.VelocityX
-				dirY = g.player.MoveController.VelocityY
-			} else if g.player.MoveController.Mode == movement.PathingMode {
-				if g.player.MoveController.Moving {
-					dirX = g.player.MoveController.TargetX - g.player.MoveController.InterpX
-					dirY = g.player.MoveController.TargetY - g.player.MoveController.InterpY
-				} else if len(g.player.MoveController.Path) > 0 {
-					next := g.player.MoveController.Path[0]
-					dirX = float64(next.X) - g.player.MoveController.InterpX
-					dirY = float64(next.Y) - g.player.MoveController.InterpY
-				}
-			}
-			if dirX == 0 && dirY == 0 {
-				dirX = g.player.LastMoveDirX
-				dirY = g.player.LastMoveDirY
-			}
-			g.player.StartDash(dirX, dirY)
+	if !g.isActionJustPressed(controls.ActionDash) {
+		return
+	}
+
+	px := g.player.MoveController.InterpX
+	py := g.player.MoveController.InterpY
+
+	// Blink: mage movement — teleport toward cursor, wall-safe. 2s cooldown.
+	if g.player.HasAbility("blink") {
+		blinkInfo := spells.SpellInfo{Name: "blink", Cooldown: 2.0}
+		if g.player.Caster.Ready(blinkInfo) {
+			g.player.Caster.PutOnCooldown(blinkInfo)
+			g.handleBlink(px, py, float64(g.hoverTileX), float64(g.hoverTileY))
 		}
+		return
+	}
+
+	// Dash: knight movement — directional burst.
+	if g.player.HasAbility("dash") && g.player.DashCharges > 0 && !g.player.IsDashing {
+		dirX, dirY := 0.0, 0.0
+		if g.player.MoveController.Mode == movement.VelocityMode {
+			dirX = g.player.MoveController.VelocityX
+			dirY = g.player.MoveController.VelocityY
+		} else if g.player.MoveController.Mode == movement.PathingMode {
+			if g.player.MoveController.Moving {
+				dirX = g.player.MoveController.TargetX - px
+				dirY = g.player.MoveController.TargetY - py
+			} else if len(g.player.MoveController.Path) > 0 {
+				next := g.player.MoveController.Path[0]
+				dirX = float64(next.X) - px
+				dirY = float64(next.Y) - py
+			}
+		}
+		if dirX == 0 && dirY == 0 {
+			dirX = g.player.LastMoveDirX
+			dirY = g.player.LastMoveDirY
+		}
+		g.player.StartDash(dirX, dirY)
 	}
 }
 

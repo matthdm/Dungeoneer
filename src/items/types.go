@@ -14,6 +14,16 @@ const (
 	ItemMisc       ItemType = "Misc"
 )
 
+// AbilitySlotType determines where a granted ability is placed.
+type AbilitySlotType string
+
+const (
+	AbilitySlotSpell   AbilitySlotType = "spell"   // fills spell bar (keys 1-6)
+	AbilitySlotDash    AbilitySlotType = "dash"     // enables Shift dash
+	AbilitySlotGrapple AbilitySlotType = "grapple"  // enables F grapple
+	AbilitySlotPrimary AbilitySlotType = "primary"  // replaces left-click attack
+)
+
 // ItemTemplate defines common data shared across item instances.
 type ItemTemplate struct {
 	ID          string
@@ -30,6 +40,12 @@ type ItemTemplate struct {
 	OnUse       func(p interface{})
 	OnEquip     func(p interface{})
 	OnUnequip   func(p interface{})
+
+	// Ability gating: equipping this item grants an ability.
+	GrantsAbility string          // ability ID: "fireball", "chaos_ray", "dash", etc.
+	AbilitySlot   AbilitySlotType // where the ability goes: "spell", "dash", "grapple"
+	SetID         string          // item set membership (empty = no set)
+	QuestLocked   bool            // true = excluded from loot tables, quest reward only
 }
 
 // Item represents an inventory instance.

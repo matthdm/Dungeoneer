@@ -188,11 +188,13 @@ func (g *Game) resetPlayerForHub() {
 		g.player.Equipment[slot] = nil
 	}
 
-	// Clear status effects.
+	// Clear status effects and abilities.
 	g.player.Effects = entities.EffectHolder{}
+	g.player.ClearAbilities()
 
-	// Recalculate derived stats (HP, mana, etc.) from base values.
+	// Recalculate derived stats and re-equip class starters.
 	g.player.RecalculateStats()
+	g.player.EquipStarter()
 	g.player.HP = g.player.MaxHP
 	g.player.Mana = g.player.MaxMana
 }
