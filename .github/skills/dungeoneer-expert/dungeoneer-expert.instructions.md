@@ -326,13 +326,15 @@ If `/dungeoneer sync` hasn't been run in >1 day:
 4. Example: "Monster AI pathfinding (📍 design-docs/enemy-placement.md) is implemented as follows: 1) MonsterUpdate() in entities/monster.go (line X) calls PathTo(target) 2) PathTo uses A* in pathing/astar.go (line Y) ..."
 
 ### Pattern: Test Case Queries
-**Example**: "What tests should I run for Phase 3?" "List all blocking tests"
+**Example**: "What tests should I run for Phase 3?" "List all blocking tests" "/dungeoneer tests phase4" "/dungeoneer tests debug"
 
 1. Load `design-docs/test-cases.md`
 2. Filter by phase if specified (e.g., "Phase 3" → section header `## Phase 3`)
-3. For each test, cite: ID, title, tag (BLOCKING/VISUAL/REGRESSION), steps, expected result
-4. If asking for blocking tests only, filter to `[BLOCKING]` tagged tests
-5. Example: "Phase 3 has 16 test cases (📍 design-docs/test-cases.md). 10 are [BLOCKING]. Key tests: T3.03 (dialogue opens with typewriter), T3.09 (hub NPC spawning after meeting)."
+3. If query is `/dungeoneer tests phase4` or says "Phase 4", use section header `## Phase 4: Stabilization & Combat Debug`
+4. If query is `/dungeoneer tests debug` or asks for "debug tests", prioritize overlay/debug tests from Phase 4 (`T4.04`-`T4.07`) and include any matching `[VISUAL]` or `[REGRESSION]` tests
+5. For each test, cite: ID, title, tag (BLOCKING/VISUAL/REGRESSION), steps, expected result
+6. If asking for blocking tests only, filter to `[BLOCKING]` tagged tests
+7. Example: "Phase 4 has 8 stabilization/debug tests (📍 design-docs/test-cases.md). Key debug tests: T4.04 (hitbox overlays), T4.05 (interaction radii), T4.06 (camera transform stability)."
 
 ### Pattern: Feature Status
 **Example**: "Is save/load done?" "What's implemented for Phase 2?"

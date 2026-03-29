@@ -50,6 +50,7 @@ func (g *Game) drawDeathScreen(screen *ebiten.Image) {
 		lines := []string{
 			fmt.Sprintf("Floors Cleared:   %d / %d", g.RunState.FloorsCleared, g.RunState.TotalFloors),
 			fmt.Sprintf("Monsters Slain:   %d", g.RunState.KillCount),
+			fmt.Sprintf("Gold Earned:      %d (lost)", g.RunState.GoldEarned),
 			fmt.Sprintf("Remnants Earned:  %d", g.RunState.RemnantEarned),
 			"",
 			fmt.Sprintf("Total Remnants:   %d", g.Meta.Remnants),
@@ -89,6 +90,7 @@ func (g *Game) drawVictoryScreen(screen *ebiten.Image) {
 		lines := []string{
 			fmt.Sprintf("Floors Cleared:   %d / %d", g.RunState.FloorsCleared, g.RunState.TotalFloors),
 			fmt.Sprintf("Monsters Slain:   %d", g.RunState.KillCount),
+			fmt.Sprintf("Gold Earned:      %d", g.RunState.GoldEarned),
 			fmt.Sprintf("Remnants Earned:  %d (x2 Victory Bonus!)", g.RunState.RemnantEarned),
 			"",
 			fmt.Sprintf("Total Remnants:   %d", g.Meta.Remnants),

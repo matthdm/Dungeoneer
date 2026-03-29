@@ -53,7 +53,7 @@ func (ip *ItemPalette) computeRect(screenW, screenH int) image.Rectangle {
 	cellH := ipSpriteSize + ipNameHeight + ipPadding
 	gridW := ipColumns*cellW - ipPadding
 	gridH := ipRows*cellH - ipPadding
-	menuW := gridW + 20            // 10px inner padding left+right
+	menuW := gridW + 20           // 10px inner padding left+right
 	menuH := 20 + 30 + gridH + 14 // title + nav row + grid + bottom padding
 	mx := (screenW - menuW) / 2
 	my := (screenH - menuH) / 2
@@ -73,8 +73,19 @@ func (ip *ItemPalette) Show() {
 	ip.visible = true
 }
 
-func (ip *ItemPalette) Hide()           { ip.visible = false }
-func (ip *ItemPalette) Toggle()         { if ip.visible { ip.Hide() } else { ip.Show() } }
+// SetPlayer rebinds item spawning to a different player instance.
+func (ip *ItemPalette) SetPlayer(player *entities.Player) {
+	ip.player = player
+}
+
+func (ip *ItemPalette) Hide() { ip.visible = false }
+func (ip *ItemPalette) Toggle() {
+	if ip.visible {
+		ip.Hide()
+	} else {
+		ip.Show()
+	}
+}
 func (ip *ItemPalette) IsVisible() bool { return ip.visible }
 
 // Resize recomputes the palette rect for the new screen dimensions.

@@ -51,6 +51,18 @@ const (
 	DefaultTileSize = 64
 )
 
+// Isometric coordinate conventions.
+//
+// Entity positions (InterpX, InterpY) are anchored at the TOP-LEFT vertex of
+// the isometric diamond — i.e., the point where cartesianToIso(x, y) lands.
+// Because a 64-px sprite spans the full tile width, its visual horizontal
+// center ends up at cartesian (x+1, y): one unit east of the anchor.
+//
+// IsoBodyDX is that canonical offset. Use it wherever you need the
+// on-screen body center rather than the tile anchor — spell detection,
+// hitbox visualization, projectile origins, etc.
+const IsoBodyDX = 1.0
+
 // Player dash mechanics
 const (
 	MaxDashCharges      = 5

@@ -12,9 +12,9 @@ import (
 	"dungeoneer/progression"
 	"dungeoneer/spells"
 	"dungeoneer/sprites"
-	"fmt"
 	"image/color"
 	"math"
+	"sort"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -85,6 +85,7 @@ type Player struct {
 
 	Mana, MaxMana int
 	Gold          int
+	manaRegenAcc  float64
 
 	Name  string
 	Class PlayerClass
@@ -103,6 +104,25 @@ type Player struct {
 	// Melee combo state.
 	ComboHit   int     // current combo hit (0, 1, 2)
 	ComboTimer float64 // time remaining in combo window (resets on hit)
+}
+
+// BodyX returns the cartesian X of the player's visual/combat body center.
+func (p *Player) BodyX() float64 { return p.MoveController.InterpX + constants.IsoBodyDX }
+
+// BodyY returns the cartesian Y of the player's visual/combat body center.
+func (p *Player) BodyY() float64 { return p.MoveController.InterpY + MonsterHitCenterYOffset }
+
+var equipmentSlotOrder = []string{
+	"Head", "Chest", "Weapon", "Offhand", "Feet", "Ring1", "Ring2",
+}
+
+// NewEquipmentSlots returns a fresh equipment map with all canonical slots.
+func NewEquipmentSlots() map[string]*items.Item {
+	slots := make(map[string]*items.Item, len(equipmentSlotOrder))
+	for _, slot := range equipmentSlotOrder {
+		slots[slot] = nil
+	}
+	return slots
 }
 
 func NewPlayer(ss *sprites.SpriteSheet) *Player {
@@ -138,15 +158,7 @@ func NewPlayer(ss *sprites.SpriteSheet) *Player {
 			Luck:         1,
 		},
 		TempModifiers: StatModifiers{},
-		Equipment: map[string]*items.Item{
-			"Head":    nil,
-			"Chest":   nil,
-			"Weapon":  nil,
-			"Offhand": nil,
-			"Feet":    nil,
-			"Ring1":   nil,
-			"Ring2":   nil,
-		},
+		Equipment:     NewEquipmentSlots(),
 		Level:         1,
 		EXP:           0,
 		UnspentPoints: 0,
@@ -269,9 +281,15 @@ func (p *Player) Update(level *levels.Level, dt float64) {
 
 	// Passive mana regeneration
 	regen := 1 + (p.Stats.Intelligence / 5)
-	p.Mana += int(float64(regen) * dt)
+	p.manaRegenAcc += float64(regen) * dt
+	if p.manaRegenAcc >= 1 {
+		ticks := int(p.manaRegenAcc)
+		p.Mana += ticks
+		p.manaRegenAcc -= float64(ticks)
+	}
 	if p.Mana > p.MaxMana {
 		p.Mana = p.MaxMana
+		p.manaRegenAcc = 0
 	}
 
 	// Track last movement direction
@@ -442,7 +460,6 @@ func (p *Player) updateGrapple(level *levels.Level, dt float64) {
 		//if g.Delay <= 0 {
 		//	stalled = math.Abs(p.MoveController.VelocityX)+math.Abs(p.MoveController.VelocityY) < 0.01
 		//}
-		fmt.Println("dist: ", closeEnough, dist)
 		if closeEnough { //| stalled {
 			//p.MoveController.Stop()
 			g.Active = false
@@ -589,7 +606,23 @@ func (p *Player) RefreshAbilities() {
 	p.Abilities = map[string]bool{}
 	p.SpellSlots = nil
 
-	for _, it := range p.Equipment {
+	slots := make([]string, 0, len(equipmentSlotOrder))
+	seen := make(map[string]bool, len(equipmentSlotOrder))
+	for _, slot := range equipmentSlotOrder {
+		slots = append(slots, slot)
+		seen[slot] = true
+	}
+	var extra []string
+	for slot := range p.Equipment {
+		if !seen[slot] {
+			extra = append(extra, slot)
+		}
+	}
+	sort.Strings(extra)
+	slots = append(slots, extra...)
+
+	for _, slot := range slots {
+		it := p.Equipment[slot]
 		if it == nil || it.GrantsAbility == "" {
 			continue
 		}
@@ -627,14 +660,14 @@ func (p *Player) EquipStarter() {
 	switch p.Class {
 	case ClassKnight:
 		loadout = []starter{
-			{"Weapon", "item_0_1"},  // Iron Emblem → slash_combo
-			{"Feet", "item_0_60"},   // Leather Boots → dash
+			{"Weapon", "item_0_1"}, // Iron Emblem → slash_combo
+			{"Feet", "item_0_60"},  // Leather Boots → dash
 		}
 	case ClassMage:
 		loadout = []starter{
-			{"Head", "item_2_44"},   // Grey Wizard Hat → arcane_bolt
-			{"Weapon", "item_0_2"},  // Arcane Emblem → arcane_spray
-			{"Ring1", "item_0_9"},   // Sapphire Amulet → blink
+			{"Head", "item_2_44"},  // Grey Wizard Hat → arcane_bolt
+			{"Weapon", "item_0_2"}, // Arcane Emblem → arcane_spray
+			{"Ring1", "item_0_9"},  // Sapphire Amulet → blink
 		}
 	}
 	for _, s := range loadout {

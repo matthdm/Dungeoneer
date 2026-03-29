@@ -3,6 +3,7 @@ package game
 import (
 	"dungeoneer/dialogue"
 	"dungeoneer/entities"
+	"dungeoneer/items"
 	"dungeoneer/levels"
 	"dungeoneer/ui"
 	"math"
@@ -25,10 +26,10 @@ func (g *Game) updateNPCHints() {
 		if !npc.Interactable {
 			continue
 		}
-		if !npc.IsPlayerInRange(g.player.TileX, g.player.TileY) {
+		if !npc.IsPlayerInRangeAt(g.player.MoveController.InterpX, g.player.MoveController.InterpY) {
 			continue
 		}
-		isoX, isoY := g.cartesianToIso(float64(npc.TileX), float64(npc.TileY))
+		isoX, isoY := g.cartesianToIso(npc.InterpX, npc.InterpY)
 		msg := "[E] Talk"
 		// The iso anchor is the sprite's top-left. Offset to center:
 		// +tileSize/2 horizontally centers on the tile diamond,
@@ -42,13 +43,48 @@ func (g *Game) updateNPCHints() {
 	}
 }
 
+// findNearbyChest returns the first unopened chest in range of the player, or nil.
+func (g *Game) findNearbyChest() *entities.Chest {
+	if g.player == nil {
+		return nil
+	}
+	px, py := g.player.MoveController.InterpX, g.player.MoveController.InterpY
+	for _, c := range g.Chests {
+		if !c.Opened && c.IsPlayerInRange(px, py) {
+			return c
+		}
+	}
+	return nil
+}
+
+// updateChestHints shows "[E] Open" hints for nearby unopened chests.
+func (g *Game) updateChestHints() {
+	if g.player == nil || g.player.IsDead {
+		return
+	}
+	px, py := g.player.MoveController.InterpX, g.player.MoveController.InterpY
+	for _, c := range g.Chests {
+		if c.Opened || !c.IsPlayerInRange(px, py) {
+			continue
+		}
+		isoX, isoY := g.cartesianToIso(float64(c.TileX), float64(c.TileY))
+		msg := "[E] Open"
+		ts := float64(g.currentLevel.TileSize)
+		sprCenterX := (isoX + ts/2 - g.camX) * g.camScale
+		hx := int(sprCenterX+float64(g.w/2)) - len(msg)*3
+		hy := int((isoY+g.camY)*g.camScale+float64(g.h/2)) - 16
+		g.ShowHintAt(msg, hx, hy)
+		break
+	}
+}
+
 // findNearbyNPC returns the first interactable NPC in range of the player, or nil.
 func (g *Game) findNearbyNPC() *entities.NPC {
 	if g.player == nil {
 		return nil
 	}
 	for _, npc := range g.NPCs {
-		if npc.Interactable && npc.IsPlayerInRange(g.player.TileX, g.player.TileY) {
+		if npc.Interactable && npc.IsPlayerInRangeAt(g.player.MoveController.InterpX, g.player.MoveController.InterpY) {
 			return npc
 		}
 	}
@@ -119,8 +155,20 @@ func (g *Game) evalDialogueCondition(c *dialogue.DialogueCondition) bool {
 	case "not_flag":
 		return flags[c.Flag] == 0
 	case "has_item":
+		// Checks inventory grid and all equipped slots.
 		if g.player != nil {
-			return g.player.Inventory.HasItem(c.ItemID)
+			return g.player.HasItemAnywhere(c.ItemID)
+		}
+		return false
+	case "has_ability":
+		// c.Flag holds the ability ID (reuses Flag field to avoid schema change).
+		if g.player != nil {
+			return g.player.HasAbility(c.Flag)
+		}
+		return false
+	case "has_gold":
+		if g.player != nil {
+			return g.player.Gold >= c.Value
 		}
 		return false
 	}
@@ -141,6 +189,29 @@ func (g *Game) execDialogueAction(a dialogue.DialogueAction) {
 	case "give_exp":
 		if g.player != nil && a.Amount > 0 {
 			g.player.EXP += a.Amount
+		}
+	case "give_item":
+		if g.player != nil && a.ItemID != "" {
+			if _, ok := items.Registry[a.ItemID]; ok {
+				it := items.NewItem(a.ItemID)
+				g.player.AddToInventory(it)
+				g.player.RefreshAbilities()
+			}
+		}
+	case "take_item":
+		if g.player != nil && a.ItemID != "" {
+			g.player.RemoveItemByID(a.ItemID)
+		}
+	case "give_gold":
+		if g.player != nil && a.Amount > 0 {
+			g.player.Gold += a.Amount
+		}
+	case "take_gold":
+		if g.player != nil && a.Amount > 0 {
+			g.player.Gold -= a.Amount
+			if g.player.Gold < 0 {
+				g.player.Gold = 0
+			}
 		}
 	}
 }
@@ -321,6 +392,88 @@ func nearestRoom(rooms []levels.Room, target *levels.Room) *levels.Room {
 		}
 	}
 	return best
+}
+
+// openChest marks the chest as opened and spawns its loot as item drops.
+func (g *Game) openChest(c *entities.Chest) {
+	if c == nil || c.Opened {
+		return
+	}
+	c.Opened = true
+
+	if g.FloorCtx == nil {
+		return
+	}
+	table := items.BuildDefaultLootTable(string(g.FloorCtx.Biome))
+	if g.FloorCtx.BiomeConfig != nil && g.FloorCtx.BiomeConfig.LootTable != nil {
+		table.Entries = append(table.Entries, g.FloorCtx.BiomeConfig.LootTable.Entries...)
+	}
+	results := items.RollChestLoot(table, c.Variant, g.FloorCtx.FloorNumber)
+	for _, r := range results {
+		tmpl, ok := items.Registry[r.ItemID]
+		if !ok {
+			continue
+		}
+		it := &items.Item{ItemTemplate: tmpl, Count: r.Count}
+		g.spawnItemDrop(it, c.TileX, c.TileY)
+	}
+}
+
+// spawnFloorChests places chests in treasure rooms on the current floor.
+// One chest per treasure room; variant scales with floor depth.
+func (g *Game) spawnFloorChests(ctx FloorContext) {
+	rooms := levels.RoomsByTag(g.currentLevel.Rooms, levels.TagTreasure)
+	if len(rooms) == 0 {
+		return
+	}
+	avoid := map[[2]int]bool{
+		{g.player.TileX, g.player.TileY}: true,
+	}
+	if g.ExitEntity != nil {
+		avoid[[2]int{g.ExitEntity.TileX, g.ExitEntity.TileY}] = true
+	}
+	for _, room := range rooms {
+		x, y := findWalkableInRoom(g.currentLevel, room, avoid)
+		if x < 0 {
+			continue
+		}
+		avoid[[2]int{x, y}] = true
+		variant := chestVariantForFloor(ctx.FloorNumber, ctx.TotalFloors)
+		chest := &entities.Chest{
+			TileX:   x,
+			TileY:   y,
+			Variant: variant,
+			Sprite:  g.spriteSheet.GrandChest,
+		}
+		g.Chests = append(g.Chests, chest)
+	}
+}
+
+// chestVariantForFloor returns a chest tier appropriate for the given floor.
+func chestVariantForFloor(floor, total int) string {
+	progress := float64(floor) / float64(max(1, total))
+	roll := rand.Float64()
+	switch {
+	case progress >= 0.75:
+		if roll < 0.20 {
+			return entities.ChestLocked
+		} else if roll < 0.60 {
+			return entities.ChestGold
+		}
+		return entities.ChestIron
+	case progress >= 0.40:
+		if roll < 0.10 {
+			return entities.ChestGold
+		} else if roll < 0.50 {
+			return entities.ChestIron
+		}
+		return entities.ChestWooden
+	default:
+		if roll < 0.30 {
+			return entities.ChestIron
+		}
+		return entities.ChestWooden
+	}
 }
 
 // spawnHubNPCs places major NPCs in the hub that the player has previously met.

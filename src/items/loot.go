@@ -80,8 +80,9 @@ func RollLoot(table *LootTableDef, floor int) *LootResult {
 		if floor < e.MinFloor {
 			continue
 		}
-		// Verify item exists in registry.
-		if _, ok := Registry[e.ItemID]; !ok {
+		// Verify item exists in registry and is not quest-locked.
+		tmpl, ok := Registry[e.ItemID]
+		if !ok || tmpl.QuestLocked {
 			continue
 		}
 		w := adjustedWeight(e, floor)
@@ -102,11 +103,112 @@ func RollLoot(table *LootTableDef, floor int) *LootResult {
 	return &LootResult{ItemID: pool[len(pool)-1].entry.ItemID, Count: 1}
 }
 
+// RollAbilityItem picks a random ability-granting item from the table,
+// ignoring quest-locked entries. Returns nil if no eligible ability item exists.
+func RollAbilityItem(table *LootTableDef, floor int) *LootResult {
+	if table == nil {
+		return nil
+	}
+	type candidate struct {
+		entry  LootEntry
+		weight float64
+	}
+	var pool []candidate
+	total := 0.0
+	for _, e := range table.Entries {
+		if floor < e.MinFloor {
+			continue
+		}
+		tmpl, ok := Registry[e.ItemID]
+		if !ok || tmpl.QuestLocked || tmpl.GrantsAbility == "" {
+			continue
+		}
+		w := adjustedWeight(e, floor)
+		pool = append(pool, candidate{e, w})
+		total += w
+	}
+	if len(pool) == 0 {
+		return nil
+	}
+	r := rand.Float64() * total
+	for _, c := range pool {
+		r -= c.weight
+		if r <= 0 {
+			return &LootResult{ItemID: c.entry.ItemID, Count: 1}
+		}
+	}
+	return &LootResult{ItemID: pool[len(pool)-1].entry.ItemID, Count: 1}
+}
+
+// RollChestLoot rolls loot for a chest based on its variant.
+// Wooden chests roll normal loot. Iron chests bias toward uncommon+. Gold/locked
+// chests guarantee ability items when possible, falling back to normal loot.
+func RollChestLoot(table *LootTableDef, variant string, floor int) []*LootResult {
+	if table == nil {
+		return nil
+	}
+	switch variant {
+	case "gold", "locked":
+		// Try for an ability item first; always produce at least one drop.
+		var results []*LootResult
+		if r := RollAbilityItem(table, floor); r != nil {
+			results = append(results, r)
+		}
+		// Second roll: normal loot (bonus drop for premium chests).
+		if r := RollLoot(table, floor); r != nil {
+			results = append(results, r)
+		}
+		return results
+	case "iron":
+		// Bias toward uncommon/rare by re-rolling once and keeping the
+		// result with higher rarity weight.
+		r1 := RollLoot(table, floor)
+		r2 := RollLoot(table, floor)
+		if r1 == nil {
+			return nil
+		}
+		if r2 == nil {
+			return []*LootResult{r1}
+		}
+		// Pick the rarer of the two.
+		if rarityRank(table, r2.ItemID) > rarityRank(table, r1.ItemID) {
+			return []*LootResult{r2}
+		}
+		return []*LootResult{r1}
+	default: // wooden
+		if r := RollLoot(table, floor); r != nil {
+			return []*LootResult{r}
+		}
+		return nil
+	}
+}
+
+// rarityRank returns a numeric rank for an item's rarity (higher = rarer).
+func rarityRank(table *LootTableDef, itemID string) int {
+	tmpl, ok := Registry[itemID]
+	if !ok {
+		return 0
+	}
+	switch tmpl.Quality {
+	case RarityLegendary:
+		return 3
+	case RarityRare:
+		return 2
+	case RarityUncommon:
+		return 1
+	default:
+		return 0
+	}
+}
+
 // BuildDefaultLootTable creates a generic loot table from all items in the
 // registry. This is used when a biome doesn't define its own table.
 func BuildDefaultLootTable(biomeID string) *LootTableDef {
 	table := &LootTableDef{BiomeID: biomeID}
-	for id := range Registry {
+	for id, tmpl := range Registry {
+		if tmpl.QuestLocked {
+			continue
+		}
 		table.Entries = append(table.Entries, LootEntry{
 			ItemID:   id,
 			Weight:   1.0,

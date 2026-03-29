@@ -338,6 +338,7 @@ func (g *Game) spawnTemplateInRoom(tmpl *EncounterTemplate, room *levels.Room, c
 				HP:               int(float64(enemyDef.BaseHP) * hpScale),
 				MaxHP:            int(float64(enemyDef.BaseHP) * hpScale),
 				Damage:           int(float64(enemyDef.BaseDamage) * dmgScale),
+				HitRadius:        entities.DefaultMonsterHitRadius,
 				AttackRate:       enemyDef.AttackRate,
 				Behavior:         makeBehavior(behaviorStr),
 				Level:            ctx.FloorNumber,

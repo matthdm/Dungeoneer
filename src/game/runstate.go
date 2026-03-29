@@ -25,12 +25,13 @@ var availableBiomes = []Biome{BiomeCrypt, BiomeMoss, BiomeGallery, BiomeBrick}
 
 // FloorContext holds the generation parameters and metadata for a single floor.
 type FloorContext struct {
-	FloorNumber int
-	TotalFloors int
-	Biome       Biome
-	Difficulty  float64 // 0.0–1.0
-	GenParams   levels.GenParams
-	BiomeConfig *BiomeConfig
+	FloorNumber    int
+	TotalFloors    int
+	Biome          Biome
+	Difficulty     float64 // 0.0–1.0
+	GenParams      levels.GenParams
+	BiomeConfig    *BiomeConfig
+	AbilityDropped bool // true once an ability item has been force-dropped this floor
 }
 
 // RunState tracks all state for a single dungeon run.
@@ -42,6 +43,7 @@ type RunState struct {
 	KillCount     int
 	FloorsCleared int
 	RemnantEarned int
+	GoldEarned    int            // total gold collected this run
 	StartTime     time.Time
 	QuestFlags    map[string]int // per-run NPC/quest state; resets each run
 }

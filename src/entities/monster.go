@@ -1,6 +1,7 @@
 package entities
 
 import (
+	"dungeoneer/constants"
 	"dungeoneer/levels"
 	"dungeoneer/pathing"
 	"dungeoneer/spells"
@@ -49,6 +50,7 @@ type Monster struct {
 	HP             int
 	MaxHP          int
 	Damage         int
+	HitRadius      float64 // combat hit radius in tile units (feet-anchored)
 	AttackRate     int
 	AttackTick     int
 	IsDead         bool
@@ -60,13 +62,25 @@ type Monster struct {
 	Caster *spells.Caster
 
 	// Phase 2 additions
-	Role               string              // "melee", "ranged", "elite", "swarm", "caster", "ambush"
+	Role               string               // "melee", "ranged", "elite", "swarm", "caster", "ambush"
 	Siblings           []*Monster           // for swarm coordination
 	PendingProjectiles []*MonsterProjectile // ranged attacks to be processed by game loop
 	PendingSpells      []PendingSpellCast   // spell casts to be processed by game loop
 	Effects            EffectHolder         // active buffs/debuffs
 	OnHitEffect        *StatusEffect        // if non-nil, applied to player on melee hit
 }
+
+const (
+	DefaultMonsterHitRadius = 0.42
+	// MonsterHitCenterYOffset is the Y depth offset from feet to body center.
+	MonsterHitCenterYOffset = 0.30
+)
+
+// BodyX returns the cartesian X of the monster's visual/combat body center.
+func (m *Monster) BodyX() float64 { return m.InterpX + constants.IsoBodyDX }
+
+// BodyY returns the cartesian Y of the monster's visual/combat body center.
+func (m *Monster) BodyY() float64 { return m.InterpY + MonsterHitCenterYOffset }
 
 func NewMonster(ss *sprites.SpriteSheet) []*Monster {
 	return []*Monster{
@@ -82,6 +96,7 @@ func NewMonster(ss *sprites.SpriteSheet) []*Monster {
 			HP:               10,
 			MaxHP:            10,
 			Damage:           1,
+			HitRadius:        DefaultMonsterHitRadius,
 			AttackRate:       30,
 			IsDead:           false,
 			Caster:           spells.NewCaster(),
@@ -91,6 +106,9 @@ func NewMonster(ss *sprites.SpriteSheet) []*Monster {
 }
 
 func (m *Monster) Update(player *Player, level *levels.Level) {
+	if m.HitRadius <= 0 {
+		m.HitRadius = DefaultMonsterHitRadius
+	}
 	//m.TickCount++
 	// Smooth interpolation update
 	m.UpdateMovement()

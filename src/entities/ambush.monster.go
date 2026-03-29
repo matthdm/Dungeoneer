@@ -34,6 +34,7 @@ func CreateAmbushMonster(sprite *ebiten.Image, x, y int) *Monster {
 		HP:               8,
 		MaxHP:            8,
 		Damage:           2,
+		HitRadius:        DefaultMonsterHitRadius,
 		AttackRate:       45,
 		Behavior:         NewAmbushBehavior(4),
 		Level:            1,
@@ -55,6 +56,7 @@ func NewStatueMonster(ss *sprites.SpriteSheet) []*Monster {
 			HP:               8,
 			MaxHP:            8,
 			Damage:           2,
+			HitRadius:        DefaultMonsterHitRadius,
 			AttackRate:       45,
 			Behavior:         NewAmbushBehavior(4), // Trigger when player is within 2 tiles
 			Level:            1,

@@ -2,6 +2,7 @@ package game
 
 import (
 	"dungeoneer/entities"
+	"dungeoneer/images"
 	"dungeoneer/items"
 	"dungeoneer/levels"
 	"dungeoneer/ui"
@@ -103,6 +104,16 @@ func (g *Game) buildDevEntries() []ui.DevEntry {
 			IsActive: func() bool { return g.ShowDoorDebug },
 			Toggle:   func() { g.ShowDoorDebug = !g.ShowDoorDebug },
 		},
+		{
+			Label:    "Show Hitboxes",
+			IsActive: func() bool { return g.ShowHitboxes },
+			Toggle:   func() { g.ShowHitboxes = !g.ShowHitboxes },
+		},
+		{
+			Label:    "Show Interaction Ranges",
+			IsActive: func() bool { return g.ShowInteractionRadii },
+			Toggle:   func() { g.ShowInteractionRadii = !g.ShowInteractionRadii },
+		},
 
 		// ── Level Generation ───────────────────────────────────────────────
 		{Label: "LEVEL GENERATION", IsHeader: true},
@@ -184,6 +195,31 @@ func (g *Game) buildDevEntries() []ui.DevEntry {
 			IsActive: func() bool { return g.player != nil && g.player.HasAbility("fireball") },
 			Toggle:   func() { g.devToggleAbility("fireball", items.AbilitySlotSpell) },
 		},
+		{
+			Label:    "Grant: Chaos Ray",
+			IsActive: func() bool { return g.player != nil && g.player.HasAbility("chaos_ray") },
+			Toggle:   func() { g.devToggleAbility("chaos_ray", items.AbilitySlotSpell) },
+		},
+		{
+			Label:    "Grant: Lightning",
+			IsActive: func() bool { return g.player != nil && g.player.HasAbility("lightning") },
+			Toggle:   func() { g.devToggleAbility("lightning", items.AbilitySlotSpell) },
+		},
+		{
+			Label:    "Grant: Lightning Storm",
+			IsActive: func() bool { return g.player != nil && g.player.HasAbility("lightning_storm") },
+			Toggle:   func() { g.devToggleAbility("lightning_storm", items.AbilitySlotSpell) },
+		},
+		{
+			Label:    "Grant: Fractal Bloom",
+			IsActive: func() bool { return g.player != nil && g.player.HasAbility("fractal_bloom") },
+			Toggle:   func() { g.devToggleAbility("fractal_bloom", items.AbilitySlotSpell) },
+		},
+		{
+			Label:    "Grant: Fractal Canopy",
+			IsActive: func() bool { return g.player != nil && g.player.HasAbility("fractal_canopy") },
+			Toggle:   func() { g.devToggleAbility("fractal_canopy", items.AbilitySlotSpell) },
+		},
 
 		// ── Class Switcher ────────────────────────────────────────────────
 		{Label: "CLASS", IsHeader: true},
@@ -191,28 +227,36 @@ func (g *Game) buildDevEntries() []ui.DevEntry {
 			Label:    "Play as Knight",
 			IsActive: func() bool { return g.player != nil && g.player.Class == entities.ClassKnight },
 			Toggle: func() {
-				if g.player != nil {
-					g.player.Class = entities.ClassKnight
-					g.player.ClearAbilities()
-					for slot := range g.player.Equipment {
-						g.player.Equipment[slot] = nil
-					}
-					g.player.EquipStarter()
+				if g.player == nil {
+					return
 				}
+				g.player.Class = entities.ClassKnight
+				if g.spriteSheet != nil {
+					g.player.Sprite = g.spriteSheet.GreyKnight
+				}
+				g.player.ClearAbilities()
+				for slot := range g.player.Equipment {
+					g.player.Equipment[slot] = nil
+				}
+				g.player.EquipStarter()
 			},
 		},
 		{
 			Label:    "Play as Mage",
 			IsActive: func() bool { return g.player != nil && g.player.Class == entities.ClassMage },
 			Toggle: func() {
-				if g.player != nil {
-					g.player.Class = entities.ClassMage
-					g.player.ClearAbilities()
-					for slot := range g.player.Equipment {
-						g.player.Equipment[slot] = nil
-					}
-					g.player.EquipStarter()
+				if g.player == nil {
+					return
 				}
+				g.player.Class = entities.ClassMage
+				if img, err := images.LoadEmbeddedImage(images.Black_Mage_Full_png); err == nil {
+					g.player.Sprite = img
+				}
+				g.player.ClearAbilities()
+				for slot := range g.player.Equipment {
+					g.player.Equipment[slot] = nil
+				}
+				g.player.EquipStarter()
 			},
 		},
 	}

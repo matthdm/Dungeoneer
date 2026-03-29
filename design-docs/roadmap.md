@@ -2,7 +2,7 @@
 
 This document defines the implementation order for all systems. Each phase builds on the previous. Within each phase, items are listed in dependency order.
 
-**Last updated:** 2026-03-24
+**Last updated:** 2026-03-26
 
 ---
 
@@ -112,30 +112,6 @@ See: `ability-items.md` for full design.
 | 4.16 | Gold Economy — monsters drop gold, gold persists within run, displayed in HUD | None | — | `entities/player.go`, `hud/hud.go`, `entities/monster.go` |
 | 4.17 | Item Actions in Dialogue — `give_item`, `take_item`, `has_item` conditions work against player inventory | 4.13 | — | `game/npc.game.go`, `dialogue/types.go` |
 
-### 4D: Item Sets
-
-| # | Task | Dependencies | New Files | Touches |
-|---|---|---|---|---|
-| 4.18 | Set Registry — `ItemSet` struct with ID, member item IDs, and `[]SetBonus` (pieces required, stat bonuses, bonus ability) | 4.1 | `items/sets.go` | — |
-| 4.19 | Set Bonus Tracking — on equip/unequip, recalculate active set bonuses; apply stat bonuses and bonus abilities | 4.18, 4.2 | — | `entities/player.go`, `items/sets.go` |
-| 4.20 | Set Bonus UI — equipment panel shows set name, pieces owned/required, active bonuses highlighted | 4.19 | — | `ui/tooltip.go`, `hud/hud.go` |
-| 4.21 | Starter Sets — define 2-3 item sets: Stormcaller (3pc, lightning focus), Fractalist (2pc, bloom+canopy synergy), Chainbreaker (3pc, Varn quest-locked, melee AoE) | 4.18 | — | `items/sets.go` |
-
-### 4E: Hub Shop & Upgrades
-
-| # | Task | Dependencies | New Files | Touches |
-|---|---|---|---|---|
-| 4.22 | Shop NPC — permanent hub NPC with shop interface, speech bubble prompt | 4.16 | — | `game/hub.go`, `game/npc_data.go` |
-| 4.23 | Shop UI — scrollable item list, Remnant balance, purchase confirmation, stock limits per run | 4.22 | `ui/shop.go` | `game/game.go`, `game/draw.game.go` |
-| 4.24 | Shop Inventory — starter consumables + basic ability items (Grimoire of Fire, Windrunner Boots, Iron Grapple) priced in Remnants | 4.23, 4.8 | `game/shop_data.go` | — |
-| 4.25 | Run Loadout — purchased items appear in player inventory when run starts | 4.24 | — | `game/hub.go` |
-| 4.26 | Upgrade Registry — `UpgradeDef` struct with ID, name, costs per level, max level, `Apply()` function | None | `game/upgrades.go` | — |
-| 4.27 | Starter Upgrades — 8 upgrades: Iron Constitution (+HP), Sharpened Edge (+DMG), Deep Pockets (+inv row), Spell Affinity (-mana cost), Mana Well (+max mana), Quick Draw (-cooldown), Scavenger (+Remnants), Innate Dash (start with dash, no item) | 4.26 | — | `game/upgrades.go` |
-| 4.28 | Upgrade Station NPC — permanent hub NPC near portal, opens upgrade UI | 4.26 | — | `game/hub.go`, `game/npc_data.go` |
-| 4.29 | Upgrade UI — category tabs, level pips, cost display, purchase with Remnants | 4.28 | `ui/upgrade_station.go` | `game/game.go`, `game/draw.game.go` |
-| 4.30 | Apply Upgrades at Run Start — iterate `Meta.Upgrades`, call `Apply()` on player before dungeon entry | 4.27 | — | `game/hub.go`, `entities/player.go` |
-| 4.31 | Meta Save Extension — persist `Upgrades map[string]int` in MetaSave, init on load | 4.26 | — | `game/metasave.go` |
-
 ### 4F: Loot Refinement
 
 | # | Task | Dependencies | New Files | Touches |
@@ -144,7 +120,9 @@ See: `ability-items.md` for full design.
 | 4.33 | Chest Variants — wooden (common), iron (uncommon+), gold (rare+) with locked chests requiring Iron Key | 4.32 | `entities/chest.go` | `game/handlers.game.go` |
 | 4.34 | Treasure Room Loot — rooms tagged `treasure` always contain a chest with elevated quality | 4.32 | — | `game/hub.go`, `items/loot.go` |
 
-**Milestone: Abilities are earned through items. Complete meta economy. Each run feels different based on what you find. Quest-locked items create NPC motivation.**
+**Milestone: Abilities are earned through items. Each run feels different based on what you find. Quest-locked items create NPC motivation.**
+
+> Item Sets (4D) and Hub Shop & Upgrades (4E) deferred to Phase 8.
 
 ---
 
@@ -265,7 +243,39 @@ These systems both depend on accumulated meta-save data (multiple completed runs
 
 ---
 
-## Phase 8: Polish & Feel
+## Phase 8: Item Sets, Shop & Upgrades
+
+*Goal: Meta-progression economy and set-bonus depth. Deferred from Phase 4 to keep momentum on narrative systems.*
+
+### 8A: Item Sets
+
+| # | Task | Dependencies | New Files | Touches |
+|---|---|---|---|---|
+| 8.1 | Set Registry — `ItemSet` struct with ID, member item IDs, and `[]SetBonus` (pieces required, stat bonuses, bonus ability) | 4.1 | `items/sets.go` | — |
+| 8.2 | Set Bonus Tracking — on equip/unequip, recalculate active set bonuses; apply stat bonuses and bonus abilities | 8.1 | — | `entities/player.go`, `items/sets.go` |
+| 8.3 | Set Bonus UI — equipment panel shows set name, pieces owned/required, active bonuses highlighted | 8.2 | — | `ui/tooltip.go`, `hud/hud.go` |
+| 8.4 | Starter Sets — define 2-3 item sets: Stormcaller (3pc, lightning focus), Fractalist (2pc, bloom+canopy synergy), Chainbreaker (3pc, Varn quest-locked, melee AoE) | 8.1 | — | `items/sets.go` |
+
+### 8B: Hub Shop & Upgrades
+
+| # | Task | Dependencies | New Files | Touches |
+|---|---|---|---|---|
+| 8.5 | Shop NPC — permanent hub NPC with shop interface, speech bubble prompt | Phase 4 | — | `game/hub.go`, `game/npc_data.go` |
+| 8.6 | Shop UI — scrollable item list, Remnant balance, purchase confirmation, stock limits per run | 8.5 | `ui/shop.go` | `game/game.go`, `game/draw.game.go` |
+| 8.7 | Shop Inventory — starter consumables + basic ability items priced in Remnants | 8.6 | `game/shop_data.go` | — |
+| 8.8 | Run Loadout — purchased items appear in player inventory when run starts | 8.7 | — | `game/hub.go` |
+| 8.9 | Upgrade Registry — `UpgradeDef` struct with ID, name, costs per level, max level, `Apply()` function | None | `game/upgrades.go` | — |
+| 8.10 | Starter Upgrades — 8 upgrades: Iron Constitution (+HP), Sharpened Edge (+DMG), Deep Pockets (+inv row), Spell Affinity (-mana cost), Mana Well (+max mana), Quick Draw (-cooldown), Scavenger (+Remnants), Innate Dash | 8.9 | — | `game/upgrades.go` |
+| 8.11 | Upgrade Station NPC — permanent hub NPC near portal, opens upgrade UI | 8.9 | — | `game/hub.go`, `game/npc_data.go` |
+| 8.12 | Upgrade UI — category tabs, level pips, cost display, purchase with Remnants | 8.11 | `ui/upgrade_station.go` | `game/game.go`, `game/draw.game.go` |
+| 8.13 | Apply Upgrades at Run Start — iterate `Meta.Upgrades`, call `Apply()` on player before dungeon entry | 8.10 | — | `game/hub.go`, `entities/player.go` |
+| 8.14 | Meta Save Extension — persist `Upgrades map[string]int` in MetaSave, init on load | 8.9 | — | `game/metasave.go` |
+
+**Milestone: Complete meta economy. Remnants have meaningful spend. Set bonuses reward focused builds.**
+
+---
+
+## Phase 9: Polish & Feel
 
 *Goal: The game feels complete. Transitions are smooth, feedback is satisfying, navigation is clear.*
 
@@ -311,7 +321,7 @@ Can be started after Phase 5. Many tasks are independent and can be parallelized
 
 ---
 
-## Phase 9: Thematic Completion
+## Phase 10: Thematic Completion
 
 *Goal: The narrative vision is fully realized. Multiple NPC arcs, Abaddon's meta-commentary, and the full biome catalogue.*
 

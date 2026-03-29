@@ -1,6 +1,7 @@
 package game
 
 import (
+	"dungeoneer/entities"
 	"dungeoneer/fov"
 	"image/color"
 	"math"
@@ -30,6 +31,7 @@ func init() {
 func (g *Game) collectRenderables(scale, cx, cy float64) []Renderable {
 	var r []Renderable
 	r = append(r, g.collectTileRenderables(scale, cx, cy)...)
+	r = append(r, g.collectChestRenderables(scale, cx, cy)...)
 	r = append(r, g.collectItemDropRenderables(scale, cx, cy)...)
 	r = append(r, g.collectExitEntityRenderables(scale, cx, cy)...)
 
@@ -106,7 +108,7 @@ func (g *Game) collectItemDropRenderables(scale, cx, cy float64) []Renderable {
 		ts := float64(g.currentLevel.TileSize)
 		op := &ebiten.DrawImageOptions{}
 		op.GeoM.Scale(0.5, 0.5)
-		op.GeoM.Translate(ts/2-w/4, ts/4-h/4)
+		op.GeoM.Translate(-w/4, ts/4-h/4)
 		op.GeoM.Translate(xi, yi)
 		op.GeoM.Translate(-g.camX, g.camY)
 		op.GeoM.Scale(scale, scale)
@@ -127,7 +129,7 @@ func (g *Game) collectItemDropRenderables(scale, cx, cy float64) []Renderable {
 		})
 		if inFOV {
 			spark := &ebiten.DrawImageOptions{}
-			spark.GeoM.Translate(ts/2-2, ts/4-h/4-4)
+			spark.GeoM.Translate(-2, ts/4-h/4-4)
 			spark.GeoM.Translate(xi, yi)
 			spark.GeoM.Translate(-g.camX, g.camY)
 			spark.GeoM.Scale(scale, scale)
@@ -179,6 +181,62 @@ func (g *Game) collectExitEntityRenderables(scale, cx, cy float64) []Renderable 
 			TileY:       float64(e.TileY),
 			DepthWeight: 0.3,
 		},
+	}
+}
+
+func (g *Game) collectChestRenderables(scale, cx, cy float64) []Renderable {
+	var out []Renderable
+	for _, c := range g.Chests {
+		if c.Sprite == nil {
+			continue
+		}
+		if c.TileX < 0 || c.TileY < 0 || c.TileX >= g.currentLevel.W || c.TileY >= g.currentLevel.H {
+			continue
+		}
+		inFOV := g.isTileVisible(c.TileX, c.TileY)
+		wasSeen := g.SeenTiles[c.TileY][c.TileX]
+		if !inFOV && !wasSeen {
+			continue
+		}
+		xi, yi := g.cartesianToIso(float64(c.TileX), float64(c.TileY))
+		op := &ebiten.DrawImageOptions{}
+		op.GeoM.Translate(xi, yi)
+		op.GeoM.Translate(-g.camX, g.camY)
+		op.GeoM.Scale(scale, scale)
+		op.GeoM.Translate(cx, cy)
+
+		// Tint by variant when in FOV; dim when only seen.
+		if inFOV {
+			r, gv, b := chestTint(c.Variant, c.Opened)
+			op.ColorScale.Scale(r, gv, b, 1)
+		} else {
+			op.ColorScale.Scale(0.2, 0.2, 0.2, 1)
+		}
+		out = append(out, Renderable{
+			Image:       c.Sprite,
+			Options:     op,
+			TileX:       float64(c.TileX),
+			TileY:       float64(c.TileY),
+			DepthWeight: 0.3,
+		})
+	}
+	return out
+}
+
+// chestTint returns RGB multipliers for a chest variant. Opened chests are dimmed.
+func chestTint(variant string, opened bool) (float32, float32, float32) {
+	if opened {
+		return 0.45, 0.35, 0.25
+	}
+	switch variant {
+	case entities.ChestGold:
+		return 1.0, 0.85, 0.3
+	case entities.ChestIron:
+		return 0.75, 0.85, 1.0
+	case entities.ChestLocked:
+		return 0.9, 0.4, 0.9
+	default: // wooden
+		return 1.0, 0.75, 0.5
 	}
 }
 

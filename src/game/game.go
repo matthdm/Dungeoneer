@@ -62,11 +62,11 @@ type Game struct {
 	ExitEntity             *entities.ExitEntity
 
 	// Run loop
-	RunState    *RunState
-	Meta        *MetaSave
-	IsInHub     bool
-	hubPortalX  int
-	hubPortalY  int
+	RunState   *RunState
+	Meta       *MetaSave
+	IsInHub    bool
+	hubPortalX int
+	hubPortalY int
 
 	DevMenu         *ui.DevMenu
 	DevTools        *ui.DevOverlay
@@ -78,9 +78,10 @@ type Game struct {
 
 	Controls *controls.Controls
 
-	ActiveSpells    []spells.Spell
-	ActiveSpray     *spells.ArcaneSpray // currently channeled spray (nil if none)
-	fireballSprites [][]*ebiten.Image
+	ActiveSpells      []spells.Spell
+	ActiveSpray       *spells.ArcaneSpray // currently channeled spray (nil if none)
+	sprayManaDrainAcc float64
+	fireballSprites   [][]*ebiten.Image
 
 	SpellDebug bool
 	GodMode    bool // infinite HP
@@ -96,6 +97,8 @@ type Game struct {
 	ShowThroatInvalid        bool
 	ShowRegionDebug          bool
 	ShowDoorDebug            bool
+	ShowHitboxes             bool
+	ShowInteractionRadii     bool
 
 	// Visibility tracking
 	// visibleTick[y][x] stores the gameTick when a tile was last hit by a ray.
@@ -129,7 +132,15 @@ type Game struct {
 	// Phase 3
 	NPCs          []*entities.NPC
 	DialoguePanel *ui.DialoguePanel
+
+	// Phase 4F
+	Chests []*entities.Chest
 }
+
+const (
+	interactionAnchorOffset = 0.65
+	hubPortalInteractRadius = 1.75
+)
 
 // editorLayerChanged updates the game when the level editor switches layers.
 func (g *Game) editorLayerChanged(l *levels.Level) {
@@ -199,6 +210,7 @@ func NewGame() (*Game, error) {
 		player:          entities.NewPlayer(ss),
 		Monsters:        []*entities.Monster{},
 		NPCs:            []*entities.NPC{},
+		Chests:          []*entities.Chest{},
 		fireballSprites: fbSprites,
 		ActiveSpells:    []spells.Spell{},
 		RaycastWalls:    fov.LevelToWalls(l),
@@ -244,7 +256,7 @@ func NewGame() (*Game, error) {
 	)
 	g.LoadPlayerMenu = ui.NewLoadPlayerMenu(g.w, g.h,
 		func(ply *entities.Player) {
-			g.player = ply
+			g.setPlayer(ply)
 		},
 		func() {
 			menumanager.Manager().CloseActiveMenu()
@@ -375,12 +387,35 @@ func NewGame() (*Game, error) {
 	return g, nil
 }
 
+// setPlayer replaces the active player and rebinds UI components that hold player pointers.
+func (g *Game) setPlayer(p *entities.Player) {
+	g.player = p
+	if p == nil {
+		return
+	}
+	if g.HeroPanel != nil {
+		g.HeroPanel.SetPlayer(p)
+	}
+	if g.DevMenu != nil {
+		g.DevMenu.SetPlayer(p)
+	}
+	g.lastPlayerTileX, g.lastPlayerTileY = p.TileX, p.TileY
+	g.cachedRays = nil
+	if g.HUD != nil {
+		g.syncHUDSpellSlots()
+	}
+}
+
 // ShowHint displays a temporary on-screen message.
 func (g *Game) ShowHint(msg string) {
 	g.hint = msg
 	g.hintTimer = 60
 	g.hintX = g.w/2 - 50
 	g.hintY = g.h - 20
+}
+
+func (g *Game) interactionCenterForTile(tx, ty int) (float64, float64) {
+	return float64(tx) + interactionAnchorOffset, float64(ty) + interactionAnchorOffset
 }
 
 // ShowHintAt displays a temporary on-screen message at a screen position.
@@ -787,6 +822,7 @@ func (g *Game) updatePlaying() error {
 			g.HUD.DashCooldown = maxCD
 			g.HUD.ExpCurrent = g.player.EXP
 			g.HUD.ExpNeeded = progression.EXPToLevel(g.player.Level)
+			g.HUD.Gold = g.player.Gold
 			g.syncHUDSpellSlots()
 		}
 		if g.HeroPanel != nil {
@@ -850,13 +886,16 @@ func (g *Game) updatePlaying() error {
 
 	// NPC interaction hints
 	g.updateNPCHints()
+	g.updateChestHints()
 
 	// Exit entity interaction (run loop)
 	if g.ExitEntity != nil && g.RunState != nil && g.RunState.Active {
 		g.ExitEntity.Update()
-		if g.ExitEntity.IsPlayerNear(g.player.TileX, g.player.TileY) {
-			isoX, isoY := g.cartesianToIso(float64(g.ExitEntity.TileX), float64(g.ExitEntity.TileY))
-			hx := int((isoX-g.camX)*g.camScale + float64(g.w/2))
+		exitX, exitY := g.interactionCenterForTile(g.ExitEntity.TileX, g.ExitEntity.TileY)
+		if g.ExitEntity.IsPlayerNearAt(g.player.MoveController.InterpX, g.player.MoveController.InterpY, exitX, exitY) {
+			isoX, isoY := g.cartesianToIso(exitX, exitY)
+			ts := float64(g.currentLevel.TileSize)
+			hx := int((isoX+ts/2-g.camX)*g.camScale + float64(g.w/2))
 			hy := int((isoY+g.camY)*g.camScale + float64(g.h/2) - 32)
 			g.ShowHintAt("[E] Descend", hx, hy)
 			if g.isActionJustPressed(controls.ActionInteract) {
@@ -867,11 +906,14 @@ func (g *Game) updatePlaying() error {
 
 	// Hub portal interaction
 	if g.IsInHub && g.hubPortalX >= 0 && g.hubPortalY >= 0 {
-		dx := g.player.TileX - g.hubPortalX
-		dy := g.player.TileY - g.hubPortalY
-		if dx*dx+dy*dy <= 9 {
-			isoX, isoY := g.cartesianToIso(float64(g.hubPortalX), float64(g.hubPortalY))
-			hx := int((isoX-g.camX)*g.camScale + float64(g.w/2))
+		portalX, portalY := g.interactionCenterForTile(g.hubPortalX, g.hubPortalY)
+		dx := g.player.MoveController.InterpX - portalX
+		dy := g.player.MoveController.InterpY - portalY
+		if dx*dx+dy*dy <= hubPortalInteractRadius*hubPortalInteractRadius &&
+			g.hasLineOfSight(g.player.TileX, g.player.TileY, g.hubPortalX, g.hubPortalY) {
+			isoX, isoY := g.cartesianToIso(portalX, portalY)
+			ts := float64(g.currentLevel.TileSize)
+			hx := int((isoX+ts/2-g.camX)*g.camScale + float64(g.w/2))
 			hy := int((isoY+g.camY)*g.camScale + float64(g.h/2) - 32)
 			g.ShowHintAt("[E] Enter the Dungeon", hx, hy)
 			if g.isActionJustPressed(controls.ActionInteract) {

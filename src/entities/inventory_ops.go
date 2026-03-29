@@ -99,6 +99,52 @@ func (p *Player) DropFromInventory(gx, gy int, count int) *items.Item {
 	return &items.Item{ItemTemplate: it.ItemTemplate, Count: count}
 }
 
+// HasItemAnywhere returns true if the player has an item with the given ID in
+// their inventory grid or any equipped slot.
+func (p *Player) HasItemAnywhere(id string) bool {
+	if p.Inventory != nil && p.Inventory.HasItem(id) {
+		return true
+	}
+	for _, it := range p.Equipment {
+		if it != nil && it.ID == id {
+			return true
+		}
+	}
+	return false
+}
+
+// RemoveItemByID removes one item with the given ID from the player's inventory
+// or equipment. Equipment slots trigger OnUnequip and RefreshAbilities.
+// Returns true if an item was found and removed.
+func (p *Player) RemoveItemByID(id string) bool {
+	if p.Inventory != nil {
+		for y := 0; y < p.Inventory.Height; y++ {
+			for x := 0; x < p.Inventory.Width; x++ {
+				if it := p.Inventory.Grid[y][x]; it != nil && it.ID == id {
+					if it.Count > 1 {
+						it.Count--
+					} else {
+						p.Inventory.Grid[y][x] = nil
+					}
+					return true
+				}
+			}
+		}
+	}
+	for slot, it := range p.Equipment {
+		if it != nil && it.ID == id {
+			if it.OnUnequip != nil {
+				it.OnUnequip(p)
+			}
+			p.Equipment[slot] = nil
+			p.RecalculateStats()
+			p.RefreshAbilities()
+			return true
+		}
+	}
+	return false
+}
+
 // AddToInventory attempts to add an item to the player's inventory.
 // Returns true if successful, false if the inventory is full.
 func (p *Player) AddToInventory(it *items.Item) bool {

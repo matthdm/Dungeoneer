@@ -20,11 +20,11 @@ type NPC struct {
 
 	// Position (mirrors Monster pattern)
 	TileX, TileY     int
-	InterpX, InterpY  float64
-	LeftFacing        bool
+	InterpX, InterpY float64
+	LeftFacing       bool
 
 	// Visuals
-	Sprite    *ebiten.Image
+	Sprite     *ebiten.Image
 	PortraitID string
 	BobOffset  float64
 	TickCount  int
@@ -80,10 +80,17 @@ func (n *NPC) Draw(screen *ebiten.Image, tileSize int, camX, camY, camScale, cx,
 
 // IsPlayerInRange returns true if the player is close enough to interact.
 func (n *NPC) IsPlayerInRange(px, py int) bool {
+	return n.IsPlayerInRangeAt(float64(px), float64(py))
+}
+
+// IsPlayerInRangeAt checks interaction radius using world-space player coordinates.
+func (n *NPC) IsPlayerInRangeAt(px, py float64) bool {
 	if n.InteractRange <= 0 {
-		return IsAdjacentRanged(px, py, n.TileX, n.TileY, 2)
+		dx := px - float64(n.TileX)
+		dy := py - float64(n.TileY)
+		return dx*dx+dy*dy <= 4 // default ~2 tiles
 	}
-	dx := float64(px - n.TileX)
-	dy := float64(py - n.TileY)
+	dx := px - n.InterpX
+	dy := py - n.InterpY
 	return math.Sqrt(dx*dx+dy*dy) <= n.InteractRange
 }

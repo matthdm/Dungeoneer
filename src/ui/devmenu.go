@@ -25,6 +25,13 @@ func (dm *DevMenu) Resize(w, h int) {
 	dm.palette.Resize(w, h)
 }
 
+// SetPlayer rebinds the palette to a newly loaded player.
+func (dm *DevMenu) SetPlayer(p *entities.Player) {
+	if dm.palette != nil {
+		dm.palette.SetPlayer(p)
+	}
+}
+
 // Update handles input and menu logic.
 func (dm *DevMenu) Update() {
 	if !constants.DebugMode {

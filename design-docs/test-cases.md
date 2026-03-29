@@ -124,6 +124,65 @@ Tests marked **[BLOCKING]** must pass before the phase is considered complete. T
 
 ---
 
+## Phase 4: Stabilization & Combat Debug
+
+### T4.01 - Arcane Bolt Center-Mass Hits [BLOCKING]
+**Steps:** Start a run as Mage. Fight enemies at short, medium, and long range using Arcane Bolt.
+**Expected:**
+- Arcane Bolt reliably hits enemy center-mass at all tested ranges
+- Hits are not limited to visually tiny "headshot-like" zones
+
+### T4.02 - Arcane Bolt Visual/Logical Alignment [VISUAL]
+**Steps:** Enable `Show Hitboxes` in Dev Overlay (F12). Cast Arcane Bolt through multiple enemies.
+**Expected:**
+- Arcane Bolt trail/head and magenta projectile hit circle overlap throughout flight
+- Impact point matches collision location on enemy hit circle
+
+### T4.03 - Enemy Grace Radius Feel [BLOCKING]
+**Steps:** Strafe Arcane Bolt along enemy edges while `Show Hitboxes` is enabled.
+**Expected:**
+- Near-edge misses do not produce phantom hits
+- Near-edge touches that overlap the red enemy hit circle register consistently
+
+### T4.04 - Hitbox Overlay Coverage [VISUAL]
+**Steps:** Toggle `Show Hitboxes` on/off during active combat.
+**Expected:**
+- Player collision box renders in cyan
+- Enemy hit circles render in red
+- Arcane Bolt circles render in magenta
+- Monster projectile circles render in orange
+- All overlays track moving entities correctly
+
+### T4.05 - Interaction Range Overlay Coverage [VISUAL]
+**Steps:** Toggle `Show Interaction Ranges` on floor and in hub.
+**Expected:**
+- NPC interaction radii are visible
+- Floor exit interaction radius is visible while run is active
+- Hub portal interaction radius is visible in hub
+- Overlay rings match actual interaction trigger distances
+
+### T4.06 - Overlay Camera Transform Stability [REGRESSION]
+**Steps:** With overlays enabled, pan and zoom camera repeatedly while entities move and combat continues.
+**Expected:**
+- Hitbox and interaction overlays remain correctly anchored in world space
+- No drift, jitter, or scale mismatch vs entities
+
+### T4.07 - Overlay Non-Interference [REGRESSION]
+**Steps:** Compare combat outcomes with overlays OFF vs ON (same class/loadout, similar encounter).
+**Expected:**
+- Overlay toggles do not alter damage, hit registration, AI, or interaction behavior
+- Overlays are visual-only diagnostics
+
+### T4.08 - Stabilization Regression Pack [REGRESSION]
+**Steps:** Re-run prior stabilization checks after hitbox/overlay changes.
+**Expected:**
+- Arcane Spray startup + drain behavior unchanged
+- Spell slot order remains deterministic
+- Save/load class and ability rebuild behavior still correct
+- Load-player UI rebinding behavior still correct
+
+---
+
 ## Adding New Test Cases
 
 When adding tests for a new phase or feature:

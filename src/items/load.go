@@ -113,20 +113,33 @@ type abilityOverride struct {
 	GrantsAbility string
 	AbilitySlot   AbilitySlotType
 	ItemType      ItemType // override generic Misc type
+	QuestLocked   bool     // true = class starter, excluded from random loot
+	Quality       string   // "common", "uncommon", "rare", "legendary"
 }
 
 // applyAbilityOverrides patches known items with their ability grants.
 // Called once after LoadItemSheet so the items already exist in the registry.
 func applyAbilityOverrides() {
 	overrides := []abilityOverride{
-		// Knight starters
-		{ID: "item_0_1", GrantsAbility: "slash_combo", AbilitySlot: AbilitySlotPrimary, ItemType: ItemWeapon},   // Iron Emblem → melee combo
-		{ID: "item_0_60", GrantsAbility: "dash", AbilitySlot: AbilitySlotDash, ItemType: ItemArmor},              // Leather Boots → dash
+		// Knight starters — QuestLocked, Uncommon: class-defining gear given at run start.
+		{ID: "item_0_1", GrantsAbility: "slash_combo", AbilitySlot: AbilitySlotPrimary, ItemType: ItemWeapon, QuestLocked: true, Quality: RarityUncommon},  // Iron Emblem → melee combo
+		{ID: "item_0_60", GrantsAbility: "dash", AbilitySlot: AbilitySlotDash, ItemType: ItemArmor, QuestLocked: true, Quality: RarityUncommon},            // Leather Boots → dash
 
-		// Mage starters
-		{ID: "item_2_44", GrantsAbility: "arcane_bolt", AbilitySlot: AbilitySlotPrimary, ItemType: ItemWeapon},   // Grey Wizard Hat → arcane bolt
-		{ID: "item_0_2", GrantsAbility: "arcane_spray", AbilitySlot: AbilitySlotSpell, ItemType: ItemWeapon},      // Arcane Emblem → arcane spray
-		{ID: "item_0_9", GrantsAbility: "blink", AbilitySlot: AbilitySlotDash, ItemType: ItemArmor},               // Sapphire Amulet → blink
+		// Mage starters — QuestLocked, Uncommon: class-defining gear given at run start.
+		{ID: "item_2_44", GrantsAbility: "arcane_bolt", AbilitySlot: AbilitySlotPrimary, ItemType: ItemWeapon, QuestLocked: true, Quality: RarityUncommon}, // Grey Wizard Hat → arcane bolt
+		{ID: "item_0_2", GrantsAbility: "arcane_spray", AbilitySlot: AbilitySlotSpell, ItemType: ItemWeapon, QuestLocked: true, Quality: RarityUncommon},   // Arcane Emblem → arcane spray
+		{ID: "item_0_9", GrantsAbility: "blink", AbilitySlot: AbilitySlotDash, ItemType: ItemArmor, QuestLocked: true, Quality: RarityUncommon},            // Sapphire Amulet → blink
+
+		// Droppable ability items — Uncommon unless otherwise noted.
+		{ID: "item_2_24", GrantsAbility: "fireball", AbilitySlot: AbilitySlotSpell, ItemType: ItemWeapon, Quality: RarityUncommon},        // Fireball Emblem → fireball
+		{ID: "item_0_3", GrantsAbility: "chaos_ray", AbilitySlot: AbilitySlotSpell, ItemType: ItemWeapon, Quality: RarityUncommon},         // Chaos Emblem → chaos ray
+		{ID: "item_0_26", GrantsAbility: "lightning", AbilitySlot: AbilitySlotSpell, ItemType: ItemWeapon, Quality: RarityUncommon},        // Rage Emblem → lightning
+		{ID: "item_0_35", GrantsAbility: "lightning_storm", AbilitySlot: AbilitySlotSpell, ItemType: ItemWeapon, Quality: RarityRare},      // Azazel's Pentagram → lightning storm (Rare)
+		{ID: "item_2_63", GrantsAbility: "fractal_bloom", AbilitySlot: AbilitySlotSpell, ItemType: ItemWeapon, Quality: RarityUncommon},    // Verdant Tome → fractal bloom
+		{ID: "item_2_55", GrantsAbility: "fractal_canopy", AbilitySlot: AbilitySlotSpell, ItemType: ItemWeapon, Quality: RarityRare},       // Necromancer's Tome → fractal canopy (Rare)
+		{ID: "item_0_63", GrantsAbility: "dash", AbilitySlot: AbilitySlotDash, ItemType: ItemArmor, Quality: RarityUncommon},              // Boots of Speed → dash (cross-class)
+		{ID: "item_2_35", GrantsAbility: "blink", AbilitySlot: AbilitySlotDash, ItemType: ItemArmor, Quality: RarityUncommon},             // Haste Carriers → blink (cross-class)
+		{ID: "item_1_12", GrantsAbility: "grapple", AbilitySlot: AbilitySlotGrapple, ItemType: ItemMisc, Quality: RarityUncommon},         // Grips of the Buried Flame → grapple
 	}
 	for _, o := range overrides {
 		tmpl, ok := Registry[o.ID]
@@ -139,5 +152,9 @@ func applyAbilityOverrides() {
 			tmpl.Type = o.ItemType
 		}
 		tmpl.Equippable = true
+		tmpl.QuestLocked = o.QuestLocked
+		if o.Quality != "" {
+			tmpl.Quality = o.Quality
+		}
 	}
 }

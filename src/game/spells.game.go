@@ -3,6 +3,7 @@ package game
 import (
 	"math"
 
+	"dungeoneer/controls"
 	"dungeoneer/entities"
 	"dungeoneer/fov"
 	"dungeoneer/hud"
@@ -48,10 +49,10 @@ func (g *Game) abilityIcon(abilityID string) *ebiten.Image {
 	fallback := map[string]string{
 		"fireball":        "Red Tome",
 		"chaos_ray":       "Teal Tome",
-		"lightning":        "Blue Tome",
-		"lightning_storm":  "Verdant Tome",
-		"fractal_bloom":    "Crypt Tome",
-		"fractal_canopy":   "Verdant Tome",
+		"lightning":       "Blue Tome",
+		"lightning_storm": "Verdant Tome",
+		"fractal_bloom":   "Crypt Tome",
+		"fractal_canopy":  "Verdant Tome",
 	}
 	if name, ok := fallback[abilityID]; ok {
 		for _, tmpl := range items.Registry {
@@ -90,6 +91,13 @@ func abilitySpellName(abilityID string) string {
 func (g *Game) updateSpells() {
 	var remaining []spells.Spell
 	for _, sp := range g.ActiveSpells {
+		prevX, prevY := 0.0, 0.0
+		isArcaneBolt := false
+		if ab, ok := sp.(*spells.ArcaneBolt); ok && ab != nil {
+			isArcaneBolt = true
+			prevX, prevY = ab.X, ab.Y
+		}
+
 		sp.Update(g.currentLevel, g.DeltaTime)
 		if fb, ok := sp.(*spells.Fireball); ok {
 			if !fb.Impact {
@@ -151,7 +159,7 @@ func (g *Game) updateSpells() {
 			}
 		}
 		if ab, ok := sp.(*spells.ArcaneBolt); ok {
-			g.checkArcaneBoltHits(ab)
+			g.checkArcaneBoltHits(ab, prevX, prevY, isArcaneBolt)
 		}
 		if !sp.IsFinished() {
 			remaining = append(remaining, sp)
@@ -166,11 +174,13 @@ func (g *Game) updateSpells() {
 func (g *Game) updateChanneledSpray() {
 	spray := g.ActiveSpray
 	if spray == nil || !spray.Channeling {
+		g.sprayManaDrainAcc = 0
 		g.ActiveSpray = nil
 		return
 	}
 	if g.player == nil {
 		spray.StopChannel()
+		g.sprayManaDrainAcc = 0
 		g.ActiveSpray = nil
 		return
 	}
@@ -180,14 +190,40 @@ func (g *Game) updateChanneledSpray() {
 	py := g.player.MoveController.InterpY
 	spray.UpdateChannel(px, py, float64(g.hoverTileX), float64(g.hoverTileY))
 
-	// Drain mana.
-	drain := spray.ManaDrain * g.DeltaTime
+	// Stop spray when the player releases the spell key.
+	sprayHeld := false
+	spellActions := []controls.ActionID{
+		controls.ActionSpell1, controls.ActionSpell2, controls.ActionSpell3,
+		controls.ActionSpell4, controls.ActionSpell5, controls.ActionSpell6,
+	}
+	for i, action := range spellActions {
+		if i < len(g.player.SpellSlots) && g.player.SpellSlots[i] == "arcane_spray" {
+			if g.isActionPressed(action) {
+				sprayHeld = true
+				break
+			}
+		}
+	}
+	if !sprayHeld {
+		spray.StopChannel()
+		g.sprayManaDrainAcc = 0
+		g.ActiveSpray = nil
+		return
+	}
+
+	// Drain mana using an accumulator so per-second drain is stable across frames.
 	if !g.InfMana {
-		g.player.Mana -= int(math.Ceil(drain))
+		g.sprayManaDrainAcc += spray.ManaDrain * g.DeltaTime
+		if g.sprayManaDrainAcc >= 1 {
+			spent := int(g.sprayManaDrainAcc)
+			g.player.Mana -= spent
+			g.sprayManaDrainAcc -= float64(spent)
+		}
 	}
 	if g.player.Mana <= 0 && !g.InfMana {
 		g.player.Mana = 0
 		spray.StopChannel()
+		g.sprayManaDrainAcc = 0
 		g.ActiveSpray = nil
 		return
 	}
@@ -200,7 +236,7 @@ func (g *Game) updateChanneledSpray() {
 			if m.IsDead {
 				continue
 			}
-			if spray.IsInCone(m.InterpX, m.InterpY) {
+			if spray.IsInCone(m.BodyX(), m.BodyY()) {
 				if m.TakeDamage(spray.Info.Damage, &g.HitMarkers, &g.DamageNumbers) {
 					g.handleMonsterDeath(m)
 				}
@@ -237,12 +273,12 @@ func (g *Game) applyFireballDamage(fb *spells.Fireball, cx, cy int) {
 		dy := int(math.Abs(float64(m.TileY - cy)))
 		if dx <= radius && dy <= radius {
 			if g.hasLineOfSight(cx, cy, m.TileX, m.TileY) {
-                               if m.TakeDamage(dmg, &g.HitMarkers, &g.DamageNumbers) {
-                                       g.handleMonsterDeath(m)
-                               }
-                       }
-               }
-       }
+				if m.TakeDamage(dmg, &g.HitMarkers, &g.DamageNumbers) {
+					g.handleMonsterDeath(m)
+				}
+			}
+		}
+	}
 }
 
 func (g *Game) hasLineOfSight(x1, y1, x2, y2 int) bool {
@@ -291,7 +327,8 @@ func (g *Game) castSpellSlot(index int) {
 	}
 	abilityID := g.player.SpellSlots[index]
 	cost := spellManaCost(abilityID)
-	if g.player.Mana < cost {
+	// Channeled spray startup cost check is done inside tryCastArcaneSpray.
+	if abilityID != "arcane_spray" && g.player.Mana < cost {
 		return
 	}
 
@@ -347,9 +384,6 @@ func (g *Game) handlePrimaryAttack(tx, ty float64, cx, cy int) {
 }
 
 func (g *Game) handleSlashCombo(px, py, tx, ty float64) {
-	if !g.player.CanAttack() {
-		return
-	}
 	// Direction from player to cursor in cartesian space.
 	dirAngle := math.Atan2(ty-py, tx-px)
 
@@ -405,7 +439,11 @@ func (g *Game) handleArcaneBolt(px, py, tx, ty float64) {
 	c.PutOnCooldown(info)
 	g.player.Mana -= info.Cost
 
-	bolt := spells.NewArcaneBolt(info, px, py, tx, ty)
+	// Emit from the player's body center so the bolt travels from the
+	// character's visual position, not the feet anchor.
+	bx := g.player.BodyX()
+	by := g.player.BodyY()
+	bolt := spells.NewArcaneBolt(info, bx, by, tx, ty)
 	g.ActiveSpells = append(g.ActiveSpells, bolt)
 }
 
@@ -426,38 +464,53 @@ func (g *Game) handleBasicMelee(cx, cy int) {
 	}
 }
 
-func (g *Game) tryCastArcaneSpray(casterX, casterY, targetX, targetY float64, _ *spells.Caster) bool {
-	// Toggle: if already channeling, stop.
+func (g *Game) tryCastArcaneSpray(casterX, casterY, targetX, targetY float64, c *spells.Caster) bool {
+	info := spells.SpellInfo{Name: "arcane_spray", Level: 1, Cooldown: 0.15, Damage: 3, Cost: 5}
+
+	// Already channeling — key is held, updateChanneledSpray handles it.
 	if g.ActiveSpray != nil && g.ActiveSpray.Channeling {
-		g.ActiveSpray.StopChannel()
-		g.ActiveSpray = nil
 		return false
 	}
-	if g.player.Mana < 5 {
+	if !c.Ready(info) {
 		return false
 	}
-	info := spells.SpellInfo{Name: "arcane_spray", Level: 1, Cooldown: 0, Damage: 3, Cost: 0}
+	if !g.InfMana && g.player.Mana < info.Cost {
+		return false
+	}
+	c.PutOnCooldown(info)
 	spray := spells.NewArcaneSpray(info, casterX, casterY, targetX, targetY)
+	g.sprayManaDrainAcc = 0
 	g.ActiveSpray = spray
 	g.ActiveSpells = append(g.ActiveSpells, spray)
-	return false // mana drained per-tick, not on cast
+	return true // upfront slot cost + ongoing per-second channel drain
 }
 
 // Arcane bolt collision — checked each frame in updateSpells.
-func (g *Game) checkArcaneBoltHits(ab *spells.ArcaneBolt) {
-	if ab.Impact || ab.IsFinished() {
+func (g *Game) checkArcaneBoltHits(ab *spells.ArcaneBolt, prevX, prevY float64, hasPrev bool) {
+	if ab.IsFinished() {
 		return
+	}
+	// If already in post-impact animation and the bolt did not advance this frame,
+	// do not re-apply collision.
+	if ab.Impact && (!hasPrev || (math.Abs(ab.X-prevX) < 1e-6 && math.Abs(ab.Y-prevY) < 1e-6)) {
+		return
+	}
+
+	segStartX, segStartY := ab.X, ab.Y
+	if hasPrev {
+		segStartX, segStartY = prevX, prevY
 	}
 	for _, m := range g.Monsters {
 		if m.IsDead {
 			continue
 		}
-		dx := m.InterpX - ab.X
-		dy := m.InterpY - ab.Y
-		if dx*dx+dy*dy <= ab.Radius*ab.Radius {
+		hitX := m.BodyX()
+		hitY := m.BodyY()
+		r := ab.Radius + m.HitRadius
+		if pointSegmentDistance(hitX, hitY, segStartX, segStartY, ab.X, ab.Y) <= r {
 			ab.Impact = true
-			ab.X = m.InterpX
-			ab.Y = m.InterpY
+			ab.X = hitX
+			ab.Y = hitY
 			if m.TakeDamage(ab.Info.Damage, &g.HitMarkers, &g.DamageNumbers) {
 				g.handleMonsterDeath(m)
 			}
@@ -590,12 +643,12 @@ func (g *Game) applyChaosRayDamage(cr *spells.ChaosRay) {
 			p1 := cr.Path[i]
 			p2 := cr.Path[i+1]
 			if pointSegmentDistance(px, py, p1.X, p1.Y, p2.X, p2.Y) <= radius {
-                               if m.TakeDamage(cr.Info.Damage, &g.HitMarkers, &g.DamageNumbers) {
-                                       g.handleMonsterDeath(m)
-                               }
-                               break
-                       }
-               }
+				if m.TakeDamage(cr.Info.Damage, &g.HitMarkers, &g.DamageNumbers) {
+					g.handleMonsterDeath(m)
+				}
+				break
+			}
+		}
 	}
 }
 
@@ -638,11 +691,11 @@ func (g *Game) applyLightningDamage(l *spells.LightningStrike, cx, cy int) {
 		dy := int(math.Abs(float64(m.TileY - cy)))
 		if dx <= radius && dy <= radius {
 			if g.hasLineOfSight(cx, cy, m.TileX, m.TileY) {
-                               if m.TakeDamage(dmg, &g.HitMarkers, &g.DamageNumbers) {
-                                       g.handleMonsterDeath(m)
-                               }
-                       }
-               }
+				if m.TakeDamage(dmg, &g.HitMarkers, &g.DamageNumbers) {
+					g.handleMonsterDeath(m)
+				}
+			}
+		}
 	}
 }
 
@@ -682,12 +735,12 @@ func (g *Game) applyFractalDamage(n *spells.FractalNode, cx, cy int) {
 		dy := int(math.Abs(float64(m.TileY - cy)))
 		if dx <= radius && dy <= radius {
 			if g.hasLineOfSight(cx, cy, m.TileX, m.TileY) {
-                               if m.TakeDamage(dmg, &g.HitMarkers, &g.DamageNumbers) {
-                                       g.handleMonsterDeath(m)
-                               }
-                       }
-               }
-       }
+				if m.TakeDamage(dmg, &g.HitMarkers, &g.DamageNumbers) {
+					g.handleMonsterDeath(m)
+				}
+			}
+		}
+	}
 }
 
 func (g *Game) castFractalBloom(centerX, centerY float64, c *spells.Caster) {

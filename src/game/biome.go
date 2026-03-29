@@ -53,11 +53,24 @@ func (bc *BiomeConfig) EnemyByRole(role string) *EnemyDef {
 	return nil
 }
 
+// biomeLootSupplement returns extra loot entries that boost thematic ability items
+// for a biome. These are merged on top of the default table so ability items
+// matching the biome theme appear more often while remaining available elsewhere.
+func biomeLootSupplement(entries ...items.LootEntry) *items.LootTableDef {
+	return &items.LootTableDef{Entries: entries}
+}
+
 // BiomeConfigs maps each Biome constant to its configuration.
 var BiomeConfigs = map[Biome]*BiomeConfig{
 	BiomeCrypt: {
 		ID: "crypt", Name: "Crypt",
 		WallFlavor: "crypt", FloorFlavor: "crypt",
+		// Dark arcane theme: fire, chaos, and grapple feel at home here.
+		LootTable: biomeLootSupplement(
+			items.LootEntry{ItemID: "item_2_24", Weight: 2.0, MinFloor: 1, Rarity: items.RarityUncommon}, // Fireball Emblem
+			items.LootEntry{ItemID: "item_0_3", Weight: 2.0, MinFloor: 1, Rarity: items.RarityUncommon},  // Chaos Emblem
+			items.LootEntry{ItemID: "item_1_12", Weight: 1.5, MinFloor: 2, Rarity: items.RarityUncommon}, // Grips of the Buried Flame → grapple
+		),
 		EnemyPool: []EnemyDef{
 			{ID: "crypt_melee", Name: "Grey Knight", Role: "melee", SpriteID: "GreyKnight", BaseHP: 30, BaseDamage: 8, BaseSpeed: 30, AttackRate: 45, Behavior: "roaming"},
 			{ID: "crypt_ranged", Name: "Sorcerer", Role: "ranged", SpriteID: "Sorcerer", BaseHP: 20, BaseDamage: 6, BaseSpeed: 35, AttackRate: 60, Behavior: "ranged"},
@@ -70,6 +83,12 @@ var BiomeConfigs = map[Biome]*BiomeConfig{
 	BiomeMoss: {
 		ID: "moss", Name: "Moss",
 		WallFlavor: "moss", FloorFlavor: "moss",
+		// Ancient nature theme: fractal spells and lightning fit the primal wilds.
+		LootTable: biomeLootSupplement(
+			items.LootEntry{ItemID: "item_2_63", Weight: 2.0, MinFloor: 1, Rarity: items.RarityUncommon}, // Verdant Tome → fractal_bloom
+			items.LootEntry{ItemID: "item_2_55", Weight: 2.0, MinFloor: 2, Rarity: items.RarityUncommon}, // Necromancer's Tome → fractal_canopy
+			items.LootEntry{ItemID: "item_0_26", Weight: 1.5, MinFloor: 2, Rarity: items.RarityUncommon}, // Rage Emblem → lightning
+		),
 		EnemyPool: []EnemyDef{
 			{ID: "moss_melee", Name: "Caveman", Role: "melee", SpriteID: "Caveman", BaseHP: 35, BaseDamage: 9, BaseSpeed: 28, AttackRate: 45, Behavior: "roaming"},
 			{ID: "moss_ranged", Name: "Oracle", Role: "ranged", SpriteID: "Oracle", BaseHP: 22, BaseDamage: 7, BaseSpeed: 32, AttackRate: 55, Behavior: "ranged"},
@@ -82,6 +101,12 @@ var BiomeConfigs = map[Biome]*BiomeConfig{
 	BiomeGallery: {
 		ID: "gallery", Name: "Gallery",
 		WallFlavor: "gallery", FloorFlavor: "gallery",
+		// Cursed aristocratic theme: dark power and blink suit the haunted halls.
+		LootTable: biomeLootSupplement(
+			items.LootEntry{ItemID: "item_0_35", Weight: 2.0, MinFloor: 2, Rarity: items.RarityRare},     // Azazel's Pentagram → lightning_storm
+			items.LootEntry{ItemID: "item_0_3", Weight: 1.5, MinFloor: 1, Rarity: items.RarityUncommon},  // Chaos Emblem → chaos_ray
+			items.LootEntry{ItemID: "item_2_35", Weight: 1.5, MinFloor: 1, Rarity: items.RarityUncommon}, // Haste Carriers → blink
+		),
 		EnemyPool: []EnemyDef{
 			{ID: "gallery_melee", Name: "Red Champion", Role: "melee", SpriteID: "RedChampion", BaseHP: 32, BaseDamage: 10, BaseSpeed: 28, AttackRate: 42, Behavior: "roaming"},
 			{ID: "gallery_ranged", Name: "Duchess", Role: "ranged", SpriteID: "Duchess", BaseHP: 18, BaseDamage: 7, BaseSpeed: 33, AttackRate: 55, Behavior: "ranged"},
@@ -94,6 +119,12 @@ var BiomeConfigs = map[Biome]*BiomeConfig{
 	BiomeBrick: {
 		ID: "brick", Name: "Brick",
 		WallFlavor: "brick", FloorFlavor: "brick",
+		// Demonic hellish theme: fire and storm dominate the deeper infernal halls.
+		LootTable: biomeLootSupplement(
+			items.LootEntry{ItemID: "item_2_24", Weight: 1.5, MinFloor: 1, Rarity: items.RarityUncommon}, // Fireball Emblem
+			items.LootEntry{ItemID: "item_0_26", Weight: 2.0, MinFloor: 1, Rarity: items.RarityUncommon}, // Rage Emblem → lightning
+			items.LootEntry{ItemID: "item_0_35", Weight: 1.5, MinFloor: 3, Rarity: items.RarityRare},     // Azazel's Pentagram → lightning_storm
+		),
 		EnemyPool: []EnemyDef{
 			{ID: "brick_melee", Name: "Sentinel", Role: "melee", SpriteID: "Sentinel", BaseHP: 28, BaseDamage: 8, BaseSpeed: 30, AttackRate: 45, Behavior: "roaming"},
 			{ID: "brick_ranged", Name: "Jester", Role: "ranged", SpriteID: "Jester", BaseHP: 20, BaseDamage: 6, BaseSpeed: 30, AttackRate: 50, Behavior: "ranged"},

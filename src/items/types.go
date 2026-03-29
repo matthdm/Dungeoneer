@@ -46,6 +46,7 @@ type ItemTemplate struct {
 	AbilitySlot   AbilitySlotType // where the ability goes: "spell", "dash", "grapple"
 	SetID         string          // item set membership (empty = no set)
 	QuestLocked   bool            // true = excluded from loot tables, quest reward only
+	Quality       string          // "common", "uncommon", "rare", "legendary" — controls border/title color
 }
 
 // Item represents an inventory instance.

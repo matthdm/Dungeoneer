@@ -38,6 +38,8 @@ Use any of these to invoke this skill in chat:
 - `/dungeoneer architecture` (code structure Q&A)
 - `/dungeoneer tests` (list test cases for current or specified phase)
 - `/dungeoneer tests phase3` (list Phase 3 test cases)
+- `/dungeoneer tests phase4` (list Phase 4 stabilization/debug test cases)
+- `/dungeoneer tests debug` (list debug/visualization-focused test cases)
 
 ---
 
@@ -136,7 +138,7 @@ This prompts the skill to:
 | Bug diagnosis | "Why does right-click spam cause stutter?" | Cite `BUG_TRACKER.md`, link movement/input code |
 | Roadmap timeline | "What's blocking Phase 3?" | Cite roadmap dependencies, list pre-requisites |
 | Backlog / optimization | "What's in the backlog?" | Cite `design-docs/roadmap.md` Backlog section, list items with severity |
-| Test cases | "What tests for Phase 3?" | Cite `design-docs/test-cases.md`, filter by phase/tag |
+| Test cases | "What tests for Phase 3 or Phase 4 debug?" | Cite `design-docs/test-cases.md`, filter by phase/tag |
 | Item lookup | "What does Sword of Chaos do?" | Cite `items_structured_effects.json`, stat block, effects |
 | Control reference | "How do I spawn a monster?" | Cite `README.md` Hotkeys, link `src/leveleditor/` or spawn logic |
 | Architecture query | "Where is NPC dialogue handled?" | Cite `src/ui/`, `dialogue/` files, explain state flow |

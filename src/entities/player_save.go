@@ -1,6 +1,8 @@
 package entities
 
 import (
+	"dungeoneer/collision"
+	"dungeoneer/constants"
 	"dungeoneer/images"
 	"dungeoneer/inventory"
 	"dungeoneer/items"
@@ -13,6 +15,7 @@ type PlayerSave struct {
 	Name      string                    `json:"name"`
 	TileX     int                       `json:"tile_x"`
 	TileY     int                       `json:"tile_y"`
+	Class     PlayerClass               `json:"class,omitempty"`
 	Stats     BaseStats                 `json:"stats"`
 	Inventory [][]items.ItemSave        `json:"inventory"`
 	Equipment map[string]items.ItemSave `json:"equipment"`
@@ -30,6 +33,7 @@ func (p *Player) ToSaveData() PlayerSave {
 		Name:      p.Name,
 		TileX:     p.TileX,
 		TileY:     p.TileY,
+		Class:     p.Class,
 		Stats:     p.Stats,
 		HP:        p.HP,
 		Mana:      p.Mana,
@@ -50,15 +54,26 @@ func LoadPlayer(data PlayerSave) *Player {
 
 	blackMage, _ := images.LoadEmbeddedImage(images.Black_Mage_Full_png)
 
+	equipment := NewEquipmentSlots()
+	for slot, it := range items.DeserializeEquipment(data.Equipment) {
+		equipment[slot] = it
+	}
 	p := &Player{
-		TileX:          data.TileX,
-		TileY:          data.TileY,
-		LeftFacing:     true,
-		Sprite:         blackMage,
-		Stats:          data.Stats,
-		TempModifiers:  StatModifiers{},
+		TileX:         data.TileX,
+		TileY:         data.TileY,
+		LeftFacing:    true,
+		Sprite:        blackMage,
+		Stats:         data.Stats,
+		TempModifiers: StatModifiers{},
+		CollisionBox:  collision.Box{X: float64(data.TileX), Y: float64(data.TileY) - 0.4, Width: 0.55, Height: 0.8},
+		DashCharges:   constants.MaxDashCharges,
+		Grapple: Grapple{
+			MaxDistance: constants.GrappleMaxDistance,
+			Speed:       constants.GrappleSpeed,
+			Delay:       constants.GrappleDelay,
+		},
 		Inventory:      inventory.FromSaveData(data.Inventory),
-		Equipment:      items.DeserializeEquipment(data.Equipment),
+		Equipment:      equipment,
 		HP:             data.HP,
 		Mana:           data.Mana,
 		Level:          data.Level,
@@ -66,6 +81,9 @@ func LoadPlayer(data PlayerSave) *Player {
 		UnspentPoints:  data.Points,
 		Gold:           data.Gold,
 		Name:           data.Name,
+		Class:          normalizeSavedClass(data.Class, equipment),
+		LastMoveDirX:   -1,
+		LastMoveDirY:   0,
 		MoveController: mc,
 		Caster:         spells.NewCaster(),
 	}
@@ -76,5 +94,24 @@ func LoadPlayer(data PlayerSave) *Player {
 	}
 
 	p.RecalculateStats()
+	p.RefreshAbilities()
 	return p
+}
+
+func normalizeSavedClass(saved PlayerClass, equipment map[string]*items.Item) PlayerClass {
+	if saved == ClassKnight || saved == ClassMage {
+		return saved
+	}
+	for _, it := range equipment {
+		if it == nil {
+			continue
+		}
+		switch it.GrantsAbility {
+		case "slash_combo":
+			return ClassKnight
+		case "arcane_bolt":
+			return ClassMage
+		}
+	}
+	return ClassMage
 }

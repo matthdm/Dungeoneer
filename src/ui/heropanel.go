@@ -31,11 +31,12 @@ func NewHeroPanel(r image.Rectangle, p *entities.Player) *HeroPanel {
 	}
 }
 
-func (hp *HeroPanel) SetRect(r image.Rectangle) { hp.rect = r }
-func (hp *HeroPanel) Show()                     { hp.visible = true }
-func (hp *HeroPanel) Hide()                     { hp.visible = false }
-func (hp *HeroPanel) Toggle()                   { hp.visible = !hp.visible }
-func (hp *HeroPanel) IsVisible() bool           { return hp.visible }
+func (hp *HeroPanel) SetRect(r image.Rectangle)    { hp.rect = r }
+func (hp *HeroPanel) SetPlayer(p *entities.Player) { hp.player = p }
+func (hp *HeroPanel) Show()                        { hp.visible = true }
+func (hp *HeroPanel) Hide()                        { hp.visible = false }
+func (hp *HeroPanel) Toggle()                      { hp.visible = !hp.visible }
+func (hp *HeroPanel) IsVisible() bool              { return hp.visible }
 
 func (hp *HeroPanel) Update() {
 	if !hp.visible || hp.player == nil {

@@ -34,8 +34,13 @@ func (e *ExitEntity) Update() {
 
 // IsPlayerNear returns true if the player is within interaction range.
 func (e *ExitEntity) IsPlayerNear(px, py int) bool {
-	dx := e.TileX - px
-	dy := e.TileY - py
+	return e.IsPlayerNearAt(float64(px), float64(py), float64(e.TileX), float64(e.TileY))
+}
+
+// IsPlayerNearAt checks interaction radius against a world-space center.
+func (e *ExitEntity) IsPlayerNearAt(px, py, centerX, centerY float64) bool {
+	dx := centerX - px
+	dy := centerY - py
 	return dx*dx+dy*dy <= 9 // within ~3 tiles
 }
 

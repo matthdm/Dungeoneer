@@ -12,6 +12,7 @@ package game
 
 import (
 	"dungeoneer/constants"
+	"dungeoneer/entities"
 	"dungeoneer/fov"
 	"dungeoneer/levels"
 	"dungeoneer/menumanager"
@@ -193,6 +194,8 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 	g.drawHealNumbers(target, scale, cx, cy)
 	g.drawGrapple(target, scale, cx, cy)
 	g.drawThroatDebug(target, scale, cx, cy)
+	g.drawCombatDebugOverlays(target, scale, cx, cy)
+	g.drawWallDebugOverlay(target, scale, cx, cy)
 
 	if scaleLater {
 		op := &ebiten.DrawImageOptions{}
@@ -206,8 +209,8 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 		mc := g.player.MoveController
 		isoX, isoY := g.cartesianToIso(mc.InterpX, mc.InterpY)
 		ts := float64(g.currentLevel.TileSize)
-		apexX := (isoX + ts/2 - g.camX) * g.camScale + cx
-		apexY := (isoY + ts/4 + g.camY) * g.camScale + cy
+		apexX := (isoX+ts/2-g.camX)*g.camScale + cx
+		apexY := (isoY+ts/4+g.camY)*g.camScale + cy
 		fov.DebugDrawRays(screen, g.cachedRays, apexX, apexY, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
 	}
 	if g.HUD != nil && g.ShowHUD {
@@ -231,9 +234,210 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 	if g.DevTools != nil {
 		g.DevTools.Draw(screen)
 	}
-	if g.ShowWalls && len(g.RaycastWalls) > 0 {
-		fov.DebugDrawWalls(screen, g.RaycastWalls, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
+}
+
+func (g *Game) drawCombatDebugOverlays(target *ebiten.Image, scale, cx, cy float64) {
+	if g.currentLevel == nil {
+		return
 	}
+	if !g.ShowHitboxes && !g.ShowInteractionRadii {
+		return
+	}
+
+	if g.ShowHitboxes {
+		// Player body hitbox — use canonical body center.
+		if g.player != nil {
+			g.drawActorHitEllipse(target, g.player.BodyX(), g.player.BodyY(), 0.35, 0.82, scale, cx, cy, color.NRGBA{R: 0, G: 230, B: 255, A: 230}, 1.5)
+		}
+
+		// Enemy combat hit volumes — use BodyX/BodyY so visualization matches
+		// detection (both in body-center space, not feet-anchor space).
+		for _, m := range g.Monsters {
+			if m == nil || m.IsDead {
+				continue
+			}
+			r := m.HitRadius
+			if r <= 0 {
+				r = entities.DefaultMonsterHitRadius
+			}
+			g.drawActorHitEllipse(target, m.BodyX(), m.BodyY(), r*0.85, 0.66, scale, cx, cy, color.NRGBA{R: 255, G: 70, B: 70, A: 230}, 1.5)
+		}
+
+		// Projectile hit circles: player and monster projectiles.
+		for _, sp := range g.ActiveSpells {
+			ab, ok := sp.(*spells.ArcaneBolt)
+			if !ok || ab == nil || ab.IsFinished() {
+				continue
+			}
+			g.drawWorldCircle(target, ab.X, ab.Y, ab.Radius, scale, cx, cy, color.NRGBA{R: 255, G: 0, B: 255, A: 230}, 1.5, false)
+		}
+		for _, p := range g.MonsterProjectiles {
+			if p == nil || p.Finished {
+				continue
+			}
+			g.drawWorldCircle(target, p.X, p.Y, p.Radius, scale, cx, cy, color.NRGBA{R: 255, G: 140, B: 60, A: 230}, 1.5, true)
+		}
+	}
+
+	if g.ShowInteractionRadii {
+		// NPC interaction range.
+		for _, n := range g.NPCs {
+			if n == nil || !n.Interactable {
+				continue
+			}
+			r := n.InteractRange
+			if r <= 0 {
+				r = 2
+			}
+			g.drawWorldCircle(target, n.InterpX, n.InterpY, r, scale, cx, cy, color.NRGBA{R: 255, G: 240, B: 80, A: 170}, 1.2, true)
+		}
+
+		// Floor exit interaction radius.
+		if g.ExitEntity != nil && g.RunState != nil && g.RunState.Active {
+			exitX, exitY := g.interactionCenterForTile(g.ExitEntity.TileX, g.ExitEntity.TileY)
+			g.drawWorldCircle(
+				target,
+				exitX,
+				exitY,
+				3.0,
+				scale, cx, cy,
+				color.NRGBA{R: 80, G: 255, B: 120, A: 170},
+				1.2,
+				true,
+			)
+		}
+
+		// Hub portal interaction radius.
+		if g.IsInHub && g.hubPortalX >= 0 && g.hubPortalY >= 0 {
+			portalX, portalY := g.interactionCenterForTile(g.hubPortalX, g.hubPortalY)
+			g.drawWorldCircle(
+				target,
+				portalX,
+				portalY,
+				hubPortalInteractRadius,
+				scale, cx, cy,
+				color.NRGBA{R: 80, G: 220, B: 255, A: 170},
+				1.2,
+				true,
+			)
+		}
+	}
+}
+
+func (g *Game) drawWorldRectFromCenter(target *ebiten.Image, centerX, centerY, w, h, scale, cx, cy float64, c color.NRGBA, strokeWidth float32, tileCentered bool) {
+	halfW := w / 2
+	halfH := h / 2
+	x1, y1 := g.worldToScreenPoint(centerX-halfW, centerY-halfH, scale, cx, cy, tileCentered)
+	x2, y2 := g.worldToScreenPoint(centerX+halfW, centerY-halfH, scale, cx, cy, tileCentered)
+	x3, y3 := g.worldToScreenPoint(centerX+halfW, centerY+halfH, scale, cx, cy, tileCentered)
+	x4, y4 := g.worldToScreenPoint(centerX-halfW, centerY+halfH, scale, cx, cy, tileCentered)
+
+	vector.StrokeLine(target, x1, y1, x2, y2, strokeWidth, c, false)
+	vector.StrokeLine(target, x2, y2, x3, y3, strokeWidth, c, false)
+	vector.StrokeLine(target, x3, y3, x4, y4, strokeWidth, c, false)
+	vector.StrokeLine(target, x4, y4, x1, y1, strokeWidth, c, false)
+}
+
+func (g *Game) drawActorHitEllipse(target *ebiten.Image, feetX, feetY, radiusTiles, heightTiles, scale, cx, cy float64, c color.NRGBA, strokeWidth float32) {
+	if radiusTiles <= 0 {
+		return
+	}
+	// tileCentered=false: callers pass the actual body center in cartesian space.
+	sx, sy := g.worldToScreenPoint(feetX, feetY, scale, cx, cy, false)
+
+	// Measure screen-space horizontal radius from the world axis that maps to iso X.
+	sx2, sy2 := g.worldToScreenPoint(feetX+radiusTiles, feetY-radiusTiles, scale, cx, cy, false)
+	rx := float32(math.Hypot(float64(sx2-sx), float64(sy2-sy)))
+	if rx < 2 {
+		rx = 2
+	}
+
+	// Vertical radius is intentionally taller than floor circles to read as body volume.
+	ts := float64(g.currentLevel.TileSize)
+	ry := float32(heightTiles * ts * scale * 0.6)
+	if ry < rx*1.35 {
+		ry = rx * 1.35
+	}
+	centerY := sy + ry*0.14
+
+	g.drawScreenEllipse(target, sx, centerY, rx, ry, c, strokeWidth)
+}
+
+func (g *Game) drawWallDebugOverlay(target *ebiten.Image, scale, cx, cy float64) {
+	if !g.ShowWalls || g.currentLevel == nil {
+		return
+	}
+	ts := float64(g.currentLevel.TileSize) * scale
+	halfW := ts / 2
+	quarterH := ts / 4
+	halfH := ts / 2
+	col := color.NRGBA{R: 255, G: 0, B: 0, A: 230}
+
+	for y := 0; y < g.currentLevel.H; y++ {
+		for x := 0; x < g.currentLevel.W; x++ {
+			tile := g.currentLevel.Tiles[y][x]
+			if tile == nil || tile.IsWalkable {
+				continue
+			}
+			ix, iy := g.cartesianToIso(float64(x), float64(y))
+			sx := (ix-g.camX)*scale + cx
+			sy := (iy+g.camY)*scale + cy
+
+			topX, topY := float32(sx+halfW), float32(sy)
+			rightX, rightY := float32(sx+ts), float32(sy+quarterH)
+			botX, botY := float32(sx+halfW), float32(sy+halfH)
+			leftX, leftY := float32(sx), float32(sy+quarterH)
+
+			vector.StrokeLine(target, topX, topY, rightX, rightY, 1, col, false)
+			vector.StrokeLine(target, rightX, rightY, botX, botY, 1, col, false)
+			vector.StrokeLine(target, botX, botY, leftX, leftY, 1, col, false)
+			vector.StrokeLine(target, leftX, leftY, topX, topY, 1, col, false)
+		}
+	}
+}
+
+func (g *Game) drawWorldCircle(target *ebiten.Image, centerX, centerY, r, scale, cx, cy float64, c color.NRGBA, strokeWidth float32, tileCentered bool) {
+	if r <= 0 {
+		return
+	}
+	const segments = 36
+	var prevX, prevY float32
+	for i := 0; i <= segments; i++ {
+		t := 2 * math.Pi * float64(i) / float64(segments)
+		px := centerX + math.Cos(t)*r
+		py := centerY + math.Sin(t)*r
+		sx, sy := g.worldToScreenPoint(px, py, scale, cx, cy, tileCentered)
+		if i > 0 {
+			vector.StrokeLine(target, prevX, prevY, sx, sy, strokeWidth, c, false)
+		}
+		prevX, prevY = sx, sy
+	}
+}
+
+func (g *Game) drawScreenEllipse(target *ebiten.Image, centerX, centerY, rx, ry float32, c color.NRGBA, strokeWidth float32) {
+	const segments = 40
+	var prevX, prevY float32
+	for i := 0; i <= segments; i++ {
+		t := 2 * math.Pi * float64(i) / float64(segments)
+		x := centerX + rx*float32(math.Cos(t))
+		y := centerY + ry*float32(math.Sin(t))
+		if i > 0 {
+			vector.StrokeLine(target, prevX, prevY, x, y, strokeWidth, c, false)
+		}
+		prevX, prevY = x, y
+	}
+}
+
+func (g *Game) worldToScreenPoint(x, y, scale, cx, cy float64, tileCentered bool) (float32, float32) {
+	isoX, isoY := g.cartesianToIso(x, y)
+	if tileCentered {
+		ts := float64(g.currentLevel.TileSize)
+		isoX += ts / 2
+		isoY += ts / 4
+	}
+	sx := (isoX-g.camX)*scale + cx
+	sy := (isoY+g.camY)*scale + cy
+	return float32(sx), float32(sy)
 }
 
 func (g *Game) drawGrapple(target *ebiten.Image, scale, cx, cy float64) {

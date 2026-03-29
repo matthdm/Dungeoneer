@@ -401,7 +401,11 @@ func (s *InventoryScreen) Draw(dst *ebiten.Image, p *entities.Player) {
 	// Equipment slots
 	for slot, r := range s.EquipSlots {
 		rr := r.Add(image.Pt(0, s.YOffset))
-		vector.StrokeRect(dst, float32(rr.Min.X), float32(rr.Min.Y), float32(rr.Dx()), float32(rr.Dy()), 2, color.White, false)
+		borderClr := color.RGBA{120, 120, 120, 255}
+		if it := p.Equipment[slot]; it != nil {
+			borderClr = QualityColor(it.Quality)
+		}
+		vector.StrokeRect(dst, float32(rr.Min.X), float32(rr.Min.Y), float32(rr.Dx()), float32(rr.Dy()), 2, borderClr, false)
 		if it := p.Equipment[slot]; it != nil {
 			op := &ebiten.DrawImageOptions{}
 			op.GeoM.Translate(float64(rr.Min.X), float64(rr.Min.Y))
@@ -418,8 +422,12 @@ func (s *InventoryScreen) Draw(dst *ebiten.Image, p *entities.Player) {
 		for x := 0; x < p.Inventory.Width; x++ {
 			px := s.GridOrigin.X + x*s.CellSize.X
 			py := s.GridOrigin.Y + s.YOffset + y*s.CellSize.Y
-			vector.StrokeRect(dst, float32(px), float32(py), float32(s.CellSize.X), float32(s.CellSize.Y), 2, color.White, false)
 			it := p.Inventory.Grid[y][x]
+			slotClr := color.RGBA{120, 120, 120, 200}
+			if it != nil {
+				slotClr = QualityColor(it.Quality)
+			}
+			vector.StrokeRect(dst, float32(px), float32(py), float32(s.CellSize.X), float32(s.CellSize.Y), 2, slotClr, false)
 			if it != nil {
 				op := &ebiten.DrawImageOptions{}
 				op.GeoM.Translate(float64(px), float64(py))
@@ -438,10 +446,23 @@ func (s *InventoryScreen) Draw(dst *ebiten.Image, p *entities.Player) {
 		}
 	}
 
-	// Tooltip
+	// Tooltip on hovered grid cell
 	if s.HoverGridX >= 0 && s.HoverGridY >= 0 && !s.menuActive && !s.confirmActive {
 		if it := p.Inventory.Grid[s.HoverGridY][s.HoverGridX]; it != nil {
-			drawItemTooltip(dst, it, mx+16, my+16)
+			DrawItemTooltip(dst, it, mx+16, my+16)
+		}
+	}
+
+	// Tooltip on hovered equip slot
+	if !s.menuActive && !s.confirmActive && !s.Dragging {
+		for slot, r := range s.EquipSlots {
+			rr := r.Add(image.Pt(0, s.YOffset))
+			if mx >= rr.Min.X && mx <= rr.Max.X && my >= rr.Min.Y && my <= rr.Max.Y {
+				if it := p.Equipment[slot]; it != nil {
+					DrawItemTooltip(dst, it, mx+16, my+16)
+				}
+				break
+			}
 		}
 	}
 
@@ -521,35 +542,3 @@ func truncate(s string, n int) string {
 	return s[:n]
 }
 
-func drawItemTooltip(dst *ebiten.Image, it *items.Item, x, y int) {
-	lines := []string{it.Name}
-	if it.Description != "" {
-		lines = append(lines, it.Description)
-	}
-	if len(it.Stats) > 0 {
-		order := []string{"Strength", "Dexterity", "Vitality", "Intelligence", "Luck"}
-		for _, stat := range order {
-			if v, ok := it.Stats[stat]; ok {
-				lines = append(lines, fmt.Sprintf("%s %+d", stat, v))
-			}
-		}
-	}
-	if it.Effect != nil {
-		line := fmt.Sprintf("%s %s %d%%", it.Effect.Trigger, it.Effect.Type, it.Effect.MagnitudePct)
-		lines = append(lines, line)
-		if it.Effect.ChancePct != 0 {
-			lines = append(lines, fmt.Sprintf("Chance %d%%", it.Effect.ChancePct))
-		}
-	}
-	width := 0
-	for _, ln := range lines {
-		if w := len(ln) * 7; w > width {
-			width = w
-		}
-	}
-	height := len(lines) * 14
-	vector.DrawFilledRect(dst, float32(x), float32(y), float32(width+4), float32(height+4), color.RGBA{0, 0, 0, 200}, false)
-	for i, ln := range lines {
-		ebitenutil.DebugPrintAt(dst, ln, x+2, y+2+i*14)
-	}
-}

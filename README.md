@@ -8,10 +8,11 @@ This project is a technical and artistic love letter to games like *Diablo* and 
 
 ##  Developer Notes
 
-**Status:** Phase 1 complete. Phase 2 (Enemy & Combat Depth) complete. Next up: Phase 3 (NPCs & Dialogue).
+**Status:** Phase 1, Phase 2, and Phase 3 are complete. Current focus is Phase 4 stabilization (ability/equipment consistency and save/load parity) before broader economy expansion.
 
 _Remaining polish from earlier phases:_
 
+- [ ] Complete roadmap bridge update for Phase 4 sequencing (stabilization baseline -> economy/features)
 - [ ] Complete full run state serialization (Remnants save working, full state TODO)
 - [ ] Implement load game menu (cosmetic)
 - [ ] Implement options menu (cosmetic)
@@ -62,6 +63,10 @@ _Remaining polish from earlier phases:_
 
 ---
 
+| NPC dialogue system with JSON trees                  | ✅       |
+| Room tagging + tag-based NPC placement               | ✅       |
+| Ability-gated spell slots from equipped items        | ✅       |
+
 ##  Known Issues / Bug Bounties
 
 - [x] **Bug #1**: Spamming right-click causes player to stutter in place or revert to earlier tiles. ***(Fixed)*** — State machine sync in movement controller (OnStep fires at tile arrival).
@@ -101,14 +106,9 @@ _Remaining polish from earlier phases:_
 | **D / →**            | Move right                                                             |
 | **W / ↑**            | Move up                                                                |
 | **S / ↓**            | Move down                                                              |
-| **1**                | Cast Fireball spell                                                    |
-| **2**                | Cast Chaos Ray spell                                                   |
-| **3**                | Cast Lightning spell                                                   |
-| **4**                | Cast Lightning Storm spell                                             |
-| **5**                | Cast Fractal Bloom spell                                               |
-| **6**                | Cast Fractal Canopy spell                                              |
-| **Shift**            | Dash ability (short burst movement)                                    |
-| **F**                | Grapple ability (interact/grab)                                        |
+| **1-6**              | Cast equipped spell slots (ability-gated loadout)                     |
+| **Shift**            | Movement ability (Dash or Blink when unlocked/equipped)               |
+| **F**                | Grapple ability (if unlocked/equipped)                                |
 | **E**                | Interact with objects (doors, NPCs)                                    |
 | **Tab**              | Open/close inventory                                                  |
 | **H**                | Open hero panel (stats/progression)                                    |

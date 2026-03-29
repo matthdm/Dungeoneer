@@ -11,6 +11,7 @@
 package fov
 
 import (
+	"dungeoneer/collision"
 	"dungeoneer/constants"
 	"image/color"
 
@@ -88,9 +89,15 @@ func DebugDrawRays(screen *ebiten.Image, rays []Line, apexScreenX, apexScreenY f
 
 func DebugDrawWalls(screen *ebiten.Image, walls []Line, camX, camY, camScale, cx, cy float64, tileSize int) {
 	for _, wall := range walls {
-		// Transform world coords to screen coords using isometric logic
-		x1, y1 := worldToScreen(wall.X1, wall.Y1, camX, camY, camScale, cx, cy, tileSize)
-		x2, y2 := worldToScreen(wall.X2, wall.Y2, camX, camY, camScale, cx, cy, tileSize)
+		// Keep wall debug in the same collision-space offset used by movement clipping.
+		wx1 := wall.X1 + collision.XWallVisualOffset
+		wy1 := wall.Y1 + collision.YWallVisualOffset
+		wx2 := wall.X2 + collision.XWallVisualOffset
+		wy2 := wall.Y2 + collision.YWallVisualOffset
+
+		// Transform world coords to screen coords using isometric logic.
+		x1, y1 := worldToScreen(wx1, wy1, camX, camY, camScale, cx, cy, tileSize)
+		x2, y2 := worldToScreen(wx2, wy2, camX, camY, camScale, cx, cy, tileSize)
 
 		// Draw red line
 		vector.StrokeLine(

@@ -24,17 +24,18 @@ type SkillSlot struct {
 
 // HUD renders a bottom-screen interface similar to classic action RPGs.
 type HUD struct {
-	HealthPercent float64
-	ManaPercent   float64
-	PlayerMana    int
-	DashCharges   int
-	DashCooldown  float64
-	DashEnabled   bool // true if player has dash ability
+	HealthPercent  float64
+	ManaPercent    float64
+	PlayerMana     int
+	DashCharges    int
+	DashCooldown   float64
+	DashEnabled    bool // true if player has dash ability
 	GrappleEnabled bool // true if player has grapple ability
-	ExpCurrent    int
-	ExpNeeded     int
-	SkillSlots    [6]SkillSlot
-	ActiveSkill   int
+	ExpCurrent     int
+	ExpNeeded      int
+	Gold           int
+	SkillSlots     [6]SkillSlot
+	ActiveSkill    int
 
 	OrbFrame      *ebiten.Image
 	HUDBackground *ebiten.Image
@@ -91,6 +92,7 @@ func (h *HUD) Draw(screen *ebiten.Image, w, hgt int) {
 	drawOrb(screen, margin, y, h.orbSize, h.HealthPercent, color.RGBA{200, 0, 0, 255}, h.OrbFrame, h.orbFill)
 	drawOrb(screen, w-h.orbSize-margin, y, h.orbSize, h.ManaPercent, color.RGBA{0, 0, 200, 255}, h.OrbFrame, h.orbFill)
 
+	h.drawGold(screen, w, hgt)
 	h.drawSkillBar(screen, w, hgt)
 }
 
@@ -189,6 +191,14 @@ func (h *HUD) drawEXPBar(screen *ebiten.Image, barX, barW, barY int) {
 	filled := int(float64(h.ExpCurrent) / float64(h.ExpNeeded) * float64(barW))
 	vector.DrawFilledRect(screen, float32(barX), float32(y), float32(barW), float32(barH), color.RGBA{80, 80, 80, 255}, false)
 	vector.DrawFilledRect(screen, float32(barX), float32(y), float32(filled), float32(barH), color.RGBA{0, 200, 0, 255}, false)
+}
+
+func (h *HUD) drawGold(screen *ebiten.Image, w, hgt int) {
+	margin := 10
+	orbX := w - h.orbSize - margin
+	y := hgt - h.orbSize - margin - 16
+	txt := fmt.Sprintf("G %d", h.Gold)
+	text.Draw(screen, txt, basicfont.Face7x13, orbX, y, color.RGBA{255, 215, 0, 255})
 }
 
 func drawOrb(dst *ebiten.Image, x, y, size int, percent float64, clr color.Color, frame *ebiten.Image, buf *ebiten.Image) {

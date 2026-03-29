@@ -102,7 +102,7 @@ func (ab *ArcaneBolt) Draw(screen *ebiten.Image, tileSize int, camX, camY, camSc
 
 	if ab.Impact {
 		// Impact spark: expanding then fading circle.
-		sx, sy := isoToScreenFloat(ab.X+1, ab.Y, tileSize)
+		sx, sy := isoToScreenFloat(ab.X, ab.Y, tileSize)
 		sx = (sx-camX)*camScale + cx
 		sy = (sy+camY)*camScale + cy
 		alpha := float32(1 - ab.age/0.15)
@@ -116,7 +116,7 @@ func (ab *ArcaneBolt) Draw(screen *ebiten.Image, tileSize int, camX, camY, camSc
 	for i := 0; i < ab.trailLen; i++ {
 		idx := (ab.trailIdx - 1 - i + len(ab.trail)) % len(ab.trail)
 		p := ab.trail[idx]
-		sx, sy := isoToScreenFloat(p.X+1, p.Y, tileSize)
+		sx, sy := isoToScreenFloat(p.X, p.Y, tileSize)
 		sx = (sx-camX)*camScale + cx
 		sy = (sy+camY)*camScale + cy
 
@@ -128,7 +128,7 @@ func (ab *ArcaneBolt) Draw(screen *ebiten.Image, tileSize int, camX, camY, camSc
 	}
 
 	// Draw bolt head.
-	sx, sy := isoToScreenFloat(ab.X+1, ab.Y, tileSize)
+	sx, sy := isoToScreenFloat(ab.X, ab.Y, tileSize)
 	sx = (sx-camX)*camScale + cx
 	sy = (sy+camY)*camScale + cy
 	r := float32(4) * float32(camScale)

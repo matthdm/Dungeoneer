@@ -36,6 +36,7 @@ func NewRoamingMonster(ss *sprites.SpriteSheet) []*Monster {
 			HP:               8,
 			MaxHP:            8,
 			Damage:           2,
+			HitRadius:        DefaultMonsterHitRadius,
 			AttackRate:       45,
 			Behavior:         NewRoamingWanderBehavior(4),
 			Level:            1,

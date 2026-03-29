@@ -53,9 +53,9 @@ func NewArcaneSpray(info SpellInfo, originX, originY, targetX, targetY float64) 
 		OriginY:    originY,
 		DirAngle:   dirAngle,
 		ConeAngle:  coneHalf,
-		Range:      3.0,
+		Range:      5.0,
 		Channeling: true,
-		ManaDrain:  8, // mana per second
+		ManaDrain:  5, // mana per second
 	}
 }
 
@@ -103,7 +103,7 @@ func (as *ArcaneSpray) Update(level *levels.Level, dt float64) {
 				DirX:    math.Cos(angle),
 				DirY:    math.Sin(angle),
 				Speed:   speed,
-				MaxLife: 0.25 + rand.Float64()*0.15,
+				MaxLife: 0.45 + rand.Float64()*0.2,
 			})
 		}
 	}
@@ -167,7 +167,7 @@ func (as *ArcaneSpray) Draw(screen *ebiten.Image, tileSize int, camX, camY, camS
 		sx = (sx-camX)*camScale + cx
 		sy = (sy+camY)*camScale + cy
 
-		r := float32(2+fade*3) * float32(camScale)
+		r := float32(1+fade*1.5) * float32(camScale)
 		vector.DrawFilledCircle(screen, float32(sx), float32(sy), r, col, true)
 	}
 }

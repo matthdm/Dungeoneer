@@ -79,6 +79,7 @@ func (g *Game) loadHub() {
 	g.BossBar = nil
 	g.BossRoom = nil
 	g.NPCs = []*entities.NPC{}
+	g.Chests = []*entities.Chest{}
 	g.IsInHub = true
 	g.hubPortalX = portalX
 	g.hubPortalY = portalY
@@ -261,6 +262,10 @@ func (g *Game) startFloor(floorNum int) {
 	g.NPCs = []*entities.NPC{}
 	g.spawnFloorNPCs(ctx)
 
+	// Spawn chests in treasure rooms
+	g.Chests = []*entities.Chest{}
+	g.spawnFloorChests(ctx)
+
 	// Reset camera and FOV
 	snapIsoX, snapIsoY := g.cartesianToIso(float64(spawnX), float64(spawnY))
 	g.camX = snapIsoX
@@ -370,6 +375,7 @@ func (g *Game) spawnFloorMonsters(ctx FloorContext) {
 				HP:               int(float64(baseHP) * hpScale),
 				MaxHP:            int(float64(baseHP) * hpScale),
 				Damage:           int(float64(baseDmg) * dmgScale),
+				HitRadius:        entities.DefaultMonsterHitRadius,
 				AttackRate:       45,
 				Behavior:         entities.NewRoamingWanderBehavior(5),
 				Level:            ctx.FloorNumber,

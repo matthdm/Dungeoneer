@@ -9,7 +9,7 @@ import (
 // BossAttack describes one attack in a boss's pattern set.
 type BossAttack struct {
 	ID         string
-	Type       string  // "melee", "aoe", "summon"
+	Type       string // "melee", "aoe", "summon"
 	Damage     int
 	Range      float64 // tiles
 	Cooldown   float64 // seconds between uses
@@ -123,15 +123,16 @@ func NewDungeonGuardian(ss *sprites.SpriteSheet, x, y int) *Boss {
 		HP:               200,
 		MaxHP:            200,
 		Damage:           15,
+		HitRadius:        DefaultMonsterHitRadius,
 		AttackRate:       30,
 		Level:            10,
 		Role:             "boss",
 	}
 	boss := &Boss{
-		Monster:  m,
-		Title:    "Hollow Sentinel of the Deep",
+		Monster:   m,
+		Title:     "Hollow Sentinel of the Deep",
 		MaxPhases: 2,
-		PhaseHP:  []float64{0.5}, // transition at 50%
+		PhaseHP:   []float64{0.5}, // transition at 50%
 		Patterns: [][]BossAttack{
 			// Phase 1: melee swings + periodic AoE slam.
 			{
