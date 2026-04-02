@@ -1,0 +1,103 @@
+{
+  "id": "varn_boss_post",
+  "root": "fallen",
+  "nodes": {
+    "fallen": {
+      "id": "fallen",
+      "speaker": "Varn",
+      "portrait": "Sentinel",
+      "text": "...",
+      "responses": [
+        {
+          "text": "[First defeat — NG+ not yet active]",
+          "next_node": "first_defeat",
+          "condition": {"type": "not_flag", "flag": "varn_ng_plus"}
+        },
+        {
+          "text": "[You have fallen before]",
+          "next_node": "ng_plus_defeat",
+          "condition": {"type": "flag_equals", "flag": "varn_ng_plus", "value": 1}
+        }
+      ]
+    },
+    "first_defeat": {
+      "id": "first_defeat",
+      "speaker": "Varn",
+      "portrait": "Sentinel",
+      "text": "The chains... are quiet now. For the first time in longer than I can remember. I do not know if that is peace or dissolution. I suppose I am about to find out.",
+      "responses": [
+        {
+          "text": "You fought well.",
+          "next_node": "fought_well",
+          "condition": {"type": "trust_gte", "flag": "varn", "value": 2}
+        },
+        {
+          "text": "You brought this on yourself.",
+          "next_node": "brought_it",
+          "condition": {"type": "flag_equals", "flag": "varn_betrayed", "value": 1}
+        },
+        {
+          "text": "Is it over?",
+          "next_node": "is_it_over"
+        }
+      ]
+    },
+    "fought_well": {
+      "id": "fought_well",
+      "speaker": "Varn",
+      "portrait": "Sentinel",
+      "text": "So did you. Remember what I told you — about structure, about what holds the chaos back. Someone must still hold that line. I hope it is you."
+    },
+    "brought_it": {
+      "id": "brought_it",
+      "speaker": "Varn",
+      "portrait": "Sentinel",
+      "text": "Yes. I did. That was the shape of this from the moment I chose the chains over compromise. I knew it then. I know it now. Go."
+    },
+    "is_it_over": {
+      "id": "is_it_over",
+      "speaker": "Varn",
+      "portrait": "Sentinel",
+      "text": "For me. Not for the dungeon. The chaos does not stop because I have. Someone else will have to hold the line. Perhaps you already are."
+    },
+    "ng_plus_defeat": {
+      "id": "ng_plus_defeat",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "Again. I have fallen again. How many times have we stood here, I wonder. Does it become easier for you, each time?",
+      "responses": [
+        {
+          "text": "No. It never does.",
+          "next_node": "ng_never_easier",
+          "condition": {"type": "trust_gte", "flag": "varn", "value": 1}
+        },
+        {
+          "text": "You keep making the same choice.",
+          "next_node": "ng_same_choice"
+        },
+        {
+          "text": "Get up. I know you'll be back.",
+          "next_node": "ng_back"
+        }
+      ]
+    },
+    "ng_never_easier": {
+      "id": "ng_never_easier",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "Good. If it did, something important would have been lost. The dungeon will return me to you. I hope, next time, one of us chooses differently."
+    },
+    "ng_same_choice": {
+      "id": "ng_same_choice",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "I know. I have wondered about that myself. The chains do not leave much room for deviation. But perhaps — this time — something will be different when I wake."
+    },
+    "ng_back": {
+      "id": "ng_back",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "Yes. I will be back. That is the one certainty the dungeon has left me. I will try to remember more of this, next time. I always try."
+    }
+  }
+}

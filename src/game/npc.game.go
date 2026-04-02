@@ -6,6 +6,7 @@ import (
 	"dungeoneer/items"
 	"dungeoneer/levels"
 	"dungeoneer/ui"
+	"fmt"
 	"math"
 	"math/rand/v2"
 	"sort"
@@ -112,10 +113,43 @@ func (g *Game) openDialogue(npc *entities.NPC) {
 		if g.RunState != nil {
 			flags = g.RunState.QuestFlags
 		}
-		treeID = dialogue.SelectTree(npc.ID, flags)
+
+		// If the phase advanced on this floor the player should have to move
+		// on before new quest content unlocks. Serve the revisit tree instead
+		// so they can't chain phase transitions in one sitting.
+		advancedFloor := flags[npc.ID+"_phase_advanced_floor"]
+		currentFloor := 0
+		if g.RunState != nil {
+			currentFloor = g.RunState.CurrentFloor
+		}
+		if advancedFloor > 0 && advancedFloor == currentFloor {
+			treeID = npc.ID + "_revisit"
+		} else {
+			treeID = dialogue.SelectTree(npc.ID, flags)
+		}
 	}
 
 	tree := dialogue.Registry[treeID]
+	// Fallback chain for major NPCs when the exact phase tree isn't loaded yet:
+	// 1. Try {id}_revisit  — a within-run "nothing new" conversation
+	// 2. Walk back through lower phase numbers
+	if tree == nil && npc.IsMajor {
+		if t, ok := dialogue.Registry[npc.ID+"_revisit"]; ok {
+			tree = t
+		} else {
+			flags := make(map[string]int)
+			if g.RunState != nil {
+				flags = g.RunState.QuestFlags
+			}
+			for phase := flags[npc.ID+"_phase"] - 1; phase >= 0; phase-- {
+				fallbackID := fmt.Sprintf("%s_phase%d", npc.ID, phase)
+				if t, ok := dialogue.Registry[fallbackID]; ok {
+					tree = t
+					break
+				}
+			}
+		}
+	}
 	if tree == nil {
 		return
 	}
@@ -171,6 +205,43 @@ func (g *Game) evalDialogueCondition(c *dialogue.DialogueCondition) bool {
 			return g.player.Gold >= c.Value
 		}
 		return false
+	case "trust_gte":
+		// c.Flag = NPC id, c.Value = minimum trust threshold.
+		return flags[c.Flag+"_trust"] >= c.Value
+	case "trust_lte":
+		return flags[c.Flag+"_trust"] <= c.Value
+	case "phase_equals":
+		return flags[c.Flag+"_phase"] == c.Value
+	case "phase_gte":
+		return flags[c.Flag+"_phase"] >= c.Value
+	case "meta_defeat_gte":
+		// c.Flag = NPC id; reads DefeatCount from MetaSave (cross-run).
+		if g.Meta != nil {
+			if state := g.Meta.NPCMeta[c.Flag]; state != nil {
+				return state.DefeatCount >= c.Value
+			}
+		}
+		return false
+	case "floor_cleared":
+		// True when every monster on the current floor is dead (or none remain).
+		for _, m := range g.Monsters {
+			if !m.IsDead {
+				return false
+			}
+		}
+		return true
+	case "current_floor_gte":
+		// c.Value = minimum floor number (inclusive).
+		if g.RunState != nil {
+			return g.RunState.CurrentFloor >= c.Value
+		}
+		return false
+	case "current_floor_lte":
+		// c.Value = maximum floor number (inclusive).
+		if g.RunState != nil {
+			return g.RunState.CurrentFloor <= c.Value
+		}
+		return false
 	}
 	return true
 }
@@ -213,6 +284,40 @@ func (g *Game) execDialogueAction(a dialogue.DialogueAction) {
 				g.player.Gold = 0
 			}
 		}
+	case "advance_phase":
+		// a.Flag = NPC id. Increments {id}_phase in QuestFlags and persists
+		// HighestPhase + accumulated trust to MetaSave immediately.
+		// Also records the floor the advance happened on so openDialogue can
+		// route repeat interactions on the same floor to the revisit tree.
+		if g.RunState == nil || a.Flag == "" {
+			return
+		}
+		npcID := a.Flag
+		g.RunState.QuestFlags[npcID+"_phase"]++
+		g.RunState.QuestFlags[npcID+"_phase_advanced_floor"] = g.RunState.CurrentFloor
+		newPhase := g.RunState.QuestFlags[npcID+"_phase"]
+		if g.Meta != nil {
+			if g.Meta.NPCMeta[npcID] == nil {
+				g.Meta.NPCMeta[npcID] = &NPCMetaState{}
+			}
+			state := g.Meta.NPCMeta[npcID]
+			if newPhase > state.HighestPhase {
+				state.HighestPhase = newPhase
+			}
+			// Flush accumulated run trust into persistent total.
+			state.TotalTrust += g.RunState.QuestFlags[npcID+"_trust"]
+			SaveMeta(g.Meta)
+		}
+	case "add_trust":
+		// a.Flag = NPC id, a.Value = trust delta (can be negative).
+		if g.RunState != nil && a.Flag != "" {
+			g.RunState.QuestFlags[a.Flag+"_trust"] += a.Value
+		}
+	case "set_betrayed":
+		// Convenience action: sets {id}_betrayed = 1 in QuestFlags.
+		if g.RunState != nil && a.Flag != "" {
+			g.RunState.QuestFlags[a.Flag+"_betrayed"] = 1
+		}
 	}
 }
 
@@ -225,6 +330,70 @@ func (g *Game) resolvePortrait(id string) *ebiten.Image {
 		return img
 	}
 	return nil
+}
+
+// spawnMajorNPCs places major NPCs on the current floor based on their
+// cross-run phase. Each major NPC spawns at most once per run.
+func (g *Game) spawnMajorNPCs(ctx FloorContext) {
+	if g.RunState == nil {
+		return
+	}
+	avoid := map[[2]int]bool{
+		{g.player.TileX, g.player.TileY}: true,
+	}
+	if g.ExitEntity != nil {
+		avoid[[2]int{g.ExitEntity.TileX, g.ExitEntity.TileY}] = true
+	}
+
+	for _, def := range majorNPCDefs {
+		phase := g.RunState.QuestFlags[def.ID+"_phase"]
+
+		var rule *MajorNPCPhaseRule
+		for i := range def.PhaseRules {
+			if def.PhaseRules[i].Phase == phase {
+				rule = &def.PhaseRules[i]
+				break
+			}
+		}
+		if rule == nil {
+			continue // no NPC spawn rule for this phase (boss phase, etc.)
+		}
+		if ctx.FloorNumber < rule.MinFloor {
+			continue
+		}
+		if rule.MaxFloor > 0 && ctx.FloorNumber > rule.MaxFloor {
+			continue
+		}
+
+		x, y := g.findNPCPlacement(def.Placement, avoid)
+		if x < 0 {
+			continue
+		}
+		avoid[[2]int{x, y}] = true
+
+		// NG+: if the NPC has been defeated before, use TorturedSoul sprite
+		// for phases where they are still restrained (not yet Sentinel).
+		spriteID := rule.SpriteID
+		portraitID := rule.PortraitID
+		if spriteID == "GreyKnight" && g.Meta != nil {
+			if state := g.Meta.NPCMeta[def.ID]; state != nil && state.DefeatCount > 0 {
+				spriteID = "TorturedSoul"
+				portraitID = "TorturedSoul"
+			}
+		}
+
+		tmpl := NPCTemplate{
+			ID:         def.ID,
+			Name:       def.Name,
+			Title:      def.Title,
+			IsMajor:    true,
+			SpriteID:   spriteID,
+			PortraitID: portraitID,
+			Placement:  def.Placement,
+		}
+		npc := g.createNPCFromTemplate(tmpl, x, y)
+		g.NPCs = append(g.NPCs, npc)
+	}
 }
 
 // spawnFloorNPCs places NPCs on a dungeon floor using tag-based placement.
@@ -394,6 +563,64 @@ func nearestRoom(rooms []levels.Room, target *levels.Room) *levels.Room {
 	return best
 }
 
+// triggerPostFightDialogue opens a post-fight dialogue tree for an NPC boss.
+// onDone is called once the dialogue closes (used to finalise the defeat).
+func (g *Game) triggerPostFightDialogue(treeID string, onDone func()) {
+	tree := dialogue.Registry[treeID]
+	if tree == nil {
+		onDone()
+		return
+	}
+	if g.DialoguePanel == nil {
+		g.initDialoguePanel()
+	}
+	// Portrait: Sentinel if betrayed, GreyKnight otherwise. The JSON nodes can
+	// override per-node portrait as usual.
+	portraitID := "GreyKnight"
+	if g.RunState != nil && g.CurrentBoss != nil {
+		if g.RunState.QuestFlags[g.CurrentBoss.NPCID+"_betrayed"] > 0 {
+			portraitID = "Sentinel"
+		}
+	}
+	portrait := g.resolvePortrait(portraitID)
+	g.DialoguePanel.Open(tree, portrait)
+	g.DialoguePanel.OnClose = onDone
+}
+
+// triggerBossEncounter is called when the player steps into the boss room.
+// If the boss has an unshown pre-fight dialogue, it opens the panel and defers
+// activation until the dialogue closes. Otherwise the boss activates immediately.
+func (g *Game) triggerBossEncounter() {
+	b := g.CurrentBoss
+	if b == nil {
+		return
+	}
+	if b.PreFightDialogueID != "" && !b.PreFightShown {
+		b.PreFightShown = true
+		tree := dialogue.Registry[b.PreFightDialogueID]
+		if tree != nil {
+			if g.DialoguePanel == nil {
+				g.initDialoguePanel()
+			}
+			// Opening portrait: Sentinel if betrayed, GreyKnight otherwise.
+			portraitID := "GreyKnight"
+			if g.RunState != nil && g.RunState.QuestFlags[b.NPCID+"_betrayed"] > 0 {
+				portraitID = "Sentinel"
+			}
+			portrait := g.resolvePortrait(portraitID)
+			g.DialoguePanel.Open(tree, portrait)
+			g.DialoguePanel.OnClose = func() {
+				g.activateBoss()
+				g.sealBossRoom()
+			}
+			return
+		}
+	}
+	// No pre-fight dialogue, or tree not found — activate immediately.
+	g.activateBoss()
+	g.sealBossRoom()
+}
+
 // openChest marks the chest as opened and spawns its loot as item drops.
 func (g *Game) openChest(c *entities.Chest) {
 	if c == nil || c.Opened {
@@ -481,15 +708,66 @@ func (g *Game) spawnHubNPCs() {
 	if g.Meta == nil {
 		return
 	}
-	// Hub NPC positions (predetermined slots)
+
+	// Major NPCs occupy reserved hub positions near the portal area.
+	// Each MajorNPCDef gets its own fixed slot — never shares with minor NPCs.
+	majorHubSlots := map[string][2]int{
+		"varn": {12, 10},
+	}
+	for _, def := range majorNPCDefs {
+		meta := g.Meta.NPCMeta[def.ID]
+		if meta == nil || !meta.Met {
+			continue
+		}
+		pos, ok := majorHubSlots[def.ID]
+		if !ok {
+			continue
+		}
+		x, y := pos[0], pos[1]
+		if !g.currentLevel.IsWalkable(x, y) {
+			// Try adjacent tiles if exact slot is a wall.
+			found := false
+			for _, d := range [][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}} {
+				nx, ny := x+d[0], y+d[1]
+				if g.currentLevel.IsWalkable(nx, ny) {
+					x, y = nx, ny
+					found = true
+					break
+				}
+			}
+			if !found {
+				continue
+			}
+		}
+
+		// Sprite: TorturedSoul post-defeat, otherwise use phase 0 sprite (GreyKnight).
+		spriteID := "GreyKnight"
+		portraitID := "GreyKnight"
+		if meta.DefeatCount > 0 {
+			spriteID = "TorturedSoul"
+			portraitID = "TorturedSoul"
+		}
+
+		tmpl := NPCTemplate{
+			ID:         def.ID,
+			Name:       def.Name,
+			Title:      def.Title,
+			IsMajor:    true,
+			DialogueID: def.ID + "_hub", // fixed hub tree, not phase-selected
+			SpriteID:   spriteID,
+			PortraitID: portraitID,
+		}
+		npc := g.createNPCFromTemplate(tmpl, x, y)
+		g.NPCs = append(g.NPCs, npc)
+	}
+
+	// Minor NPCs occupy a separate set of hub slots.
 	hubSlots := [][2]int{{8, 8}, {16, 8}, {8, 16}, {16, 16}}
 	slotIdx := 0
-
 	for npcID, meta := range g.Meta.NPCMeta {
 		if !meta.Met || slotIdx >= len(hubSlots) {
 			continue
 		}
-		// Look up the NPC template
 		var tmpl *NPCTemplate
 		for i := range minorNPCPool {
 			if minorNPCPool[i].ID == npcID {

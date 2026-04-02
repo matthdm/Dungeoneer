@@ -135,6 +135,9 @@ type Game struct {
 
 	// Phase 4F
 	Chests []*entities.Chest
+
+	// Boss floor announcement overlay: counts down from 240 when a boss floor is entered.
+	bossFloorAnnouncement int
 }
 
 const (
@@ -638,6 +641,9 @@ func (g *Game) Update() error {
 	if g.hintTimer > 0 {
 		g.hintTimer--
 	}
+	if g.bossFloorAnnouncement > 0 {
+		g.bossFloorAnnouncement--
+	}
 	switch g.State {
 	case StateMainMenu:
 		return g.updateMainMenu()
@@ -855,11 +861,13 @@ func (g *Game) updatePlaying() error {
 		}
 	}
 
-	// Boss arena activation: seal doors when player enters the boss room.
-	if g.CurrentBoss != nil && !g.CurrentBoss.IsActive && g.BossRoom != nil {
+	// Boss arena activation: when the player enters the boss room and the boss
+	// is not yet active, trigger the encounter (pre-fight dialogue if any, then seal).
+	// Skip if a dialogue is already open to avoid re-triggering every frame.
+	dialogueOpen := g.DialoguePanel != nil && g.DialoguePanel.Active
+	if g.CurrentBoss != nil && !g.CurrentBoss.IsActive && g.BossRoom != nil && !dialogueOpen {
 		if g.BossRoom.Contains(g.player.TileX, g.player.TileY) {
-			g.activateBoss()
-			g.sealBossRoom()
+			g.triggerBossEncounter()
 		}
 	}
 

@@ -7,6 +7,27 @@ import (
 	"dungeoneer/tiles"
 )
 
+// spawnVarnBoss creates and places Varn as the boss on the final floor.
+func (g *Game) spawnVarnBoss(x, y int) {
+	isNGPlus := false
+	if g.Meta != nil {
+		if state := g.Meta.NPCMeta["varn"]; state != nil {
+			isNGPlus = state.DefeatCount > 0
+		}
+	}
+	boss := entities.NewVarnChainkeeper(g.spriteSheet, x, y, isNGPlus)
+	g.CurrentBoss = boss
+	g.Monsters = append(g.Monsters, boss.Monster)
+	g.BossBar = &hud.BossHealthBar{
+		Name:         boss.Monster.Name,
+		Title:        boss.Title,
+		MaxHP:        boss.Monster.MaxHP,
+		CurrentHP:    boss.Monster.HP,
+		PhaseMarkers: boss.PhaseHP,
+		Visible:      false,
+	}
+}
+
 // setupBossFloor identifies the largest room as the arena, spawns the boss,
 // and removes the normal exit portal (it will be spawned on boss death).
 func (g *Game) setupBossFloor(lvl *levels.Level) {
@@ -32,7 +53,13 @@ func (g *Game) setupBossFloor(lvl *levels.Level) {
 	}
 
 	g.BossRoom = best
-	g.spawnBoss(bx, by)
+
+	// Use Varn as boss if his questline has reached the confrontation phase.
+	if g.RunState != nil && g.RunState.QuestFlags["varn_phase"] >= 3 {
+		g.spawnVarnBoss(bx, by)
+	} else {
+		g.spawnBoss(bx, by)
+	}
 
 	// Remove the normal exit — player must defeat the boss to proceed.
 	g.ExitEntity = nil
@@ -97,7 +124,8 @@ func (g *Game) activateBoss() {
 	}
 }
 
-// onBossDefeated handles the boss dying: unseal arena, spawn exit, trigger victory.
+// onBossDefeated handles the boss dying: plays any post-fight dialogue, then
+// unseals the arena and spawns the exit portal once the dialogue closes.
 func (g *Game) onBossDefeated() {
 	if g.CurrentBoss == nil {
 		return
@@ -107,13 +135,29 @@ func (g *Game) onBossDefeated() {
 		g.BossBar.Visible = false
 	}
 
-	// Unseal the arena doors.
-	g.unsealBossRoom()
-
-	// Spawn exit portal at boss position so the player can leave.
-	// Victory is triggered when the player steps on it (via advanceFloor).
+	// finaliseBossDefeat performs the actions that follow once the post-fight
+	// sequence (if any) has finished: save meta, unseal, spawn portal.
 	bx, by := g.CurrentBoss.Monster.TileX, g.CurrentBoss.Monster.TileY
-	g.ExitEntity = entities.NewExitEntity(bx, by, g.spriteSheet.Portal, "Portal")
+	finaliseBossDefeat := func() {
+		if g.CurrentBoss != nil && g.CurrentBoss.NPCID != "" && g.Meta != nil {
+			npcID := g.CurrentBoss.NPCID
+			if g.Meta.NPCMeta[npcID] == nil {
+				g.Meta.NPCMeta[npcID] = &NPCMetaState{}
+			}
+			g.Meta.NPCMeta[npcID].DefeatCount++
+			SaveMeta(g.Meta)
+		}
+		g.unsealBossRoom()
+		g.ExitEntity = entities.NewExitEntity(bx, by, g.spriteSheet.Portal, "Portal")
+	}
+
+	// If the boss has post-fight dialogue, show it before finalising.
+	if g.CurrentBoss.PostFightDialogueID != "" {
+		g.triggerPostFightDialogue(g.CurrentBoss.PostFightDialogueID, finaliseBossDefeat)
+		return
+	}
+
+	finaliseBossDefeat()
 }
 
 // sealBossRoom locks all door tiles on the boss room perimeter.

@@ -1,0 +1,46 @@
+{
+  "id": "varn_boss_pre",
+  "root": "entry",
+  "nodes": {
+    "entry": {
+      "id": "entry",
+      "speaker": "Varn",
+      "portrait": "Sentinel",
+      "text": "You have come this far. I expected nothing less.",
+      "responses": [
+        {
+          "text": "I don't want to fight you.",
+          "next_node": "no_choice",
+          "condition": {"type": "flag_equals", "flag": "varn_betrayed", "value": 0}
+        },
+        {
+          "text": "You knew this would happen.",
+          "next_node": "knew_it_would",
+          "condition": {"type": "flag_equals", "flag": "varn_betrayed", "value": 1}
+        },
+        {
+          "text": "Let's end this.",
+          "next_node": "end_this"
+        }
+      ]
+    },
+    "no_choice": {
+      "id": "no_choice",
+      "speaker": "Varn",
+      "portrait": "Sentinel",
+      "text": "Nor I. But the chains demand it. You have walked through everything the dungeon placed before you — and here, at the end, only one of us can hold the line. That is not malice. That is structure."
+    },
+    "knew_it_would": {
+      "id": "knew_it_would",
+      "speaker": "Varn",
+      "portrait": "Sentinel",
+      "text": "From the moment you refused me. I do not blame you for it. But consequences do not require blame. You made your choice. Now stand to it."
+    },
+    "end_this": {
+      "id": "end_this",
+      "speaker": "Varn",
+      "portrait": "Sentinel",
+      "text": "As you say. The chains were always going to lead here. I am ready."
+    }
+  }
+}

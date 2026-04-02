@@ -1,0 +1,35 @@
+{
+  "id": "varn_revisit",
+  "root": "revisit",
+  "nodes": {
+    "revisit": {
+      "id": "revisit",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "The chains hold better already. You have done enough for now. We will speak again when the time comes.",
+      "responses": [
+        {
+          "text": "I'll find you again.",
+          "next_node": "farewell",
+          "condition": {"type": "trust_gte", "flag": "varn", "value": 1}
+        },
+        {
+          "text": "Don't count on it.",
+          "next_node": "farewell_cold"
+        }
+      ]
+    },
+    "farewell": {
+      "id": "farewell",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "I know you will."
+    },
+    "farewell_cold": {
+      "id": "farewell_cold",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "You always do."
+    }
+  }
+}

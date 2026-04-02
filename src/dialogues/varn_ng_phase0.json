@@ -1,0 +1,100 @@
+{
+  "id": "varn_ng_phase0",
+  "root": "intro",
+  "nodes": {
+    "intro": {
+      "id": "intro",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "You again. I remember you — or something shaped like memory of you. The dungeon gave me back, as it gives everything back. It does not release what it has already claimed.",
+      "responses": [
+        {"text": "You remember dying.", "next_node": "remember_dying"},
+        {"text": "I need to understand what happened.", "next_node": "what_happened"},
+        {"text": "The chains still hold you here.", "next_node": "still_here"}
+      ]
+    },
+    "remember_dying": {
+      "id": "remember_dying",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "Fragments. The shape of your face. The sound of the chains breaking. And then — nothing, and then this. I do not know how many times this has already happened. The dungeon does not keep records it intends to share.",
+      "responses": [
+        {"text": "Does it change anything, knowing?", "next_node": "does_it_change"}
+      ]
+    },
+    "what_happened": {
+      "id": "what_happened",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "The dungeon keeps its own counsel on that. I know only that I was, then was not, and now am again. The chains that bind me are the same chains — they do not care whether I remember them. They hold regardless.",
+      "responses": [
+        {"text": "The same task, then.", "next_node": "same_task"}
+      ]
+    },
+    "still_here": {
+      "id": "still_here",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "Still here. Still holding. The dungeon gave me back but did not return what the chains took from me. I am less than I was. You can see that, I think.",
+      "on_enter": [{"type": "add_trust", "flag": "varn", "value": 1}],
+      "responses": [
+        {"text": "What do you need from me?", "next_node": "what_do_you_want"}
+      ]
+    },
+    "does_it_change": {
+      "id": "does_it_change",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "No. The work is the same. The chaos still erodes the structure. Whether I remember you changes nothing about what must be done. Perhaps that is the point.",
+      "responses": [
+        {"text": "What do you need?", "next_node": "what_do_you_want"}
+      ]
+    },
+    "same_task": {
+      "id": "same_task",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "The same task. I would apologize for that if it would mean anything. It does not.",
+      "responses": [
+        {"text": "Tell me.", "next_node": "what_do_you_want"}
+      ]
+    },
+    "what_do_you_want": {
+      "id": "what_do_you_want",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "The corrupted things still walk near this post. Clear them. The structure needs it. Whatever I am now, I am still holding the line — I need you to give it something to hold against.",
+      "responses": [
+        {
+          "text": "I'll do it.",
+          "next_node": "agree",
+          "on_select": [{"type": "add_trust", "flag": "varn", "value": 1}]
+        },
+        {
+          "text": "I don't owe you anything.",
+          "next_node": "disagree"
+        }
+      ]
+    },
+    "agree": {
+      "id": "agree",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "Good. I remember that you were worth trusting. I will hold to that, even if I cannot hold to much else.",
+      "on_enter": [
+        {"type": "set_flag", "flag": "varn_met", "value": 1},
+        {"type": "advance_phase", "flag": "varn"}
+      ]
+    },
+    "disagree": {
+      "id": "disagree",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "Then we are further from each other than we were before. I remember you being worth the trouble. Perhaps I misremembered.",
+      "on_enter": [
+        {"type": "set_flag", "flag": "varn_met", "value": 1},
+        {"type": "advance_phase", "flag": "varn"}
+      ]
+    }
+  }
+}

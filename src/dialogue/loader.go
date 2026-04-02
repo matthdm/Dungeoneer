@@ -88,7 +88,17 @@ func LoadAll(dir string) error {
 }
 
 // SelectTree picks the appropriate tree ID for an NPC based on quest flags.
+// When the player is in NG+ (npc_ng_plus > 0), it first checks whether an
+// NG+-specific variant exists (e.g. "varn_ng_phase0") before falling back to
+// the standard tree ("varn_phase0"). This allows NG+ questlines to diverge
+// without touching the normal trees.
 func SelectTree(npcID string, flags map[string]int) string {
 	phase := flags[npcID+"_phase"]
+	if flags[npcID+"_ng_plus"] > 0 {
+		ngKey := fmt.Sprintf("%s_ng_phase%d", npcID, phase)
+		if _, ok := Registry[ngKey]; ok {
+			return ngKey
+		}
+	}
 	return fmt.Sprintf("%s_phase%d", npcID, phase)
 }

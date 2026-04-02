@@ -1,0 +1,154 @@
+{
+  "id": "varn_hub",
+  "root": "entry",
+  "nodes": {
+    "entry": {
+      "id": "entry",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "You made it back. The dungeon does not give that freely.",
+      "responses": [
+        {
+          "text": "Are you well?",
+          "next_node": "warm_check",
+          "condition": {"type": "trust_gte", "flag": "varn", "value": 2}
+        },
+        {
+          "text": "I'm surprised to see you here.",
+          "next_node": "surprised",
+          "condition": {"type": "trust_lte", "flag": "varn", "value": 1}
+        },
+        {
+          "text": "I have questions.",
+          "next_node": "questions"
+        }
+      ]
+    },
+    "warm_check": {
+      "id": "warm_check",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "As well as something like me can be. The chains follow me here too — I feel the dungeon even in this place. But it is quieter. Almost peaceful.",
+      "responses": [
+        {"text": "Does it ever stop?", "next_node": "does_it_stop"},
+        {"text": "I'll go back soon.", "next_node": "going_back_warm"}
+      ]
+    },
+    "surprised": {
+      "id": "surprised",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "I follow the chains. They led me here. This place sits at an edge — not inside the dungeon, not fully outside it. An appropriate location for something like me.",
+      "responses": [
+        {"text": "What do you want here?", "next_node": "what_here"},
+        {"text": "I have questions.", "next_node": "questions"}
+      ]
+    },
+    "does_it_stop": {
+      "id": "does_it_stop",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "Not yet. Perhaps not ever. But I have carried it long enough that the weight feels like belonging. Some things are not meant to be put down.",
+      "responses": [
+        {"text": "I'll keep going back.", "next_node": "going_back_warm"}
+      ]
+    },
+    "going_back_warm": {
+      "id": "going_back_warm",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "I know. And when you do, I will be there. The chains connect us now — whether you intended that or not. Be careful with what you carry into those halls."
+    },
+    "what_here": {
+      "id": "what_here",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "Nothing, if you prefer. I am not here to impose. But I find myself... watching. Waiting to see if you return. Old habits.",
+      "responses": [
+        {"text": "I have questions.", "next_node": "questions"}
+      ]
+    },
+    "questions": {
+      "id": "questions",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "Ask.",
+      "responses": [
+        {"text": "What is the dungeon, really?", "next_node": "what_is_dungeon"},
+        {"text": "Why do the chains hold you?", "next_node": "why_chains"},
+        {
+          "text": "I want to understand your philosophy.",
+          "next_node": "philosophy",
+          "condition": {"type": "trust_gte", "flag": "varn", "value": 1}
+        },
+        {"text": "Nothing. Never mind.", "next_node": "nevermind"}
+      ]
+    },
+    "what_is_dungeon": {
+      "id": "what_is_dungeon",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "A place that should not exist but does anyway. A wound in something larger that has refused to close. The things inside it — including myself — are what the wound has grown around. We are the scar tissue.",
+      "responses": [
+        {"text": "And what heals it?", "next_node": "what_heals"},
+        {"text": "That's grim.", "next_node": "grim"}
+      ]
+    },
+    "why_chains": {
+      "id": "why_chains",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "I chose them, once. Long ago, before I understood what that meant. A binding willingly entered is still a binding. I have made my peace with it. Most days.",
+      "responses": [
+        {"text": "What about the other days?", "next_node": "other_days"}
+      ]
+    },
+    "philosophy": {
+      "id": "philosophy",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "Order is not the absence of pain. It is the agreement that pain will not be inflicted arbitrarily. Chaos makes no such agreements. That is the difference. That is why the chains matter.",
+      "on_enter": [{"type": "add_trust", "flag": "varn", "value": 1}],
+      "responses": [
+        {"text": "I think I understand.", "next_node": "understands"},
+        {"text": "That sounds like control, not order.", "next_node": "control"}
+      ]
+    },
+    "what_heals": {
+      "id": "what_heals",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "Structure. Purpose. Things given meaning and held to it. Whether that is possible — I do not know. But it is the only answer I have been able to find."
+    },
+    "grim": {
+      "id": "grim",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "Yes. But accurate. I have never found comfort in pleasant lies."
+    },
+    "other_days": {
+      "id": "other_days",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "On the other days, I remember what I gave up to hold the chains. And I wonder if the things I gave up would have been worth more than the things I protected. I have not found an answer yet."
+    },
+    "understands": {
+      "id": "understands",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "Good. Whether you agree or not is a different matter. But understanding it is something."
+    },
+    "control": {
+      "id": "control",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "Perhaps. The line between them is thinner than I would like. I am aware of that. It is why I chose to hold the chains rather than wield them — there is a difference, even if others cannot see it."
+    },
+    "nevermind": {
+      "id": "nevermind",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "Come back when you have something to say."
+    }
+  }
+}

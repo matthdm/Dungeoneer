@@ -193,6 +193,7 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 	g.drawDamageNumbers(target, scale, cx, cy)
 	g.drawHealNumbers(target, scale, cx, cy)
 	g.drawGrapple(target, scale, cx, cy)
+	g.drawBossChainPull(target, scale, cx, cy)
 	g.drawThroatDebug(target, scale, cx, cy)
 	g.drawCombatDebugOverlays(target, scale, cx, cy)
 	g.drawWallDebugOverlay(target, scale, cx, cy)
@@ -219,6 +220,7 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 	if g.BossBar != nil {
 		g.BossBar.Draw(screen, g.w)
 	}
+	g.drawBossFloorAnnouncement(screen)
 	if g.HeroPanel != nil && g.HeroPanel.IsVisible() {
 		g.HeroPanel.Draw(screen)
 	}
@@ -452,6 +454,67 @@ func (g *Game) drawGrapple(target *ebiten.Image, scale, cx, cy float64) {
 	sx2 := (endX-g.camX+30)*scale + cx
 	sy2 := (endY+g.camY+25)*scale + cy
 	vector.StrokeLine(target, float32(sx1), float32(sy1), float32(sx2), float32(sy2), 2, color.White, false)
+}
+
+// drawBossChainPull renders the chain line from Varn to the player for a brief
+// flash after a pull_player attack fires.
+func (g *Game) drawBossChainPull(target *ebiten.Image, scale, cx, cy float64) {
+	if g.CurrentBoss == nil || g.CurrentBoss.PullLineTicks <= 0 || g.player == nil {
+		return
+	}
+	bossX := float64(g.CurrentBoss.Monster.TileX)
+	bossY := float64(g.CurrentBoss.Monster.TileY)
+	playerX := g.player.MoveController.InterpX
+	playerY := g.player.MoveController.InterpY
+
+	bsx, bsy := g.cartesianToIso(bossX, bossY)
+	psx, psy := g.cartesianToIso(playerX, playerY)
+
+	x1 := float32((bsx-g.camX+30)*scale + cx)
+	y1 := float32((bsy+g.camY+25)*scale + cy)
+	x2 := float32((psx-g.camX+30)*scale + cx)
+	y2 := float32((psy+g.camY+25)*scale + cy)
+
+	// Fade out over the 14-tick lifetime.
+	alpha := uint8(float32(g.CurrentBoss.PullLineTicks) / 14.0 * 200)
+	chainColor := color.RGBA{R: 180, G: 180, B: 200, A: alpha}
+	vector.StrokeLine(target, x1, y1, x2, y2, 2, chainColor, false)
+}
+
+// drawBossFloorAnnouncement renders a centered warning overlay for the first
+// ~4 seconds after entering a boss floor.
+func (g *Game) drawBossFloorAnnouncement(screen *ebiten.Image) {
+	if g.bossFloorAnnouncement <= 0 {
+		return
+	}
+	// Fade out over the last 60 ticks.
+	alpha := 1.0
+	if g.bossFloorAnnouncement < 60 {
+		alpha = float64(g.bossFloorAnnouncement) / 60.0
+	}
+	msg := "A great evil stirs ahead..."
+	charW := 7  // basicfont character width
+	scale := 2.0
+	textW := len(msg) * charW * int(scale)
+	x := g.w/2 - textW/2
+	y := g.h/3
+
+	// Dark backdrop strip.
+	stripH := int(13*scale) + 16
+	stripImg := ebiten.NewImage(g.w, stripH)
+	stripImg.Fill(color.RGBA{0, 0, 0, uint8(alpha * 140)})
+	stripOp := &ebiten.DrawImageOptions{}
+	stripOp.GeoM.Translate(0, float64(y-8))
+	screen.DrawImage(stripImg, stripOp)
+
+	// Text — fade by drawing at reduced alpha via a temporary image.
+	textImg := ebiten.NewImage(textW+4, int(13*scale))
+	ebitenutil.DebugPrintAt(textImg, msg, 0, 0)
+	textOp := &ebiten.DrawImageOptions{}
+	textOp.GeoM.Scale(scale, scale)
+	textOp.GeoM.Translate(float64(x), float64(y))
+	textOp.ColorScale.ScaleAlpha(float32(alpha))
+	screen.DrawImage(textImg, textOp)
 }
 
 func (g *Game) drawFloorTiles(target *ebiten.Image, scale, cx, cy float64) {

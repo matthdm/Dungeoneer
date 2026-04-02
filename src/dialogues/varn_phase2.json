@@ -1,0 +1,122 @@
+{
+  "id": "varn_phase2",
+  "root": "intro",
+  "nodes": {
+    "intro": {
+      "id": "intro",
+      "speaker": "Varn",
+      "portrait": "Sentinel",
+      "text": "You see it now, don't you. I am no longer what you first met. The chains have shifted — not broken. Redirected. This is what I was always meant to become.",
+      "responses": [
+        {"text": "You look different.", "next_node": "look_different"},
+        {"text": "What happened to the man who was chained to a post?", "next_node": "the_old_varn"}
+      ]
+    },
+    "look_different": {
+      "id": "look_different",
+      "speaker": "Varn",
+      "portrait": "Sentinel",
+      "text": "The chains no longer bind me to a single point. They extend outward now. Through the walls. Through the rooms. I can feel every fraying thread in this dungeon, and I am pulling them tight. It is... clarifying.",
+      "responses": [
+        {"text": "That sounds like power, not order.", "next_node": "power_not_order"},
+        {"text": "What do you need from me?", "next_node": "the_ask"}
+      ]
+    },
+    "the_old_varn": {
+      "id": "the_old_varn",
+      "speaker": "Varn",
+      "portrait": "Sentinel",
+      "text": "He is still here. More focused. The post was a limitation I no longer require. I have grown into what the chains always needed me to be.",
+      "on_enter": [{"type": "add_trust", "flag": "varn", "value": -1}],
+      "responses": [
+        {"text": "I'm not sure that's better.", "next_node": "not_sure"},
+        {"text": "What do you need from me?", "next_node": "the_ask"}
+      ]
+    },
+    "power_not_order": {
+      "id": "power_not_order",
+      "speaker": "Varn",
+      "portrait": "Sentinel",
+      "text": "They are the same thing. They have always been the same thing. Anyone who tells you otherwise is selling you chaos.",
+      "responses": [
+        {"text": "What do you need from me?", "next_node": "the_ask"}
+      ]
+    },
+    "not_sure": {
+      "id": "not_sure",
+      "speaker": "Varn",
+      "portrait": "Sentinel",
+      "text": "Your uncertainty is noted. It does not change what must be done.",
+      "responses": [
+        {"text": "Then tell me what must be done.", "next_node": "the_ask"}
+      ]
+    },
+    "the_ask": {
+      "id": "the_ask",
+      "speaker": "Varn",
+      "portrait": "Sentinel",
+      "text": "There is a symbol of chaos moving through these halls — an emblem, an icon. It calls to the corrupted things and gives them direction. I need it brought to me so I can unmake it. Chaos must not be allowed to organize.",
+      "responses": [
+        {
+          "text": "I have it. Take it.",
+          "next_node": "give_emblem",
+          "condition": {"type": "has_item", "item_id": "item_0_3"},
+          "on_select": [{"type": "add_trust", "flag": "varn", "value": 1}]
+        },
+        {
+          "text": "I don't have it yet.",
+          "next_node": "not_yet"
+        },
+        {
+          "text": "What gives you the right to unmake anything?",
+          "next_node": "what_right"
+        }
+      ]
+    },
+    "what_right": {
+      "id": "what_right",
+      "speaker": "Varn",
+      "portrait": "Sentinel",
+      "text": "The chains give me that right. I did not choose this role — it chose me. Someone must hold the line between structure and dissolution. I am holding it.",
+      "responses": [
+        {
+          "text": "Fine. I'll bring you the emblem.",
+          "next_node": "not_yet"
+        },
+        {
+          "text": "No. The emblem stays where I found it.",
+          "next_node": "refuse"
+        }
+      ]
+    },
+    "give_emblem": {
+      "id": "give_emblem",
+      "speaker": "Varn",
+      "portrait": "Sentinel",
+      "text": "Good. This is what working together looks like. The dungeon is more orderly with you in it than without you. Remember that.",
+      "on_enter": [
+        {"type": "take_item", "item_id": "item_0_3"},
+        {"type": "add_trust", "flag": "varn", "value": 1},
+        {"type": "set_flag", "flag": "varn_conflict_resolved", "value": 1},
+        {"type": "advance_phase", "flag": "varn"}
+      ]
+    },
+    "not_yet": {
+      "id": "not_yet",
+      "speaker": "Varn",
+      "portrait": "Sentinel",
+      "text": "Find it. The chaos emblem will be somewhere in these halls — it always is. Bring it to me when you have it. The dungeon will wait."
+    },
+    "refuse": {
+      "id": "refuse",
+      "speaker": "Varn",
+      "portrait": "Sentinel",
+      "text": "Then we are done cooperating. You have chosen to work against the structure that keeps you alive. I will remember that choice — and I will act accordingly. Do not expect mercy when next we meet in a different capacity.",
+      "on_enter": [
+        {"type": "set_betrayed", "flag": "varn"},
+        {"type": "add_trust", "flag": "varn", "value": -2},
+        {"type": "advance_phase", "flag": "varn"}
+      ]
+    }
+  }
+}

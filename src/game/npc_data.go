@@ -127,6 +127,42 @@ func countWalkableNeighbors(lvl *levels.Level, x, y int) int {
 	return n
 }
 
+// MajorNPCPhaseRule controls when and how a major NPC spawns during one phase.
+type MajorNPCPhaseRule struct {
+	Phase      int    // exact QuestFlag phase value this rule applies to
+	MinFloor   int    // earliest floor to spawn on (inclusive)
+	MaxFloor   int    // latest floor to spawn on (0 = any)
+	SpriteID   string // in-world sprite for this phase
+	PortraitID string // dialogue portrait
+}
+
+// MajorNPCDef defines a major NPC with cross-run phase-aware spawning.
+// DialogueID is left empty so SelectTree picks the phase tree automatically.
+type MajorNPCDef struct {
+	ID         string
+	Name       string
+	Title      string
+	Placement  SpawnStrategy
+	PhaseRules []MajorNPCPhaseRule // one entry per spawnable phase; absent phase = boss/no-spawn
+}
+
+// majorNPCDefs lists all major NPCs with their per-phase spawn rules.
+// Phase 3+ entries are intentionally omitted — those phases become boss fights.
+var majorNPCDefs = []MajorNPCDef{
+	{
+		ID: "varn", Name: "Varn", Title: "The Chainkeeper",
+		Placement: SpawnQuest,
+		PhaseRules: []MajorNPCPhaseRule{
+			// Phase 0 & 1: GreyKnight — he is restrained, constrained, holding back.
+			// Phase 2: Sentinel  — he is visibly different; the transformation is showing.
+			// NG+ (DefeatCount >= 1): overridden to TorturedSoul at spawn time for phases 0-1.
+			{Phase: 0, MinFloor: 1, MaxFloor: 1, SpriteID: "GreyKnight", PortraitID: "GreyKnight"},                          // floor 1 only — intro, clear the floor
+			{Phase: 1, MinFloor: 2, MaxFloor: 5, SpriteID: "GreyKnight", PortraitID: "GreyKnight"},                          // floors 2-5 — Grips quest; item injected into loot
+			{Phase: 2, MinFloor: 3, MaxFloor: 6, SpriteID: "Sentinel", PortraitID: "Sentinel"},                               // floors 3-6 — Chaos Emblem quest; item injected into loot
+		},
+	},
+}
+
 // minorNPCPool defines the set of minor NPCs that can appear on dungeon floors.
 var minorNPCPool = []NPCTemplate{
 	{

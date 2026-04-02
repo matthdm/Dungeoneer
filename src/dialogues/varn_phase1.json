@@ -1,0 +1,137 @@
+{
+  "id": "varn_phase1",
+  "root": "intro",
+  "nodes": {
+    "intro": {
+      "id": "intro",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "You returned. I was not certain you would. The dungeon discourages repetition — yet here you are again.",
+      "responses": [
+        {
+          "text": "Not yet. I need to go deeper first.",
+          "condition": {"type": "current_floor_lte", "value": 1}
+        },
+        {
+          "text": "I remember you. What do you need?",
+          "next_node": "the_ask",
+          "condition": {"type": "current_floor_gte", "value": 2}
+        },
+        {
+          "text": "How have you been holding up?",
+          "next_node": "how_holding_up",
+          "condition": {"type": "current_floor_gte", "value": 2}
+        }
+      ]
+    },
+    "how_holding_up": {
+      "id": "how_holding_up",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "The chains fray a little more each day. But I endure. I have always endured. It is the only thing I know how to do well.",
+      "on_enter": [{"type": "add_trust", "flag": "varn", "value": 1}],
+      "responses": [
+        {"text": "What do you need from me this time?", "next_node": "the_ask"}
+      ]
+    },
+    "the_ask": {
+      "id": "the_ask",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "There is something I require. It was taken from me long before the chains began to fray. A pair of grips — iron and chain, built for climbing, for pulling, for holding things in place. I believe you may have found them.",
+      "responses": [
+        {
+          "text": "The Grips of the Buried Flame? I have them.",
+          "next_node": "has_grips",
+          "condition": {"type": "has_item", "item_id": "item_1_12"}
+        },
+        {
+          "text": "I haven't come across anything like that.",
+          "next_node": "no_grips"
+        },
+        {
+          "text": "Why should I give them to you?",
+          "next_node": "why_give"
+        }
+      ]
+    },
+    "why_give": {
+      "id": "why_give",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "Because they are mine. And because I can show you what they once allowed me to do.",
+      "responses": [
+        {"text": "Show me.", "next_node": "the_flash"}
+      ]
+    },
+    "the_flash": {
+      "id": "the_flash",
+      "speaker": "Varn",
+      "portrait": "Sentinel",
+      "text": "For just a moment, the chains around him pull taut — then release. The air tastes of iron. He exhales slowly, composing himself. 'That. That is what I am suppressing. It is not gone. It is waiting.'",
+      "responses": [
+        {
+          "text": "Take them.",
+          "next_node": "give_grips",
+          "condition": {"type": "has_item", "item_id": "item_1_12"}
+        },
+        {
+          "text": "I don't have them yet. I'll find them.",
+          "next_node": "find_them"
+        }
+      ]
+    },
+    "has_grips": {
+      "id": "has_grips",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "Then you know what they are capable of. I would ask you to return them to me. In exchange, I can offer you something that may serve you better on the path ahead.",
+      "responses": [
+        {
+          "text": "A fair trade.",
+          "next_node": "give_grips",
+          "on_select": [{"type": "add_trust", "flag": "varn", "value": 1}]
+        },
+        {
+          "text": "I'm keeping them.",
+          "next_node": "refuse_grips"
+        }
+      ]
+    },
+    "give_grips": {
+      "id": "give_grips",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "Good. The chains remember this. You will find these carriers move differently than the grips — faster, lighter. Less suited for holding things in place. More suited for surviving.",
+      "on_enter": [
+        {"type": "take_item", "item_id": "item_1_12"},
+        {"type": "give_item", "item_id": "item_2_35"},
+        {"type": "add_trust", "flag": "varn", "value": 1},
+        {"type": "set_flag", "flag": "varn_task_done", "value": 1},
+        {"type": "advance_phase", "flag": "varn"}
+      ]
+    },
+    "refuse_grips": {
+      "id": "refuse_grips",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "Then keep them. I will not force the matter. But remember — the chains I hold are for everyone's benefit. Including yours. Think on that.",
+      "on_enter": [
+        {"type": "add_trust", "flag": "varn", "value": -1},
+        {"type": "advance_phase", "flag": "varn"}
+      ]
+    },
+    "no_grips": {
+      "id": "no_grips",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "Then keep looking. They will be somewhere in these halls — the dungeon hoards what it takes. When you find them, bring them to me. I will make it worth your while."
+    },
+    "find_them": {
+      "id": "find_them",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "I know you will. The dungeon does not give up what it has taken easily, but it gives to those who persist. Find them. Bring them back."
+    }
+  }
+}

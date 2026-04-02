@@ -205,9 +205,33 @@ func (g *Game) StartRun() {
 	g.Meta.RunCount++
 	SaveMeta(g.Meta)
 	g.RunState = NewRunState(DefaultRunFloors)
+	g.seedNPCPhaseFlags()
 	g.IsInHub = false
 	g.FullBright = false
 	g.startFloor(1)
+}
+
+// seedNPCPhaseFlags initialises per-run QuestFlags from MetaSave at run start.
+//
+// Phase intentionally resets to 0 every run — the full questline must be
+// completed within a single run. What carries over is relationship state:
+//   - {id}_met    — player has spoken to this NPC before (greeting varies)
+//   - {id}_ng_plus — player has defeated this NPC as boss (unlocks NG+ dialogue)
+//
+// HighestPhase is tracked in MetaSave for analytics/display but is NOT seeded
+// into QuestFlags here, so it cannot skip the questline on a new run.
+func (g *Game) seedNPCPhaseFlags() {
+	if g.Meta == nil || g.RunState == nil {
+		return
+	}
+	for npcID, state := range g.Meta.NPCMeta {
+		if state.Met {
+			g.RunState.QuestFlags[npcID+"_met"] = 1
+		}
+		if state.DefeatCount > 0 {
+			g.RunState.QuestFlags[npcID+"_ng_plus"] = 1
+		}
+	}
 }
 
 // startFloor generates and activates a new dungeon floor.
@@ -238,6 +262,18 @@ func (g *Game) startFloor(floorNum int) {
 	g.player.MoveController.Stop()
 	g.player.CollisionBox.X = float64(spawnX)
 	g.player.CollisionBox.Y = float64(spawnY)
+	// Fallback: if BFS couldn't separate spawn and exit (degenerate level),
+	// find any walkable tile that isn't the spawn point.
+	if exitX == spawnX && exitY == spawnY || !lvl.IsWalkable(exitX, exitY) {
+		for y := 0; y < lvl.H && exitX == spawnX && exitY == spawnY; y++ {
+			for x := 0; x < lvl.W; x++ {
+				if lvl.IsWalkable(x, y) && (x != spawnX || y != spawnY) {
+					exitX, exitY = x, y
+					break
+				}
+			}
+		}
+	}
 	g.ExitEntity = entities.NewExitEntity(exitX, exitY, g.spriteSheet.Portal, "Portal")
 
 	// Spawn entities from level data
@@ -250,6 +286,7 @@ func (g *Game) startFloor(floorNum int) {
 	isBossFloor := g.RunState.IsLastFloor() && len(lvl.Rooms) > 0
 	if isBossFloor {
 		g.setupBossFloor(lvl)
+		g.bossFloorAnnouncement = 240 // ~4 seconds at 60 TPS
 	}
 
 	// Tag rooms for semantic placement (must run after boss setup).
@@ -258,8 +295,9 @@ func (g *Game) startFloor(floorNum int) {
 	// Spawn monsters using encounter template system (falls back to legacy if needed)
 	g.spawnEncounterMonsters(ctx)
 
-	// Spawn minor NPCs on this floor
+	// Spawn NPCs: major NPCs first (get priority placement), then minor NPCs.
 	g.NPCs = []*entities.NPC{}
+	g.spawnMajorNPCs(ctx)
 	g.spawnFloorNPCs(ctx)
 
 	// Spawn chests in treasure rooms

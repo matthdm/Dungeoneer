@@ -1,0 +1,136 @@
+{
+  "id": "varn_phase0",
+  "root": "intro",
+  "nodes": {
+    "intro": {
+      "id": "intro",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "You walk these halls as though they belong to you. They do not. Nothing here belongs to anyone anymore.",
+      "responses": [
+        {
+          "text": "Who are you?",
+          "next_node": "who_are_you",
+          "condition": {"type": "not_flag", "flag": "varn_task0_assigned"}
+        },
+        {
+          "text": "I'm just passing through.",
+          "next_node": "passing_through",
+          "condition": {"type": "not_flag", "flag": "varn_task0_assigned"}
+        },
+        {
+          "text": "I've cleared the floor. Every last one.",
+          "next_node": "task_complete",
+          "condition": {"type": "floor_cleared"}
+        },
+        {
+          "text": "I'm still working on it.",
+          "next_node": "task_in_progress",
+          "condition": {"type": "flag_equals", "flag": "varn_task0_assigned", "value": 1}
+        }
+      ]
+    },
+    "task_complete": {
+      "id": "task_complete",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "I can feel it. The pressure in the chains has eased. That is not nothing — it is a kind of proof. I will remember that you followed through. Go deeper. I will find you when the time is right.",
+      "on_enter": [
+        {"type": "add_trust", "flag": "varn", "value": 1},
+        {"type": "advance_phase", "flag": "varn"}
+      ]
+    },
+    "task_in_progress": {
+      "id": "task_in_progress",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "There are still things moving out there — I can feel the chains straining. Finish the work. Return when the floor is silent."
+    },
+    "who_are_you": {
+      "id": "who_are_you",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "I am Varn. I was charged with keeping the chains of this place intact — the order that holds the dungeon's madness from consuming everything within it. The chains have frayed. I am less than I was.",
+      "responses": [
+        {"text": "What do you mean, chains?", "next_node": "the_chains"},
+        {"text": "That sounds like a heavy burden.", "next_node": "burden"}
+      ]
+    },
+    "passing_through": {
+      "id": "passing_through",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "Everyone says that. Then the dungeon takes them. You are the first I have seen who moves with purpose. That is worth something.",
+      "responses": [
+        {"text": "What do you want from me?", "next_node": "what_do_you_want"}
+      ]
+    },
+    "the_chains": {
+      "id": "the_chains",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "Structure. Agreements between things that they will not unmake each other. The dungeon was once bound by such agreements. Something has undone them, and the chaos bleeds through every wall. I hold what little remains.",
+      "responses": [
+        {"text": "And what does that cost you?", "next_node": "the_cost"},
+        {"text": "What do you need from me?", "next_node": "what_do_you_want"}
+      ]
+    },
+    "burden": {
+      "id": "burden",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "All necessary things are burdens. I do not resent it. Without someone to hold the structure, these halls would collapse into pure chaos. You would not survive that. Neither would I.",
+      "on_enter": [{"type": "add_trust", "flag": "varn", "value": 1}],
+      "responses": [
+        {"text": "What do you need?", "next_node": "what_do_you_want"}
+      ]
+    },
+    "the_cost": {
+      "id": "the_cost",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "I cannot leave this post. The chains that bind the dungeon also bind me to it. A fitting irony. The Chainkeeper, chained.",
+      "on_enter": [{"type": "add_trust", "flag": "varn", "value": 1}],
+      "responses": [
+        {"text": "Then let me help.", "next_node": "what_do_you_want"}
+      ]
+    },
+    "what_do_you_want": {
+      "id": "what_do_you_want",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "Clear the corrupted things that wander near this post. Every creature that goes unchecked frays the chains further. I cannot leave to do it myself. Clear the floor entirely — do not leave anything standing.",
+      "responses": [
+        {
+          "text": "I'll do it.",
+          "next_node": "agree",
+          "on_select": [{"type": "add_trust", "flag": "varn", "value": 1}]
+        },
+        {
+          "text": "I'm not here to serve your agenda.",
+          "next_node": "disagree"
+        }
+      ]
+    },
+    "agree": {
+      "id": "agree",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "Good. We understand each other. Return when the floor is silent — I will know when it is done.",
+      "on_enter": [
+        {"type": "set_flag", "flag": "varn_task0_assigned", "value": 1},
+        {"type": "set_flag", "flag": "varn_met", "value": 1}
+      ]
+    },
+    "disagree": {
+      "id": "disagree",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "Then you are a wanderer like all the others. Perhaps you will reconsider when you see what the chaos does to those who ignore it. I will remember that too.",
+      "on_enter": [
+        {"type": "set_flag", "flag": "varn_met", "value": 1},
+        {"type": "advance_phase", "flag": "varn"}
+      ]
+    }
+  }
+}

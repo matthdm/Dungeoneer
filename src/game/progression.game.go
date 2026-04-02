@@ -57,6 +57,30 @@ func (g *Game) handleMonsterDeath(m *entities.Monster) {
 	}
 }
 
+// activeQuestItems returns item IDs that are needed for an in-progress NPC
+// quest this floor but not yet in the player's possession. These are injected
+// into the loot pool at high weight so the player finds them through normal
+// play rather than having them handed over.
+func (g *Game) activeQuestItems() []string {
+	if g.RunState == nil {
+		return nil
+	}
+	var needed []string
+	// Varn phase 1 needs the Grips; phase 2 needs the Chaos Emblem.
+	// Only inject if the item isn't already in the player's inventory.
+	questItems := map[int]string{
+		1: "item_1_12", // Grips of the Buried Flame
+		2: "item_0_3",  // Chaos Emblem
+	}
+	phase := g.RunState.QuestFlags["varn_phase"]
+	if itemID, ok := questItems[phase]; ok {
+		if g.player != nil && !g.player.HasItemAnywhere(itemID) {
+			needed = append(needed, itemID)
+		}
+	}
+	return needed
+}
+
 // rollAndDropLoot checks if the monster drops loot and spawns an item drop.
 func (g *Game) rollAndDropLoot(m *entities.Monster) {
 	if g.FloorCtx == nil || g.FloorCtx.BiomeConfig == nil {
@@ -70,6 +94,18 @@ func (g *Game) rollAndDropLoot(m *entities.Monster) {
 		table.Entries = append(table.Entries, g.FloorCtx.BiomeConfig.LootTable.Entries...)
 	}
 
+	// Inject active quest items at high weight so they surface through normal
+	// combat. Elites guarantee a quest item on their first kill; regular enemies
+	// get a high-chance roll weighted heavily against the rest of the table.
+	questItems := g.activeQuestItems()
+	for _, id := range questItems {
+		table.Entries = append(table.Entries, items.LootEntry{
+			ItemID: id,
+			Weight: 20.0, // dominates the pool — roughly 80-90% of rolls
+			Rarity: items.RarityUncommon,
+		})
+	}
+
 	// On floor 1, the first elite or boss guarantees an ability item drop so
 	// the player always leaves floor 1 with at least one new ability.
 	if g.FloorCtx.FloorNumber == 1 && !g.FloorCtx.AbilityDropped &&
@@ -80,6 +116,14 @@ func (g *Game) rollAndDropLoot(m *entities.Monster) {
 			}
 		}
 		g.FloorCtx.AbilityDropped = true
+	}
+
+	// Elites guarantee the quest item if it's still needed.
+	if len(questItems) > 0 && (m.Role == "elite" || m.Role == "boss") {
+		if tmpl, ok := items.Registry[questItems[0]]; ok {
+			g.spawnDrop(m, tmpl, 1)
+			return
+		}
 	}
 
 	if !items.ShouldDrop(m.Role, g.FloorCtx.FloorNumber) {

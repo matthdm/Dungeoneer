@@ -49,7 +49,13 @@ type RunState struct {
 }
 
 // DefaultRunFloors is the starting number of floors for a new run.
-const DefaultRunFloors = 3
+// Layout for Varn's questline:
+//   Floors 1     : Phase 0 — intro, clear the floor
+//   Floors 2-3   : Phase 1 — find and return Grips of the Buried Flame
+//   Floors 4-5   : Phase 2 — find and return the Chaos Emblem
+//   Floor  6     : Transitional — build-up before the confrontation
+//   Floor  7     : Boss floor
+const DefaultRunFloors = 7
 
 // NewRunState initialises a new run with the given floor count.
 func NewRunState(totalFloors int) *RunState {
