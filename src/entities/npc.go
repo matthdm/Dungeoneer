@@ -1,6 +1,7 @@
 package entities
 
 import (
+	"dungeoneer/coords"
 	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -38,6 +39,11 @@ type NPC struct {
 
 	// Behavior
 	Behavior NPCBehavior
+}
+
+// Pos returns the NPC's current world position as a WorldPos.
+func (n *NPC) Pos() coords.WorldPos {
+	return coords.WorldPos{X: n.InterpX, Y: n.InterpY}
 }
 
 // Update ticks the NPC's behavior and animation.

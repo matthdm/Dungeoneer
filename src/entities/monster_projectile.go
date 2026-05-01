@@ -1,6 +1,7 @@
 package entities
 
 import (
+	"dungeoneer/coords"
 	"dungeoneer/levels"
 	"image/color"
 	"math"
@@ -62,10 +63,13 @@ func (p *MonsterProjectile) Update(level *levels.Level) {
 	}
 }
 
-// HitsPlayer returns true if the projectile overlaps the player tile.
-func (p *MonsterProjectile) HitsPlayer(px, py int) bool {
-	dx := p.X - float64(px)
-	dy := p.Y - float64(py)
+// HitsPlayer returns true if the projectile overlaps the player's body center.
+// Uses the player's continuous WorldPos rather than integer tile coords so the
+// check matches the player's visual screen position at all times.
+func (p *MonsterProjectile) HitsPlayer(playerPos coords.WorldPos) bool {
+	bc := playerPos.BodyCenter()
+	dx := p.X - bc.X
+	dy := p.Y - bc.Y
 	return dx*dx+dy*dy <= p.Radius*p.Radius
 }
 
@@ -79,9 +83,11 @@ func (p *MonsterProjectile) Draw(screen *ebiten.Image, tileSize int, camX, camY,
 	img := ebiten.NewImage(size, size)
 	img.Fill(color.RGBA{255, 80, 40, 255})
 
-	sx, sy := isoToScreenFloat(p.X, p.Y, tileSize)
+	// TileCenterIso gives the visual center of the tile diamond — the correct
+	// anchor for a projectile dot so it tracks the projectile's world position.
+	cx_, cy_ := coords.WorldPos{X: p.X, Y: p.Y}.TileCenterIso(tileSize)
 	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(sx+float64(tileSize)/2, sy+float64(tileSize)/4)
+	op.GeoM.Translate(cx_, cy_)
 	op.GeoM.Translate(-camX, camY)
 	op.GeoM.Scale(camScale, camScale)
 	op.GeoM.Translate(cx, cy)

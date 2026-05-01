@@ -2,7 +2,6 @@ package entities
 
 import (
 	"dungeoneer/levels"
-	"math"
 )
 
 // RangedBehavior keeps distance from the player and fires projectiles.
@@ -31,14 +30,13 @@ func (r *RangedBehavior) Update(m *Monster, p *Player, level *levels.Level) {
 		return
 	}
 
-	dx := m.TileX - p.TileX
-	dy := m.TileY - p.TileY
-	distSq := dx*dx + dy*dy
-	dist := math.Sqrt(float64(distSq))
+	// Use continuous world-space distance so behaviour matches the visual
+	// positions on screen, not lagging integer tile coords.
+	dist := m.Pos().DistTo(p.Pos())
 
 	// Trigger check.
 	if !r.Triggered {
-		if distSq <= r.TriggerRadius*r.TriggerRadius {
+		if dist <= float64(r.TriggerRadius) {
 			r.Triggered = true
 		} else {
 			return
@@ -48,22 +46,25 @@ func (r *RangedBehavior) Update(m *Monster, p *Player, level *levels.Level) {
 	r.ShootCounter++
 
 	// Too close — retreat.
-	if int(dist) < r.FleeRange {
+	if dist < float64(r.FleeRange) {
 		r.retreat(m, p, level)
 		return
 	}
 
 	// In range — shoot.
-	if int(dist) <= r.AttackRange {
+	if dist <= float64(r.AttackRange) {
 		if r.ShootCounter >= r.ShootCooldown {
 			r.ShootCounter = 0
 			dmg := r.ProjectileDmg
 			if dmg == 0 {
 				dmg = m.Damage
 			}
+			// Fire from the monster's continuous position and aim at the
+			// player's continuous position so projectiles originate from where
+			// the sprite is drawn, not from the lagging integer tile.
 			proj := NewMonsterProjectile(
-				float64(m.TileX), float64(m.TileY),
-				float64(p.TileX), float64(p.TileY),
+				m.InterpX, m.InterpY,
+				p.MoveController.InterpX, p.MoveController.InterpY,
 				0.15, dmg,
 			)
 			m.PendingProjectiles = append(m.PendingProjectiles, proj)
@@ -84,8 +85,8 @@ func (r *RangedBehavior) retreat(m *Monster, p *Player, level *levels.Level) {
 		if !level.IsWalkable(nx, ny) {
 			continue
 		}
-		ddx := float64(nx - p.TileX)
-		ddy := float64(ny - p.TileY)
+		ddx := float64(nx) - p.MoveController.InterpX
+		ddy := float64(ny) - p.MoveController.InterpY
 		dd := ddx*ddx + ddy*ddy
 		if dd > bestDist {
 			bestDist = dd
@@ -97,3 +98,4 @@ func (r *RangedBehavior) retreat(m *Monster, p *Player, level *levels.Level) {
 		m.MoveTo(bestX, bestY)
 	}
 }
+

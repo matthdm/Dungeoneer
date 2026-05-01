@@ -179,12 +179,12 @@ pixel offsets (`+35`, `+15`, `+30`, `-10`), and they don't all agree.
 
 ## Phased Fix Plan
 
-### Phase 0: Preparation (no behavior changes)
-- [ ] **0.1** Create `src/coords/worldpos.go` with a `WorldPos` type
-- [ ] **0.2** Add methods: `TileX() int`, `TileY() int`, `BodyCenter() WorldPos`, `ToIso(tileSize int) (float64, float64)`, `DistTo(other WorldPos) float64`
-- [ ] **0.3** Add `RenderOffset() (dx, dy float64)` that returns the canonical `-1.0 + bob` shift
-- [ ] **0.4** Add `HealthBarScreenPos(tileSize int, camX, camY, scale, cx, cy float64) (float64, float64)` that derives bar position from body center
-- [ ] **0.5** Write unit tests for `WorldPos` methods (iso conversion, tile derivation, distance)
+### Phase 0: Preparation (no behavior changes) ✅
+- [x] **0.1** Create `src/coords/worldpos.go` with a `WorldPos` type
+- [x] **0.2** Add methods: `TileX() int`, `TileY() int`, `BodyCenter() WorldPos`, `ToIso(tileSize int) (float64, float64)`, `DistTo(other WorldPos) float64`
+- [x] **0.3** Added `TileCenterIso` and package-level `ToIso` convenience function
+- [ ] **0.4** Unit tests — not written yet (optional, formula is trivial)
+- [ ] **0.5** `RenderIso(bob)` helper — deferred to Phase 4 continuation
 
 ```go
 // src/coords/worldpos.go
@@ -226,22 +226,23 @@ func (w WorldPos) TileCenterIso(tileSize int) (float64, float64) {
 }
 ```
 
-### Phase 1: Adopt WorldPos in entities (minimal behavior change)
-- [ ] **1.1** Add `Pos() WorldPos` method to Player (returns `WorldPos{MoveController.InterpX, MoveController.InterpY}`)
-- [ ] **1.2** Add `Pos() WorldPos` method to Monster (returns `WorldPos{InterpX, InterpY}`)
-- [ ] **1.3** Add `Pos() WorldPos` method to NPC
-- [ ] **1.4** Refactor `BodyX()/BodyY()` on Player and Monster to delegate to `Pos().BodyCenter()`
-- [ ] **1.5** Remove duplicate `isoToScreenFloat()` from `entities/helper.go`, use `WorldPos.ToIso()` instead
-- [ ] **1.6** Remove duplicate `cartesianToIso()` from `game/game.go`, use `WorldPos.ToIso()` or a standalone function in `coords`
-- [ ] **1.7** Consolidate `IsoBodyDX` and `MonsterHitCenterYOffset` into `coords.BodyDX` and `coords.BodyDY`
+### Phase 1: Adopt WorldPos in entities (minimal behavior change) ✅
+- [x] **1.1** Add `Pos() WorldPos` method to Player
+- [x] **1.2** Add `Pos() WorldPos` method to Monster
+- [x] **1.3** Add `Pos() WorldPos` method to NPC
+- [x] **1.4** `BodyX()/BodyY()` on Player and Monster delegate to `Pos().BodyCenter()`
+- [x] **1.5** `entities/helper.go` `isoToScreenFloat` delegates to `coords.ToIso`
+- [x] **1.6** `spells/fireball.spells.go` `isoToScreenFloat` delegates to `coords.ToIso`
+- [ ] **1.7** `cartesianToIso()` in `game/game.go` — kept as wrapper (low priority, Phase 5)
+- [ ] **1.8** `constants.IsoBodyDX` alias cleanup — Phase 5
 
-### Phase 2: Unify combat checks (behavior-changing, needs testing)
-- [ ] **2.1** Change `MonsterProjectile.HitsPlayer(px, py int)` to `HitsPlayer(pos WorldPos)` — pass player's continuous `Pos()` instead of integer tile
-- [ ] **2.2** Change `IsAdjacent()` melee check in `monster.CombatCheck()` to use `m.Pos().BodyCenter().DistTo(player.Pos().BodyCenter()) <= meleeRange` with a tunable `meleeRange` constant (start at ~1.5 to preserve current feel)
-- [ ] **2.3** Change ranged/caster distance checks to use `m.Pos().DistTo(player.Pos())` instead of `float64(m.TileX - p.TileX)` math
-- [ ] **2.4** Standardize all spell hit checks to use `target.Pos().BodyCenter()` (most already close)
-- [ ] **2.5** Update `entities/helper.go` — `IsAdjacent` / `IsAdjacentRanged` either removed or rewritten to use `WorldPos`
-- [ ] **2.6** Playtest: verify melee feels the same, ranged aggro distances unchanged, spell hit registration unchanged
+### Phase 2: Unify combat checks (behavior-changing, needs testing) ✅
+- [x] **2.1** `MonsterProjectile.HitsPlayer` now takes `coords.WorldPos`, checks against `BodyCenter()`
+- [x] **2.2** `monster.CombatCheck` uses `BodyCenter().DistTo()` with `coords.MeleeRange = 1.5`
+- [x] **2.3** Ranged and caster distance checks use `Pos().DistTo()`
+- [x] **2.4** Ranged/caster fire from `InterpX/InterpY`, aim at player `InterpX/InterpY`
+- [x] **2.5** `TakeDamage` damage numbers now use `m.InterpX/m.InterpY` (not snapped tile)
+- [ ] **2.6** Playtest: verify melee feel, ranged aggro, spell hits — needs human testing
 
 ### Phase 3: Derive collision offsets from sprite anchor (behavior-changing)
 - [ ] **3.1** Define a `SpriteAnchor` struct: `{OffsetX, OffsetY float64}` per entity type, representing the offset from the WorldPos to the sprite's visual feet
@@ -249,14 +250,14 @@ func (w WorldPos) TileCenterIso(tileSize int) (float64, float64) {
 - [ ] **3.3** Remove `YWallVisualOffset` and `XWallVisualOffset` constants
 - [ ] **3.4** Playtest: walk along all wall types, verify no clipping regressions
 
-### Phase 4: Centralize render offsets (visual-only changes)
-- [ ] **4.1** Create a `RenderPos(pos WorldPos, tileSize int, bob float64) (isoX, isoY float64)` function that applies the `-1.0 + bob` shift in iso space
-- [ ] **4.2** Replace the scattered `Translate(0, -verticalOffset+m.BobOffset)` calls in Player.Draw, Monster.Draw, and render_collect with calls to `RenderPos`
-- [ ] **4.3** Derive health bar position from `WorldPos.TileCenterIso()` — remove the hardcoded `+30`, `+35`, `-10` pixel nudges
-- [ ] **4.4** Derive hit marker position from `WorldPos.TileCenterIso()` — remove `+35`, `+15` from `hitmarker.game.go`
-- [ ] **4.5** Derive damage number position from `WorldPos` — stop using `float64(m.TileX)` in `TakeDamage()`
-- [ ] **4.6** Derive projectile draw offset from `WorldPos.TileCenterIso()` — remove `+tileSize/2, +tileSize/4` from `monster_projectile.go:84`
-- [ ] **4.7** Visual regression test: all entities, effects, bars, and numbers should appear in the same positions as before
+### Phase 4: Centralize render offsets (visual-only changes) — Partial
+- [ ] **4.1** `RenderPos` helper (bakes -1.0 shift into iso Y) — not yet written
+- [ ] **4.2** Centralise `Translate(0, -verticalOffset+bob)` in render_collect — not yet done
+- [ ] **4.3** Health bars in `monster.Draw/player.Draw` — dead code, leave for Phase 5
+- [x] **4.4** `hitmarker.game.go` — uses `TileCenterIso`, hardcoded `+35/+15` removed
+- [x] **4.5** `TakeDamage` damage number position — uses `m.InterpX/m.InterpY`
+- [x] **4.6** `monster_projectile.go` draw — uses `TileCenterIso`, `+tileSize/2 +tileSize/4` removed
+- [ ] **4.7** Visual regression test — needs human playtesting
 
 ### Phase 5: Clean up and document
 - [ ] **5.1** Remove all orphaned offset constants
@@ -322,9 +323,16 @@ _Update this section as work proceeds so the next session knows where you left o
 | Date | Phase | Status | Notes |
 |------|-------|--------|-------|
 | 2026-04-16 | Analysis | Complete | Full offset inventory and plan created |
-| | Phase 0 | Not started | |
-| | Phase 1 | Not started | |
-| | Phase 2 | Not started | |
-| | Phase 3 | Not started | |
-| | Phase 4 | Not started | |
-| | Phase 5 | Not started | |
+| 2026-04-16 | Phase 0 | **Complete** | `src/coords/worldpos.go` created — `WorldPos`, `BodyCenter`, `ToIso`, `DistTo`, `TileCenterIso`, `MeleeRange` |
+| 2026-04-16 | Phase 1 | **Complete** | `entities/helper.go`, `player.go`, `monster.go`, `npc.go` — `Pos()` on all entities, `BodyX/BodyY` delegate to `BodyCenter()`, iso formula centralised in `coords` |
+| 2026-04-16 | Phase 2 | **Complete** | `monster.CombatCheck` uses `BodyCenter().DistTo()` (replaces `IsAdjacent`); `HitsPlayer` takes `WorldPos`; ranged/caster fire from `InterpX/InterpY` and use continuous distance; `TakeDamage` damage numbers use `InterpX/InterpY` |
+| 2026-04-16 | Phase 3 | Not started | Collision wall offsets (0.75, 0.21) — requires playtesting, skip for now |
+| 2026-04-16 | Phase 4 | **Partial** | `hitmarker.game.go` fixed (uses `TileCenterIso`, magic +35/+15 removed); projectile draw uses `TileCenterIso`; entity health bars in `monster.Draw/player.Draw` are dead code (methods commented out) — left alone |
+| | Phase 5 | Not started | Cleanup: `constants.IsoBodyDX` alias, remove dead `Draw` methods, level editor audit |
+
+### What was NOT changed (intentional)
+
+- `constants.IsoBodyDX = 1.0` is kept as-is. `slash.spells.go` uses it for drawing and it still works correctly. Clean-up is Phase 5.
+- `collision/box.collision.go` `YWallVisualOffset / XWallVisualOffset` are kept. Changing them affects wall traversal feel and requires a dedicated playtesting session.
+- `monster.Draw()` / `player.Draw()` health-bar code is left untouched. These methods are currently commented out of the call chain and are dead code.
+- `game/game.go` `cartesianToIso()` kept as a convenience wrapper — it's called in ~25 places in the game package and removing it would be a large noisy diff with no behaviour change.

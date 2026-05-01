@@ -244,9 +244,8 @@ func (g *Game) collectPlayerRenderables(scale, cx, cy float64) []Renderable {
 	if g.player == nil || g.player.IsDead {
 		return nil
 	}
-	sx, sy := g.cartesianToIso(g.player.MoveController.InterpX, g.player.MoveController.InterpY)
+	sx, sy := g.player.Pos().RenderIso(g.currentLevel.TileSize, g.player.BobOffset)
 	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(0, -1.0+g.player.BobOffset)
 	if g.player.IsDashing {
 		op.ColorScale.Scale(1.3, 1.3, 1.3, 1)
 	}
@@ -280,10 +279,8 @@ func (g *Game) collectMonsterRenderables(scale, cx, cy float64) []Renderable {
 		if !g.isTileVisible(m.TileX, m.TileY) {
 			continue // monsters only render when actively in FOV, not fog-of-war
 		}
-		x, y := g.cartesianToIso(m.InterpX, m.InterpY)
+		x, y := m.Pos().RenderIso(g.currentLevel.TileSize, m.BobOffset)
 		op := &ebiten.DrawImageOptions{}
-		const verticalOffset = 1.0
-		op.GeoM.Translate(0, -verticalOffset+m.BobOffset)
 		if !m.LeftFacing {
 			op.GeoM.Scale(-1, 1)
 			w := float64(m.Sprite.Bounds().Dx())
@@ -319,10 +316,8 @@ func (g *Game) collectNPCRenderables(scale, cx, cy float64) []Renderable {
 		if !g.isTileVisible(n.TileX, n.TileY) {
 			continue
 		}
-		x, y := g.cartesianToIso(n.InterpX, n.InterpY)
+		x, y := n.Pos().RenderIso(g.currentLevel.TileSize, n.BobOffset)
 		op := &ebiten.DrawImageOptions{}
-		const verticalOffset = 1.0
-		op.GeoM.Translate(0, -verticalOffset+n.BobOffset)
 		if !n.LeftFacing {
 			op.GeoM.Scale(-1, 1)
 			w := float64(n.Sprite.Bounds().Dx())

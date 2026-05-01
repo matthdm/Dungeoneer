@@ -104,8 +104,8 @@ func (g *Game) updateSpells() {
 				if fb.MonsterCast {
 					// Monster-cast fireball: check player collision.
 					if g.player != nil && !g.player.IsDead {
-						dx := g.player.MoveController.InterpX - fb.X
-						dy := g.player.MoveController.InterpY - fb.Y
+						dx := g.player.BodyX() - fb.X
+						dy := g.player.BodyY() - fb.Y
 						if dx*dx+dy*dy <= fb.Radius*fb.Radius {
 							fb.Impact = true
 							g.player.TakeDamage(fb.Info.Damage)
@@ -118,8 +118,8 @@ func (g *Game) updateSpells() {
 							continue
 						}
 
-						dx := m.InterpX - fb.X
-						dy := m.InterpY - fb.Y
+						dx := m.BodyX() - fb.X
+						dy := m.BodyY() - fb.Y
 						distSq := dx*dx + dy*dy
 
 						if distSq <= fb.Radius*fb.Radius {
@@ -332,8 +332,10 @@ func (g *Game) castSpellSlot(index int) {
 		return
 	}
 
-	gx := g.player.MoveController.InterpX
-	gy := g.player.MoveController.InterpY
+	// Cast from the player's body center so projectiles and rays visually
+	// originate from the sprite rather than the invisible feet anchor.
+	gx := g.player.BodyX()
+	gy := g.player.BodyY()
 	tx := float64(g.hoverTileX)
 	ty := float64(g.hoverTileY)
 	c := g.player.Caster
@@ -384,8 +386,14 @@ func (g *Game) handlePrimaryAttack(tx, ty float64, cx, cy int) {
 }
 
 func (g *Game) handleSlashCombo(px, py, tx, ty float64) {
-	// Direction from player to cursor in cartesian space.
-	dirAngle := math.Atan2(ty-py, tx-px)
+	// Use the player's body center as the arc origin so the detection radius
+	// is measured from the same point the visual arc is drawn from. Using feet
+	// (px, py) made the effective origin ~1 tile away from the sprite body,
+	// causing the monster's body center to fall outside the radius even when
+	// visually adjacent.
+	bx := g.player.BodyX()
+	by := g.player.BodyY()
+	dirAngle := math.Atan2(ty-by, tx-bx)
 
 	hit := g.player.ComboHit
 	if hit > 2 {
@@ -403,7 +411,7 @@ func (g *Game) handleSlashCombo(px, py, tx, ty float64) {
 	}
 	c.PutOnCooldown(info)
 
-	slash := spells.NewSlashArc(info, px, py, dirAngle, hit)
+	slash := spells.NewSlashArc(info, bx, by, dirAngle, hit)
 	g.ActiveSpells = append(g.ActiveSpells, slash)
 	g.applySlashDamage(slash)
 
@@ -419,7 +427,7 @@ func (g *Game) applySlashDamage(slash *spells.SlashArc) {
 		if m.IsDead {
 			continue
 		}
-		if slash.IsInArc(m.InterpX, m.InterpY) {
+		if slash.IsInArc(m.BodyX(), m.BodyY()) {
 			if m.TakeDamage(dmg, &g.HitMarkers, &g.DamageNumbers) {
 				g.handleMonsterDeath(m)
 			}
@@ -637,8 +645,8 @@ func (g *Game) applyChaosRayDamage(cr *spells.ChaosRay) {
 		if m.IsDead {
 			continue
 		}
-		px := m.InterpX
-		py := m.InterpY
+		px := m.BodyX()
+		py := m.BodyY()
 		for i := 0; i < len(cr.Path)-1; i++ {
 			p1 := cr.Path[i]
 			p2 := cr.Path[i+1]

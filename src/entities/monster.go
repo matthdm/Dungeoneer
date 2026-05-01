@@ -1,7 +1,7 @@
 package entities
 
 import (
-	"dungeoneer/constants"
+	"dungeoneer/coords"
 	"dungeoneer/levels"
 	"dungeoneer/pathing"
 	"dungeoneer/spells"
@@ -72,15 +72,19 @@ type Monster struct {
 
 const (
 	DefaultMonsterHitRadius = 0.42
-	// MonsterHitCenterYOffset is the Y depth offset from feet to body center.
-	MonsterHitCenterYOffset = 0.30
 )
 
+// Pos returns the monster's current world position as a WorldPos.
+// This is the single source of truth — TileX/TileY and BodyX/BodyY derive from it.
+func (m *Monster) Pos() coords.WorldPos {
+	return coords.WorldPos{X: m.InterpX, Y: m.InterpY}
+}
+
 // BodyX returns the cartesian X of the monster's visual/combat body center.
-func (m *Monster) BodyX() float64 { return m.InterpX + constants.IsoBodyDX }
+func (m *Monster) BodyX() float64 { return m.Pos().BodyCenter().X }
 
 // BodyY returns the cartesian Y of the monster's visual/combat body center.
-func (m *Monster) BodyY() float64 { return m.InterpY + MonsterHitCenterYOffset }
+func (m *Monster) BodyY() float64 { return m.Pos().BodyCenter().Y }
 
 func NewMonster(ss *sprites.SpriteSheet) []*Monster {
 	return []*Monster{
@@ -251,9 +255,11 @@ func (m *Monster) MoveTo(x, y int) {
 }
 
 func (m *Monster) CombatCheck(player *Player) {
+	// Use continuous BodyCenter distance so the check matches what the player
+	// sees on screen, regardless of which "official" tile either entity occupies.
 	if !m.IsDead && !player.IsDead &&
 		!m.Moving &&
-		IsAdjacent(m.TileX, m.TileY, player.TileX, player.TileY) {
+		m.Pos().BodyCenter().DistTo(player.Pos().BodyCenter()) <= coords.MeleeRange {
 		m.AttackTick++
 		if m.AttackTick >= m.AttackRate {
 			dmg := int(float64(m.Damage) * m.Effects.DamageModifier())
@@ -350,10 +356,11 @@ func (m *Monster) TakeDamage(dmg int, markers *[]HitMarker, damageNumbers *[]Dam
 		MaxTicks: 30, // 0.5 seconds at 60 TPS
 	})
 
-	// Add damage number
+	// Add damage number at the monster's continuous world position so it
+	// appears where the sprite is, not at the snapped tile center.
 	*damageNumbers = append(*damageNumbers, DamageNumber{
-		X:        float64(m.TileX),
-		Y:        float64(m.TileY),
+		X:        m.InterpX,
+		Y:        m.InterpY,
 		Value:    dmg,
 		Ticks:    0,
 		MaxTicks: 30,

@@ -27,7 +27,7 @@ func (g *Game) updateMonsterProjectiles() {
 	alive := g.MonsterProjectiles[:0]
 	for _, p := range g.MonsterProjectiles {
 		p.Update(g.currentLevel)
-		if !p.Finished && !g.player.IsDead && p.HitsPlayer(g.player.TileX, g.player.TileY) {
+		if !p.Finished && !g.player.IsDead && p.HitsPlayer(g.player.Pos()) {
 			g.player.TakeDamage(p.Damage)
 			p.Finished = true
 		}

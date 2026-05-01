@@ -2,7 +2,6 @@ package entities
 
 import (
 	"dungeoneer/levels"
-	"math"
 )
 
 // PendingSpellCast is queued by caster monsters for the game loop to process
@@ -41,14 +40,13 @@ func (c *CasterBehavior) Update(m *Monster, p *Player, level *levels.Level) {
 		return
 	}
 
-	dx := m.TileX - p.TileX
-	dy := m.TileY - p.TileY
-	distSq := dx*dx + dy*dy
-	dist := math.Sqrt(float64(distSq))
+	// Use continuous world-space distance so behaviour matches the visual
+	// positions on screen, not lagging integer tile coords.
+	dist := m.Pos().DistTo(p.Pos())
 
 	// Trigger check.
 	if !c.Triggered {
-		if distSq <= c.TriggerRadius*c.TriggerRadius {
+		if dist <= float64(c.TriggerRadius) {
 			c.Triggered = true
 		} else {
 			return
@@ -58,21 +56,23 @@ func (c *CasterBehavior) Update(m *Monster, p *Player, level *levels.Level) {
 	c.CastCounter++
 
 	// Too close — retreat.
-	if int(dist) < c.FleeRange {
+	if dist < float64(c.FleeRange) {
 		c.retreat(m, p, level)
 		return
 	}
 
 	// In range — cast spell.
-	if int(dist) <= c.AttackRange {
+	if dist <= float64(c.AttackRange) {
 		if c.CastCounter >= c.CastCooldown {
 			c.CastCounter = 0
+			// Use continuous positions for origin and target so spells fire
+			// from where the sprite is drawn and track the player's visual position.
 			m.PendingSpells = append(m.PendingSpells, PendingSpellCast{
 				SpellName: c.SpellName,
-				OriginX:   float64(m.TileX),
-				OriginY:   float64(m.TileY),
-				TargetX:   float64(p.TileX),
-				TargetY:   float64(p.TileY),
+				OriginX:   m.InterpX,
+				OriginY:   m.InterpY,
+				TargetX:   p.MoveController.InterpX,
+				TargetY:   p.MoveController.InterpY,
 				Damage:    m.Damage,
 			})
 		}
@@ -92,8 +92,8 @@ func (c *CasterBehavior) retreat(m *Monster, p *Player, level *levels.Level) {
 		if !level.IsWalkable(nx, ny) {
 			continue
 		}
-		ddx := float64(nx - p.TileX)
-		ddy := float64(ny - p.TileY)
+		ddx := float64(nx) - p.MoveController.InterpX
+		ddy := float64(ny) - p.MoveController.InterpY
 		dd := ddx*ddx + ddy*ddy
 		if dd > bestDist {
 			bestDist = dd

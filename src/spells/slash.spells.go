@@ -4,7 +4,7 @@ import (
 	"image/color"
 	"math"
 
-	"dungeoneer/constants"
+	"dungeoneer/coords"
 	"dungeoneer/levels"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -192,8 +192,8 @@ func (s *SlashArc) Draw(screen *ebiten.Image, tileSize int, camX, camY, camScale
 		p1 := s.ArcPoints[i]
 		p2 := s.ArcPoints[i+1]
 
-		sx1, sy1 := isoToScreenFloat(p1.X+constants.IsoBodyDX, p1.Y, tileSize)
-		sx2, sy2 := isoToScreenFloat(p2.X+constants.IsoBodyDX, p2.Y, tileSize)
+		sx1, sy1 := isoToScreenFloat(p1.X+coords.BodyDX, p1.Y, tileSize)
+		sx2, sy2 := isoToScreenFloat(p2.X+coords.BodyDX, p2.Y, tileSize)
 		sx1 = (sx1-camX)*camScale + cx
 		sy1 = (sy1+camY)*camScale + cy
 		sx2 = (sx2-camX)*camScale + cx
@@ -210,10 +210,10 @@ func (s *SlashArc) Draw(screen *ebiten.Image, tileSize int, camX, camY, camScale
 	// Draw a connecting line from origin to the start of the arc (the "blade arm").
 	if visibleSegments > 0 {
 		tip := s.ArcPoints[visibleSegments]
-		osx, osy := isoToScreenFloat(s.OriginX+constants.IsoBodyDX, s.OriginY, tileSize)
+		osx, osy := isoToScreenFloat(s.OriginX+coords.BodyDX, s.OriginY, tileSize)
 		osx = (osx-camX)*camScale + cx
 		osy = (osy+camY)*camScale + cy
-		tsx, tsy := isoToScreenFloat(tip.X+constants.IsoBodyDX, tip.Y, tileSize)
+		tsx, tsy := isoToScreenFloat(tip.X+coords.BodyDX, tip.Y, tileSize)
 		tsx = (tsx-camX)*camScale + cx
 		tsy = (tsy+camY)*camScale + cy
 
@@ -241,8 +241,8 @@ func (s *SlashArc) drawSlamRing(screen *ebiten.Image, tileSize int, camX, camY, 
 		p2x := s.OriginX + math.Cos(t2)*ringRadius
 		p2y := s.OriginY + math.Sin(t2)*ringRadius
 
-		sx1, sy1 := isoToScreenFloat(p1x+constants.IsoBodyDX, p1y, tileSize)
-		sx2, sy2 := isoToScreenFloat(p2x+constants.IsoBodyDX, p2y, tileSize)
+		sx1, sy1 := isoToScreenFloat(p1x+coords.BodyDX, p1y, tileSize)
+		sx2, sy2 := isoToScreenFloat(p2x+coords.BodyDX, p2y, tileSize)
 		sx1 = (sx1-camX)*camScale + cx
 		sy1 = (sy1+camY)*camScale + cy
 		sx2 = (sx2-camX)*camScale + cx
@@ -257,7 +257,7 @@ func (s *SlashArc) drawSlamRing(screen *ebiten.Image, tileSize int, camX, camY, 
 	if s.age < s.SweepTime {
 		flash := colors.edge
 		flash.A = uint8(80 * globalAlpha)
-		osx, osy := isoToScreenFloat(s.OriginX+constants.IsoBodyDX, s.OriginY, tileSize)
+		osx, osy := isoToScreenFloat(s.OriginX+coords.BodyDX, s.OriginY, tileSize)
 		osx = (osx-camX)*camScale + cx
 		osy = (osy+camY)*camScale + cy
 		vector.DrawFilledCircle(screen, float32(osx), float32(osy), float32(ringRadius*camScale*float64(tileSize/4)), flash, true)

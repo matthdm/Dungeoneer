@@ -8,14 +8,20 @@ This project is a technical and artistic love letter to games like *Diablo* and 
 
 ##  Developer Notes
 
-**Status:** Phase 1, Phase 2, and Phase 3 are complete. Current focus is Phase 4 stabilization (ability/equipment consistency and save/load parity) before broader economy expansion.
+**Status (2026-04-27):** Phases 1–3 complete. Phase 4 in stabilization.
+
+- 4A (ability gating) and 4B (ability item templates) shipped: 13 ability-granting items wired through `Player.RefreshAbilities`, mana costs enforced, dynamic spell bar, dash/grapple gated, biome-themed loot bias, Varn quest items injected into the loot pool.
+- 4C (equipment & stats) mostly shipped: stat modifiers, item quality tiers, gold economy, dialogue `give_item` action.
+- Active stabilization work: the coordinate unification refactor in [`OFFSET_UNIFICATION_PLAN.md`](OFFSET_UNIFICATION_PLAN.md) (phases 0–2 done, 3–5 partial).
+- For the canonical agent entry point, see [`CLAUDE.md`](CLAUDE.md). For phase planning, see [`design-docs/roadmap.md`](design-docs/roadmap.md).
 
 _Remaining polish from earlier phases:_
 
-- [ ] Complete roadmap bridge update for Phase 4 sequencing (stabilization baseline -> economy/features)
+- [ ] Finish `OFFSET_UNIFICATION_PLAN` phases 3–5 (collision wall offsets, render offset centralization, cleanup)
 - [ ] Complete full run state serialization (Remnants save working, full state TODO)
-- [ ] Implement load game menu (cosmetic)
-- [ ] Implement options menu (cosmetic)
+- [ ] Phase 4F: chest variants (wood/iron/gold), treasure-room loot, weighted loot by quality
+- [ ] Implement Load Game menu (TODOs in `src/game/handlers.game.go`)
+- [ ] Implement Options menu (TODOs in `src/game/handlers.game.go`)
 - [ ] Investigate corner ray FOV edge case (visual polish)
 
 ---

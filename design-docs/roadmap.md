@@ -2,7 +2,7 @@
 
 This document defines the implementation order for all systems. Each phase builds on the previous. Within each phase, items are listed in dependency order.
 
-**Last updated:** 2026-03-26
+**Last updated:** 2026-04-27
 
 ---
 
@@ -72,7 +72,10 @@ Design docs: `room-tagging.md`, `spawn-placement.md`, `dialogue-system.md`, `npc
 
 ---
 
-## Phase 4: Ability Items, Economy & Equipment
+## Phase 4: Ability Items, Economy & Equipment 🟡 IN PROGRESS
+
+> **Status (2026-04-27):** 4A complete · 4B complete · 4C mostly complete · 4F open.
+> Active stabilization work tracked in [`../OFFSET_UNIFICATION_PLAN.md`](../OFFSET_UNIFICATION_PLAN.md) (phases 0–2 done, 3–5 partial). Hub Shop & Upgrades (4E) remain deferred to Phase 8.
 
 *Goal: Abilities are earned, not given. The player starts with only melee and must find items to unlock spells, dash, and grapple. The hub economy gives reason to return between runs.*
 

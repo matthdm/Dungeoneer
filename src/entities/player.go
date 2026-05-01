@@ -3,6 +3,7 @@ package entities
 import (
 	"dungeoneer/collision"
 	"dungeoneer/constants"
+	"dungeoneer/coords"
 	"dungeoneer/images"
 	"dungeoneer/inventory"
 	"dungeoneer/items"
@@ -106,11 +107,18 @@ type Player struct {
 	ComboTimer float64 // time remaining in combo window (resets on hit)
 }
 
+// Pos returns the player's current world position as a WorldPos.
+// This is the single source of truth — TileX/TileY and BodyX/BodyY derive from it.
+func (p *Player) Pos() coords.WorldPos {
+	return coords.WorldPos{X: p.MoveController.InterpX, Y: p.MoveController.InterpY}
+}
+
 // BodyX returns the cartesian X of the player's visual/combat body center.
-func (p *Player) BodyX() float64 { return p.MoveController.InterpX + constants.IsoBodyDX }
+func (p *Player) BodyX() float64 { return p.Pos().BodyCenter().X }
 
 // BodyY returns the cartesian Y of the player's visual/combat body center.
-func (p *Player) BodyY() float64 { return p.MoveController.InterpY + MonsterHitCenterYOffset }
+func (p *Player) BodyY() float64 { return p.Pos().BodyCenter().Y }
+
 
 var equipmentSlotOrder = []string{
 	"Head", "Chest", "Weapon", "Offhand", "Feet", "Ring1", "Ring2",

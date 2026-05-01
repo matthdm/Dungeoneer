@@ -2,6 +2,7 @@ package spells
 
 import (
 	"dungeoneer/constants"
+	"dungeoneer/coords"
 	"dungeoneer/images"
 	"dungeoneer/levels"
 	"fmt"
@@ -162,8 +163,9 @@ func (f *Fireball) DebugDraw(screen *ebiten.Image, tileSize int, camX, camY, cam
 
 func (f *Fireball) IsFinished() bool { return f.Finished }
 
+// isoToScreenFloat converts cartesian world coordinates to isometric screen
+// coordinates. Delegates to coords.ToIso — the single source of truth for
+// the projection formula used across the entire codebase.
 func isoToScreenFloat(x, y float64, tileSize int) (float64, float64) {
-	ix := (x - y) * float64(tileSize/2)
-	iy := (x + y) * float64(tileSize/4)
-	return ix, iy
+	return coords.ToIso(x, y, tileSize)
 }

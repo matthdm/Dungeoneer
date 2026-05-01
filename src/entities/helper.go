@@ -1,13 +1,15 @@
 package entities
 
 import (
+	"dungeoneer/coords"
 	"math"
 )
 
+// isoToScreenFloat converts cartesian world coordinates to isometric screen
+// coordinates. Delegates to coords.ToIso — the single source of truth for
+// the projection formula.
 func isoToScreenFloat(x, y float64, tileSize int) (float64, float64) {
-	ix := (x - y) * float64(tileSize/2)
-	iy := (x + y) * float64(tileSize/4)
-	return ix, iy
+	return coords.ToIso(x, y, tileSize)
 }
 
 func IsAdjacent(x1, y1, x2, y2 int) bool {
