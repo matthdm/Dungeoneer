@@ -64,12 +64,20 @@ func (g *Game) updateChestHints() {
 		return
 	}
 	px, py := g.player.MoveController.InterpX, g.player.MoveController.InterpY
+	playerHasKey := g.player.HasItemAnywhere("iron_key")
 	for _, c := range g.Chests {
 		if c.Opened || !c.IsPlayerInRange(px, py) {
 			continue
 		}
 		isoX, isoY := g.cartesianToIso(float64(c.TileX), float64(c.TileY))
 		msg := "[E] Open"
+		if c.Locked {
+			if playerHasKey {
+				msg = "[E] Open (Iron Key)"
+			} else {
+				msg = "[E] Open (Iron Key required)"
+			}
+		}
 		ts := float64(g.currentLevel.TileSize)
 		sprCenterX := (isoX + ts/2 - g.camX) * g.camScale
 		hx := int(sprCenterX+float64(g.w/2)) - len(msg)*3
@@ -626,6 +634,13 @@ func (g *Game) openChest(c *entities.Chest) {
 	if c == nil || c.Opened {
 		return
 	}
+	// Locked chests require an Iron Key.
+	if c.Locked {
+		if g.player == nil || !g.player.HasItemAnywhere("iron_key") {
+			return
+		}
+		g.player.RemoveItemByID("iron_key")
+	}
 	c.Opened = true
 
 	if g.FloorCtx == nil {
@@ -635,7 +650,12 @@ func (g *Game) openChest(c *entities.Chest) {
 	if g.FloorCtx.BiomeConfig != nil && g.FloorCtx.BiomeConfig.LootTable != nil {
 		table.Entries = append(table.Entries, g.FloorCtx.BiomeConfig.LootTable.Entries...)
 	}
-	results := items.RollChestLoot(table, c.Variant, g.FloorCtx.FloorNumber)
+	lootVariant := c.Variant
+	if c.Locked {
+		// Locked chests use premium loot regardless of visual tier.
+		lootVariant = "locked"
+	}
+	results := items.RollChestLoot(table, lootVariant, g.FloorCtx.FloorNumber)
 	for _, r := range results {
 		tmpl, ok := items.Registry[r.ItemID]
 		if !ok {
@@ -666,10 +686,18 @@ func (g *Game) spawnFloorChests(ctx FloorContext) {
 		}
 		avoid[[2]int{x, y}] = true
 		variant := chestVariantForFloor(ctx.FloorNumber, ctx.TotalFloors)
+		locked := false
+		switch variant {
+		case entities.ChestIron:
+			locked = rand.Float64() < entities.ChestLockedChanceIron
+		case entities.ChestGold:
+			locked = rand.Float64() < entities.ChestLockedChanceGold
+		}
 		chest := &entities.Chest{
 			TileX:   x,
 			TileY:   y,
 			Variant: variant,
+			Locked:  locked,
 			Sprite:  g.spriteSheet.GrandChest,
 		}
 		g.Chests = append(g.Chests, chest)
@@ -677,28 +705,14 @@ func (g *Game) spawnFloorChests(ctx FloorContext) {
 }
 
 // chestVariantForFloor returns a chest tier appropriate for the given floor.
-func chestVariantForFloor(floor, total int) string {
-	progress := float64(floor) / float64(max(1, total))
-	roll := rand.Float64()
+// Locked state is determined separately in spawnFloorChests.
+func chestVariantForFloor(floor, _ int) string {
 	switch {
-	case progress >= 0.75:
-		if roll < 0.20 {
-			return entities.ChestLocked
-		} else if roll < 0.60 {
-			return entities.ChestGold
-		}
+	case floor >= entities.ChestGoldMinFloor:
+		return entities.ChestGold
+	case floor >= entities.ChestIronMinFloor:
 		return entities.ChestIron
-	case progress >= 0.40:
-		if roll < 0.10 {
-			return entities.ChestGold
-		} else if roll < 0.50 {
-			return entities.ChestIron
-		}
-		return entities.ChestWooden
 	default:
-		if roll < 0.30 {
-			return entities.ChestIron
-		}
 		return entities.ChestWooden
 	}
 }
