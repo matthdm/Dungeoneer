@@ -8,7 +8,7 @@ Single source of truth for what's active, queued, blocked, and done. Update this
 
 The one plan currently being worked. There is only ever one active plan at a time.
 
-> **Active:** `4F-loot-refinement.md`
+> **Active:** `load-game-menu.md`
 
 ---
 
@@ -18,27 +18,27 @@ Plans ready to be picked up next. Top of list = next active. When the active pla
 
 | # | Plan | Size | Depends On | Notes |
 |---|------|------|------------|-------|
-| 1 | `load-game-menu.md` | Small | — | Wires the stubbed Load Game menu. Independent. |
-| 2 | `options-menu.md` | Small | — | Wires the stubbed Options menu. Independent. |
-| 3 | `runstate-serialization.md` | Medium | `load-game-menu` | Full mid-run save/load. Extends load screen. |
-| 4 | `5A-npc-phase-tracker.md` | Medium | `4F-loot-refinement` | NPCPhaseTracker + trust system infrastructure. |
-| 5 | `5B-varn-arc.md` | Medium | `5A` | Varn's 4-phase dialogue arc (mostly JSON content). |
-| 6 | `5C-boss-selection.md` | Large | `5B` | Boss selection engine + Varn boss fight. |
-| 7 | `5D-hub-npc-quarter.md` | Small | `5B` | Hub NPC positions + Varn hub dialogue. |
-| 8 | `6A-full-meta-save.md` | Medium | `5C` | Extended MetaSave, milestone unlocks, toast system. |
-| 9 | `6B-ng-plus-dialogue.md` | Medium | `6A` | Meta-flag conditions, Varn NG+ trees, betrayal memory. |
-| 10 | `6C-lore-system.md` | Medium | `6B` | Lore registry, unlock action, lore library UI. |
-| 11 | `7A-echoes-of-self.md` | Large | `6C` | Echo recorder, echo entities, ghost visuals, shrine UI. |
-| 12 | `7B-living-dungeon-ai.md` | Large | `6C` | Behavior tracker, dungeon mood, adaptive gen params. |
-| 13 | `8A-item-sets.md` | Medium | `7A`, `7B` | Set registry, set bonuses, tooltip + HUD UI. |
-| 14 | `8B-hub-shop-upgrades.md` | Large | `8A` | Shop NPC, upgrade station, 8 starter upgrades. |
-| 15 | `9A-polish-transitions-camera.md` | Small | `8B` | Fade transitions, screen shake, boss intro pan. |
-| 16 | `9B-polish-visual-effects.md` | Medium | `9A` | Particle system, damage numbers, death fades. |
-| 17 | `9C-polish-audio.md` | Medium | `9B` | Audio engine, SFX hookups, music, volume wiring. |
-| 18 | `9D-polish-hud-navigation.md` | Small | `9A` | Minimap, floor indicator, status effect icons. |
-| 19 | `10A-additional-npcs.md` | XL | `9D`, `9C` | Seris, Mira, Kael — full arcs + boss fights. |
-| 20 | `10B-abaddon-meta-narrative.md` | Large | `10A` | Abaddon, alignment system, endgame dialogue. |
-| 21 | `10C-world-expansion.md` | Large | `10B` | 4 new biomes, hub evolution, cross-NPC dialogue. |
+| 1 | `options-menu.md` | Small | — | Wires the stubbed Options menu. Independent. |
+| 2 | `runstate-serialization.md` | Medium | `load-game-menu` | Full mid-run save/load. Extends load screen. |
+| 3 | `5A-npc-phase-tracker.md` | Medium | `4F-loot-refinement` | NPCPhaseTracker + trust system infrastructure. |
+| 4 | `5B-varn-arc.md` | Medium | `5A` | Varn's 4-phase dialogue arc (mostly JSON content). |
+| 5 | `5C-boss-selection.md` | Large | `5B` | Boss selection engine + Varn boss fight. |
+| 6 | `5D-hub-npc-quarter.md` | Small | `5B` | Hub NPC positions + Varn hub dialogue. |
+| 7 | `6A-full-meta-save.md` | Medium | `5C` | Extended MetaSave, milestone unlocks, toast system. |
+| 8 | `6B-ng-plus-dialogue.md` | Medium | `6A` | Meta-flag conditions, Varn NG+ trees, betrayal memory. |
+| 9 | `6C-lore-system.md` | Medium | `6B` | Lore registry, unlock action, lore library UI. |
+| 10 | `7A-echoes-of-self.md` | Large | `6C` | Echo recorder, echo entities, ghost visuals, shrine UI. |
+| 11 | `7B-living-dungeon-ai.md` | Large | `6C` | Behavior tracker, dungeon mood, adaptive gen params. |
+| 12 | `8A-item-sets.md` | Medium | `7A`, `7B` | Set registry, set bonuses, tooltip + HUD UI. |
+| 13 | `8B-hub-shop-upgrades.md` | Large | `8A` | Shop NPC, upgrade station, 8 starter upgrades. |
+| 14 | `9A-polish-transitions-camera.md` | Small | `8B` | Fade transitions, screen shake, boss intro pan. |
+| 15 | `9B-polish-visual-effects.md` | Medium | `9A` | Particle system, damage numbers, death fades. |
+| 16 | `9C-polish-audio.md` | Medium | `9B` | Audio engine, SFX hookups, music, volume wiring. |
+| 17 | `9D-polish-hud-navigation.md` | Small | `9A` | Minimap, floor indicator, status effect icons. |
+| 18 | `10A-additional-npcs.md` | XL | `9D`, `9C` | Seris, Mira, Kael — full arcs + boss fights. |
+| 19 | `10B-abaddon-meta-narrative.md` | Large | `10A` | Abaddon, alignment system, endgame dialogue. |
+| 20 | `10C-world-expansion.md` | Large | `10B` | 4 new biomes, hub evolution, cross-NPC dialogue. |
+| 21 | `11A-glyph-language.md` | Large | `10C`, `10B` | NG+ glyph cipher system — inscription stones, fragment items, codex UI, 25–30 authored shrine messages. |
 
 ### Backlog (schedule when triggered)
 
@@ -71,7 +71,9 @@ Plans that predate this system but follow the same conventions.
 
 Most recent first.
 
-_None yet._
+| Date | Plan | Notes |
+|------|------|-------|
+| 2026-05-27 | `4F-loot-refinement` | Chest variants, Iron Key, locked-chest interaction, loot rarity scaling, loot tests. |
 
 ---
 

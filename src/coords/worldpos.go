@@ -72,6 +72,18 @@ func (w WorldPos) ToIso(tileSize int) (float64, float64) {
 	return (w.X - w.Y) * h, (w.X + w.Y) * q
 }
 
+// FromIso unprojects isometric screen-space coordinates back into world space.
+// x and y must already be in world-render coordinates: camera, zoom, and screen
+// centering are caller responsibilities.
+func FromIso(x, y float64, tileSize int) WorldPos {
+	h := float64(tileSize / 2)
+	q := float64(tileSize / 4)
+	return WorldPos{
+		X: (x/h + y/q) / 2,
+		Y: (y/q - x/h) / 2,
+	}
+}
+
 // DistTo returns the euclidean distance from w to other in world space.
 func (w WorldPos) DistTo(other WorldPos) float64 {
 	return math.Hypot(w.X-other.X, w.Y-other.Y)

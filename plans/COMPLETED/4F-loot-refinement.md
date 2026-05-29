@@ -1,10 +1,10 @@
 ---
 plan-id: 4F-loot-refinement
-status: active
+status: complete
 owner: unassigned
 branch: plan/4F-loot-refinement
 depends-on: []
-last-touched: 2026-04-27
+last-touched: 2026-05-27
 ---
 
 # Plan: Phase 4F — Loot Refinement
@@ -98,10 +98,11 @@ When done, every run produces a clear visual loot economy: the player learns to 
 | Date | Phase | Status | Notes |
 |------|-------|--------|-------|
 | 2026-04-27 | — | Drafted | Plan written; not yet started |
+| 2026-05-27 | 1-5 | Complete | All phases shipped. Chest variants, Iron Key, locked-chest interaction, loot tests. |
 
 ## What was NOT changed (intentional)
 
-_None yet._
+- Chest sprite tinting not wired to the renderer in this pass — `ChestVariantTint` helper exists but draw code still uses `g.spriteSheet.GrandChest` for all variants. Deferred: requires renderer changes outside this plan's file envelope.
 
 ## Open questions
 

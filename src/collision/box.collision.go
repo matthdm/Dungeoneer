@@ -11,6 +11,22 @@ type Box struct {
 	Width, Height float64
 }
 
+// SpriteAnchor describes the offset from a logical collision box center to the
+// sprite's visual feet. Collision checks use this to keep wall contact aligned
+// with rendered character sprites without scattering magic offsets.
+type SpriteAnchor struct {
+	OffsetX float64
+	OffsetY float64
+}
+
+func (a SpriteAnchor) CollisionOffset() (x, y float64) {
+	return a.OffsetX, a.OffsetY
+}
+
+// PlayerSpriteAnchor preserves the current player wall-contact feel while
+// making the visual collision anchor explicit.
+var PlayerSpriteAnchor = SpriteAnchor{OffsetX: 0.21, OffsetY: 0.75}
+
 // PredictAndClip moves the given Box by dx/dy while preventing it from entering
 // any unwalkable tile. Movement is stepped in small increments to avoid
 // tunneling. The returned Box is the final clipped position. The bools indicate
@@ -52,15 +68,17 @@ func PredictAndClip(level *levels.Level, box Box, dx, dy float64) (Box, bool, bo
 	return box, collidedX, collidedY
 }
 
-// CollidesWithMap checks if the given box overlaps with unwalkable tiles.
-const YWallVisualOffset = .75 // shift player's collision box
-const XWallVisualOffset = .21 // shift player's collision box
-
 func CollidesWithMap(level *levels.Level, box Box) bool {
-	// Apply Y-offset to collision check (helps align visual sprite base to tile logic)
+	return CollidesWithMapWithAnchor(level, box, PlayerSpriteAnchor)
+}
+
+// CollidesWithMapWithAnchor checks if the given box overlaps with unwalkable
+// tiles after applying the supplied sprite anchor.
+func CollidesWithMapWithAnchor(level *levels.Level, box Box, anchor SpriteAnchor) bool {
 	offsetBox := box
-	offsetBox.Y += YWallVisualOffset
-	offsetBox.X += XWallVisualOffset
+	offsetX, offsetY := anchor.CollisionOffset()
+	offsetBox.X += offsetX
+	offsetBox.Y += offsetY
 
 	tileLeft := int(math.Floor(offsetBox.X - offsetBox.Width/2))
 	tileTop := int(math.Floor(offsetBox.Y - offsetBox.Height/2))

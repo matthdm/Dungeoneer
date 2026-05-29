@@ -74,7 +74,7 @@ Design docs: `room-tagging.md`, `spawn-placement.md`, `dialogue-system.md`, `npc
 
 ## Phase 4: Ability Items, Economy & Equipment 🟡 IN PROGRESS
 
-> **Status (2026-04-27):** 4A complete · 4B complete · 4C mostly complete · 4F open.
+> **Status (2026-05-27):** 4A complete · 4B complete · 4C mostly complete · 4F shipped.
 > Active stabilization work tracked in [`../OFFSET_UNIFICATION_PLAN.md`](../OFFSET_UNIFICATION_PLAN.md) (phases 0–2 done, 3–5 partial). Hub Shop & Upgrades (4E) remain deferred to Phase 8.
 
 *Goal: Abilities are earned, not given. The player starts with only melee and must find items to unlock spells, dash, and grapple. The hub economy gives reason to return between runs.*
@@ -119,9 +119,9 @@ See: `ability-items.md` for full design.
 
 | # | Task | Dependencies | New Files | Touches |
 |---|---|---|---|---|
-| 4.32 | Weighted Loot by Quality — higher floors and rarer rooms produce better item tiers; ability items skew Uncommon+ | 4.14 | — | `items/loot.go` |
-| 4.33 | Chest Variants — wooden (common), iron (uncommon+), gold (rare+) with locked chests requiring Iron Key | 4.32 | `entities/chest.go` | `game/handlers.game.go` |
-| 4.34 | Treasure Room Loot — rooms tagged `treasure` always contain a chest with elevated quality | 4.32 | — | `game/hub.go`, `items/loot.go` |
+| ✅ 4.32 | Weighted Loot by Quality — higher floors and rarer rooms produce better item tiers; ability items skew Uncommon+ | 4.14 | — | `items/loot.go` |
+| ✅ 4.33 | Chest Variants — wooden (common), iron (uncommon+), gold (rare+) with locked chests requiring Iron Key | 4.32 | `entities/chest.go` | `game/handlers.game.go` |
+| ✅ 4.34 | Treasure Room Loot — rooms tagged `treasure` always contain a chest with elevated quality | 4.32 | — | `game/hub.go`, `items/loot.go` |
 
 **Milestone: Abilities are earned through items. Each run feels different based on what you find. Quest-locked items create NPC motivation.**
 

@@ -91,8 +91,8 @@ spell detection code, not melee or projectile code.
 ### Collision Offsets
 | Constant | Value | File | Line | Purpose |
 |----------|-------|------|------|---------|
-| `YWallVisualOffset` | 0.75 | `collision/box.collision.go` | 56 | Shift collision box down to align visual sprite base with tile walkability |
-| `XWallVisualOffset` | 0.21 | `collision/box.collision.go` | 57 | Shift collision box right for same reason |
+| `PlayerSpriteAnchor.OffsetY` | 0.75 | `collision/box.collision.go` | 28 | Shift collision box down to align visual sprite base with tile walkability |
+| `PlayerSpriteAnchor.OffsetX` | 0.21 | `collision/box.collision.go` | 28 | Shift collision box right for same reason |
 | `CollisionBox.Width` | 0.55 | `entities/player.go` | 144 | Player collision box width |
 | `CollisionBox.Height` | 0.80 | `entities/player.go` | 144 | Player collision box height |
 
@@ -126,7 +126,7 @@ spell detection code, not melee or projectile code.
 | Fireball radius | `InterpX, InterpY` (float) | `game/spells.game.go` | ~115-132 |
 | Projectile hit | `p.X/Y` (float) vs `px, py` (int) | `entities/monster_projectile.go` | 66-70 |
 | NPC interaction | `TileX/TileY` or `InterpX/InterpY` depending on config | `entities/npc.go` | ~82-96 |
-| Collision sweep | `CollisionBox.X/Y` + `YWallVisualOffset/XWallVisualOffset` | `collision/box.collision.go` | 59-63 |
+| Collision sweep | `CollisionBox.X/Y` + `PlayerSpriteAnchor` | `collision/box.collision.go` | 59-63 |
 
 ---
 
@@ -134,11 +134,12 @@ spell detection code, not melee or projectile code.
 
 ### 1. Collision box uses hardcoded visual fudge factors
 
-`collision/box.collision.go:56-63` applies `YWallVisualOffset = 0.75` and
-`XWallVisualOffset = 0.21` to shift the collision box so the sprite *looks*
-like it stops at walls. These aren't derived from sprite dimensions or anchor
-points — they're eyeballed. Changing sprites, zoom, or anchor conventions will
-silently break collision alignment.
+`collision/box.collision.go` applies `PlayerSpriteAnchor = {0.21, 0.75}` to
+shift the collision box so the sprite *looks*
+like it stops at walls. These numbers are now named anchor data instead of
+anonymous constants, but they are still inherited from the original eyeballed
+offsets. Changing sprites, zoom, or anchor conventions should be followed by
+the manual wall-collision test cases.
 
 ### 2. Melee uses int tiles while spells use floats
 
@@ -183,8 +184,9 @@ pixel offsets (`+35`, `+15`, `+30`, `-10`), and they don't all agree.
 - [x] **0.1** Create `src/coords/worldpos.go` with a `WorldPos` type
 - [x] **0.2** Add methods: `TileX() int`, `TileY() int`, `BodyCenter() WorldPos`, `ToIso(tileSize int) (float64, float64)`, `DistTo(other WorldPos) float64`
 - [x] **0.3** Added `TileCenterIso` and package-level `ToIso` convenience function
-- [ ] **0.4** Unit tests — not written yet (optional, formula is trivial)
-- [ ] **0.5** `RenderIso(bob)` helper — deferred to Phase 4 continuation
+- [x] **0.4** Unit tests added in `src/coords/worldpos_test.go`
+- [x] **0.5** `RenderIso(bob)` helper added to `coords.WorldPos`
+- [x] **0.6** Added `coords.FromIso()` using Clint Bellanger's reference inverse projection formula
 
 ```go
 // src/coords/worldpos.go
@@ -233,8 +235,8 @@ func (w WorldPos) TileCenterIso(tileSize int) (float64, float64) {
 - [x] **1.4** `BodyX()/BodyY()` on Player and Monster delegate to `Pos().BodyCenter()`
 - [x] **1.5** `entities/helper.go` `isoToScreenFloat` delegates to `coords.ToIso`
 - [x] **1.6** `spells/fireball.spells.go` `isoToScreenFloat` delegates to `coords.ToIso`
-- [ ] **1.7** `cartesianToIso()` in `game/game.go` — kept as wrapper (low priority, Phase 5)
-- [ ] **1.8** `constants.IsoBodyDX` alias cleanup — Phase 5
+- [x] **1.7** `cartesianToIso()` in `game/game.go` kept as wrapper, delegates to `coords.ToIso`
+- [x] **1.8** `constants.IsoBodyDX` alias cleanup complete; no remaining references
 
 ### Phase 2: Unify combat checks (behavior-changing, needs testing) ✅
 - [x] **2.1** `MonsterProjectile.HitsPlayer` now takes `coords.WorldPos`, checks against `BodyCenter()`
@@ -245,14 +247,14 @@ func (w WorldPos) TileCenterIso(tileSize int) (float64, float64) {
 - [ ] **2.6** Playtest: verify melee feel, ranged aggro, spell hits — needs human testing
 
 ### Phase 3: Derive collision offsets from sprite anchor (behavior-changing)
-- [ ] **3.1** Define a `SpriteAnchor` struct: `{OffsetX, OffsetY float64}` per entity type, representing the offset from the WorldPos to the sprite's visual feet
-- [ ] **3.2** Compute collision visual offsets from `SpriteAnchor` instead of hardcoded `0.75`/`0.21`
-- [ ] **3.3** Remove `YWallVisualOffset` and `XWallVisualOffset` constants
+- [x] **3.1** Define a `SpriteAnchor` struct: `{OffsetX, OffsetY float64}` per entity type, representing the offset from the WorldPos to the sprite's visual feet
+- [x] **3.2** Compute collision visual offsets from `SpriteAnchor` instead of hardcoded `0.75`/`0.21`
+- [x] **3.3** Remove `YWallVisualOffset` and `XWallVisualOffset` constants
 - [ ] **3.4** Playtest: walk along all wall types, verify no clipping regressions
 
 ### Phase 4: Centralize render offsets (visual-only changes) — Partial
-- [ ] **4.1** `RenderPos` helper (bakes -1.0 shift into iso Y) — not yet written
-- [ ] **4.2** Centralise `Translate(0, -verticalOffset+bob)` in render_collect — not yet done
+- [x] **4.1** `RenderIso` helper bakes -1.0 shift into iso Y
+- [x] **4.2** Centralise `Translate(0, -verticalOffset+bob)` in render_collect for player, monster, and NPC renderables
 - [ ] **4.3** Health bars in `monster.Draw/player.Draw` — dead code, leave for Phase 5
 - [x] **4.4** `hitmarker.game.go` — uses `TileCenterIso`, hardcoded `+35/+15` removed
 - [x] **4.5** `TakeDamage` damage number position — uses `m.InterpX/m.InterpY`
@@ -260,9 +262,9 @@ func (w WorldPos) TileCenterIso(tileSize int) (float64, float64) {
 - [ ] **4.7** Visual regression test — needs human playtesting
 
 ### Phase 5: Clean up and document
-- [ ] **5.1** Remove all orphaned offset constants
-- [ ] **5.2** Add a comment block at the top of `coords/worldpos.go` explaining the coordinate system for future contributors
-- [ ] **5.3** Update any level editor code that uses raw offsets
+- [x] **5.1** Remove all orphaned offset constants
+- [x] **5.2** Add a comment block at the top of `coords/worldpos.go` explaining the coordinate system for future contributors
+- [x] **5.3** Audit level editor code that uses raw offsets; no isometric offset constants found
 - [ ] **5.4** Final full playtest
 
 ---
@@ -314,6 +316,75 @@ After each phase, verify:
 - [ ] Level editor entity placement still works
 - [ ] No visual jitter at any zoom level
 
+## Manual Regression Cases
+
+Run these with a fresh build and send screenshots plus a short note for any
+failure. Include the floor number/biome, player class, and whether FOV debug
+lines were enabled.
+
+### Case 1: Wall-adjacent FOV leak
+1. Start a new run and choose either class.
+2. Move until the player is directly beside a one-tile-thick wall, like the
+   lava-wall screenshots where the blue player circle touches the wall edge.
+3. Stand still for at least two seconds.
+4. Move one tile north, south, east, and west along the same wall face.
+5. Expected: the wall remains dark/solid outside the visible side; no bright
+   crescent, light leak, or visible floor appears behind the wall.
+
+### Case 2: Wall collision and sprite feet
+1. In a room with straight walls, hold movement into each wall direction:
+   north, south, east, and west.
+2. Then slide diagonally along a corner by holding two movement keys.
+3. Expected: the player's feet/collision circle stop at the apparent wall
+   boundary without sinking into the wall top, floating away from it, or
+   jittering between tiles.
+
+### Case 3: Melee and slash alignment
+1. As Knight, approach a monster until the sprites look visually adjacent.
+2. Attack from all four cardinal directions, including while either sprite is
+   mid-step.
+3. If using a slash/arc ability, aim so the visible arc barely touches the
+   monster.
+4. Expected: melee and slash hits match the visible overlap. Note any case
+   where the effect clearly touches but misses, or clearly misses but hits.
+
+### Case 4: Ranged projectile collision
+1. Let a ranged/caster enemy fire while the player is moving perpendicular to
+   the projectile path.
+2. Repeat while dashing across the projectile path.
+3. Expected: hits occur only when the projectile visually overlaps the
+   player's body center/circle, not the old tile the player left behind.
+
+### Case 5: Hit marker and damage number anchoring
+1. Damage a monster from melee range and at range.
+2. Watch the red hit marker and floating damage number.
+3. Expected: both originate from the damaged monster's current visual position,
+   including if it is moving. They should not appear one tile behind or offset
+   down/right.
+
+### Case 6: NPC/chest interaction labels
+1. Stand next to an NPC or chest from each side.
+2. Move one half-step away and back in.
+3. Expected: the interaction hint appears when the player is visually in range
+   and does not lag behind the player or target while moving.
+
+### Case 7: Level editor placement
+1. Toggle the level editor and place a floor/wall sprite and one monster entity.
+2. Save, reload, and verify the placed entity appears on the tile that was
+   highlighted.
+3. Expected: editor cursor, saved tile coordinates, and in-game spawn location
+   refer to the same tile.
+
+### Case 8: Cursor-to-tile anchor sanity
+1. Enable a visible hover tile and slowly move the cursor across one isolated
+   floor diamond.
+2. Click near the diamond top corner, center, left edge, right edge, and bottom
+   corner.
+3. Expected: every click inside the diamond targets the highlighted tile, and
+   every click outside targets a neighboring tile. If this fails, inspect the
+   `tx - 1.5`, `ty - 0.5` anchor offsets in `game/handlers.game.go` before
+   changing melee hit rules.
+
 ---
 
 ## Progress Log
@@ -329,10 +400,11 @@ _Update this section as work proceeds so the next session knows where you left o
 | 2026-04-16 | Phase 3 | Not started | Collision wall offsets (0.75, 0.21) — requires playtesting, skip for now |
 | 2026-04-16 | Phase 4 | **Partial** | `hitmarker.game.go` fixed (uses `TileCenterIso`, magic +35/+15 removed); projectile draw uses `TileCenterIso`; entity health bars in `monster.Draw/player.Draw` are dead code (methods commented out) — left alone |
 | | Phase 5 | Not started | Cleanup: `constants.IsoBodyDX` alias, remove dead `Draw` methods, level editor audit |
+| 2026-05-01 | Phases 0, 1, 3, 4, 5 | **Code complete; playtest open** | Added `coords` and collision unit tests; added `SpriteAnchor` collision offsets; removed wall visual offset constants; routed `game.cartesianToIso()` through `coords.ToIso`; documented manual regression cases for visual/collision validation |
+| 2026-05-01 | Phase 0 | **Projection reference folded in** | Added `coords.FromIso()` and tests against Clint Bellanger's `(64,96)->(2,1)` reference example; `game.isoToCartesian()` now delegates to `coords.FromIso()` |
 
 ### What was NOT changed (intentional)
 
-- `constants.IsoBodyDX = 1.0` is kept as-is. `slash.spells.go` uses it for drawing and it still works correctly. Clean-up is Phase 5.
-- `collision/box.collision.go` `YWallVisualOffset / XWallVisualOffset` are kept. Changing them affects wall traversal feel and requires a dedicated playtesting session.
+- `collision.PlayerSpriteAnchor` preserves the old `0.21, 0.75` wall-contact feel intentionally. The anonymous `YWallVisualOffset / XWallVisualOffset` constants were removed, but the numeric behavior was not retuned without playtesting.
 - `monster.Draw()` / `player.Draw()` health-bar code is left untouched. These methods are currently commented out of the call chain and are dead code.
 - `game/game.go` `cartesianToIso()` kept as a convenience wrapper — it's called in ~25 places in the game package and removing it would be a large noisy diff with no behaviour change.

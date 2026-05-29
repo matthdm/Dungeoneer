@@ -1,6 +1,6 @@
 {
   "remnants": 1206,
-  "run_count": 80,
+  "run_count": 84,
   "best_floor": 3,
   "total_kills": 116,
   "npc_meta": {
@@ -27,6 +27,12 @@
       "defeat_count": 0,
       "highest_phase": 0,
       "total_trust": 0
+    },
+    "varn": {
+      "met": true,
+      "defeat_count": 0,
+      "highest_phase": 1,
+      "total_trust": 5
     }
   }
 }

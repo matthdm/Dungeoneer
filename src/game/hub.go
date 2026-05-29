@@ -235,9 +235,56 @@ func (g *Game) seedNPCPhaseFlags() {
 }
 
 // startFloor generates and activates a new dungeon floor.
+// buildRunSave snapshots the current run state for mid-run persistence.
+func (g *Game) buildRunSave() *RunSave {
+	if g.RunState == nil || g.FloorCtx == nil || g.player == nil {
+		return nil
+	}
+	var seed int64
+	seed = g.FloorCtx.GenParams.Seed
+
+	monsterSnaps := make([]MonsterSnap, 0, len(g.Monsters))
+	for _, m := range g.Monsters {
+		if m == nil || m.HP <= 0 {
+			continue // skip dead monsters
+		}
+		monsterSnaps = append(monsterSnaps, MonsterSnap{
+			TileX: m.TileX,
+			TileY: m.TileY,
+			HP:    m.HP,
+			MaxHP: m.MaxHP,
+			Level: m.Level,
+			Role:  m.Role,
+		})
+	}
+
+	return &RunSave{
+		RunState:  *g.RunState,
+		FloorSeed: seed,
+		Player:    g.player.ToSnapshot(),
+		Monsters:  monsterSnaps,
+	}
+}
+
+// saveRun persists the current mid-run state. Non-fatal on error.
+func (g *Game) saveRun() {
+	rs := g.buildRunSave()
+	if rs == nil {
+		return
+	}
+	_ = SaveRunSave(rs)
+}
+
 func (g *Game) startFloor(floorNum int) {
 	ctx := g.RunState.BuildFloorContext(floorNum)
-	g.RunState.CurrentFloor = floorNum
+	g.startFloorWithContext(ctx)
+}
+
+// startFloorWithContext generates and activates a dungeon floor from a pre-built FloorContext.
+// It is the core of startFloor; callers that need a specific seed (e.g. resume from save)
+// override ctx.GenParams.Seed before calling this.
+func (g *Game) startFloorWithContext(ctx FloorContext) {
+	g.RunState.CurrentFloor = ctx.FloorNumber
 	g.FloorCtx = &ctx
 	g.MonsterProjectiles = nil
 
@@ -311,6 +358,12 @@ func (g *Game) startFloor(floorNum int) {
 	g.cachedRays = nil
 	g.RaycastWalls = fov.LevelToWalls(g.currentLevel)
 	fov.InvalidateCache()
+
+	// Persist run state so the player can resume from this floor.
+	// (Ebiten v2.8 has no OnClose callback; floor transitions cover the important save point.)
+	if g.RunState != nil && g.RunState.Active {
+		g.saveRun()
+	}
 }
 
 // advanceFloor moves to the next floor or triggers victory.
@@ -334,6 +387,7 @@ func (g *Game) endRunDeath() {
 		g.Meta.BestFloor = g.RunState.FloorsCleared
 	}
 	SaveMeta(g.Meta)
+	ClearRunSave()
 	g.State = StateDeathScreen
 }
 
@@ -349,6 +403,7 @@ func (g *Game) endRunVictory() {
 		g.Meta.BestFloor = g.RunState.TotalFloors
 	}
 	SaveMeta(g.Meta)
+	ClearRunSave()
 	g.State = StateVictoryScreen
 }
 
@@ -422,4 +477,76 @@ func (g *Game) spawnFloorMonsters(ctx FloorContext) {
 			break
 		}
 	}
+}
+
+// restoreMonsters recreates the monster list from a saved snapshot.
+// Call after startFloorWithContext to replace the randomly-spawned monsters.
+func (g *Game) restoreMonsters(snaps []MonsterSnap) {
+	ss := g.spriteSheet
+	g.Monsters = make([]*entities.Monster, 0, len(snaps))
+	for _, snap := range snaps {
+		sprite := ss.GreyKnight // default sprite
+		name := "Grey Knight"
+		switch snap.Role {
+		case "elite":
+			sprite = ss.Sentinel
+			name = "Sentinel"
+		case "caster":
+			sprite = ss.Chimera
+			name = "Chimera"
+		case "ambush", "swarm":
+			sprite = ss.LesserDemon
+			name = "Lesser Demon"
+		}
+		m := &entities.Monster{
+			Name:             name,
+			TileX:            snap.TileX,
+			TileY:            snap.TileY,
+			InterpX:          float64(snap.TileX),
+			InterpY:          float64(snap.TileY),
+			Sprite:           sprite,
+			MovementDuration: 30,
+			LeftFacing:       true,
+			HP:               snap.HP,
+			MaxHP:            snap.MaxHP,
+			Damage:           2 + snap.Level,
+			HitRadius:        entities.DefaultMonsterHitRadius,
+			AttackRate:       45,
+			Behavior:         entities.NewRoamingWanderBehavior(5),
+			Level:            snap.Level,
+			Role:             snap.Role,
+		}
+		g.Monsters = append(g.Monsters, m)
+	}
+}
+
+// resumeFromSave restores a mid-run session from a saved RunSave.
+func (g *Game) resumeFromSave(rs *RunSave) {
+	// Restore run state (copy to avoid aliasing).
+	runState := rs.RunState
+	g.RunState = &runState
+
+	g.IsInHub = false
+	g.FullBright = false
+	g.seedNPCPhaseFlags()
+
+	// Build the floor context then override the seed so we get the exact same
+	// layout the player was on when they saved.
+	floorNum := rs.RunState.CurrentFloor
+	ctx := g.RunState.BuildFloorContext(floorNum)
+	ctx.GenParams.Seed = rs.FloorSeed
+
+	// Generate floor with saved seed, spawn entities (NPCs, chests).
+	// Monsters are restored separately from snapshot below.
+	g.startFloorWithContext(ctx)
+
+	// Restore player vitals, position, inventory, and equipment.
+	g.player.ApplySnapshot(rs.Player)
+	g.player.RefreshAbilities()
+	g.player.RecalculateStats()
+
+	// Replace randomly-spawned monsters with saved snapshot.
+	g.restoreMonsters(rs.Monsters)
+
+	g.State = StatePlaying
 }

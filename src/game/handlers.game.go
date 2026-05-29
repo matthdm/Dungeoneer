@@ -44,9 +44,17 @@ func (g *Game) handleMainMenuInput() {
 				case "New Game":
 					g.loadHub()
 				case "Load Game":
-					// TODO: Show load game menu
+					meta, metaErr := LoadMetaSaveWithError()
+					runSave, _ := LoadRunSave()
+					if metaErr != nil && runSave == nil {
+						g.noSaveTimer = 180
+					} else {
+						loadScreenMeta = meta
+						loadScreenRunSave = runSave
+						g.State = StateLoadGame
+					}
 				case "Options":
-					// TODO: Show options menu
+					g.openOptions()
 				case "Exit Game":
 					os.Exit(2)
 				}
@@ -64,7 +72,15 @@ func (g *Game) handleMainMenuInput() {
 		case "New Game":
 			g.loadHub()
 		case "Load Game":
-			// TODO: Show load game menu
+			meta, metaErr := LoadMetaSaveWithError()
+			runSave, _ := LoadRunSave()
+			if metaErr != nil && runSave == nil {
+				g.noSaveTimer = 180
+			} else {
+				loadScreenMeta = meta
+				loadScreenRunSave = runSave
+				g.State = StateLoadGame
+			}
 		case "Options":
 			// TODO: Show options menu
 		case "Exit Game":

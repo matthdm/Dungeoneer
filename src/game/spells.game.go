@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"dungeoneer/controls"
+	"dungeoneer/coords"
 	"dungeoneer/entities"
 	"dungeoneer/fov"
 	"dungeoneer/hud"
@@ -558,7 +559,7 @@ func (g *Game) tryCastFireball(casterX, casterY, targetX, targetY float64, c *sp
 		return false
 	}
 	c.PutOnCooldown(info)
-	fb := spells.NewFireball(info, casterX, casterY, targetX, targetY, g.fireballSprites, g.spriteSheet.FireBurst)
+	fb := spells.NewFireball(info, casterX, casterY, targetX+coords.BodyDX, targetY+coords.BodyDY, g.fireballSprites, g.spriteSheet.FireBurst)
 	g.ActiveSpells = append(g.ActiveSpells, fb)
 	return true
 }
@@ -569,7 +570,7 @@ func (g *Game) tryCastChaosRay(casterX, casterY, targetX, targetY float64, c *sp
 		return false
 	}
 	c.PutOnCooldown(info)
-	cr := spells.NewChaosRay(info, casterX, casterY, targetX, targetY)
+	cr := spells.NewChaosRay(info, casterX, casterY, targetX+coords.BodyDX, targetY+coords.BodyDY)
 	g.applyChaosRayDamage(cr)
 	g.ActiveSpells = append(g.ActiveSpells, cr)
 	return true

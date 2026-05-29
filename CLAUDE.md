@@ -13,7 +13,8 @@ Dungeoneer is a 2D isometric dark-fantasy roguelike in Go on Ebiten v2.8. Real-t
   - 4A (ability gating): shipped. `ItemTemplate.GrantsAbility/AbilitySlot`, `Player.RefreshAbilities`, mana costs, dynamic spell bar, dash/grapple gated.
   - 4B (ability item templates): shipped. 13 ability-granting items wired in `items/load.go`, biome-themed loot bias, Varn quest items injected by `progression.game.go`.
   - 4C (equipment & stats): mostly shipped. Stat modifiers, gold economy, item quality tiers, `give_item` dialogue action.
-  - 4F (loot refinement, chest variants, treasure-room loot): open.
+  - 4F (loot refinement, chest variants, treasure-room loot): shipped.
+  - 4G (RunState serialization, mid-run save/load): shipped. Full `RunSave` model with `PlayerSnapshot`, floor seed restore, save/clear on floor transition and quit, load screen with run-save detection.
   - **Active stabilization work: the coordinate unification refactor.** See `OFFSET_UNIFICATION_PLAN.md` — phases 0–2 done, 3–5 partial.
 - **Phases 5–10: not started.** Trust system, NPC phase tracker, hub shop/upgrades, full meta save, NG+ memory, echoes, living dungeon AI, additional major NPCs, Abaddon.
 

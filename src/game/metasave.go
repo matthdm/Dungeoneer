@@ -40,6 +40,26 @@ func LoadMeta() *MetaSave {
 	return &m
 }
 
+// LoadMetaSaveWithError reads the meta save file. Returns nil, os.ErrNotExist if the
+// file is absent. Returns nil, err if the file is present but unreadable or corrupt.
+func LoadMetaSaveWithError() (*MetaSave, error) {
+	data, err := os.ReadFile(metaSavePath)
+	if os.IsNotExist(err) {
+		return nil, err
+	}
+	if err != nil {
+		return nil, err
+	}
+	var m MetaSave
+	if err := json.Unmarshal(data, &m); err != nil {
+		return nil, err
+	}
+	if m.NPCMeta == nil {
+		m.NPCMeta = make(map[string]*NPCMetaState)
+	}
+	return &m, nil
+}
+
 // SaveMeta writes the meta save to disk.
 func SaveMeta(m *MetaSave) {
 	data, err := json.MarshalIndent(m, "", "  ")

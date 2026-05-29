@@ -45,11 +45,15 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		g.drawDeathScreen(screen)
 	case StateVictoryScreen:
 		g.drawVictoryScreen(screen)
+	case StateLoadGame:
+		g.drawLoadScreen(screen)
+	case StateOptions:
+		g.drawOptionsScreen(screen)
 	case StatePlaying:
 		g.drawPlaying(screen, cx, cy)
 	}
 
-	if menumanager.Manager().IsMenuOpen() {
+	if g.State != StateOptions && menumanager.Manager().IsMenuOpen() {
 		if g.LoadLevelMenu != nil && g.LoadLevelMenu.Menu.IsVisible() {
 			g.LoadLevelMenu.Draw(screen)
 		} else if g.LoadPlayerMenu != nil && g.LoadPlayerMenu.Menu.IsVisible() {
@@ -79,7 +83,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if g.LinkPrompt != nil && g.LinkPrompt.IsVisible() {
 		g.LinkPrompt.Draw(screen)
 	}
-	if g.ControlsMenu != nil && g.ControlsMenu.IsVisible() {
+	if g.State != StateOptions && g.ControlsMenu != nil && g.ControlsMenu.IsVisible() {
 		g.ControlsMenu.Draw(screen)
 	}
 	if !controlToggle {
@@ -152,6 +156,11 @@ func (g *Game) drawMainMenuLabels(screen *ebiten.Image, cx, cy float64) {
 		}
 
 		screen.DrawImage(img, op)
+	}
+
+	if g.noSaveTimer > 0 {
+		msg := "No saved game found"
+		ebitenutil.DebugPrintAt(screen, msg, int(cx)-len(msg)*3, int(cy)+20)
 	}
 }
 

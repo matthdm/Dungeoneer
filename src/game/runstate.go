@@ -36,16 +36,16 @@ type FloorContext struct {
 
 // RunState tracks all state for a single dungeon run.
 type RunState struct {
-	Active        bool
-	CurrentFloor  int
-	TotalFloors   int
-	Biomes        []Biome
-	KillCount     int
-	FloorsCleared int
-	RemnantEarned int
-	GoldEarned    int            // total gold collected this run
-	StartTime     time.Time
-	QuestFlags    map[string]int // per-run NPC/quest state; resets each run
+	Active        bool           `json:"active"`
+	CurrentFloor  int            `json:"current_floor"`
+	TotalFloors   int            `json:"total_floors"`
+	Biomes        []Biome        `json:"biomes"`
+	KillCount     int            `json:"kill_count"`
+	FloorsCleared int            `json:"floors_cleared"`
+	RemnantEarned int            `json:"remnant_earned"`
+	GoldEarned    int            `json:"gold_earned"`           // total gold collected this run
+	StartTime     time.Time      `json:"start_time"`
+	QuestFlags    map[string]int `json:"quest_flags"`           // per-run NPC/quest state; resets each run
 }
 
 // DefaultRunFloors is the starting number of floors for a new run.

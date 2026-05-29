@@ -1,0 +1,285 @@
+{
+  "run_state": {
+    "active": true,
+    "current_floor": 2,
+    "total_floors": 7,
+    "biomes": [
+      "crypt",
+      "moss",
+      "crypt",
+      "gallery",
+      "brick",
+      "gallery",
+      "crypt"
+    ],
+    "kill_count": 12,
+    "floors_cleared": 1,
+    "remnant_earned": 0,
+    "gold_earned": 60,
+    "start_time": "2026-05-28T11:06:38.6878775-07:00",
+    "quest_flags": {
+      "forgotten_soldier_met": 1,
+      "hollow_monk_met": 1,
+      "mad_scholar_met": 1,
+      "scavenger_met": 1,
+      "varn_met": 1,
+      "varn_phase": 1,
+      "varn_phase_advanced_floor": 1,
+      "varn_task0_assigned": 1,
+      "varn_trust": 2
+    }
+  },
+  "floor_seed": 5852374197807551647,
+  "player": {
+    "tile_x": 15,
+    "tile_y": 17,
+    "interp_x": 15,
+    "interp_y": 17,
+    "hp": 110,
+    "max_hp": 110,
+    "mana": 55,
+    "max_mana": 55,
+    "inventory": [
+      [
+        {
+          "ID": "item_2_46",
+          "Count": 1
+        },
+        {
+          "ID": "item_1_8",
+          "Count": 1
+        },
+        {
+          "ID": "item_0_55",
+          "Count": 1
+        },
+        {
+          "ID": "",
+          "Count": 0
+        },
+        {
+          "ID": "",
+          "Count": 0
+        }
+      ],
+      [
+        {
+          "ID": "",
+          "Count": 0
+        },
+        {
+          "ID": "item_2_49",
+          "Count": 1
+        },
+        {
+          "ID": "",
+          "Count": 0
+        },
+        {
+          "ID": "",
+          "Count": 0
+        },
+        {
+          "ID": "",
+          "Count": 0
+        }
+      ],
+      [
+        {
+          "ID": "",
+          "Count": 0
+        },
+        {
+          "ID": "",
+          "Count": 0
+        },
+        {
+          "ID": "",
+          "Count": 0
+        },
+        {
+          "ID": "",
+          "Count": 0
+        },
+        {
+          "ID": "",
+          "Count": 0
+        }
+      ],
+      [
+        {
+          "ID": "",
+          "Count": 0
+        },
+        {
+          "ID": "",
+          "Count": 0
+        },
+        {
+          "ID": "",
+          "Count": 0
+        },
+        {
+          "ID": "",
+          "Count": 0
+        },
+        {
+          "ID": "",
+          "Count": 0
+        }
+      ]
+    ],
+    "equipment": {
+      "Chest": {
+        "ID": "item_0_3",
+        "Count": 1
+      },
+      "Head": {
+        "ID": "item_2_44",
+        "Count": 1
+      },
+      "Offhand": {
+        "ID": "item_0_42",
+        "Count": 1
+      },
+      "Ring1": {
+        "ID": "item_0_9",
+        "Count": 1
+      },
+      "Weapon": {
+        "ID": "item_0_2",
+        "Count": 1
+      }
+    }
+  },
+  "monsters": [
+    {
+      "tile_x": 30,
+      "tile_y": 59,
+      "hp": 23,
+      "max_hp": 23,
+      "level": 2,
+      "role": "ranged"
+    },
+    {
+      "tile_x": 22,
+      "tile_y": 53,
+      "hp": 37,
+      "max_hp": 37,
+      "level": 2,
+      "role": "melee"
+    },
+    {
+      "tile_x": 26,
+      "tile_y": 55,
+      "hp": 37,
+      "max_hp": 37,
+      "level": 2,
+      "role": "melee"
+    },
+    {
+      "tile_x": 18,
+      "tile_y": 49,
+      "hp": 23,
+      "max_hp": 23,
+      "level": 2,
+      "role": "ranged"
+    },
+    {
+      "tile_x": 16,
+      "tile_y": 49,
+      "hp": 23,
+      "max_hp": 23,
+      "level": 2,
+      "role": "ranged"
+    },
+    {
+      "tile_x": 49,
+      "tile_y": 13,
+      "hp": 37,
+      "max_hp": 37,
+      "level": 2,
+      "role": "melee"
+    },
+    {
+      "tile_x": 55,
+      "tile_y": 58,
+      "hp": 30,
+      "max_hp": 30,
+      "level": 2,
+      "role": "caster"
+    },
+    {
+      "tile_x": 56,
+      "tile_y": 54,
+      "hp": 37,
+      "max_hp": 37,
+      "level": 2,
+      "role": "melee"
+    },
+    {
+      "tile_x": 40,
+      "tile_y": 9,
+      "hp": 37,
+      "max_hp": 37,
+      "level": 2,
+      "role": "melee"
+    },
+    {
+      "tile_x": 35,
+      "tile_y": 51,
+      "hp": 37,
+      "max_hp": 37,
+      "level": 2,
+      "role": "melee"
+    },
+    {
+      "tile_x": 30,
+      "tile_y": 51,
+      "hp": 37,
+      "max_hp": 37,
+      "level": 2,
+      "role": "melee"
+    },
+    {
+      "tile_x": 18,
+      "tile_y": 57,
+      "hp": 37,
+      "max_hp": 37,
+      "level": 2,
+      "role": "melee"
+    },
+    {
+      "tile_x": 15,
+      "tile_y": 59,
+      "hp": 37,
+      "max_hp": 37,
+      "level": 2,
+      "role": "melee"
+    },
+    {
+      "tile_x": 45,
+      "tile_y": 36,
+      "hp": 37,
+      "max_hp": 37,
+      "level": 2,
+      "role": "melee"
+    },
+    {
+      "tile_x": 11,
+      "tile_y": 4,
+      "hp": 23,
+      "max_hp": 23,
+      "level": 2,
+      "role": "ranged"
+    },
+    {
+      "tile_x": 13,
+      "tile_y": 2,
+      "hp": 23,
+      "max_hp": 23,
+      "level": 2,
+      "role": "ranged"
+    }
+  ]
+}

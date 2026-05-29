@@ -35,6 +35,7 @@ type PauseMenuCallbacks struct {
 	OnExit             func()
 	OnShowSettings     func()
 	OnBackFromSettings func()
+	OnOptions          func()
 }
 
 func NewPauseMenu(w, h int, ctrl *controls.Controls, cb PauseMenuCallbacks) *PauseMenu {
@@ -69,6 +70,11 @@ func NewPauseMenu(w, h int, ctrl *controls.Controls, cb PauseMenuCallbacks) *Pau
 	pm.MainMenu.SetInstructions(menuInstructions)
 
 	settingsOptions := []MenuOption{
+		{Text: "Options", Action: func() {
+			if cb.OnOptions != nil {
+				cb.OnOptions()
+			}
+		}},
 		{Text: "Controls", Action: func() {
 			pm.SwitchToControls()
 		}},

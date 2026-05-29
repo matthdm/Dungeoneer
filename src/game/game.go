@@ -138,6 +138,13 @@ type Game struct {
 
 	// Boss floor announcement overlay: counts down from 240 when a boss floor is entered.
 	bossFloorAnnouncement int
+
+	// noSaveTimer counts down while displaying the "No saved game found" message.
+	noSaveTimer int
+
+	// Options menu
+	Options       *OptionsData
+	previousState GameState
 }
 
 const (
@@ -167,6 +174,8 @@ const (
 	StateGameOver
 	StateDeathScreen
 	StateVictoryScreen
+	StateLoadGame
+	StateOptions
 )
 
 func NewGame() (*Game, error) {
@@ -223,6 +232,8 @@ func NewGame() (*Game, error) {
 		SpellDebug:      true,
 		Controls:        controls.New(),
 	}
+	g.Options = LoadOptions()
+	g.Options.Apply()
 	// Load saved control bindings if they exist
 	if err := g.Controls.LoadBindings(); err == nil {
 		fmt.Println("Loaded saved control bindings")
@@ -316,6 +327,7 @@ func NewGame() (*Game, error) {
 	pm := ui.NewPauseMenu(640, 480, g.Controls, ui.PauseMenuCallbacks{
 		OnResume:     func() { g.resumeGame() },
 		OnExit:       func() { os.Exit(0) },
+		OnOptions:    func() { g.openOptions() },
 		OnLoadLevel:  func() { menumanager.Manager().Open(g.LoadLevelMenu) },
 		OnLoadPlayer: func() { menumanager.Manager().Open(g.LoadPlayerMenu) },
 		OnGenerate:   func() { menumanager.Manager().Open(g.GenerateMenu) },
@@ -644,6 +656,9 @@ func (g *Game) Update() error {
 	if g.bossFloorAnnouncement > 0 {
 		g.bossFloorAnnouncement--
 	}
+	if g.noSaveTimer > 0 {
+		g.noSaveTimer--
+	}
 	switch g.State {
 	case StateMainMenu:
 		return g.updateMainMenu()
@@ -653,6 +668,10 @@ func (g *Game) Update() error {
 		return g.updateDeathScreen()
 	case StateVictoryScreen:
 		return g.updateVictoryScreen()
+	case StateLoadGame:
+		return g.updateLoadScreen()
+	case StateOptions:
+		return g.updateOptionsScreen()
 	case StatePlaying:
 		if g.player != nil && g.player.IsDead {
 			if g.RunState != nil && g.RunState.Active {

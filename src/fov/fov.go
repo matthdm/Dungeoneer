@@ -46,7 +46,7 @@ func RayCasting(cx, cy float64, walls []Line, level *levels.Level) []Line {
 	tx := int(math.Floor(cx))
 	ty := int(math.Floor(cy))
 
-	// The collision system's visual offsets (XWallVisualOffset, box width)
+	// The collision system's sprite anchor offset and box width
 	// allow InterpX+0.5 to cross into a wall tile when the player is pressed
 	// against a wall on their right (cartesian east).  If the ray origin lands
 	// inside a wall tile, rays aimed in that direction start past the wall face

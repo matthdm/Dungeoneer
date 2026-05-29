@@ -90,10 +90,11 @@ func DebugDrawRays(screen *ebiten.Image, rays []Line, apexScreenX, apexScreenY f
 func DebugDrawWalls(screen *ebiten.Image, walls []Line, camX, camY, camScale, cx, cy float64, tileSize int) {
 	for _, wall := range walls {
 		// Keep wall debug in the same collision-space offset used by movement clipping.
-		wx1 := wall.X1 + collision.XWallVisualOffset
-		wy1 := wall.Y1 + collision.YWallVisualOffset
-		wx2 := wall.X2 + collision.XWallVisualOffset
-		wy2 := wall.Y2 + collision.YWallVisualOffset
+		offsetX, offsetY := collision.PlayerSpriteAnchor.CollisionOffset()
+		wx1 := wall.X1 + offsetX
+		wy1 := wall.Y1 + offsetY
+		wx2 := wall.X2 + offsetX
+		wy2 := wall.Y2 + offsetY
 
 		// Transform world coords to screen coords using isometric logic.
 		x1, y1 := worldToScreen(wx1, wy1, camX, camY, camScale, cx, cy, tileSize)

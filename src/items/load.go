@@ -104,7 +104,23 @@ func LoadDefaultItems() error {
 	}
 	LoadItemSheet(img, entries)
 	applyAbilityOverrides()
+	registerKeyItems()
 	return nil
+}
+
+// registerKeyItems registers dungeon key items that have no icon sprite.
+func registerKeyItems() {
+	RegisterItem(&ItemTemplate{
+		ID:          "iron_key",
+		Name:        "Iron Key",
+		Type:        ItemConsumable,
+		Description: "Opens locked iron and gold chests.",
+		Stackable:   true,
+		MaxStack:    5,
+		Usable:      false,
+		Equippable:  false,
+		QuestLocked: false,
+	})
 }
 
 // abilityOverride patches a registered item with ability-granting fields.
