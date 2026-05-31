@@ -317,9 +317,16 @@ func (g *Game) execDialogueAction(a dialogue.DialogueAction) {
 			SaveMeta(g.Meta)
 		}
 	case "add_trust":
-		// a.Flag = NPC id, a.Value = trust delta (can be negative).
+		// a.Flag = NPC id, a.Value = trust delta. Trust is clamped to [0, 100].
 		if g.RunState != nil && a.Flag != "" {
-			g.RunState.QuestFlags[a.Flag+"_trust"] += a.Value
+			key := a.Flag + "_trust"
+			g.RunState.QuestFlags[key] = clampTrust(g.RunState.QuestFlags[key] + a.Value)
+		}
+	case "trust_decay":
+		// a.Flag = NPC id, a.Value = amount to subtract. Floored at 0.
+		if g.RunState != nil && a.Flag != "" {
+			key := a.Flag + "_trust"
+			g.RunState.QuestFlags[key] = clampTrust(g.RunState.QuestFlags[key] - a.Value)
 		}
 	case "set_betrayed":
 		// Convenience action: sets {id}_betrayed = 1 in QuestFlags.
@@ -338,6 +345,34 @@ func (g *Game) resolvePortrait(id string) *ebiten.Image {
 		return img
 	}
 	return nil
+}
+
+// checkMajorNPCPhaseAdvancement evaluates auto-advance conditions for all major NPCs
+// at floor entry and increments phases where conditions are met. This is a fallback
+// for cases where the advance_phase dialogue action was not triggered — e.g., the
+// player skipped a conversation but still fulfilled the quest conditions.
+func (g *Game) checkMajorNPCPhaseAdvancement() {
+	if g.RunState == nil {
+		return
+	}
+	for i := range majorNPCDefs {
+		tracker := majorNPCDefs[i].BuildPhaseTracker()
+		if tracker.ShouldAdvance(g.RunState) {
+			tracker.Advance(g.RunState)
+			// Persist the new highest phase to MetaSave immediately.
+			npcID := majorNPCDefs[i].ID
+			if g.Meta != nil {
+				if g.Meta.NPCMeta[npcID] == nil {
+					g.Meta.NPCMeta[npcID] = &NPCMetaState{}
+				}
+				newPhase := g.RunState.QuestFlags[npcID+"_phase"]
+				if newPhase > g.Meta.NPCMeta[npcID].HighestPhase {
+					g.Meta.NPCMeta[npcID].HighestPhase = newPhase
+					SaveMeta(g.Meta)
+				}
+			}
+		}
+	}
 }
 
 // spawnMajorNPCs places major NPCs on the current floor based on their

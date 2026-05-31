@@ -139,11 +139,21 @@ type MajorNPCPhaseRule struct {
 // MajorNPCDef defines a major NPC with cross-run phase-aware spawning.
 // DialogueID is left empty so SelectTree picks the phase tree automatically.
 type MajorNPCDef struct {
-	ID         string
-	Name       string
-	Title      string
-	Placement  SpawnStrategy
-	PhaseRules []MajorNPCPhaseRule // one entry per spawnable phase; absent phase = boss/no-spawn
+	ID                string
+	Name              string
+	Title             string
+	Placement         SpawnStrategy
+	PhaseRules        []MajorNPCPhaseRule // one entry per spawnable phase; absent phase = boss/no-spawn
+	AdvanceConditions []PhaseCondition    // auto-advance conditions per phase (nil = dialogue-driven only)
+}
+
+// BuildPhaseTracker constructs an NPCPhaseTracker from this definition.
+func (d *MajorNPCDef) BuildPhaseTracker() NPCPhaseTracker {
+	return NPCPhaseTracker{
+		NPCID:      d.ID,
+		MaxPhase:   len(d.PhaseRules),
+		Conditions: d.AdvanceConditions,
+	}
 }
 
 // majorNPCDefs lists all major NPCs with their per-phase spawn rules.
@@ -156,9 +166,10 @@ var majorNPCDefs = []MajorNPCDef{
 			// Phase 0 & 1: GreyKnight — he is restrained, constrained, holding back.
 			// Phase 2: Sentinel  — he is visibly different; the transformation is showing.
 			// NG+ (DefeatCount >= 1): overridden to TorturedSoul at spawn time for phases 0-1.
-			{Phase: 0, MinFloor: 1, MaxFloor: 1, SpriteID: "GreyKnight", PortraitID: "GreyKnight"},                          // floor 1 only — intro, clear the floor
-			{Phase: 1, MinFloor: 2, MaxFloor: 5, SpriteID: "GreyKnight", PortraitID: "GreyKnight"},                          // floors 2-5 — Grips quest; item injected into loot
-			{Phase: 2, MinFloor: 3, MaxFloor: 6, SpriteID: "Sentinel", PortraitID: "Sentinel"},                               // floors 3-6 — Chaos Emblem quest; item injected into loot
+			{Phase: 0, MinFloor: 1, MaxFloor: 1, SpriteID: "GreyKnight", PortraitID: "GreyKnight"},  // floor 1 only — intro, clear the floor
+			{Phase: 1, MinFloor: 2, MaxFloor: 5, SpriteID: "GreyKnight", PortraitID: "GreyKnight"}, // floors 2-5 — Grips quest; item injected into loot
+			{Phase: 2, MinFloor: 3, MaxFloor: 6, SpriteID: "Sentinel", PortraitID: "Sentinel"},     // floors 3-6 — Chaos Emblem quest; item injected into loot
+			{Phase: 3, MinFloor: 5, MaxFloor: 6, SpriteID: "Sentinel", PortraitID: "Sentinel"},     // floors 5-6 — ascension trigger; no-spawn on boss floor
 		},
 	},
 }

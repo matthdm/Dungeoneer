@@ -1,0 +1,124 @@
+{
+  "id": "varn_phase3",
+  "root": "intro",
+  "nodes": {
+    "intro": {
+      "id": "intro",
+      "speaker": "Varn",
+      "portrait": "Sentinel",
+      "text": "Do not be alarmed by what you see. The transformation is complete. I am no longer holding the chains — I have become them.",
+      "responses": [
+        {
+          "text": "Is this what you wanted?",
+          "next_node": "wanted_ally",
+          "condition": {"type": "flag_equals", "flag": "varn_betrayed", "value": 0}
+        },
+        {
+          "text": "You said this would happen.",
+          "next_node": "foretold_betrayer",
+          "condition": {"type": "flag_equals", "flag": "varn_betrayed", "value": 1}
+        },
+        {
+          "text": "What does that mean for us?",
+          "next_node": "what_it_means"
+        }
+      ]
+    },
+    "wanted_ally": {
+      "id": "wanted_ally",
+      "speaker": "Varn",
+      "portrait": "Sentinel",
+      "text": "I wanted order. This is order. Whether I wanted this particular form of it — I am no longer certain I am the right one to ask.",
+      "on_enter": [{"type": "add_trust", "flag": "varn", "value": 1}],
+      "responses": [
+        {"text": "You sound uncertain.", "next_node": "uncertain"},
+        {"text": "What happens now?", "next_node": "what_happens_now"}
+      ]
+    },
+    "foretold_betrayer": {
+      "id": "foretold_betrayer",
+      "speaker": "Varn",
+      "portrait": "Sentinel",
+      "text": "I said a great many things. Most of them were true. Including this: I do not blame you for what you chose. You saw something I could not see in myself. That does not make you right. It makes you honest.",
+      "responses": [
+        {"text": "What are you now?", "next_node": "what_are_you"},
+        {"text": "What happens next?", "next_node": "what_happens_now"}
+      ]
+    },
+    "what_it_means": {
+      "id": "what_it_means",
+      "speaker": "Varn",
+      "portrait": "Sentinel",
+      "text": "It means the dungeon's structure and I are no longer separate things. I feel every room, every corridor — every fraying thread. And I am drawing them tight. That is what it means.",
+      "responses": [
+        {"text": "And what does it mean for us?", "next_node": "us_specifically"}
+      ]
+    },
+    "uncertain": {
+      "id": "uncertain",
+      "speaker": "Varn",
+      "portrait": "Sentinel",
+      "text": "I have always been uncertain. I simply had more room to conceal it before. The chains do not leave much space for ambiguity now.",
+      "responses": [
+        {"text": "What happens at the end of all this?", "next_node": "what_happens_now"}
+      ]
+    },
+    "what_are_you": {
+      "id": "what_are_you",
+      "speaker": "Varn",
+      "portrait": "Sentinel",
+      "text": "The dungeon's will made manifest. Its desire for structure, embodied. I have become what the chains always needed — not someone to hold them, but something to be them. Whether that is better is a question for afterward.",
+      "responses": [
+        {"text": "There may not be an afterward.", "next_node": "no_afterward"}
+      ]
+    },
+    "no_afterward": {
+      "id": "no_afterward",
+      "speaker": "Varn",
+      "portrait": "Sentinel",
+      "text": "No. There may not be. I have made my peace with that. You should make yours as well.",
+      "responses": [
+        {"text": "I'll see you at the end.", "next_node": "farewell"}
+      ]
+    },
+    "us_specifically": {
+      "id": "us_specifically",
+      "speaker": "Varn",
+      "portrait": "Sentinel",
+      "text": "It means that when you reach the deepest point of this place, I will be there. Not as an ally holding a post. As the dungeon's final assertion. You have always known this was how it would end.",
+      "responses": [
+        {"text": "I know.", "next_node": "farewell"},
+        {"text": "It doesn't have to be.", "next_node": "doesnt_have_to"}
+      ]
+    },
+    "what_happens_now": {
+      "id": "what_happens_now",
+      "speaker": "Varn",
+      "portrait": "Sentinel",
+      "text": "You go deeper. I hold the structure together until we meet again — at the place where the dungeon ends, or where you do. There is no other path from here.",
+      "responses": [
+        {"text": "Then I'll see you there.", "next_node": "farewell"},
+        {"text": "It doesn't have to end that way.", "next_node": "doesnt_have_to"}
+      ]
+    },
+    "doesnt_have_to": {
+      "id": "doesnt_have_to",
+      "speaker": "Varn",
+      "portrait": "Sentinel",
+      "text": "It does. The chains have always led here — I knew it before you did. I do not resent you for what is coming. I want you to know that.",
+      "on_enter": [{"type": "add_trust", "flag": "varn", "value": 1}],
+      "responses": [
+        {"text": "I'll remember that.", "next_node": "farewell"}
+      ]
+    },
+    "farewell": {
+      "id": "farewell",
+      "speaker": "Varn",
+      "portrait": "Sentinel",
+      "text": "Go. Whatever awaits you at the bottom of this place — face it as you have faced everything else. Without flinching.",
+      "on_enter": [
+        {"type": "set_flag", "flag": "varn_p3_done", "value": 1}
+      ]
+    }
+  }
+}

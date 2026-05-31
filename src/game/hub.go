@@ -342,6 +342,9 @@ func (g *Game) startFloorWithContext(ctx FloorContext) {
 	// Spawn monsters using encounter template system (falls back to legacy if needed)
 	g.spawnEncounterMonsters(ctx)
 
+	// Advance NPC phases whose auto-advance conditions are now met.
+	g.checkMajorNPCPhaseAdvancement()
+
 	// Spawn NPCs: major NPCs first (get priority placement), then minor NPCs.
 	g.NPCs = []*entities.NPC{}
 	g.spawnMajorNPCs(ctx)

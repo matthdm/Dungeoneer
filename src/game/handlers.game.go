@@ -82,7 +82,7 @@ func (g *Game) handleMainMenuInput() {
 				g.State = StateLoadGame
 			}
 		case "Options":
-			// TODO: Show options menu
+			g.openOptions()
 		case "Exit Game":
 			os.Exit(2)
 		}
