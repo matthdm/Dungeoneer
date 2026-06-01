@@ -1,10 +1,10 @@
 ---
 plan-id: 5C-boss-selection
-status: queued
-owner: unassigned
-branch: plan/5C-boss-selection
+status: active
+owner: claude
+branch: main
 depends-on: [5B-varn-arc]
-last-touched: 2026-04-30
+last-touched: 2026-05-30
 ---
 
 # Plan: Phase 5C — Boss Selection Engine & Varn Boss Fight
@@ -62,10 +62,10 @@ When done, players who helped Varn through his arc fight a fully realized, story
 ## Phases
 
 ### Phase 1: Boss selection engine
-- [ ] 1.1 Create `src/game/boss_selection.go`. Define `BossType` enum: `BossGeneric`, `BossVarn` (expandable for future NPCs).
-- [ ] 1.2 Implement `SelectBoss(rs RunState) BossType`: check `rs.QuestFlags["varn_p3_done"] >= 1` → `BossVarn`; else `BossGeneric`.
-- [ ] 1.3 In `src/game/boss.game.go`, call `SelectBoss()` when the boss room is entered; spawn the appropriate boss entity.
-- [ ] 1.4 `cd src && go build ./...` passes.
+- [x] 1.1 Create `src/game/boss_selection.go`. Define `BossType` enum: `BossGeneric`, `BossVarn` (expandable for future NPCs).
+- [x] 1.2 Implement `SelectBoss(rs RunState) BossType`: check `rs.QuestFlags["varn_p3_done"] >= 1` → `BossVarn`; else `BossGeneric`.
+- [x] 1.3 In `src/game/boss.game.go`, call `SelectBoss()` when the boss room is entered; spawn the appropriate boss entity.
+- [x] 1.4 `cd src && go build ./...` passes.
 
 ### Phase 2: Varn boss entity
 - [ ] 2.1 Create `src/entities/bosses/` directory and `varn.go`. Define `VarnBoss` struct embedding or referencing the existing `Boss` struct.
@@ -96,6 +96,7 @@ When done, players who helped Varn through his arc fight a fully realized, story
 | Date | Phase | Status | Notes |
 |------|-------|--------|-------|
 | 2026-04-30 | — | Drafted | Plan written; not yet started |
+| 2026-05-30 | 1 | Complete | `boss_selection.go` created with `BossType`/`SelectBoss`; `setupBossFloor` now calls `SelectBoss(g.RunState)` instead of inline `varn_phase >= 3` check; build passes. |
 
 ## What was NOT changed (intentional)
 

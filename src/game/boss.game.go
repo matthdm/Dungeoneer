@@ -54,10 +54,10 @@ func (g *Game) setupBossFloor(lvl *levels.Level) {
 
 	g.BossRoom = best
 
-	// Use Varn as boss if his questline has reached the confrontation phase.
-	if g.RunState != nil && g.RunState.QuestFlags["varn_phase"] >= 3 {
+	switch SelectBoss(g.RunState) {
+	case BossVarn:
 		g.spawnVarnBoss(bx, by)
-	} else {
+	default:
 		g.spawnBoss(bx, by)
 	}
 
