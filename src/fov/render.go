@@ -109,11 +109,3 @@ func DebugDrawWalls(screen *ebiten.Image, walls []Line, camX, camY, camScale, cx
 		)
 	}
 }
-
-func triangleVertices(x1, y1, x2, y2, x3, y3 float64) []ebiten.Vertex {
-	return []ebiten.Vertex{
-		{DstX: float32(x1), DstY: float32(y1), ColorA: 1},
-		{DstX: float32(x2), DstY: float32(y2), ColorA: 1},
-		{DstX: float32(x3), DstY: float32(y3), ColorA: 1},
-	}
-}

@@ -335,19 +335,6 @@ func (g *Game) drawCombatDebugOverlays(target *ebiten.Image, scale, cx, cy float
 	}
 }
 
-func (g *Game) drawWorldRectFromCenter(target *ebiten.Image, centerX, centerY, w, h, scale, cx, cy float64, c color.NRGBA, strokeWidth float32, tileCentered bool) {
-	halfW := w / 2
-	halfH := h / 2
-	x1, y1 := g.worldToScreenPoint(centerX-halfW, centerY-halfH, scale, cx, cy, tileCentered)
-	x2, y2 := g.worldToScreenPoint(centerX+halfW, centerY-halfH, scale, cx, cy, tileCentered)
-	x3, y3 := g.worldToScreenPoint(centerX+halfW, centerY+halfH, scale, cx, cy, tileCentered)
-	x4, y4 := g.worldToScreenPoint(centerX-halfW, centerY+halfH, scale, cx, cy, tileCentered)
-
-	vector.StrokeLine(target, x1, y1, x2, y2, strokeWidth, c, false)
-	vector.StrokeLine(target, x2, y2, x3, y3, strokeWidth, c, false)
-	vector.StrokeLine(target, x3, y3, x4, y4, strokeWidth, c, false)
-	vector.StrokeLine(target, x4, y4, x1, y1, strokeWidth, c, false)
-}
 
 func (g *Game) drawActorHitEllipse(target *ebiten.Image, feetX, feetY, radiusTiles, heightTiles, scale, cx, cy float64, c color.NRGBA, strokeWidth float32) {
 	if radiusTiles <= 0 {
@@ -571,28 +558,6 @@ func (g *Game) drawFloorTiles(target *ebiten.Image, scale, cx, cy float64) {
 			}
 		}
 	}
-}
-func (g *Game) drawHoverTile(target *ebiten.Image, scale, cx, cy float64) {
-	if g.hoverTileX < 0 || g.hoverTileY < 0 ||
-		g.hoverTileX >= g.currentLevel.W || g.hoverTileY >= g.currentLevel.H {
-		return
-	}
-
-	xi, yi := g.cartesianToIso(float64(g.hoverTileX), float64(g.hoverTileY))
-	op := g.getDrawOp(xi, yi, scale, cx, cy)
-
-	// If this is the last tile in the path AND contains a living monster, draw red
-	if len(g.player.PathPreview) > 0 {
-		finalSpot := g.player.PathPreview[len(g.player.PathPreview)-1]
-		for _, m := range g.Monsters {
-			if !m.IsDead && m.TileX == finalSpot.X && m.TileY == finalSpot.Y {
-				op.ColorScale.Scale(1, 0, 0, constants.HostileTargetAlpha) // red
-				break
-			}
-		}
-	}
-
-	target.DrawImage(g.highlightImage, op)
 }
 
 func (g *Game) drawThroatDebug(target *ebiten.Image, scale, cx, cy float64) {

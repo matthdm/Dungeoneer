@@ -372,21 +372,18 @@ func (g *Game) handlePrimaryAttack(tx, ty float64, cx, cy int) {
 		return
 	}
 
-	px := g.player.MoveController.InterpX
-	py := g.player.MoveController.InterpY
-
 	switch {
 	case g.player.HasAbility("slash_combo"):
-		g.handleSlashCombo(px, py, tx, ty)
+		g.handleSlashCombo(tx, ty)
 	case g.player.HasAbility("arcane_bolt"):
-		g.handleArcaneBolt(px, py, tx, ty)
+		g.handleArcaneBolt(tx, ty)
 	default:
 		// Fallback: basic click-on-enemy melee (no ability needed).
 		g.handleBasicMelee(cx, cy)
 	}
 }
 
-func (g *Game) handleSlashCombo(px, py, tx, ty float64) {
+func (g *Game) handleSlashCombo(tx, ty float64) {
 	// Use the player's body center as the arc origin so the detection radius
 	// is measured from the same point the visual arc is drawn from. Using feet
 	// (px, py) made the effective origin ~1 tile away from the sprite body,
@@ -436,7 +433,7 @@ func (g *Game) applySlashDamage(slash *spells.SlashArc) {
 	}
 }
 
-func (g *Game) handleArcaneBolt(px, py, tx, ty float64) {
+func (g *Game) handleArcaneBolt(tx, ty float64) {
 	info := spells.SpellInfo{Name: "arcane_bolt", Level: 1, Cooldown: 0.3, Damage: 3, Cost: 2}
 	c := g.player.Caster
 	if !c.Ready(info) {
@@ -629,16 +626,6 @@ func (g *Game) tryCastFractalCanopy(centerX, centerY float64, c *spells.Caster) 
 	return true
 }
 
-// Legacy wrappers — used by monster-cast spells and any non-player casters.
-func (g *Game) castFireball(casterX, casterY, targetX, targetY float64, c *spells.Caster) {
-	info := spells.SpellInfo{Name: "fireball", Level: 1, Cooldown: 1.0, Damage: 5}
-	if !c.Ready(info) {
-		return
-	}
-	c.PutOnCooldown(info)
-	fb := spells.NewFireball(info, casterX, casterY, targetX, targetY, g.fireballSprites, g.spriteSheet.FireBurst)
-	g.ActiveSpells = append(g.ActiveSpells, fb)
-}
 
 func (g *Game) applyChaosRayDamage(cr *spells.ChaosRay) {
 	radius := 0.6
@@ -678,16 +665,6 @@ func pointSegmentDistance(px, py, x1, y1, x2, y2 float64) float64 {
 	return math.Hypot(px-projX, py-projY)
 }
 
-func (g *Game) castChaosRay(casterX, casterY, targetX, targetY float64, c *spells.Caster) {
-	info := spells.SpellInfo{Name: "chaosray", Level: 1, Cooldown: 1.0, Damage: 8}
-	if !c.Ready(info) {
-		return
-	}
-	c.PutOnCooldown(info)
-	cr := spells.NewChaosRay(info, casterX, casterY, targetX, targetY)
-	g.applyChaosRayDamage(cr)
-	g.ActiveSpells = append(g.ActiveSpells, cr)
-}
 
 func (g *Game) applyLightningDamage(l *spells.LightningStrike, cx, cy int) {
 	radius := 1
@@ -708,30 +685,6 @@ func (g *Game) applyLightningDamage(l *spells.LightningStrike, cx, cy int) {
 	}
 }
 
-func (g *Game) castLightningStrike(targetX, targetY float64, c *spells.Caster) {
-	info := spells.SpellInfo{Name: "lightning", Level: 1, Cooldown: 0.01, Damage: 8}
-	if !c.Ready(info) {
-		return
-	}
-	c.PutOnCooldown(info)
-	ls := spells.NewLightningStrike(info, targetX, targetY, g.spriteSheet.ArcaneBurst)
-	g.ActiveSpells = append(g.ActiveSpells, ls)
-}
-
-func (g *Game) castLightningStorm(centerX, centerY float64, c *spells.Caster) {
-	info := spells.SpellInfo{Name: "lightningstorm", Level: 1, Cooldown: 3.0, Damage: 8}
-	if !c.Ready(info) {
-		return
-	}
-	c.PutOnCooldown(info)
-
-	// Do not apply any offset hack here — use center-aligned tile coordinates
-	tx := float64(g.hoverTileX)
-	ty := float64(g.hoverTileY)
-
-	storm := spells.NewLightningStorm(info, tx, ty, 3, 0.2, 3.0, c, g.spriteSheet.ArcaneBurst, g.currentLevel)
-	g.ActiveSpells = append(g.ActiveSpells, storm)
-}
 
 func (g *Game) applyFractalDamage(n *spells.FractalNode, cx, cy int) {
 	radius := n.Radius
@@ -752,15 +705,6 @@ func (g *Game) applyFractalDamage(n *spells.FractalNode, cx, cy int) {
 	}
 }
 
-func (g *Game) castFractalBloom(centerX, centerY float64, c *spells.Caster) {
-	info := spells.SpellInfo{Name: "fractalbloom", Level: 1, Cooldown: 4.0, Damage: 6}
-	if !c.Ready(info) {
-		return
-	}
-	c.PutOnCooldown(info)
-	bloom := spells.NewFractalBloom(info, centerX, centerY, c, g.spriteSheet.ArcaneBurst, g.currentLevel, 3, 0.7, 0.2)
-	g.ActiveSpells = append(g.ActiveSpells, bloom)
-}
 func (g *Game) applyFractalCanopyHealing(fc *spells.FractalCanopy) {
 	if g.player == nil || g.player.IsDead {
 		return
@@ -806,21 +750,3 @@ func (g *Game) applyFractalCanopyHealing(fc *spells.FractalCanopy) {
 	})
 }
 
-func (g *Game) castFractalCanopy(centerX, centerY float64, c *spells.Caster) {
-	info := spells.SpellInfo{Name: "fractalcanopy", Level: 1, Cooldown: 5.0, Damage: 0}
-	if !c.Ready(info) {
-		return
-	}
-	c.PutOnCooldown(info)
-	fc := &spells.FractalCanopy{
-		MaxGrowTime: 5,
-		MaxDuration: 10,
-		MaxRadius:   5,
-		HealingMin:  3,
-		HealingMax:  15,
-		X:           centerX,
-		Y:           centerY,
-		Visual:      spells.NewFractalCanopyVisual(centerX, centerY, 10),
-	}
-	g.ActiveSpells = append(g.ActiveSpells, fc)
-}

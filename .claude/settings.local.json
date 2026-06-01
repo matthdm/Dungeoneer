@@ -5,7 +5,8 @@
       "Skill(superpowers:brainstorming)",
       "Skill(superpowers:executing-plans)",
       "Skill(superpowers:subagent-driven-development)",
-      "Skill(superpowers:using-git-worktrees)"
+      "Skill(superpowers:using-git-worktrees)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('keys:', list\\(d.keys\\(\\)\\)[:10]\\)\")"
     ]
   }
 }

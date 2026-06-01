@@ -1,0 +1,124 @@
+{
+  "id": "varn_ng2",
+  "root": "entry",
+  "nodes": {
+    "entry": {
+      "id": "entry",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "You again. And again I have died, and again the dungeon has returned me. I am beginning to suspect that neither of us has any choice in this. That the pattern is the point.",
+      "responses": [
+        {
+          "text": "I've been wondering the same thing.",
+          "next_node": "wondering_same",
+          "condition": {"type": "not_flag", "flag": "varn_betrayed"}
+        },
+        {
+          "text": "Does it feel different this time?",
+          "next_node": "feels_different"
+        },
+        {
+          "text": "What do you mean, the pattern is the point?",
+          "next_node": "pattern_meaning"
+        }
+      ]
+    },
+    "wondering_same": {
+      "id": "wondering_same",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "Then we are the only honest things in this dungeon. Everything else pretends there is a direction to move in. We know there is only the loop — and the question of what we do inside it.",
+      "on_enter": [{"type": "add_trust", "flag": "varn", "value": 1}],
+      "responses": [
+        {"text": "What do you do with that?", "next_node": "what_do_with_it"}
+      ]
+    },
+    "feels_different": {
+      "id": "feels_different",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "Yes. Each time I wake I carry slightly more of what came before. Not memories — impressions. The shape of things. This time I woke knowing you were coming. That is new. And troubling in ways I cannot articulate.",
+      "responses": [
+        {"text": "What do you do with that?", "next_node": "what_do_with_it"}
+      ]
+    },
+    "pattern_meaning": {
+      "id": "pattern_meaning",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "Something made this. Not carelessly. The dungeon, the chains, the way you keep returning to find me here — there is intention behind it. Whether that intention is benevolent or predatory is the question I cannot answer. Yet.",
+      "responses": [
+        {"text": "What would help you answer it?", "next_node": "what_would_help"}
+      ]
+    },
+    "what_do_with_it": {
+      "id": "what_do_with_it",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "I ask questions. It is the only tool left to me that the chains cannot take. I have one that I need your help with. When my chains broke during our last fight — pieces of them remained. Somewhere in the dungeon's deep rooms. I want one of those fragments.",
+      "responses": [
+        {"text": "What for?", "next_node": "what_for"},
+        {"text": "I'll look for it.", "next_node": "will_look"}
+      ]
+    },
+    "what_would_help": {
+      "id": "what_would_help",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "Evidence. The chains that bound me — when they broke, pieces scattered into the dungeon. A Chain Fragment. I want to hold one again. Not to restore what was — but to understand, for a moment, what it felt like to be free of it. Even briefly.",
+      "responses": [
+        {"text": "I'll find one.", "next_node": "will_look"}
+      ]
+    },
+    "what_for": {
+      "id": "what_for",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "The chains never let me feel their absence while I held them. I want to know what that absence is. Whether it is freedom or just a different kind of weight. I cannot know it from the outside — I have to hold it again, from the other side.",
+      "responses": [
+        {"text": "I understand. I'll bring it back.", "next_node": "will_look"}
+      ]
+    },
+    "will_look": {
+      "id": "will_look",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "Thank you. And — take care of yourself in those halls. The dungeon is less coherent now. It has begun to forget what it was trying to contain.",
+      "on_enter": [{"type": "set_flag", "flag": "varn_ng2_quest_started", "value": 1}]
+    },
+    "fragment_returned": {
+      "id": "fragment_returned",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "You found it. I can feel it from here — the resonance. Come closer. I need to say this carefully.",
+      "on_enter": [{"type": "add_trust", "flag": "varn", "value": 1}],
+      "responses": [
+        {
+          "text": "Tell me.",
+          "next_node": "chain_truth_high",
+          "condition": {"type": "meta_flag_gte", "field": "varn_total_trust", "value": 60}
+        },
+        {
+          "text": "I'm listening.",
+          "next_node": "chain_truth_low"
+        }
+      ]
+    },
+    "chain_truth_high": {
+      "id": "chain_truth_high",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "The chains were not made to hold chaos back. They were made to hold something specific — something that agreed to be held. And when that something stopped agreeing, the chains tightened. That is what I was. Not a keeper. A lock. And I did not know what I was locking away until just now.",
+      "on_enter": [
+        {"type": "add_trust", "flag": "varn", "value": 2},
+        {"type": "unlock_lore", "lore_id": "varn_chain_purpose"}
+      ]
+    },
+    "chain_truth_low": {
+      "id": "chain_truth_low",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "Holding this fragment — it does not feel like freedom. It feels like a key that has lost its lock. The chains protected something that is no longer there to be protected. I do not know whether to grieve that or be relieved by it."
+    }
+  }
+}

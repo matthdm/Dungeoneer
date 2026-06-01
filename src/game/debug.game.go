@@ -11,10 +11,6 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
-func notNil(t *tiles.Tile) bool {
-	return t != nil
-}
-
 func (g *Game) DebugLevelEditor() {
 	if g.editor == nil || !g.editor.Active {
 		return

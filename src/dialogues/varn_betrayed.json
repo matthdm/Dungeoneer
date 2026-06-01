@@ -1,0 +1,159 @@
+{
+  "id": "varn_betrayed",
+  "root": "entry",
+  "nodes": {
+    "entry": {
+      "id": "entry",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "I remember everything. Every run, every choice, every moment you decided that what I was building was less important than what you wanted. The chains are back. So am I. You should not have come here.",
+      "responses": [
+        {
+          "text": "I don't owe you an explanation.",
+          "next_node": "dismissive"
+        },
+        {
+          "text": "I'm sorry for what I did.",
+          "next_node": "apologetic"
+        },
+        {
+          "text": "I made the only choice I could.",
+          "next_node": "defiant"
+        }
+      ]
+    },
+    "dismissive": {
+      "id": "dismissive",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "No. You do not. I stopped expecting explanations from you several lifetimes ago. What you owe — and what you do not give — is irrelevant now. The chains remember the betrayal even if you do not.",
+      "responses": [
+        {"text": "Then what do you want from this conversation?", "next_node": "what_want_cold"},
+        {
+          "text": "I've been thinking about what I did.",
+          "next_node": "opens_door",
+          "condition": {"type": "trust_gte", "flag": "varn", "value": 20}
+        }
+      ]
+    },
+    "apologetic": {
+      "id": "apologetic",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "Are you. That is the question I cannot answer from here — whether you mean that or whether you have simply learned that saying it changes things. I have been wrong before about the difference between the two. I will not be hasty.",
+      "responses": [
+        {"text": "I mean it.", "next_node": "means_it"},
+        {"text": "I understand if you don't believe me.", "next_node": "understands_doubt"}
+      ]
+    },
+    "defiant": {
+      "id": "defiant",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "I know. That is what makes it worse — not that you chose against me, but that you were certain while doing it. I have never had that certainty about anything. The things I hold most firmly have always required doubt as their foundation. You act as though doubt is a weakness. It is not.",
+      "responses": [
+        {"text": "Maybe you're right.", "next_node": "maybe_right"},
+        {"text": "I won't argue this with you.", "next_node": "wont_argue"}
+      ]
+    },
+    "what_want_cold": {
+      "id": "what_want_cold",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "Nothing. I have learned not to want things from you. It produces a cleaner outcome — for both of us. Go deeper. Do what you came to do. I will meet you at the end the same way I always do. We can dispense with the pretense of anything else.",
+      "responses": [
+        {
+          "text": "It doesn't have to be like this.",
+          "next_node": "forgiveness_path",
+          "condition": {"type": "trust_gte", "flag": "varn", "value": 20}
+        }
+      ]
+    },
+    "means_it": {
+      "id": "means_it",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "Then I will hold that. Not comfortably — it will take time before I know whether it is something I believe or simply something I want to believe. The distinction matters. I need you to know that it matters to me, even now.",
+      "on_enter": [{"type": "add_trust", "flag": "varn", "value": 1}],
+      "responses": [
+        {"text": "I understand.", "next_node": "uneasy_accord"}
+      ]
+    },
+    "understands_doubt": {
+      "id": "understands_doubt",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "That is more honest than the apology was. I have more use for honest doubt than sincere certainty — I have been harmed by the latter more than I can account for. Come back when you have decided what you actually mean. I will still be here.",
+      "responses": [
+        {
+          "text": "What I mean is that it mattered to me too.",
+          "next_node": "forgiveness_path",
+          "condition": {"type": "trust_gte", "flag": "varn", "value": 20}
+        }
+      ]
+    },
+    "maybe_right": {
+      "id": "maybe_right",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "I am rarely right and often certain — that has been my recurring failure. But on this, I think I am not wrong. The dungeon has had a long time to teach me the cost of conviction without examination.",
+      "on_enter": [{"type": "add_trust", "flag": "varn", "value": 1}],
+      "responses": [
+        {
+          "text": "Then let's be honest with each other.",
+          "next_node": "forgiveness_path",
+          "condition": {"type": "trust_gte", "flag": "varn", "value": 20}
+        },
+        {"text": "I'll keep that in mind.", "next_node": "cold_close"}
+      ]
+    },
+    "wont_argue": {
+      "id": "wont_argue",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "No. You never did. That was not the problem — the problem was the action the refusal always preceded. Go, then. I will be at the end of the dungeon. We will finish what we always finish.",
+      "responses": [
+        {"text": "I know.", "next_node": "cold_close"}
+      ]
+    },
+    "opens_door": {
+      "id": "opens_door",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "Then say it. I will not make it easier for you — you did not make it easier for me. But I will listen. Whatever you have worked out, say it plainly.",
+      "responses": [
+        {"text": "I chose convenience over something that mattered. I knew that at the time.", "next_node": "forgiveness_path"}
+      ]
+    },
+    "forgiveness_path": {
+      "id": "forgiveness_path",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "...\n\nI hear you. I want to be clear: I do not forgive easily, and I do not forgive completely. What happened left marks on the chains — on me — that do not simply close because the words have been said. But I am also not made of only what was done to me. There may be room for something less cold than this. In time.",
+      "on_enter": [{"type": "add_trust", "flag": "varn", "value": 2}],
+      "condition": {"type": "trust_gte", "flag": "varn", "value": 20},
+      "responses": [
+        {"text": "That's enough for now.", "next_node": "fractured_close"}
+      ]
+    },
+    "uneasy_accord": {
+      "id": "uneasy_accord",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "Go. Be careful. The dungeon does not reward what you have chosen before — but then, it does not reward anything consistently. Perhaps that is the only fair thing about it.",
+      "on_enter": [{"type": "add_trust", "flag": "varn", "value": 1}]
+    },
+    "cold_close": {
+      "id": "cold_close",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "Then we understand each other. Whatever that is worth."
+    },
+    "fractured_close": {
+      "id": "fractured_close",
+      "speaker": "Varn",
+      "portrait": "GreyKnight",
+      "text": "It is not nothing. I have held worse together with less. Go do what you came to do. We will speak again when there is more to say."
+    }
+  }
+}

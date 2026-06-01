@@ -2,7 +2,6 @@ package game
 
 import (
 	"dungeoneer/entities"
-	"dungeoneer/fov"
 	"image/color"
 	"math"
 	"strings"
@@ -338,26 +337,3 @@ func (g *Game) collectNPCRenderables(scale, cx, cy float64) []Renderable {
 	return out
 }
 
-func (g *Game) collectShadowRenderables(scale, cx, cy float64) []Renderable {
-	// Place the shadow apex at the player's head — sprite pixel (tileSize/2, tileSize/4)
-	// from the sprite's iso anchor, which aligns with the character's visual position.
-	mc := g.player.MoveController
-	isoX, isoY := g.cartesianToIso(mc.InterpX, mc.InterpY)
-	ts := float64(g.currentLevel.TileSize)
-	apexX := (isoX + ts/2 - g.camX) * scale + cx
-	apexY := (isoY + ts/4 + g.camY) * scale + cy
-
-	img := fov.BuildShadowImage(g.cachedRays, apexX, apexY, g.camX, g.camY, scale, cx, cy, g.currentLevel.TileSize)
-	op := &ebiten.DrawImageOptions{}
-	tx := mc.InterpX
-	ty := mc.InterpY
-	return []Renderable{
-		{
-			Image:       img,
-			Options:     op,
-			TileX:       tx,
-			TileY:       ty,
-			DepthWeight: 0.25,
-		},
-	}
-}

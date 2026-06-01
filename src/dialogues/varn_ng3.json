@@ -1,0 +1,146 @@
+{
+  "id": "varn_ng3",
+  "root": "entry",
+  "nodes": {
+    "entry": {
+      "id": "entry",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "I stopped counting. The deaths. The returns. At some point the number becomes irrelevant and only the fact of it remains. You are here. I am here. The dungeon continues. That is all that is true.",
+      "responses": [
+        {
+          "text": "Does it get easier?",
+          "next_node": "gets_easier"
+        },
+        {
+          "text": "I've been thinking about what you said last time.",
+          "next_node": "last_time",
+          "condition": {"type": "not_flag", "flag": "varn_betrayed"}
+        },
+        {
+          "text": "What do you want from this conversation?",
+          "next_node": "what_want"
+        }
+      ]
+    },
+    "gets_easier": {
+      "id": "gets_easier",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "No. It gets quieter. That is not the same thing. The noise — the certainty that things should be otherwise — that fades. What remains is just the loop, and whatever I choose to do inside it.",
+      "responses": [
+        {"text": "What do you choose?", "next_node": "what_choose"}
+      ]
+    },
+    "last_time": {
+      "id": "last_time",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "I said a great deal across many times. The versions blur together. But I am glad something held. That is more than the dungeon intended, I think.",
+      "on_enter": [{"type": "add_trust", "flag": "varn", "value": 1}],
+      "responses": [
+        {"text": "What do you choose to do, in the loop?", "next_node": "what_choose"}
+      ]
+    },
+    "what_want": {
+      "id": "what_want",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "Honesty. I have had enough of the shapes we perform for each other — the warnings, the tasks, the rituals. I know you. You know me. Let us speak plainly while we still can.",
+      "responses": [
+        {"text": "Plainly, then.", "next_node": "what_choose"}
+      ]
+    },
+    "what_choose": {
+      "id": "what_choose",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "Understanding. I know something about what watches this dungeon — what watches us, inside it. I am willing to share it. But I have a condition.",
+      "responses": [
+        {"text": "What condition?", "next_node": "the_condition"}
+      ]
+    },
+    "the_condition": {
+      "id": "the_condition",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "Tell me something true. Not about the dungeon. Not about me. About yourself. Something from these runs that you have not said aloud. I need to know you are still in there — that the loop has not hollowed you the way it has hollowed some of the things I have seen return here.",
+      "responses": [
+        {
+          "text": "I keep coming back because I don't know how to stop.",
+          "next_node": "truth_compulsion",
+          "condition": {"type": "not_flag", "flag": "varn_betrayed"}
+        },
+        {
+          "text": "I'm not sure I'm the same person who started this.",
+          "next_node": "truth_changed"
+        },
+        {
+          "text": "I came back because of you. To understand what you became.",
+          "next_node": "truth_varn",
+          "condition": {"type": "not_flag", "flag": "varn_betrayed"}
+        }
+      ]
+    },
+    "truth_compulsion": {
+      "id": "truth_compulsion",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "That is honest. More honest than I expected. The dungeon does that — removes the exits until the only direction is forward. I have wondered whether you stay because you choose to or because choice has been taken from you. Now I know: you do not know either. That is the most human thing I have heard in a very long time.",
+      "on_enter": [{"type": "add_trust", "flag": "varn", "value": 1}],
+      "responses": [
+        {"text": "Now tell me what you know.", "next_node": "abaddon_reveal"}
+      ]
+    },
+    "truth_changed": {
+      "id": "truth_changed",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "No. Neither am I. That is the thing the dungeon takes that you do not notice losing — the fixed point of yourself that you navigate from. We are both drift, now. I find that less troubling than I once would have.",
+      "on_enter": [{"type": "add_trust", "flag": "varn", "value": 1}],
+      "responses": [
+        {"text": "Now tell me what you know.", "next_node": "abaddon_reveal"}
+      ]
+    },
+    "truth_varn": {
+      "id": "truth_varn",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "...\n\nThat will do. That is more than enough.",
+      "on_enter": [{"type": "add_trust", "flag": "varn", "value": 2}],
+      "responses": [
+        {"text": "Tell me what you know.", "next_node": "abaddon_reveal"}
+      ]
+    },
+    "abaddon_reveal": {
+      "id": "abaddon_reveal",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "The dungeon is not empty at its deepest point. Something is there — has always been there. I felt it through the chains, before they broke. It does not sleep. It waits. It has been watching every run, every death, every return. It already knows your name.",
+      "responses": [
+        {
+          "text": "How long has it been watching?",
+          "next_node": "abaddon_watching",
+          "condition": {"type": "meta_flag_gte", "field": "varn_total_trust", "value": 80}
+        },
+        {
+          "text": "What does it want?",
+          "next_node": "abaddon_wants"
+        }
+      ]
+    },
+    "abaddon_watching": {
+      "id": "abaddon_watching",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "Since before you arrived. Since before I was made Chainkeeper. The dungeon — the whole structure of it — was built around keeping that presence from reaching outward. I was the lock. You were the key that was never supposed to exist. I do not think that was an accident.",
+      "on_enter": [{"type": "unlock_lore", "lore_id": "abaddon_is_watching"}]
+    },
+    "abaddon_wants": {
+      "id": "abaddon_wants",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "I do not know. That is the question I cannot answer, and I have had a great deal of time to try. Perhaps nothing. Perhaps everything. Perhaps it only wants to be seen. I have found that some things, when finally acknowledged, stop needing to be feared. I cannot promise that is true here."
+    }
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "id": "varn_ng1",
+  "root": "entry",
+  "nodes": {
+    "entry": {
+      "id": "entry",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "I remember dying. That is the part that unsettles me — not the death itself, but that I remember it. The chains do not usually allow that kind of continuity.",
+      "responses": [
+        {
+          "text": "You seem... more yourself than I expected.",
+          "next_node": "more_yourself",
+          "condition": {"type": "meta_flag_gte", "field": "varn_total_trust", "value": 40}
+        },
+        {
+          "text": "The dungeon brought you back.",
+          "next_node": "brought_back"
+        },
+        {
+          "text": "What do you remember?",
+          "next_node": "what_remember",
+          "condition": {"type": "not_flag", "flag": "varn_betrayed"}
+        }
+      ]
+    },
+    "more_yourself": {
+      "id": "more_yourself",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "Is that what you see. I am not sure I agree. But I trust you more than I trust my own reflection, so I will take it as meant. Something held when I fell — not the chains. Something else. I think it may be what we built between us.",
+      "on_enter": [{"type": "add_trust", "flag": "varn", "value": 1}],
+      "responses": [
+        {"text": "I need to ask you something.", "next_node": "the_ask"}
+      ]
+    },
+    "brought_back": {
+      "id": "brought_back",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "Yes. With less of itself intact than before. I feel the gaps — places the chains used to run through that are now silence. I do not know if that silence is loss or something waiting to be named.",
+      "responses": [
+        {"text": "Is there something I can do?", "next_node": "something_do"},
+        {"text": "I need to ask you something.", "next_node": "the_ask"}
+      ]
+    },
+    "what_remember": {
+      "id": "what_remember",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "You. The fight. The exact moment I understood that you were not going to stop. It was not rage — just clarity. I remember thinking: this is the correct outcome. Then nothing, until now. That clarity disturbs me more than the death does.",
+      "on_enter": [{"type": "add_trust", "flag": "varn", "value": 1}],
+      "responses": [
+        {"text": "Is there something I can do?", "next_node": "something_do"}
+      ]
+    },
+    "something_do": {
+      "id": "something_do",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "Perhaps. There is something I left behind — deliberately, I think, though I cannot be certain. A Warden's Seal. A remnant of the authority I held before the chains changed what I was. I believe I hid it somewhere in the dungeon's deeper rooms. I need to understand what it still means.",
+      "responses": [
+        {"text": "What would you learn from it?", "next_node": "what_learn"},
+        {"text": "I'll find it.", "next_node": "will_find"}
+      ]
+    },
+    "the_ask": {
+      "id": "the_ask",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "Ask.",
+      "responses": [
+        {"text": "What do you need from me?", "next_node": "something_do"},
+        {"text": "I've been looking for something of yours.", "next_node": "seal_returned", "condition": {"type": "flag_equals", "flag": "varn_ng1_seal_returned", "value": 1}}
+      ]
+    },
+    "what_learn": {
+      "id": "what_learn",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "Whether the chains were protecting something — or protecting the dungeon from something. I have carried the obligation without ever being certain which direction it pointed. The Seal was made before the chains bound me. It might remember a version of the truth I have since been denied.",
+      "responses": [
+        {"text": "I'll bring it back.", "next_node": "will_find"}
+      ]
+    },
+    "will_find": {
+      "id": "will_find",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "I know you will. That is the only certainty I have been able to hold onto since I woke. Go carefully — the dungeon is less structured than it was when I held it together.",
+      "on_enter": [{"type": "set_flag", "flag": "varn_ng1_quest_started", "value": 1}]
+    },
+    "seal_returned": {
+      "id": "seal_returned",
+      "speaker": "Varn",
+      "portrait": "TorturedSoul",
+      "text": "You brought it back. Let me... yes. I remember making this. I remember what I was protecting. The chains were not walls keeping chaos out. They were a promise I made to something I no longer understand. That distinction matters. I am not certain why yet.",
+      "on_enter": [{"type": "add_trust", "flag": "varn", "value": 2}]
+    }
+  }
+}
