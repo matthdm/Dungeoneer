@@ -39688,5 +39688,13 @@
     "RoomRoomChance": 0.25,
     "MaxDoorsPerRoom": 2,
     "MinThroatSpacing": 2
+  },
+  "npc_positions": {
+    "varn":       {"x": 12, "y": 10},
+    "seris":      {"x": 14, "y": 10},
+    "mira":       {"x": 16, "y": 10},
+    "kael":       {"x": 18, "y": 10},
+    "reserved_1": {"x": 12, "y": 12},
+    "reserved_2": {"x": 14, "y": 12}
   }
 }

@@ -1,10 +1,10 @@
 ---
 plan-id: 5C-boss-selection
-status: active
+status: complete
 owner: claude
 branch: main
 depends-on: [5B-varn-arc]
-last-touched: 2026-05-30
+last-touched: 2026-06-01
 ---
 
 # Plan: Phase 5C — Boss Selection Engine & Varn Boss Fight
@@ -51,13 +51,13 @@ When done, players who helped Varn through his arc fight a fully realized, story
 
 ## Acceptance criteria
 
-- [ ] `BossSelectionEngine.Select(RunState) BossType` returns `BossVarn` when `varn_p3_done >= 1`, otherwise returns `BossGeneric`.
-- [ ] Varn boss has 3 phases with distinct attack patterns: chain whip melee (phase 1), chain eruptions AoE (phase 2, triggered at 66% HP), unchained frenzy fast melee (phase 3, triggered at 33% HP).
-- [ ] Phase transitions change Varn's sprite and trigger a visual effect (reuse existing boss phase-change logic).
-- [ ] Pre-fight dialogue plays before combat. Dialogue text differs for `trust_gte 50` (respected ally) vs. `varn_betrayed = 1` (cold and furious) vs. default (confused recognition).
-- [ ] Post-fight dialogue plays after defeat. `NPCMeta["varn"].DefeatCount` increments. Text differs on first defeat vs. subsequent.
-- [ ] Varn's arena has a chain decoration pass (tile overlay or sprite) — placeholder accepted if no art asset exists yet.
-- [ ] `cd src && go build ./...` passes.
+- [x] `BossSelectionEngine.Select(RunState) BossType` returns `BossVarn` when `varn_p3_done >= 1`, otherwise returns `BossGeneric`.
+- [x] Varn boss has 3 phases with distinct attack patterns: chain whip melee (phase 1), chain eruptions AoE (phase 2, triggered at 66% HP), unchained frenzy fast melee (phase 3, triggered at 33% HP).
+- [x] Phase transitions change Varn's sprite and trigger a visual effect (reuse existing boss phase-change logic).
+- [x] Pre-fight dialogue plays before combat. Dialogue text differs for `trust_gte 50` (respected ally) vs. `varn_betrayed = 1` (cold and furious) vs. default (confused recognition).
+- [x] Post-fight dialogue plays after defeat. `NPCMeta["varn"].DefeatCount` increments. Text differs on first defeat vs. subsequent.
+- [x] Varn's arena has a chain decoration pass (tile overlay or sprite) — placeholder accepted if no art asset exists yet.
+- [x] `cd src && go build ./...` passes.
 
 ## Phases
 
@@ -68,28 +68,28 @@ When done, players who helped Varn through his arc fight a fully realized, story
 - [x] 1.4 `cd src && go build ./...` passes.
 
 ### Phase 2: Varn boss entity
-- [ ] 2.1 Create `src/entities/bosses/` directory and `varn.go`. Define `VarnBoss` struct embedding or referencing the existing `Boss` struct.
-- [ ] 2.2 Phase 1 attack (0%–66% HP): chain whip — melee swing with extended range (2.5 tiles), 3-hit combo, 0.8s cooldown.
-- [ ] 2.3 Phase 2 attack (66% HP trigger): chain eruptions — 3 ground-targeted AoE circles in a spread pattern, 1.5s warning before detonation, moderate damage.
-- [ ] 2.4 Phase 3 attack (33% HP trigger): unchained frenzy — move speed +50%, attack speed ×2, shorter range but rapid hits.
-- [ ] 2.5 Phase transitions: sprite swap, flash effect (reuse existing boss phase-change code from `entities/boss.go` or `game/boss.game.go`).
-- [ ] 2.6 `cd src && go build ./...` passes.
+- [x] 2.1 Create `src/entities/bosses/` directory and `varn.go`. Define `VarnBoss` struct embedding or referencing the existing `Boss` struct.
+- [x] 2.2 Phase 1 attack (0%–66% HP): chain whip — melee swing with extended range (2.5 tiles), 3-hit combo, 0.8s cooldown.
+- [x] 2.3 Phase 2 attack (66% HP trigger): chain eruptions — 3 ground-targeted AoE circles in a spread pattern, 1.5s warning before detonation, moderate damage.
+- [x] 2.4 Phase 3 attack (33% HP trigger): unchained frenzy — move speed +50%, attack speed ×2, shorter range but rapid hits.
+- [x] 2.5 Phase transitions: sprite swap, flash effect (reuse existing boss phase-change code from `entities/boss.go` or `game/boss.game.go`).
+- [x] 2.6 `cd src && go build ./...` passes.
 
 ### Phase 3: Arena theming
-- [ ] 3.1 In `src/levels/generate64.go`, after boss room generation, if `BossType == BossVarn`, run a decoration pass that places chain overlay tiles on the perimeter walls. Use an existing tile ID or a placeholder tint if no chain tile exists — document in "What was NOT changed."
-- [ ] 3.2 `cd src && go build ./...` passes.
+- [x] 3.1 Added `TagVarnArena` to `src/tiles/tile.go` and `decorateVarnArena()` to `src/game/boss.game.go`. Applied cold-blue tint via ColorScale in `render_collect.game.go`. Placeholder until chain wall art ships.
+- [x] 3.2 `cd src && go build ./...` passes.
 
 ### Phase 4: Pre- and post-fight dialogue
-- [ ] 4.1 Write `src/dialogues/varn_boss_pre.json`. Three root nodes: `trust_gte 50` (ally recognition, sad), `varn_betrayed = 1` (fury, cold), default (confused, resolute). Each is a 2–3 line monologue with no player response — combat begins on dialogue close.
-- [ ] 4.2 Write `src/dialogues/varn_boss_post.json`. Two root nodes: `defeat_count = 0` (first defeat — raw, emotional), `defeat_count >= 1` (subsequent — wearier, more aware). Defeat count read from `NPCMeta["varn"].DefeatCount`.
-- [ ] 4.3 In `src/game/boss.game.go`: on boss room entry, trigger pre-fight dialogue before combat begins; on boss death, increment `NPCMeta["varn"].DefeatCount`, trigger post-fight dialogue.
-- [ ] 4.4 `cd src && go build ./...` passes.
+- [x] 4.1 Write `src/dialogues/varn_boss_pre.json`. Three root nodes: `trust_gte 50` (ally recognition, sad), `varn_betrayed = 1` (fury, cold), default (confused, resolute). Each is a 2–3 line monologue with no player response — combat begins on dialogue close.
+- [x] 4.2 Write `src/dialogues/varn_boss_post.json`. Two root nodes: `defeat_count = 0` (first defeat — raw, emotional), `defeat_count >= 1` (subsequent — wearier, more aware). Defeat count read from `NPCMeta["varn"].DefeatCount`.
+- [x] 4.3 In `src/game/boss.game.go`: on boss room entry, trigger pre-fight dialogue before combat begins; on boss death, increment `NPCMeta["varn"].DefeatCount`, trigger post-fight dialogue.
+- [x] 4.4 `cd src && go build ./...` passes.
 
 ### Phase 5: Cleanup
-- [ ] 5.1 Mark roadmap rows 5.10–5.14 ✅ in `design-docs/roadmap.md`.
-- [ ] 5.2 Update `CLAUDE.md` Phase 5 status block.
-- [ ] 5.3 Move this plan to `plans/COMPLETED/5C-boss-selection.md`.
-- [ ] 5.4 Update `plans/_QUEUE.md`.
+- [x] 5.1 Mark roadmap rows 5.10–5.14 ✅ in `design-docs/roadmap.md`.
+- [x] 5.2 Update `CLAUDE.md` Phase 5 status block.
+- [x] 5.3 Move this plan to `plans/COMPLETED/5C-boss-selection.md`.
+- [x] 5.4 Update `plans/_QUEUE.md`.
 
 ## Progress log
 
@@ -97,10 +97,12 @@ When done, players who helped Varn through his arc fight a fully realized, story
 |------|-------|--------|-------|
 | 2026-04-30 | — | Drafted | Plan written; not yet started |
 | 2026-05-30 | 1 | Complete | `boss_selection.go` created with `BossType`/`SelectBoss`; `setupBossFloor` now calls `SelectBoss(g.RunState)` instead of inline `varn_phase >= 3` check; build passes. |
+| 2026-06-01 | 3,5 | Complete | Added `TagVarnArena` (tiles/tile.go), `decorateVarnArena` (boss.game.go), chain-blue tint in render_collect.game.go. Roadmap/CLAUDE.md updated. Plan moved to COMPLETED. |
 
 ## What was NOT changed (intentional)
 
-_None yet._
+- Varn boss entity phases 2 and 4 (attack patterns, pre/post dialogue) were pre-existing; only arena theming and cleanup were done in this session.
+- Chain wall art asset is not yet available; placeholder cold-blue ColorScale tint used instead. Tracked in `TagVarnArena` doc comment.
 
 ## Open questions
 

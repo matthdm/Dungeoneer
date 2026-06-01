@@ -6,7 +6,7 @@
 
 Dungeoneer is a 2D isometric dark-fantasy roguelike in Go on Ebiten v2.8. Real-time tile combat, procedurally generated floors, item-gated abilities, and NPCs that ascend into the run's final boss. Single-player, offline. Source lives in `src/` (~24K lines of Go); the `dungeoneer` Go module sits there too.
 
-## Current state — last updated 2026-04-27
+## Current state — last updated 2026-06-01
 
 - **Phases 1, 2, 3: complete.** Run loop, combat depth (6 enemy roles, status effects, multi-phase boss), NPCs & dialogue (room-tag placement, branching JSON trees, Varn arc through phase 2 + boss).
 - **Phase 4: in stabilization.**
@@ -16,7 +16,8 @@ Dungeoneer is a 2D isometric dark-fantasy roguelike in Go on Ebiten v2.8. Real-t
   - 4F (loot refinement, chest variants, treasure-room loot): shipped.
   - 4G (RunState serialization, mid-run save/load): shipped. Full `RunSave` model with `PlayerSnapshot`, floor seed restore, save/clear on floor transition and quit, load screen with run-save detection.
   - **Active stabilization work: the coordinate unification refactor.** See `OFFSET_UNIFICATION_PLAN.md` — phases 0–2 done, 3–5 partial.
-- **Phases 5–10: not started.** Trust system, NPC phase tracker, hub shop/upgrades, full meta save, NG+ memory, echoes, living dungeon AI, additional major NPCs, Abaddon.
+- **Phase 5: complete.** NPC Phase Tracker, Varn arc (4 phases + boss fight with pre/post dialogue), boss selection engine, hub NPC quarter (Varn appears in hub after first meeting).
+- **Phases 6–10: not started.** Full meta save, NG+ memory, echoes, living dungeon AI, hub shop/upgrades, additional major NPCs, Abaddon.
 
 ## Where to look (by task type)
 

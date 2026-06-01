@@ -2,6 +2,7 @@ package game
 
 import (
 	"dungeoneer/entities"
+	"dungeoneer/tiles"
 	"image/color"
 	"math"
 	"strings"
@@ -74,6 +75,9 @@ func (g *Game) collectTileRenderables(scale, cx, cy float64) []Renderable {
 				op := g.getDrawOp(xi, yi, scale, cx, cy)
 				if !inFOV && wasSeen {
 					op.ColorScale.Scale(0.2, 0.2, 0.2, 1.0)
+				} else if inFOV && tile.HasTag(tiles.TagVarnArena) {
+					// Placeholder chain-wall tint: cold blue. Replace when chain wall art ships.
+					op.ColorScale.Scale(0.72, 0.85, 1.15, 1.0)
 				}
 				weight := depthWeightForSprite(s.ID)
 				out = append(out, Renderable{

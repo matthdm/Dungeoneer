@@ -11,6 +11,7 @@ const (
 	TagDashLane      = 1 << 0
 	TagGrappleAnchor = 1 << 1
 	TagDoor          = 1 << 2
+	TagVarnArena     = 1 << 3 // perimeter walls in Varn's boss arena; placeholder until chain wall art ships
 )
 
 // Tile represents a space with an x,y coordinate within a Level. Any number of

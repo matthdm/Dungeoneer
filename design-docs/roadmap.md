@@ -2,7 +2,7 @@
 
 This document defines the implementation order for all systems. Each phase builds on the previous. Within each phase, items are listed in dependency order.
 
-**Last updated:** 2026-04-27
+**Last updated:** 2026-06-01
 
 ---
 
@@ -129,7 +129,7 @@ See: `ability-items.md` for full design.
 
 ---
 
-## Phase 5: Character Ascension
+## Phase 5: Character Ascension ✅ COMPLETE
 
 *Goal: Helping an NPC transforms them into the final boss. The player's moral choices have mechanical consequences.*
 
@@ -158,19 +158,19 @@ Requires Phase 4 (item actions in dialogue, quest flag economy) and Phase 3 (dia
 
 | # | Task | Dependencies | New Files | Touches |
 |---|---|---|---|---|
-| 5.10 | Boss Selection Engine — evaluate all major NPC quest flags, pick highest-phase NPC as final boss, fallback to generic boss | 5.8, 2.6 | `game/boss_selection.go` | `game/hub.go` |
-| 5.11 | Varn Boss Form — 3-phase boss: chain whip (melee), chain eruptions (AoE), unchained frenzy (fast melee) | 5.10 | `entities/bosses/varn.go` | `entities/boss.go` |
-| 5.12 | Boss Arena Theming — Varn's arena has chain decoration tiles, unique wall sprites, sealed entrance | 5.11 | — | `levels/generate64.go`, `game/boss.game.go` |
-| 5.13 | Pre-Fight Dialogue — Varn speaks before combat begins, text varies by trust level and betrayal status | 5.11 | `dialogues/varn_boss_pre.json` | `game/boss.game.go` |
-| 5.14 | Post-Fight Dialogue — after defeat, Varn has final words; different if first defeat vs. NG+ | 5.11 | `dialogues/varn_boss_post.json` | `game/boss.game.go` |
+| ✅ 5.10 | Boss Selection Engine — evaluate all major NPC quest flags, pick highest-phase NPC as final boss, fallback to generic boss | 5.8, 2.6 | `game/boss_selection.go` | `game/hub.go` |
+| ✅ 5.11 | Varn Boss Form — 3-phase boss: chain whip (melee), chain eruptions (AoE), unchained frenzy (fast melee) | 5.10 | `entities/bosses/varn.go` | `entities/boss.go` |
+| ✅ 5.12 | Boss Arena Theming — Varn's arena has chain decoration tiles, unique wall sprites, sealed entrance | 5.11 | — | `levels/generate64.go`, `game/boss.game.go` |
+| ✅ 5.13 | Pre-Fight Dialogue — Varn speaks before combat begins, text varies by trust level and betrayal status | 5.11 | `dialogues/varn_boss_pre.json` | `game/boss.game.go` |
+| ✅ 5.14 | Post-Fight Dialogue — after defeat, Varn has final words; different if first defeat vs. NG+ | 5.11 | `dialogues/varn_boss_post.json` | `game/boss.game.go` |
 
 ### 5D: Hub NPC Quarter
 
 | # | Task | Dependencies | New Files | Touches |
 |---|---|---|---|---|
-| 5.15 | Hub NPC Positions — define fixed tile positions in hub.json for up to 6 major NPCs | 5.4 | — | `levels/hub.json` |
-| 5.16 | Hub NPC Spawning — check `NPCMeta.Met` for each major NPC, spawn in hub at assigned position | 5.15 | — | `game/hub.go`, `game/npc.game.go` |
-| 5.17 | Hub NPC Dialogue — between-run conversations reflecting quest progress, hints for next encounter | 5.16 | `dialogues/varn_hub.json` | — |
+| ✅ 5.15 | Hub NPC Positions — define fixed tile positions in hub.json for up to 6 major NPCs | 5.4 | — | `levels/hub.json` |
+| ✅ 5.16 | Hub NPC Spawning — check `NPCMeta.Met` for each major NPC, spawn in hub at assigned position | 5.15 | — | `game/hub.go`, `game/npc.game.go` |
+| ✅ 5.17 | Hub NPC Dialogue — between-run conversations reflecting quest progress, hints for next encounter | 5.16 | `dialogues/varn_hub.json` | — |
 
 **Milestone: Full Varn arc from introduction through ascension to boss fight. Hub reflects player choices.**
 

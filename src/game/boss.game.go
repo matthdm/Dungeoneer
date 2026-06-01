@@ -57,6 +57,7 @@ func (g *Game) setupBossFloor(lvl *levels.Level) {
 	switch SelectBoss(g.RunState) {
 	case BossVarn:
 		g.spawnVarnBoss(bx, by)
+		g.decorateVarnArena(best)
 	default:
 		g.spawnBoss(bx, by)
 	}
@@ -186,6 +187,19 @@ func (g *Game) unsealBossRoom() {
 			tile.IsWalkable = true
 		}
 	})
+}
+
+// decorateVarnArena tags non-walkable perimeter tiles of the boss room with
+// TagVarnArena so the renderer applies a chain-themed tint.
+func (g *Game) decorateVarnArena(room *levels.Room) {
+	for y := room.Y - 1; y <= room.Y+room.H; y++ {
+		for x := room.X - 1; x <= room.X+room.W; x++ {
+			tile := g.currentLevel.Tile(x, y)
+			if tile != nil && !tile.IsWalkable {
+				tile.Tags |= tiles.TagVarnArena
+			}
+		}
+	}
 }
 
 // forEachBossRoomDoor iterates all tiles on the room's perimeter border.
