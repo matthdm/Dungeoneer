@@ -186,29 +186,29 @@ Requires Phase 5 (at least one defeated major NPC to trigger NG+ content).
 
 | # | Task | Dependencies | New Files | Touches |
 |---|---|---|---|---|
-| 6.1 | Extended MetaSave — add `CompletedRuns`, `TotalDeaths`, `TotalRemnants` (lifetime), `LoreUnlocked []string`, `HubState` | Phase 5 | — | `game/metasave.go` |
-| 6.2 | Milestone Unlocks — `CheckMilestones()` evaluates MetaSave thresholds, unlocks shop (run 1), upgrades (run 3), echo shrine (first death), etc. | 6.1 | `game/milestones.go` | `game/hub.go` |
-| 6.3 | Milestone UI — small notification toast when a milestone unlocks ("Upgrade Station now available") | 6.2 | — | `ui/toast.go`, `game/draw.game.go` |
+| ✅ 6.1 | Extended MetaSave — add `CompletedRuns`, `TotalDeaths`, `TotalRemnants` (lifetime), `LoreUnlocked []string`, `HubState` | Phase 5 | — | `game/metasave.go` |
+| ✅ 6.2 | Milestone Unlocks — `CheckMilestones()` evaluates MetaSave thresholds, unlocks shop (run 1), upgrades (run 3), echo shrine (first death), etc. | 6.1 | `game/milestones.go` | `game/hub.go` |
+| ✅ 6.3 | Milestone UI — small notification toast when a milestone unlocks ("Upgrade Station now available") | 6.2 | — | `ui/toast.go`, `game/draw.game.go` |
 
 ### 6B: NG+ Dialogue
 
 | # | Task | Dependencies | New Files | Touches |
 |---|---|---|---|---|
-| 6.4 | Meta-Flag Conditions — dialogue conditions can read `NPCMeta` fields (defeat count, betrayed, highest phase) via `meta_flag_gte`, `meta_flag_equals` | 6.1 | — | `dialogue/types.go`, `game/npc.game.go` |
-| 6.5 | Varn NG+ Trees — post-defeat dialogue: recognition after 1 defeat, self-doubt after 2, meta-awareness after 3 | 6.4 | `dialogues/varn_ng1.json`, `varn_ng2.json`, `varn_ng3.json` | — |
-| 6.6 | Betrayal Memory — if player betrayed Varn (chose against him in Phase 2), he is hostile/suspicious on re-encounter, requires more trust to progress | 6.4 | `dialogues/varn_betrayed.json` | — |
-| 6.7 | Trust Accumulation — `NPCMeta.TotalTrust` accumulates across runs, high trust unlocks deeper lore dialogue | 6.4 | — | `game/npc.game.go` |
+| ✅ 6.4 | Meta-Flag Conditions — dialogue conditions can read `NPCMeta` fields (defeat count, betrayed, highest phase) via `meta_flag_gte`, `meta_flag_equals` | 6.1 | — | `dialogue/types.go`, `game/npc.game.go` |
+| ✅ 6.5 | Varn NG+ Trees — post-defeat dialogue: recognition after 1 defeat, self-doubt after 2, meta-awareness after 3 | 6.4 | `dialogues/varn_ng1.json`, `varn_ng2.json`, `varn_ng3.json` | — |
+| ✅ 6.6 | Betrayal Memory — if player betrayed Varn (chose against him in Phase 2), he is hostile/suspicious on re-encounter, requires more trust to progress | 6.4 | `dialogues/varn_betrayed.json` | — |
+| ✅ 6.7 | Trust Accumulation — `NPCMeta.TotalTrust` accumulates across runs, high trust unlocks deeper lore dialogue | 6.4 | — | `game/npc.game.go` |
 
 ### 6C: Lore System
 
 | # | Task | Dependencies | New Files | Touches |
 |---|---|---|---|---|
-| 6.8 | Lore Registry — `LoreDef` struct with ID, title, category (character/cosmology/history/fragment), body text | 6.1 | `game/lore.go` | — |
-| 6.9 | Lore Unlock Action — `unlock_lore` dialogue action adds entry to `Meta.LoreUnlocked` | 6.8 | — | `game/npc.game.go` |
-| 6.10 | Lore Library UI — scrollable text panel in hub, categorized tabs, locked entries shown as "???" | 6.9 | `ui/lore_library.go` | `game/game.go`, `game/draw.game.go` |
-| 6.11 | Lore Content — 15-20 lore entries covering Abaddon's nature, dungeon cosmology, NPC backstories, cryptic fragments | 6.8 | `data/lore.json` | — |
+| ✅ 6.8 | Lore Registry — `LoreDef` struct with ID, title, category (character/cosmology/history/fragment), body text | 6.1 | `game/lore.go` | — |
+| ✅ 6.9 | Lore Unlock Action — `unlock_lore` dialogue action adds entry to `Meta.LoreUnlocked` | 6.8 | — | `game/npc.game.go` |
+| ✅ 6.10 | Lore Library UI — scrollable text panel in hub, categorized tabs, locked entries shown as "???" | 6.9 | `ui/lore_library.go` | `game/game.go`, `game/draw.game.go` |
+| ✅ 6.11 | Lore Content — 15 lore entries across 4 categories | 6.8 | `data/lore.json` | — |
 
-**Milestone: NG+ dialogue transforms repeat encounters. Lore rewards exploration and trust.**
+**Milestone: NG+ dialogue transforms repeat encounters. Lore rewards exploration and trust.** ⚠️ Implemented, untested (manual testing pending)
 
 ---
 

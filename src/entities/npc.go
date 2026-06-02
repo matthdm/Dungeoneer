@@ -39,6 +39,10 @@ type NPC struct {
 
 	// Behavior
 	Behavior NPCBehavior
+
+	// Interaction hooks
+	OnInteract func()  // called instead of dialogue when player presses E (e.g. lore pedestal)
+	HintText   string  // overrides "[E] Talk" in interaction hint; empty = use default
 }
 
 // Pos returns the NPC's current world position as a WorldPos.

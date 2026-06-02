@@ -91,6 +91,49 @@ func (g *Game) loadHub() {
 	g.RaycastWalls = fov.LevelToWalls(g.currentLevel)
 	fov.InvalidateCache()
 	g.spawnHubNPCs()
+
+	// Milestone-gated hub features.
+	if g.Meta != nil {
+		if g.Meta.HubState[MilestoneShop] {
+			// TODO(8B): spawn shop NPC
+		}
+		if g.Meta.HubState[MilestoneUpgrades] {
+			// TODO(8B): spawn upgrade station NPC
+		}
+		if g.Meta.HubState[MilestoneEchoShrine] {
+			// TODO(7A): spawn echo shrine entity
+		}
+		if g.Meta.HubState[MilestoneLoreLibrary] {
+			// Lore pedestal — opens the lore library UI.
+			// entities.NPC.OnInteract and g.openLoreLibrary() added by Agent E.
+			loreTmpl := NPCTemplate{
+				ID:         "lore_pedestal",
+				Name:       "Lore Library",
+				Title:      "Ancient Records",
+				IsMajor:    false,
+				DialogueID: "",
+				SpriteID:   "Chest",
+				PortraitID: "",
+			}
+			px, py := 10, 12
+			if !g.currentLevel.IsWalkable(px, py) {
+				for _, d := range [][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}} {
+					nx, ny := px+d[0], py+d[1]
+					if g.currentLevel.IsWalkable(nx, ny) {
+						px, py = nx, ny
+						break
+					}
+				}
+			}
+			if g.currentLevel.IsWalkable(px, py) {
+				npc := g.createNPCFromTemplate(loreTmpl, px, py)
+				npc.HintText = "[E] Read"
+				npc.OnInteract = func() { g.openLoreLibrary() }
+				g.NPCs = append(g.NPCs, npc)
+			}
+		}
+	}
+
 	g.State = StatePlaying
 }
 
@@ -230,6 +273,10 @@ func (g *Game) seedNPCPhaseFlags() {
 		}
 		if state.DefeatCount > 0 {
 			g.RunState.QuestFlags[npcID+"_ng_plus"] = 1
+			g.RunState.QuestFlags[npcID+"_defeat_count"] = state.DefeatCount
+		}
+		if state.Betrayed {
+			g.RunState.QuestFlags[npcID+"_betrayed"] = 1
 		}
 	}
 }
@@ -386,9 +433,13 @@ func (g *Game) endRunDeath() {
 	g.RunState.RemnantEarned = g.RunState.CalculateRemnants()
 	g.Meta.Remnants += g.RunState.RemnantEarned
 	g.Meta.TotalKills += g.RunState.KillCount
+	g.Meta.TotalDeaths++
+	g.Meta.TotalRemnants += g.RunState.RemnantEarned
 	if g.RunState.FloorsCleared > g.Meta.BestFloor {
 		g.Meta.BestFloor = g.RunState.FloorsCleared
 	}
+	newly := CheckMilestones(g.Meta)
+	g.queueMilestoneToasts(newly)
 	SaveMeta(g.Meta)
 	ClearRunSave()
 	g.State = StateDeathScreen
@@ -399,15 +450,28 @@ func (g *Game) endRunVictory() {
 	g.RunState.Active = false
 	g.RunState.FloorsCleared = g.RunState.TotalFloors
 	remnants := g.RunState.CalculateRemnants()
-	g.RunState.RemnantEarned = remnants * 2 // bonus for victory
+	g.RunState.RemnantEarned = remnants * 2
 	g.Meta.Remnants += g.RunState.RemnantEarned
 	g.Meta.TotalKills += g.RunState.KillCount
+	g.Meta.CompletedRuns++
+	g.Meta.TotalRemnants += g.RunState.RemnantEarned
 	if g.RunState.TotalFloors > g.Meta.BestFloor {
 		g.Meta.BestFloor = g.RunState.TotalFloors
 	}
+	newly := CheckMilestones(g.Meta)
+	g.queueMilestoneToasts(newly)
 	SaveMeta(g.Meta)
 	ClearRunSave()
 	g.State = StateVictoryScreen
+}
+
+// queueMilestoneToasts enqueues toast messages for each newly unlocked milestone.
+func (g *Game) queueMilestoneToasts(milestoneIDs []string) {
+	for _, id := range milestoneIDs {
+		if msg, ok := MilestoneMessages[id]; ok {
+			g.pendingToasts = append(g.pendingToasts, msg)
+		}
+	}
 }
 
 // spawnFloorMonsters places procedural monsters scaled to floor difficulty.

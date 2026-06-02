@@ -2,22 +2,23 @@
 
 > Read this first. It is intentionally short and points you at the right doc for the task at hand instead of the whole codebase. Update it when the project's current focus changes.
 
+YOU MAY NOT COMMIT ANYTHING EVER, ONLY MATTHEW MORALES WILL COMMIT.
+
 ## What this is
 
 Dungeoneer is a 2D isometric dark-fantasy roguelike in Go on Ebiten v2.8. Real-time tile combat, procedurally generated floors, item-gated abilities, and NPCs that ascend into the run's final boss. Single-player, offline. Source lives in `src/` (~24K lines of Go); the `dungeoneer` Go module sits there too.
 
-## Current state — last updated 2026-06-01
+## Current state — last updated 2026-06-02
 
 - **Phases 1, 2, 3: complete.** Run loop, combat depth (6 enemy roles, status effects, multi-phase boss), NPCs & dialogue (room-tag placement, branching JSON trees, Varn arc through phase 2 + boss).
-- **Phase 4: in stabilization.**
-  - 4A (ability gating): shipped. `ItemTemplate.GrantsAbility/AbilitySlot`, `Player.RefreshAbilities`, mana costs, dynamic spell bar, dash/grapple gated.
-  - 4B (ability item templates): shipped. 13 ability-granting items wired in `items/load.go`, biome-themed loot bias, Varn quest items injected by `progression.game.go`.
-  - 4C (equipment & stats): mostly shipped. Stat modifiers, gold economy, item quality tiers, `give_item` dialogue action.
-  - 4F (loot refinement, chest variants, treasure-room loot): shipped.
-  - 4G (RunState serialization, mid-run save/load): shipped. Full `RunSave` model with `PlayerSnapshot`, floor seed restore, save/clear on floor transition and quit, load screen with run-save detection.
+- **Phase 4: complete.** Ability gating, 13 ability items, stat modifiers, gold economy, item quality tiers, loot refinement, chest variants, RunState serialization, mid-run save/load.
   - **Active stabilization work: the coordinate unification refactor.** See `OFFSET_UNIFICATION_PLAN.md` — phases 0–2 done, 3–5 partial.
 - **Phase 5: complete.** NPC Phase Tracker, Varn arc (4 phases + boss fight with pre/post dialogue), boss selection engine, hub NPC quarter (Varn appears in hub after first meeting).
-- **Phases 6–10: not started.** Full meta save, NG+ memory, echoes, living dungeon AI, hub shop/upgrades, additional major NPCs, Abaddon.
+- **Phase 6: implemented, ⚠️ UNTESTED.** Code is written and unit-tested (46 tests pass) but manual testing per `design-docs/test-cases.md` T1–T9 has not been done. See manual test plan in session context.
+  - 6A: MetaSave v1 (`CompletedRuns`, `TotalDeaths`, `TotalRemnants`, `LoreUnlocked`, `HubState`, `Upgrades`, `Betrayed`), milestone system (4 milestones), toast UI.
+  - 6B: `meta_flag_gte/equals` conditions, `SelectTree` NG+ branching (betrayed → ng{N} → phase), `varn_ng1/2/3.json` + `varn_betrayed.json` with new quest content, `set_betrayed` cross-run persistence.
+  - 6C: Lore registry, 15 lore entries in `data/lore.json`, `unlock_lore` action, lore library UI, hub lore pedestal (milestone-gated), `NPC.OnInteract`.
+- **Phases 7–10: not started.** Echoes, living dungeon AI, item sets, hub shop/upgrades, polish, additional NPCs, Abaddon.
 
 ## Where to look (by task type)
 

@@ -133,6 +133,11 @@ type Game struct {
 	NPCs          []*entities.NPC
 	DialoguePanel *ui.DialoguePanel
 
+	// Phase 4G+ UI
+	LoreLibrary   *ui.LoreLibrary
+	ActiveToast   *ui.Toast
+	pendingToasts []string
+
 	// Phase 4F
 	Chests []*entities.Chest
 
@@ -205,6 +210,11 @@ func NewGame() (*Game, error) {
 
 	// Load dialogue trees from JSON files (non-fatal if directory missing).
 	_ = dialogue.LoadAll("dialogues")
+
+	// Load lore registry (non-fatal if file missing).
+	if _, err := LoadLoreRegistry("data/lore.json"); err != nil {
+		fmt.Printf("lore: could not load data/lore.json: %v\n", err)
+	}
 
 	g := &Game{
 		currentWorld:    world,
@@ -398,6 +408,7 @@ func NewGame() (*Game, error) {
 	panelRect := image.Rect(g.w/2-150, g.h/2-150, g.w/2+150, g.h/2+150)
 	g.HeroPanel = ui.NewHeroPanel(panelRect, g.player)
 	g.InventoryScreen = ui.NewInventoryScreen()
+	g.LoreLibrary = ui.NewLoreLibrary(640, 480)
 
 	return g, nil
 }
@@ -439,6 +450,24 @@ func (g *Game) ShowHintAt(msg string, x, y int) {
 	g.hintTimer = 60
 	g.hintX = x
 	g.hintY = y
+}
+
+// openLoreLibrary assembles entries from LoreRegistry + MetaSave and opens the UI.
+func (g *Game) openLoreLibrary() {
+	if g.LoreLibrary == nil || g.Meta == nil {
+		return
+	}
+	entries := make([]ui.LoreEntry, len(LoreRegistry))
+	for i, def := range LoreRegistry {
+		entries[i] = ui.LoreEntry{
+			ID:       def.ID,
+			Title:    def.Title,
+			Category: string(def.Category),
+			Body:     def.Body,
+			Unlocked: IsLoreUnlocked(g.Meta, def.ID),
+		}
+	}
+	g.LoreLibrary.Open(entries)
 }
 
 // AddItemToPlayer tries to add an item to the player's inventory.
@@ -752,6 +781,20 @@ func (g *Game) updatePlaying() error {
 		return nil
 	}
 
+	// Tick active toast; pop next from queue when expired.
+	if g.ActiveToast != nil && g.ActiveToast.Update(g.DeltaTime) {
+		g.ActiveToast = nil
+	}
+	if g.ActiveToast == nil && len(g.pendingToasts) > 0 {
+		g.ActiveToast = ui.NewToast(g.pendingToasts[0])
+		g.pendingToasts = g.pendingToasts[1:]
+	}
+	// Lore library input guard: consume all input while open.
+	if g.LoreLibrary != nil && g.LoreLibrary.Active {
+		g.LoreLibrary.Update()
+		return nil
+	}
+
 	if g.LinkPrompt != nil && g.LinkPrompt.IsVisible() {
 		g.LinkPrompt.Update()
 		return nil
@@ -1030,6 +1073,9 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	}
 	if g.DialoguePanel != nil {
 		g.DialoguePanel.Resize(g.w, g.h)
+	}
+	if g.LoreLibrary != nil {
+		g.LoreLibrary.Resize(g.w, g.h)
 	}
 
 	if g.editor == nil {

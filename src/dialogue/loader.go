@@ -87,18 +87,42 @@ func LoadAll(dir string) error {
 	return nil
 }
 
-// SelectTree picks the appropriate tree ID for an NPC based on quest flags.
-// When the player is in NG+ (npc_ng_plus > 0), it first checks whether an
-// NG+-specific variant exists (e.g. "varn_ng_phase0") before falling back to
-// the standard tree ("varn_phase0"). This allows NG+ questlines to diverge
-// without touching the normal trees.
+// SelectTree picks the appropriate dialogue tree ID for a major NPC.
+//
+// Priority (highest to lowest):
+//  1. Betrayed variant — {id}_betrayed tree if {id}_betrayed flag is set and tree exists
+//  2. NG+ defeat-count — varn_ng{N} (N = defeat count, capped at 3) if ng_plus > 0
+//  3. NG+ phase fallback — {id}_ng_phase{N} (original convention)
+//  4. Standard phase — {id}_phase{N}
 func SelectTree(npcID string, flags map[string]int) string {
-	phase := flags[npcID+"_phase"]
-	if flags[npcID+"_ng_plus"] > 0 {
-		ngKey := fmt.Sprintf("%s_ng_phase%d", npcID, phase)
-		if _, ok := Registry[ngKey]; ok {
-			return ngKey
+	// Betrayed takes highest priority.
+	if flags[npcID+"_betrayed"] > 0 {
+		betrayedKey := npcID + "_betrayed"
+		if _, ok := Registry[betrayedKey]; ok {
+			return betrayedKey
 		}
 	}
+
+	phase := flags[npcID+"_phase"]
+
+	// NG+ defeat-count branching.
+	if flags[npcID+"_ng_plus"] > 0 {
+		defeatCount := flags[npcID+"_defeat_count"]
+		if defeatCount > 3 {
+			defeatCount = 3
+		}
+		if defeatCount >= 1 {
+			ngKey := fmt.Sprintf("%s_ng%d", npcID, defeatCount)
+			if _, ok := Registry[ngKey]; ok {
+				return ngKey
+			}
+		}
+		// Fall back to ng_phase convention.
+		ngPhaseKey := fmt.Sprintf("%s_ng_phase%d", npcID, phase)
+		if _, ok := Registry[ngPhaseKey]; ok {
+			return ngPhaseKey
+		}
+	}
+
 	return fmt.Sprintf("%s_phase%d", npcID, phase)
 }

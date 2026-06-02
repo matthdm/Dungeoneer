@@ -8,7 +8,9 @@ Single source of truth for what's active, queued, blocked, and done. Update this
 
 The one plan currently being worked. There is only ever one active plan at a time.
 
-> **Active:** `6A-full-meta-save.md`
+> **Active:** `7A-echoes-of-self.md`
+>
+> ⚠️ Phase 6 (6A/6B/6C) is implemented but **untested**. Manual test plan T1–T9 must be completed before marking Phase 6 fully done. See CLAUDE.md for test scenarios.
 
 ---
 
@@ -18,11 +20,9 @@ Plans ready to be picked up next. Top of list = next active. When the active pla
 
 | # | Plan | Size | Depends On | Notes |
 |---|------|------|------------|-------|
-| 1 | `6B-ng-plus-dialogue.md` | Medium | `6A` | Meta-flag conditions, Varn NG+ trees, betrayal memory. |
-| 2 | `6C-lore-system.md` | Medium | `6B` | Lore registry, unlock action, lore library UI. |
-| 3 | `7A-echoes-of-self.md` | Large | `6C` | Echo recorder, echo entities, ghost visuals, shrine UI. |
-| 4 | `7B-living-dungeon-ai.md` | Large | `6C` | Behavior tracker, dungeon mood, adaptive gen params. |
-| 5 | `8A-item-sets.md` | Medium | `7A`, `7B` | Set registry, set bonuses, tooltip + HUD UI. |
+| 1 | `7B-living-dungeon-ai.md` | Large | `7A` | Behavior tracker, dungeon mood, adaptive gen params. |
+| 2 | `8A-item-sets.md` | Medium | `7A`, `7B` | Set registry, set bonuses, tooltip + HUD UI. |
+| 3 | `8B-hub-shop-upgrades.md` | Large | `8A` | Shop NPC, upgrade station, 8 starter upgrades. |
 | 6 | `8B-hub-shop-upgrades.md` | Large | `8A` | Shop NPC, upgrade station, 8 starter upgrades. |
 | 7 | `9A-polish-transitions-camera.md` | Small | `8B` | Fade transitions, screen shake, boss intro pan. |
 | 8 | `9B-polish-visual-effects.md` | Medium | `9A` | Particle system, damage numbers, death fades. |
@@ -66,6 +66,9 @@ Most recent first.
 
 | Date | Plan | Notes |
 |------|------|-------|
+| 2026-06-02 | `6C-lore-system` | Lore registry, 15 entries, unlock_lore action, lore library UI, hub pedestal. ⚠️ Untested. |
+| 2026-06-02 | `6B-ng-plus-dialogue` | meta_flag conditions, SelectTree NG+ branching, varn_ng1/2/3+betrayed trees. ⚠️ Untested. |
+| 2026-06-02 | `6A-full-meta-save` | MetaSave v1, milestones (4), toast UI, run-end stat tracking, hub guards. ⚠️ Untested. |
 | 2026-06-01 | `5C-boss-selection` | Varn boss entity, pre/post dialogue, arena chain tint, boss selection engine |
 | 2026-06-01 | `5D-hub-npc-quarter` | Hub NPC spawning, varn_hub.json wired, npc_positions in hub.json |
 | 2026-05-28 | `5B-varn-arc` | varn_phase3.json (ascension trigger) + phase 3 spawn rule. All other content was already implemented. |

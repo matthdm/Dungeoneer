@@ -133,6 +133,14 @@ func (g *Game) openDialogue(npc *entities.NPC) {
 		if advancedFloor > 0 && advancedFloor == currentFloor {
 			treeID = npc.ID + "_revisit"
 		} else {
+			// Enrich flags with cross-run MetaSave state for SelectTree.
+			if g.Meta != nil {
+				if state := g.Meta.NPCMeta[npc.ID]; state != nil {
+					if state.Betrayed {
+						flags[npc.ID+"_betrayed"] = 1
+					}
+				}
+			}
 			treeID = dialogue.SelectTree(npc.ID, flags)
 		}
 	}
@@ -227,6 +235,21 @@ func (g *Game) evalDialogueCondition(c *dialogue.DialogueCondition) bool {
 		if g.Meta != nil {
 			if state := g.Meta.NPCMeta[c.Flag]; state != nil {
 				return state.DefeatCount >= c.Value
+			}
+		}
+		return false
+	case "meta_flag_gte":
+		// c.Flag = NPC id, c.Field = "defeat_count"|"total_trust"|"highest_phase"
+		if g.Meta != nil {
+			if state := g.Meta.NPCMeta[c.Flag]; state != nil {
+				return metaFieldValue(state, c.Field) >= c.Value
+			}
+		}
+		return false
+	case "meta_flag_equals":
+		if g.Meta != nil {
+			if state := g.Meta.NPCMeta[c.Flag]; state != nil {
+				return metaFieldValue(state, c.Field) == c.Value
 			}
 		}
 		return false
@@ -333,7 +356,41 @@ func (g *Game) execDialogueAction(a dialogue.DialogueAction) {
 		if g.RunState != nil && a.Flag != "" {
 			g.RunState.QuestFlags[a.Flag+"_betrayed"] = 1
 		}
+		// Persist betrayal to MetaSave so it survives across runs.
+		if g.Meta != nil && a.Flag != "" {
+			npcID := a.Flag
+			if g.Meta.NPCMeta[npcID] == nil {
+				g.Meta.NPCMeta[npcID] = &NPCMetaState{}
+			}
+			g.Meta.NPCMeta[npcID].Betrayed = true
+			SaveMeta(g.Meta)
+		}
+	case "unlock_lore":
+		if g.Meta != nil && a.LoreID != "" {
+			if UnlockLore(g.Meta, a.LoreID) {
+				for _, def := range LoreRegistry {
+					if def.ID == a.LoreID {
+						g.pendingToasts = append(g.pendingToasts, "Lore unlocked: "+def.Title)
+						break
+					}
+				}
+				SaveMeta(g.Meta)
+			}
+		}
 	}
+}
+
+// metaFieldValue reads a named field from NPCMetaState for meta_flag conditions.
+func metaFieldValue(s *NPCMetaState, field string) int {
+	switch field {
+	case "defeat_count":
+		return s.DefeatCount
+	case "total_trust":
+		return s.TotalTrust
+	case "highest_phase":
+		return s.HighestPhase
+	}
+	return 0
 }
 
 // resolvePortrait maps a portrait ID to a sprite image from the sprite map.

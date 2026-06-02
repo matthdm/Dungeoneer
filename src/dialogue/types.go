@@ -29,18 +29,21 @@ type DialogueResponse struct {
 
 // DialogueCondition gates whether a response is shown.
 type DialogueCondition struct {
-	Type   string `json:"type"`    // "flag_equals", "flag_gte", "flag_lte", "has_item", "not_flag"
+	Type   string `json:"type"`             // "flag_equals", "flag_gte", "flag_lte", "has_item", "not_flag"
 	Flag   string `json:"flag"`
+	Field  string `json:"field,omitempty"`  // for meta_flag_gte/equals: "defeat_count", "total_trust", "highest_phase"
 	Value  int    `json:"value"`
 	ItemID string `json:"item_id,omitempty"`
 }
 
 // DialogueAction is a side effect triggered by entering a node or selecting a response.
 type DialogueAction struct {
-	Type   string `json:"type"` // "set_flag", "add_flag", "give_item", "take_item", "give_exp"
+	Type   string `json:"type"` // "set_flag","add_flag","give_item","take_item","give_exp","unlock_lore"
 	Flag   string `json:"flag,omitempty"`
+	Field  string `json:"field,omitempty"`
 	Value  int    `json:"value,omitempty"`
 	ItemID string `json:"item_id,omitempty"`
+	LoreID string `json:"lore_id,omitempty"`
 	Amount int    `json:"amount,omitempty"`
 }
 

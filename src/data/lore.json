@@ -1,0 +1,92 @@
+[
+  {
+    "id": "varn_chain_purpose",
+    "title": "The Purpose of the Chains",
+    "category": "character",
+    "body": "Varn was not always the Chainkeeper. He chose the chains after the Sealing — not as punishment, but as vow. He believed something in the dungeon required a guardian. What he did not know then was that the thing requiring guardianship was him."
+  },
+  {
+    "id": "varn_before_sealing",
+    "title": "Warden Before the Dark",
+    "category": "character",
+    "body": "Before the dungeon became what it is, Varn was a keeper of order in a place with a different name. He does not speak of what it was called. The chains remember, but chains do not speak."
+  },
+  {
+    "id": "hollow_monk_truth",
+    "title": "The Hollow Monk's Vow",
+    "category": "character",
+    "body": "The Hollow Monk speaks in fragments because the vow they took removed everything unnecessary. What remains is only what they swore to carry: the names of the dead, repeated endlessly, so nothing beneath the dungeon can claim them as forgotten."
+  },
+  {
+    "id": "weeping_shade_guilt",
+    "title": "What the Shade Carries",
+    "category": "character",
+    "body": "The Weeping Shade is not mourning someone else. The shade is what remains when a soul mourns itself — when the weight of what was left undone exceeds the capacity of the living. The dungeon does not dissolve guilt. It preserves it."
+  },
+  {
+    "id": "mad_scholar_discovery",
+    "title": "The Scholar's Last Entry",
+    "category": "character",
+    "body": "He came to study the dungeon's geometry. He published seventeen papers. The eighteenth was never delivered. His notes, found near the fourth floor, read only: 'The rooms are not arranged. They are remembered. Someone is doing the remembering.'"
+  },
+  {
+    "id": "dungeon_is_memory",
+    "title": "The Dungeon as Memory Space",
+    "category": "cosmology",
+    "body": "The dungeon is not a place. It is a persistent impression — the aftermath of something that happened before the current age, preserved by forces that do not understand forgetting. Every room is a memory. Every enemy is something that cannot let go."
+  },
+  {
+    "id": "remnants_spiritual",
+    "title": "What Remnants Are",
+    "category": "cosmology",
+    "body": "What the living call Remnants, the dungeon calls residue. It is what a life leaves behind when it passes through a space of concentrated death. Not a soul — something more mechanical. The dungeon collects it the way a drain collects water. What it does with it is unresolved."
+  },
+  {
+    "id": "the_loop_mechanism",
+    "title": "The Loop Mechanism",
+    "category": "cosmology",
+    "body": "The dungeon does not kill. It resets. The distinction matters. A thing that kills disperses. A thing that resets preserves — the body, the self, the capacity to return. The question no philosopher here has answered: why does something want you preserved?"
+  },
+  {
+    "id": "abaddon_is_watching",
+    "title": "Abaddon Observes",
+    "category": "cosmology",
+    "body": "Abaddon has no body. Abaddon has no location. What Abaddon has is attention — a persistent, ancient noticing that saturates the dungeon like humidity saturates air. It does not interfere. It watches. What it is watching for has not been made clear. The watching itself may be the point."
+  },
+  {
+    "id": "dungeon_before_abaddon",
+    "title": "Before the Watching Began",
+    "category": "history",
+    "body": "There are rooms in the dungeon that predate the loop. Their geometry is different — less deliberate, more organic. In these rooms, the walls sweat cold water and the echoes arrive before the sounds. These are the original chambers. They were here before anything decided to watch."
+  },
+  {
+    "id": "the_first_returner",
+    "title": "The First to Return",
+    "category": "history",
+    "body": "Records describe someone before you. A figure who walked the dungeon in an age when the hub did not exist. They returned seven times. On the eighth descent, they did not come back. The dungeon closed around them. They may still be in there."
+  },
+  {
+    "id": "chain_war",
+    "title": "The Chain War",
+    "category": "history",
+    "body": "The chains in the dungeon are not decorative. They are the legacy of a binding — a conflict between entities who wished to contain something and the something that refused containment. The war is long over. The chains remain because no one has agreed on what to do with them."
+  },
+  {
+    "id": "the_sealing",
+    "title": "The Sealing",
+    "category": "history",
+    "body": "At some point — the date is contested, the witnesses are dead — someone sealed this place. Not to destroy it. To prevent it from spreading. The dungeon continues to exist because what is inside it cannot exist outside it without consequence. The seal is the walls. The walls are holding."
+  },
+  {
+    "id": "fragment_one",
+    "title": "Fragment: Something Waits",
+    "category": "fragment",
+    "body": "Down. Down past the rooms with names, past the rooms with purposes. Down to where the geometry stops making sense and the light moves wrong. Something is there. It has always been there. It has learned patience from centuries of waiting. It is almost done waiting."
+  },
+  {
+    "id": "fragment_two",
+    "title": "Fragment: The Inheritance",
+    "category": "fragment",
+    "body": "The dungeon gives and the dungeon takes. What it gives: strength, knowledge, the memory of what was survived. What it takes: the certainty that the outside world is more real than this one. Every return makes the hub a little more like a dream and the dungeon a little more like home. That is not an accident."
+  }
+]

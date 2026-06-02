@@ -320,7 +320,11 @@ func (g *Game) handleInputPlaying() {
 	// NPC interaction (E key) — check before other E-key handlers
 	if g.isActionJustPressed(controls.ActionInteract) {
 		if npc := g.findNearbyNPC(); npc != nil {
-			g.openDialogue(npc)
+			if npc.OnInteract != nil {
+				npc.OnInteract()
+			} else {
+				g.openDialogue(npc)
+			}
 			return
 		}
 		if chest := g.findNearbyChest(); chest != nil {

@@ -96,6 +96,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		ebitenutil.DebugPrintAt(screen, g.hint, g.hintX, g.hintY)
 	}
 
+	if g.LoreLibrary != nil {
+		g.LoreLibrary.Draw(screen)
+	}
+	if g.ActiveToast != nil {
+		g.ActiveToast.Draw(screen, g.w, g.h)
+	}
 }
 
 func (g *Game) drawMainMenu(screen *ebiten.Image, cx, cy float64) {
