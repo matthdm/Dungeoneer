@@ -1,6 +1,7 @@
 package game
 
 import (
+	"dungeoneer/audio"
 	"dungeoneer/entities"
 	"dungeoneer/items"
 	"dungeoneer/progression"
@@ -48,6 +49,13 @@ func (g *Game) handleMonsterDeath(m *entities.Monster) {
 	g.awardGold(m)
 	if g.RunState != nil && g.RunState.Active {
 		g.RunState.KillCount++
+	}
+	if g.BehaviorTracker != nil {
+		isRanged := m.Role == "ranged" || m.Role == "caster"
+		g.BehaviorTracker.RecordKill(isRanged)
+	}
+	if g.Audio != nil {
+		g.Audio.PlaySFX(audio.SFXEnemyDeath)
 	}
 	g.rollAndDropLoot(m)
 

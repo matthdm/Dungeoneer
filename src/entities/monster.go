@@ -54,12 +54,17 @@ type Monster struct {
 	AttackRate     int
 	AttackTick     int
 	IsDead         bool
+	DyingTicks     int // counts down from 30 after death for fade-out rendering
 	FlashTick      int
 	FlashTicksLeft int // total ticks remaining for the flash effect
 
 	Level int
 
 	Caster *spells.Caster
+
+	// Phase 7A: echo entities
+	IsEcho       bool    // true for echo entities; skips loot tables and XP on death
+	EchoLifetime float64 // for HeroEcho: remaining seconds (0 = permanent)
 
 	// Phase 2 additions
 	Role               string               // "melee", "ranged", "elite", "swarm", "caster", "ambush"
@@ -342,8 +347,9 @@ func (m *Monster) UpdateFlashStatus() {
 
 func (m *Monster) TakeDamage(dmg int, markers *[]HitMarker, damageNumbers *[]DamageNumber) bool {
 	m.HP -= dmg
-	if m.HP <= 0 {
+	if m.HP <= 0 && !m.IsDead {
 		m.IsDead = true
+		m.DyingTicks = 30 // 0.5s fade-out at 60fps
 	} else {
 		m.FlashTicksLeft = 15 // e.g. 15 ticks = flicker for 0.25s at 60fps
 	}

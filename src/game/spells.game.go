@@ -3,6 +3,7 @@ package game
 import (
 	"math"
 
+	"dungeoneer/audio"
 	"dungeoneer/controls"
 	"dungeoneer/coords"
 	"dungeoneer/entities"
@@ -277,8 +278,15 @@ func (g *Game) applyFireballDamage(fb *spells.Fireball, cx, cy int) {
 				if m.TakeDamage(dmg, &g.HitMarkers, &g.DamageNumbers) {
 					g.handleMonsterDeath(m)
 				}
+				if spells.OnSpellImpact != nil {
+					spells.OnSpellImpact(m.InterpX, m.InterpY, "fireball")
+				}
 			}
 		}
+	}
+	// Also emit at the impact center even if no monsters were hit.
+	if spells.OnSpellImpact != nil {
+		spells.OnSpellImpact(float64(cx), float64(cy), "fireball")
 	}
 }
 
@@ -361,6 +369,21 @@ func (g *Game) castSpellSlot(index int) {
 
 	if cast {
 		g.player.Mana -= cost
+		if g.BehaviorTracker != nil {
+			g.BehaviorTracker.RecordSpellCast(abilityID)
+		}
+		if g.Audio != nil {
+			switch abilityID {
+			case "fireball":
+				g.Audio.PlaySFX(audio.SFXSpellFireball)
+			case "lightning", "lightning_storm":
+				g.Audio.PlaySFX(audio.SFXSpellLightning)
+			case "chaos_ray":
+				g.Audio.PlaySFX(audio.SFXSpellChaos)
+			default:
+				g.Audio.PlaySFX(audio.SFXSpellGeneric)
+			}
+		}
 	}
 }
 
@@ -428,6 +451,9 @@ func (g *Game) applySlashDamage(slash *spells.SlashArc) {
 		if slash.IsInArc(m.BodyX(), m.BodyY()) {
 			if m.TakeDamage(dmg, &g.HitMarkers, &g.DamageNumbers) {
 				g.handleMonsterDeath(m)
+			}
+			if spells.OnSpellImpact != nil {
+				spells.OnSpellImpact(m.InterpX, m.InterpY, "arcane")
 			}
 		}
 	}
@@ -519,6 +545,9 @@ func (g *Game) checkArcaneBoltHits(ab *spells.ArcaneBolt, prevX, prevY float64, 
 			ab.Y = hitY
 			if m.TakeDamage(ab.Info.Damage, &g.HitMarkers, &g.DamageNumbers) {
 				g.handleMonsterDeath(m)
+			}
+			if spells.OnSpellImpact != nil {
+				spells.OnSpellImpact(m.InterpX, m.InterpY, "arcane_bolt")
 			}
 			return
 		}
@@ -642,6 +671,9 @@ func (g *Game) applyChaosRayDamage(cr *spells.ChaosRay) {
 				if m.TakeDamage(cr.Info.Damage, &g.HitMarkers, &g.DamageNumbers) {
 					g.handleMonsterDeath(m)
 				}
+				if spells.OnSpellImpact != nil {
+					spells.OnSpellImpact(m.InterpX, m.InterpY, "chaos_ray")
+				}
 				break
 			}
 		}
@@ -683,6 +715,9 @@ func (g *Game) applyLightningDamage(l *spells.LightningStrike, cx, cy int) {
 			}
 		}
 	}
+	if spells.OnSpellImpact != nil {
+		spells.OnSpellImpact(float64(cx), float64(cy), "lightning")
+	}
 }
 
 
@@ -702,6 +737,9 @@ func (g *Game) applyFractalDamage(n *spells.FractalNode, cx, cy int) {
 				}
 			}
 		}
+	}
+	if spells.OnSpellImpact != nil {
+		spells.OnSpellImpact(float64(cx), float64(cy), "nature")
 	}
 }
 

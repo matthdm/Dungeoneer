@@ -79,6 +79,19 @@ func DrawItemTooltip(dst *ebiten.Image, it *items.Item, x, y int) {
 		lines = append(lines, tline{txt, color.RGBA{200, 180, 255, 255}})
 	}
 
+	// Show set membership if this item belongs to a set.
+	for _, set := range items.SetRegistry {
+		for _, mid := range set.MemberIDs {
+			if mid == it.ID {
+				lines = append(lines, tline{
+					fmt.Sprintf("Set: %s (%d pieces)", set.Name, len(set.MemberIDs)),
+					color.RGBA{255, 200, 80, 255},
+				})
+				break
+			}
+		}
+	}
+
 	// Measure width and height.
 	w := minW
 	for _, ln := range lines {

@@ -1,8 +1,8 @@
 {
-  "remnants": 1206,
-  "run_count": 85,
-  "best_floor": 3,
-  "total_kills": 116,
+  "remnants": 1196,
+  "run_count": 88,
+  "best_floor": 7,
+  "total_kills": 191,
   "npc_meta": {
     "forgotten_soldier": {
       "met": true,
@@ -30,9 +30,42 @@
     },
     "varn": {
       "met": true,
-      "defeat_count": 0,
-      "highest_phase": 2,
-      "total_trust": 13
+      "defeat_count": 1,
+      "highest_phase": 3,
+      "total_trust": 28
     }
+  },
+  "version": 1,
+  "completed_runs": 1,
+  "total_deaths": 0,
+  "total_remnants": 440,
+  "hub_state": {
+    "lore_library_unlocked": true,
+    "shop_unlocked": true
+  },
+  "echo_files": [
+    "echoes/run_0.json"
+  ],
+  "recent_behavior": [
+    {
+      "spell_usage": {
+        "arcane_spray": 36,
+        "chaos_ray": 1,
+        "fireball": 44,
+        "lightning": 195,
+        "lightning_storm": 16
+      },
+      "melee_kills": 59,
+      "ranged_kills": 16,
+      "total_kills": 75,
+      "total_enemies": 147,
+      "deaths": 0
+    }
+  ],
+  "current_profile": {
+    "avg_kill_ratio": 1,
+    "avg_ranged_ratio": 0,
+    "avg_spell_variety": 0,
+    "death_rate": 0
   }
 }

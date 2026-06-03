@@ -1,80 +1,77 @@
 {
   "run_state": {
     "active": true,
-    "current_floor": 4,
+    "current_floor": 2,
     "total_floors": 7,
     "biomes": [
       "brick",
       "crypt",
-      "gallery",
-      "moss",
       "brick",
-      "moss",
-      "crypt"
+      "crypt",
+      "brick",
+      "crypt",
+      "moss"
     ],
-    "kill_count": 23,
-    "floors_cleared": 3,
+    "kill_count": 2,
+    "floors_cleared": 1,
     "remnant_earned": 0,
-    "gold_earned": 137,
-    "start_time": "2026-06-01T08:02:03.3313067-07:00",
+    "gold_earned": 10,
+    "start_time": "2026-06-02T16:49:03.5046303-07:00",
     "quest_flags": {
       "forgotten_soldier_met": 1,
       "hollow_monk_met": 1,
       "mad_scholar_met": 1,
       "scavenger_met": 1,
+      "varn_defeat_count": 1,
       "varn_met": 1,
-      "varn_phase": 2,
-      "varn_phase_advanced_floor": 2,
-      "varn_task0_assigned": 1,
-      "varn_task_done": 1,
-      "varn_trust": 5
+      "varn_ng_plus": 1
     }
   },
-  "floor_seed": 3255412892330385631,
+  "floor_seed": 1669027285742619097,
   "player": {
-    "tile_x": 34,
-    "tile_y": 2,
-    "interp_x": 34,
-    "interp_y": 2,
-    "hp": 135,
-    "max_hp": 135,
-    "mana": 60,
-    "max_mana": 60,
+    "tile_x": 55,
+    "tile_y": 61,
+    "interp_x": 55,
+    "interp_y": 61,
+    "hp": 97,
+    "max_hp": 120,
+    "mana": 19,
+    "max_mana": 55,
     "inventory": [
       [
         {
-          "ID": "item_1_11",
-          "Count": 1
+          "ID": "",
+          "Count": 0
         },
         {
-          "ID": "item_0_36",
-          "Count": 1
+          "ID": "",
+          "Count": 0
         },
         {
-          "ID": "item_2_43",
-          "Count": 1
+          "ID": "",
+          "Count": 0
         },
         {
-          "ID": "item_0_17",
-          "Count": 1
+          "ID": "",
+          "Count": 0
         },
         {
-          "ID": "item_0_14",
-          "Count": 1
+          "ID": "",
+          "Count": 0
         }
       ],
       [
         {
-          "ID": "item_1_4",
-          "Count": 1
+          "ID": "",
+          "Count": 0
         },
         {
-          "ID": "item_2_35",
-          "Count": 1
+          "ID": "",
+          "Count": 0
         },
         {
-          "ID": "item_0_49",
-          "Count": 1
+          "ID": "",
+          "Count": 0
         },
         {
           "ID": "",
@@ -132,7 +129,7 @@
     ],
     "equipment": {
       "Chest": {
-        "ID": "item_1_12",
+        "ID": "item_1_9",
         "Count": 1
       },
       "Head": {
@@ -140,15 +137,11 @@
         "Count": 1
       },
       "Offhand": {
-        "ID": "item_0_3",
+        "ID": "item_1_46",
         "Count": 1
       },
       "Ring1": {
         "ID": "item_0_9",
-        "Count": 1
-      },
-      "Ring2": {
-        "ID": "item_2_50",
         "Count": 1
       },
       "Weapon": {
@@ -159,163 +152,123 @@
   },
   "monsters": [
     {
-      "tile_x": 16,
-      "tile_y": 9,
-      "hp": 27,
-      "max_hp": 27,
-      "level": 4,
-      "role": "ranged"
-    },
-    {
-      "tile_x": 17,
-      "tile_y": 10,
-      "hp": 27,
-      "max_hp": 27,
-      "level": 4,
-      "role": "ranged"
-    },
-    {
-      "tile_x": 29,
-      "tile_y": 54,
-      "hp": 43,
-      "max_hp": 43,
-      "level": 4,
-      "role": "melee"
-    },
-    {
-      "tile_x": 44,
-      "tile_y": 36,
-      "hp": 43,
-      "max_hp": 43,
-      "level": 4,
-      "role": "melee"
-    },
-    {
-      "tile_x": 44,
-      "tile_y": 35,
-      "hp": 43,
-      "max_hp": 43,
-      "level": 4,
-      "role": "melee"
-    },
-    {
       "tile_x": 4,
-      "tile_y": 4,
-      "hp": 43,
-      "max_hp": 43,
-      "level": 4,
+      "tile_y": 15,
+      "hp": 32,
+      "max_hp": 32,
+      "level": 2,
       "role": "melee"
     },
     {
-      "tile_x": 21,
-      "tile_y": 4,
-      "hp": 43,
-      "max_hp": 43,
-      "level": 4,
+      "tile_x": 27,
+      "tile_y": 13,
+      "hp": 32,
+      "max_hp": 32,
+      "level": 2,
       "role": "melee"
     },
     {
-      "tile_x": 59,
-      "tile_y": 32,
-      "hp": 7,
-      "max_hp": 7,
-      "level": 4,
-      "role": "swarm"
+      "tile_x": 52,
+      "tile_y": 18,
+      "hp": 21,
+      "max_hp": 21,
+      "level": 2,
+      "role": "ranged"
     },
     {
       "tile_x": 53,
-      "tile_y": 30,
-      "hp": 7,
-      "max_hp": 7,
-      "level": 4,
-      "role": "swarm"
-    },
-    {
-      "tile_x": 54,
-      "tile_y": 33,
-      "hp": 7,
-      "max_hp": 7,
-      "level": 4,
-      "role": "swarm"
-    },
-    {
-      "tile_x": 60,
-      "tile_y": 34,
-      "hp": 7,
-      "max_hp": 7,
-      "level": 4,
-      "role": "swarm"
-    },
-    {
-      "tile_x": 55,
-      "tile_y": 27,
-      "hp": 7,
-      "max_hp": 7,
-      "level": 4,
-      "role": "swarm"
-    },
-    {
-      "tile_x": 49,
-      "tile_y": 59,
-      "hp": 27,
-      "max_hp": 27,
-      "level": 4,
+      "tile_y": 20,
+      "hp": 21,
+      "max_hp": 21,
+      "level": 2,
       "role": "ranged"
     },
     {
-      "tile_x": 50,
-      "tile_y": 57,
-      "hp": 27,
-      "max_hp": 27,
-      "level": 4,
-      "role": "ranged"
-    },
-    {
-      "tile_x": 14,
-      "tile_y": 47,
-      "hp": 43,
-      "max_hp": 43,
-      "level": 4,
+      "tile_x": 5,
+      "tile_y": 54,
+      "hp": 32,
+      "max_hp": 32,
+      "level": 2,
       "role": "melee"
     },
     {
-      "tile_x": 17,
-      "tile_y": 59,
-      "hp": 43,
-      "max_hp": 43,
-      "level": 4,
+      "tile_x": 1,
+      "tile_y": 57,
+      "hp": 32,
+      "max_hp": 32,
+      "level": 2,
+      "role": "melee"
+    },
+    {
+      "tile_x": 33,
+      "tile_y": 20,
+      "hp": 32,
+      "max_hp": 32,
+      "level": 2,
+      "role": "melee"
+    },
+    {
+      "tile_x": 43,
+      "tile_y": 35,
+      "hp": 21,
+      "max_hp": 21,
+      "level": 2,
+      "role": "ranged"
+    },
+    {
+      "tile_x": 41,
+      "tile_y": 33,
+      "hp": 21,
+      "max_hp": 21,
+      "level": 2,
+      "role": "ranged"
+    },
+    {
+      "tile_x": 12,
+      "tile_y": 33,
+      "hp": 21,
+      "max_hp": 21,
+      "level": 2,
+      "role": "ranged"
+    },
+    {
+      "tile_x": 12,
+      "tile_y": 36,
+      "hp": 21,
+      "max_hp": 21,
+      "level": 2,
+      "role": "ranged"
+    },
+    {
+      "tile_x": 43,
+      "tile_y": 18,
+      "hp": 21,
+      "max_hp": 21,
+      "level": 2,
+      "role": "ranged"
+    },
+    {
+      "tile_x": 41,
+      "tile_y": 17,
+      "hp": 21,
+      "max_hp": 21,
+      "level": 2,
+      "role": "ranged"
+    },
+    {
+      "tile_x": 38,
+      "tile_y": 2,
+      "hp": 32,
+      "max_hp": 32,
+      "level": 2,
       "role": "melee"
     },
     {
       "tile_x": 38,
-      "tile_y": 37,
-      "hp": 27,
-      "max_hp": 27,
-      "level": 4,
-      "role": "ranged"
-    },
-    {
-      "tile_x": 39,
-      "tile_y": 35,
-      "hp": 27,
-      "max_hp": 27,
-      "level": 4,
-      "role": "ranged"
-    },
-    {
-      "tile_x": 7,
-      "tile_y": 19,
-      "hp": 43,
-      "max_hp": 43,
-      "level": 4,
-      "role": "melee"
-    },
-    {
-      "tile_x": 9,
-      "tile_y": 56,
-      "hp": 43,
-      "max_hp": 43,
-      "level": 4,
+      "tile_y": 8,
+      "hp": 32,
+      "max_hp": 32,
+      "level": 2,
       "role": "melee"
     }
   ]

@@ -12,6 +12,10 @@ import (
 	"golang.org/x/image/font/basicfont"
 )
 
+// OnTypewriterTick is called once per newly revealed character during typewriter playback.
+// Wire this in the game layer to play a click SFX.
+var OnTypewriterTick func()
+
 var (
 	dialogueSpeakerColor  = color.RGBA{220, 180, 60, 255}  // gold
 	dialogueTextColor     = color.RGBA{220, 220, 220, 255} // light grey
@@ -100,7 +104,11 @@ func (dp *DialoguePanel) Update() {
 
 	// Typewriter advance
 	if !dp.TextDone {
+		prev := int(dp.TextProgress)
 		dp.TextProgress += typewriterSpeed
+		if int(dp.TextProgress) > prev && OnTypewriterTick != nil {
+			OnTypewriterTick()
+		}
 		if int(dp.TextProgress) >= len(dp.CurrentNode.Text) {
 			dp.TextDone = true
 		}

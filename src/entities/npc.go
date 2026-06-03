@@ -41,8 +41,10 @@ type NPC struct {
 	Behavior NPCBehavior
 
 	// Interaction hooks
-	OnInteract func()  // called instead of dialogue when player presses E (e.g. lore pedestal)
-	HintText   string  // overrides "[E] Talk" in interaction hint; empty = use default
+	OnInteract    func()   // called instead of dialogue when player presses E (e.g. lore pedestal)
+	HintText      string   // overrides "[E] Talk" in interaction hint; empty = use default
+	DialogueLines []string // if non-nil, build a simple dialogue tree from these lines instead of registry lookup
+	IsEcho        bool     // true for echo ghost NPCs (MemoryFragment)
 }
 
 // Pos returns the NPC's current world position as a WorldPos.

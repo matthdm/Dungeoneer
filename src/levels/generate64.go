@@ -31,6 +31,10 @@ type GenParams struct {
 	// Visual/theme
 	WallFlavor  string // e.g., "crypt", "moss", "normal"
 	FloorFlavor string // usually same list as wall flavors
+
+	// Phase 7B: Living Dungeon AI modifiers (additive, applied after defaults)
+	CorridorWidthMod int // additive modifier to CorridorWidth (applied after base)
+	RoomCountMod     int // additive modifier to RoomCountMin and RoomCountMax
 }
 
 type rect struct{ X, Y, W, H int }
@@ -59,6 +63,17 @@ func Generate64x64(p GenParams) *Level {
 	if p.RoomCountMax < p.RoomCountMin {
 		p.RoomCountMax = p.RoomCountMin
 	}
+	// Apply mood modifier to room count; clamp min to 1.
+	if p.RoomCountMod != 0 {
+		p.RoomCountMin += p.RoomCountMod
+		p.RoomCountMax += p.RoomCountMod
+		if p.RoomCountMin < 1 {
+			p.RoomCountMin = 1
+		}
+		if p.RoomCountMax < p.RoomCountMin {
+			p.RoomCountMax = p.RoomCountMin
+		}
+	}
 	if p.RoomWMin == 0 {
 		p.RoomWMin = 6
 	}
@@ -79,7 +94,10 @@ func Generate64x64(p GenParams) *Level {
 	}
 	if p.CorridorWidth == 0 {
 		p.CorridorWidth = 1
-	} else {
+	}
+	// Apply mood modifier; clamp to minimum of 1.
+	p.CorridorWidth += p.CorridorWidthMod
+	if p.CorridorWidth < 1 {
 		p.CorridorWidth = 1
 	}
 	if p.DashLaneMinLen == 0 {

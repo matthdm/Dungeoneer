@@ -1,6 +1,7 @@
 package game
 
 import (
+	gaudio "dungeoneer/audio"
 	"dungeoneer/constants"
 	"dungeoneer/controls"
 	"dungeoneer/dialogue"
@@ -138,8 +139,38 @@ type Game struct {
 	ActiveToast   *ui.Toast
 	pendingToasts []string
 
+	// Phase 8B: hub shop and upgrade station
+	Shop           *ui.Shop
+	UpgradeStation *ui.UpgradeStation
+
+	// Phase 7A: echo system
+	EchoRecorder *EchoRecorder
+	EchoShrine   *ui.EchoShrine
+
+	// Phase 7B: living dungeon AI
+	BehaviorTracker  *BehaviorTracker
+	CurrentMoodDelta GenParamsDelta
+
+	// Phase 9C: audio engine
+	Audio *gaudio.Engine
+
 	// Phase 4F
 	Chests []*entities.Chest
+
+	// Phase 9A: transitions & screen shake
+	Transition   *Transition
+	ScreenShake  *ScreenShake
+
+	// Phase 9B: particle system
+	Particles *ParticlePool
+	shakeOffsetX float64
+	shakeOffsetY float64
+	// Camera pan (boss intro)
+	camPanActive  bool
+	camPanTargetX float64
+	camPanTargetY float64
+	camPanTimer   float64
+	camPanHold    float64 // countdown after pan completes before combat starts
 
 	// Boss floor announcement overlay: counts down from 240 when a boss floor is entered.
 	bossFloorAnnouncement int
@@ -409,6 +440,33 @@ func NewGame() (*Game, error) {
 	g.HeroPanel = ui.NewHeroPanel(panelRect, g.player)
 	g.InventoryScreen = ui.NewInventoryScreen()
 	g.LoreLibrary = ui.NewLoreLibrary(640, 480)
+	g.Shop = ui.NewShop(640, 480)
+	g.UpgradeStation = ui.NewUpgradeStation(640, 480)
+	g.EchoShrine = ui.NewEchoShrine(640, 480)
+	g.EchoRecorder = &EchoRecorder{}
+	g.BehaviorTracker = &BehaviorTracker{}
+	g.Transition = NewTransition(640, 480) // resized on first Layout call
+	g.ScreenShake = &ScreenShake{}
+	g.Particles = NewParticlePool()
+	g.Audio = gaudio.NewEngine() // nil if audio context unavailable; all methods nil-safe
+
+	// Wire spell impact callback so particles emit on hits without a circular import.
+	spells.OnSpellImpact = func(wx, wy float64, spellType string) {
+		if g.Particles == nil || g.currentLevel == nil {
+			return
+		}
+		isoX, isoY := g.cartesianToIso(wx, wy)
+		sx := (isoX-g.camX)*g.camScale + float64(g.w/2)
+		sy := (isoY+g.camY)*g.camScale + float64(g.h/2)
+		r, gf, b := SpellParticleColor(spellType)
+		g.Particles.Emit(sx, sy, 8, r, gf, b)
+	}
+
+	ui.OnTypewriterTick = func() {
+		if g.Audio != nil {
+			g.Audio.PlaySFX(gaudio.SFXTypewriter)
+		}
+	}
 
 	return g, nil
 }
@@ -512,6 +570,13 @@ func (g *Game) pickupItemsAt(x, y int) {
 			g.ItemDrops = append(g.ItemDrops[:i], g.ItemDrops[i+1:]...)
 			if g.currentLevel != nil {
 				g.currentLevel.RemoveEntityAt(x, y, "ItemDrop", d.Item.ID)
+			}
+			// Emit pickup sparkle particles at the item's screen position.
+			if g.Particles != nil {
+				isoX, isoY := g.cartesianToIso(float64(x), float64(y))
+				sx := (isoX-g.camX)*g.camScale + float64(g.w/2)
+				sy := (isoY+g.camY)*g.camScale + float64(g.h/2)
+				g.Particles.Emit(sx, sy, 6, 1.0, 1.0, 0.8)
 			}
 		}
 	}
@@ -688,6 +753,25 @@ func (g *Game) Update() error {
 	if g.noSaveTimer > 0 {
 		g.noSaveTimer--
 	}
+
+	// Update screen shake.
+	if g.ScreenShake != nil {
+		g.ScreenShake.Update(g.DeltaTime)
+		g.shakeOffsetX, g.shakeOffsetY = g.ScreenShake.Offset()
+	}
+	// Update transition.
+	if g.Transition != nil {
+		g.Transition.Update(g.DeltaTime)
+	}
+	// Update particle system.
+	if g.Particles != nil {
+		g.Particles.Update(g.DeltaTime)
+	}
+	// Update camera pan.
+	if g.camPanActive {
+		g.updateCameraPan(g.DeltaTime)
+	}
+
 	switch g.State {
 	case StateMainMenu:
 		return g.updateMainMenu()
@@ -713,6 +797,37 @@ func (g *Game) Update() error {
 		return g.updatePlaying()
 	default:
 		return nil
+	}
+}
+
+// updateCameraPan smoothly moves the camera toward camPanTargetX/Y, then
+// holds briefly before calling activateBoss to start the fight.
+func (g *Game) updateCameraPan(dt float64) {
+	const panSpeed = 3.0
+	g.camX += (g.camPanTargetX - g.camX) * panSpeed * dt
+	g.camY += (g.camPanTargetY - g.camY) * panSpeed * dt
+
+	dx := g.camPanTargetX - g.camX
+	dy := g.camPanTargetY - g.camY
+	if dx*dx+dy*dy < 0.5 {
+		g.camX = g.camPanTargetX
+		g.camY = g.camPanTargetY
+		if g.camPanHold > 0 {
+			g.camPanHold -= dt
+			if g.camPanHold <= 0 {
+				g.camPanActive = false
+				g.activateBoss()
+			}
+		} else {
+			g.camPanHold = 0.5 // hold for 0.5s
+		}
+	}
+}
+
+// TriggerShake starts a camera shake with the given intensity (max pixel offset).
+func (g *Game) TriggerShake(intensity float64) {
+	if g.ScreenShake != nil {
+		g.ScreenShake.Trigger(intensity)
 	}
 }
 
@@ -792,6 +907,21 @@ func (g *Game) updatePlaying() error {
 	// Lore library input guard: consume all input while open.
 	if g.LoreLibrary != nil && g.LoreLibrary.Active {
 		g.LoreLibrary.Update()
+		return nil
+	}
+	// Hub shop input guard: consume all input while open.
+	if g.Shop != nil && g.Shop.Active {
+		g.Shop.Update()
+		return nil
+	}
+	// Upgrade station input guard: consume all input while open.
+	if g.UpgradeStation != nil && g.UpgradeStation.Active {
+		g.UpgradeStation.Update()
+		return nil
+	}
+	// Echo shrine input guard: consume all input while open.
+	if g.EchoShrine != nil && g.EchoShrine.Active {
+		g.EchoShrine.Update()
 		return nil
 	}
 
@@ -908,9 +1038,35 @@ func (g *Game) updatePlaying() error {
 		}
 	}
 
+	// Tick echo recorder if active.
+	if g.EchoRecorder != nil && g.RunState != nil && g.RunState.Active && g.player != nil {
+		floor := g.RunState.CurrentFloor
+		g.EchoRecorder.Tick(g.DeltaTime,
+			g.player.MoveController.InterpX,
+			g.player.MoveController.InterpY,
+			g.player.HP, floor)
+	}
+
 	// Monsters
 	for _, m := range g.Monsters {
 		m.Update(g.player, g.currentLevel)
+	}
+
+	// Tick death fade-out for recently killed monsters.
+	for _, m := range g.Monsters {
+		if m.IsDead && m.DyingTicks > 0 {
+			m.DyingTicks--
+		}
+	}
+
+	// Tick HeroEcho lifetime.
+	for _, m := range g.Monsters {
+		if m != nil && m.IsEcho && m.EchoLifetime > 0 {
+			m.EchoLifetime -= g.DeltaTime
+			if m.EchoLifetime <= 0 {
+				m.IsDead = true
+			}
+		}
 	}
 
 	// Monster projectiles
@@ -1076,6 +1232,18 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	}
 	if g.LoreLibrary != nil {
 		g.LoreLibrary.Resize(g.w, g.h)
+	}
+	if g.Shop != nil {
+		g.Shop.Resize(g.w, g.h)
+	}
+	if g.UpgradeStation != nil {
+		g.UpgradeStation.Resize(g.w, g.h)
+	}
+	if g.EchoShrine != nil {
+		g.EchoShrine.Resize(g.w, g.h)
+	}
+	if g.Transition != nil {
+		g.Transition.Resize(g.w, g.h)
 	}
 
 	if g.editor == nil {

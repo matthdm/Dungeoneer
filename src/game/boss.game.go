@@ -1,6 +1,7 @@
 package game
 
 import (
+	"dungeoneer/audio"
 	"dungeoneer/entities"
 	"dungeoneer/hud"
 	"dungeoneer/levels"
@@ -114,6 +115,24 @@ func (g *Game) spawnBoss(x, y int) {
 	}
 }
 
+// startBossIntroPan begins a camera pan from the player toward the boss,
+// then calls activateBoss after the pan+hold completes.
+// If the boss position is unknown, activateBoss is called immediately.
+func (g *Game) startBossIntroPan() {
+	if g.CurrentBoss == nil {
+		g.activateBoss()
+		return
+	}
+	bx := float64(g.CurrentBoss.Monster.TileX)
+	by := float64(g.CurrentBoss.Monster.TileY)
+	isoX, isoY := g.cartesianToIso(bx, by)
+	g.camPanTargetX = isoX
+	g.camPanTargetY = -isoY // camera Y is stored as negative iso
+	g.camPanActive = true
+	g.camPanHold = 0.0
+	// activateBoss() will be called by updateCameraPan after pan+hold completes.
+}
+
 // activateBoss seals the arena and starts the fight.
 func (g *Game) activateBoss() {
 	if g.CurrentBoss == nil || g.CurrentBoss.IsActive {
@@ -122,6 +141,10 @@ func (g *Game) activateBoss() {
 	g.CurrentBoss.IsActive = true
 	if g.BossBar != nil {
 		g.BossBar.Visible = true
+	}
+	if g.Audio != nil {
+		g.Audio.StopAmbient()
+		g.Audio.PlayMusic(audio.MusicBoss)
 	}
 }
 
@@ -134,6 +157,9 @@ func (g *Game) onBossDefeated() {
 	g.CurrentBoss.IsActive = false
 	if g.BossBar != nil {
 		g.BossBar.Visible = false
+	}
+	if g.Audio != nil {
+		g.Audio.StopMusic()
 	}
 
 	// finaliseBossDefeat performs the actions that follow once the post-fight

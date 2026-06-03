@@ -1,0 +1,135 @@
+{
+  "name": "Hero",
+  "tile_x": 14,
+  "tile_y": 42,
+  "class": "mage",
+  "stats": {
+    "strength": 1,
+    "dexterity": 1,
+    "vitality": 1,
+    "intelligence": 1,
+    "luck": 1
+  },
+  "inventory": [
+    [
+      {
+        "ID": "",
+        "Count": 0
+      },
+      {
+        "ID": "iron_key",
+        "Count": 3
+      },
+      {
+        "ID": "",
+        "Count": 0
+      },
+      {
+        "ID": "",
+        "Count": 0
+      },
+      {
+        "ID": "",
+        "Count": 0
+      }
+    ],
+    [
+      {
+        "ID": "",
+        "Count": 0
+      },
+      {
+        "ID": "",
+        "Count": 0
+      },
+      {
+        "ID": "",
+        "Count": 0
+      },
+      {
+        "ID": "",
+        "Count": 0
+      },
+      {
+        "ID": "",
+        "Count": 0
+      }
+    ],
+    [
+      {
+        "ID": "",
+        "Count": 0
+      },
+      {
+        "ID": "",
+        "Count": 0
+      },
+      {
+        "ID": "",
+        "Count": 0
+      },
+      {
+        "ID": "",
+        "Count": 0
+      },
+      {
+        "ID": "",
+        "Count": 0
+      }
+    ],
+    [
+      {
+        "ID": "",
+        "Count": 0
+      },
+      {
+        "ID": "",
+        "Count": 0
+      },
+      {
+        "ID": "",
+        "Count": 0
+      },
+      {
+        "ID": "",
+        "Count": 0
+      },
+      {
+        "ID": "",
+        "Count": 0
+      }
+    ]
+  ],
+  "equipment": {
+    "Chest": {
+      "ID": "item_0_26",
+      "Count": 1
+    },
+    "Head": {
+      "ID": "item_2_44",
+      "Count": 1
+    },
+    "Offhand": {
+      "ID": "item_0_3",
+      "Count": 1
+    },
+    "Ring1": {
+      "ID": "item_0_9",
+      "Count": 1
+    },
+    "Ring2": {
+      "ID": "item_2_24",
+      "Count": 1
+    },
+    "Weapon": {
+      "ID": "item_0_2",
+      "Count": 1
+    }
+  },
+  "hp": 105,
+  "mana": 60,
+  "level": 2,
+  "exp": 174,
+  "points": 3,
+  "gold": 30
+}

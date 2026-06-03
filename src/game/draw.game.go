@@ -14,6 +14,7 @@ import (
 	"dungeoneer/constants"
 	"dungeoneer/entities"
 	"dungeoneer/fov"
+	"dungeoneer/hud"
 	"dungeoneer/levels"
 	"dungeoneer/menumanager"
 	"dungeoneer/spells"
@@ -99,8 +100,21 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if g.LoreLibrary != nil {
 		g.LoreLibrary.Draw(screen)
 	}
+	if g.Shop != nil {
+		g.Shop.Draw(screen)
+	}
+	if g.UpgradeStation != nil {
+		g.UpgradeStation.Draw(screen)
+	}
+	if g.EchoShrine != nil {
+		g.EchoShrine.Draw(screen)
+	}
 	if g.ActiveToast != nil {
 		g.ActiveToast.Draw(screen, g.w, g.h)
+	}
+	// Fade overlay drawn last so it covers everything.
+	if g.Transition != nil {
+		g.Transition.Draw(screen)
 	}
 }
 
@@ -230,7 +244,49 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 		fov.DebugDrawRays(screen, g.cachedRays, apexX, apexY, g.camX, g.camY, g.camScale, cx, cy, g.currentLevel.TileSize)
 	}
 	if g.HUD != nil && g.ShowHUD {
+		// Populate 9D fields before drawing.
+		if g.RunState != nil {
+			g.HUD.CurrentFloor = g.RunState.CurrentFloor
+			g.HUD.TotalFloors = g.RunState.TotalFloors
+		}
+		if g.FloorCtx != nil {
+			b := string(g.FloorCtx.Biome)
+			if len(b) > 0 {
+				g.HUD.BiomeName = strings.ToUpper(b[:1]) + b[1:]
+			}
+		}
+		// Rebuild status effect display list without allocating a new slice.
+		g.HUD.StatusEffects = g.HUD.StatusEffects[:0]
+		if g.player != nil {
+			for _, eff := range g.player.Effects.Effects {
+				if eff == nil {
+					continue
+				}
+				g.HUD.StatusEffects = append(g.HUD.StatusEffects, buildStatusEffectDisplay(eff))
+			}
+		}
 		g.HUD.Draw(screen, g.w, g.h)
+	}
+	// Draw minimap (only during dungeon runs, not in hub).
+	if g.HUD != nil && g.HUD.Minimap != nil && g.currentLevel != nil && !g.IsInHub {
+		exitTX, exitTY := -1, -1
+		if g.ExitEntity != nil {
+			exitTX = g.ExitEntity.TileX
+			exitTY = g.ExitEntity.TileY
+		}
+		playerTX, playerTY := 0, 0
+		if g.player != nil {
+			playerTX = g.player.TileX
+			playerTY = g.player.TileY
+		}
+		g.HUD.Minimap.Draw(
+			screen,
+			g.currentLevel.Rooms,
+			g.SeenTiles,
+			playerTX, playerTY,
+			exitTX, exitTY,
+			g.w, g.h,
+		)
 	}
 	if g.BossBar != nil {
 		g.BossBar.Draw(screen, g.w)
@@ -250,6 +306,10 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 	}
 	if g.DevTools != nil {
 		g.DevTools.Draw(screen)
+	}
+	// Draw particles on top of world, below UI overlays.
+	if g.Particles != nil {
+		g.Particles.Draw(screen)
 	}
 }
 
@@ -659,7 +719,7 @@ func (g *Game) getDrawOp(worldX, worldY, scale, cx, cy float64) *ebiten.DrawImag
 	// apply camera transform, scale, then translate to screen center. This
 	// ordering preserves the isometric anchor semantics (feet-centered sprites).
 	op.GeoM.Translate(worldX, worldY)
-	op.GeoM.Translate(-g.camX, g.camY)
+	op.GeoM.Translate(-(g.camX+g.shakeOffsetX), g.camY-g.shakeOffsetY)
 	op.GeoM.Scale(scale, scale)
 	op.GeoM.Translate(cx, cy)
 	return op
@@ -676,4 +736,24 @@ func (g *Game) isTileVisible(x, y int) bool {
 		return false
 	}
 	return g.FullBright || g.gameTick-g.visibleTick[y][x] <= fovDecayFrames
+}
+
+// buildStatusEffectDisplay converts a StatusEffect into the HUD display model.
+func buildStatusEffectDisplay(eff *entities.StatusEffect) hud.StatusEffectDisplay {
+	type effectInfo struct {
+		char string
+		col  color.NRGBA
+	}
+	m := map[entities.EffectType]effectInfo{
+		entities.EffectPoison: {"P", color.NRGBA{100, 200, 50, 255}},
+		entities.EffectBurn:   {"B", color.NRGBA{255, 120, 20, 255}},
+		entities.EffectSlow:   {"S", color.NRGBA{80, 80, 200, 255}},
+		entities.EffectShield: {"+", color.NRGBA{200, 200, 255, 255}},
+		entities.EffectWeaken: {"W", color.NRGBA{180, 50, 180, 255}},
+		entities.EffectHaste:  {"H", color.NRGBA{255, 240, 80, 255}},
+	}
+	if info, ok := m[eff.Type]; ok {
+		return hud.StatusEffectDisplay{TypeChar: info.char, Color: info.col, Duration: eff.Duration}
+	}
+	return hud.StatusEffectDisplay{TypeChar: "?", Color: color.NRGBA{200, 200, 200, 255}, Duration: eff.Duration}
 }

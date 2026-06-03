@@ -6,6 +6,12 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+// OnSpellImpact is an optional callback invoked when a spell deals damage at a
+// world position. Set by the game package at startup to avoid a circular import.
+// worldX, worldY are cartesian tile-space coordinates; spellType matches the
+// spell name used in SpellParticleColor (e.g. "fireball", "lightning").
+var OnSpellImpact func(worldX, worldY float64, spellType string)
+
 // SpellInfo holds data about a spell type.
 type SpellInfo struct {
 	Name     string

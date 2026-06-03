@@ -4,6 +4,7 @@ import (
 	"dungeoneer/entities"
 	"dungeoneer/levels"
 	"math/rand/v2"
+	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -274,6 +275,7 @@ func (g *Game) spawnEncounterMonsters(ctx FloorContext) {
 		}
 
 		eligible := eligibleTemplates(ctx.FloorNumber, room.Size)
+		eligible = applyEnemyBias(eligible, g.CurrentMoodDelta)
 		tmpl := pickTemplate(eligible)
 		if tmpl == nil {
 			continue
@@ -287,6 +289,11 @@ func (g *Game) spawnEncounterMonsters(ctx FloorContext) {
 		monsters := g.spawnTemplateInRoom(tmpl, room, ctx, occupied)
 		g.Monsters = append(g.Monsters, monsters...)
 		budget -= len(monsters)
+		if g.BehaviorTracker != nil {
+			for range monsters {
+				g.BehaviorTracker.RecordEnemySpawned()
+			}
+		}
 	}
 }
 
@@ -366,6 +373,38 @@ func (g *Game) spawnTemplateInRoom(tmpl *EncounterTemplate, room *levels.Room, c
 	}
 
 	return spawned
+}
+
+// applyEnemyBias returns a copy of templates with weights adjusted per the mood delta.
+// Templates whose ID contains "ranged", "firing", or "sniper" are boosted by RangedEnemyBias.
+// Templates whose ID contains "ambush" are boosted by AmbushBias.
+func applyEnemyBias(templates []EncounterTemplate, delta GenParamsDelta) []EncounterTemplate {
+	if delta.RangedEnemyBias == 0 && delta.AmbushBias == 0 {
+		return templates
+	}
+	out := make([]EncounterTemplate, len(templates))
+	copy(out, templates)
+	for i := range out {
+		id := out[i].ID
+		if containsAny(id, "ranged", "firing", "sniper") && delta.RangedEnemyBias > 0 {
+			out[i].Weight = out[i].Weight * delta.RangedEnemyBias
+		}
+		if containsAny(id, "ambush") && delta.AmbushBias > 0 {
+			out[i].Weight = out[i].Weight * delta.AmbushBias
+		}
+	}
+	return out
+}
+
+// containsAny reports whether s contains any of the given substrings (case-insensitive).
+func containsAny(s string, subs ...string) bool {
+	lower := strings.ToLower(s)
+	for _, sub := range subs {
+		if strings.Contains(lower, sub) {
+			return true
+		}
+	}
+	return false
 }
 
 // resolveSprite looks up a sprite by its SpriteID string.

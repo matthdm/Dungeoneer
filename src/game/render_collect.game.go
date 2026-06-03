@@ -276,7 +276,11 @@ func (g *Game) collectPlayerRenderables(scale, cx, cy float64) []Renderable {
 func (g *Game) collectMonsterRenderables(scale, cx, cy float64) []Renderable {
 	var out []Renderable
 	for _, m := range g.Monsters {
-		if m.IsDead || m.TileX < 0 || m.TileY < 0 || m.TileX >= g.currentLevel.W || m.TileY >= g.currentLevel.H {
+		if m.TileX < 0 || m.TileY < 0 || m.TileX >= g.currentLevel.W || m.TileY >= g.currentLevel.H {
+			continue
+		}
+		// Skip fully dead monsters (DyingTicks exhausted); allow dying ones through for fade.
+		if m.IsDead && m.DyingTicks <= 0 {
 			continue
 		}
 		if !g.isTileVisible(m.TileX, m.TileY) {
@@ -295,6 +299,17 @@ func (g *Game) collectMonsterRenderables(scale, cx, cy float64) []Renderable {
 		op.GeoM.Translate(cx, cy)
 		if m.FlashTicksLeft > 0 {
 			op.ColorScale.Scale(1, 1, 1, 0.7)
+		}
+		if m.IsEcho {
+			// Ghost tint: blue-purple, alpha ~0.6 with 2 Hz flicker.
+			flicker := float32(0.1 * math.Sin(float64(time.Now().UnixNano())/1e9*2*math.Pi*2.0))
+			alpha := float32(0.6) + flicker
+			op.ColorScale.Scale(0.4, 0.5, 1.0, alpha)
+		}
+		// Dying: fade alpha from 1 → 0 over 30 ticks.
+		if m.IsDead && m.DyingTicks > 0 {
+			alpha := float32(m.DyingTicks) / 30.0
+			op.ColorScale.ScaleAlpha(alpha)
 		}
 		out = append(out, Renderable{
 			Image:       m.Sprite,

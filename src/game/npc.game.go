@@ -32,6 +32,9 @@ func (g *Game) updateNPCHints() {
 		}
 		isoX, isoY := g.cartesianToIso(npc.InterpX, npc.InterpY)
 		msg := "[E] Talk"
+		if npc.HintText != "" {
+			msg = npc.HintText
+		}
 		// The iso anchor is the sprite's top-left. Offset to center:
 		// +tileSize/2 horizontally centers on the tile diamond,
 		// then subtract half the text pixel width to center the text itself.
@@ -113,6 +116,14 @@ func (g *Game) initDialoguePanel() {
 func (g *Game) openDialogue(npc *entities.NPC) {
 	if g.DialoguePanel == nil {
 		g.initDialoguePanel()
+	}
+
+	// MemoryFragment NPCs: build a simple dialogue tree from literal lines.
+	if len(npc.DialogueLines) > 0 {
+		sd := &dialogue.SimpleDialogue{Speaker: npc.Name, Lines: npc.DialogueLines}
+		tree := sd.ToTree(npc.ID + "_memory")
+		g.DialoguePanel.Open(tree, nil)
+		return
 	}
 
 	treeID := npc.DialogueID
@@ -710,15 +721,15 @@ func (g *Game) triggerBossEncounter() {
 			portrait := g.resolvePortrait(portraitID)
 			g.DialoguePanel.Open(tree, portrait)
 			g.DialoguePanel.OnClose = func() {
-				g.activateBoss()
 				g.sealBossRoom()
+				g.startBossIntroPan()
 			}
 			return
 		}
 	}
-	// No pre-fight dialogue, or tree not found — activate immediately.
-	g.activateBoss()
+	// No pre-fight dialogue, or tree not found — pan then activate immediately.
 	g.sealBossRoom()
+	g.startBossIntroPan()
 }
 
 // openChest marks the chest as opened and spawns its loot as item drops.

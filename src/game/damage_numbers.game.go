@@ -28,7 +28,8 @@ func (g *Game) drawDamageNumbers(target *ebiten.Image, scale, cx, cy float64) {
 		drawY := (yi+g.camY)*scale + cy - float64(d.Ticks) // floats up
 
 		alpha := 1.0 - float64(d.Ticks)/float64(d.MaxTicks)
-		clr := color.NRGBA{255, 255, 0, uint8(alpha * 255)}
+		base := DamageNumberColor(d.Type, d.IsCrit)
+		clr := color.NRGBA{base.R, base.G, base.B, uint8(alpha * float64(base.A))}
 
 		msg := fmt.Sprintf("%d", d.Value)
 		text.Draw(target, msg, basicfont.Face7x13, int(drawX), int(drawY), clr)

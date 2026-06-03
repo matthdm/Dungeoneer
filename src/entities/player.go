@@ -20,6 +20,12 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+// SetBonusQuestState holds cross-run state needed for set bonus activation.
+// Set by the game layer at run start (e.g. after loading MetaSave).
+var SetBonusQuestState struct {
+	VarnDefeated bool
+}
+
 // PlayerClass determines starting equipment and primary attack style.
 type PlayerClass string
 
@@ -131,6 +137,17 @@ func NewEquipmentSlots() map[string]*items.Item {
 		slots[slot] = nil
 	}
 	return slots
+}
+
+// GetEquippedItemIDs returns the item IDs of all currently equipped (non-nil) items.
+func (p *Player) GetEquippedItemIDs() []string {
+	ids := make([]string, 0, len(p.Equipment))
+	for _, it := range p.Equipment {
+		if it != nil {
+			ids = append(ids, it.ID)
+		}
+	}
+	return ids
 }
 
 func NewPlayer(ss *sprites.SpriteSheet) *Player {
@@ -580,6 +597,15 @@ func (p *Player) EffectiveStats() BaseStats {
 // RecalculateStats updates derived fields like MaxHP, Damage, and AttackRate.
 func (p *Player) RecalculateStats() {
 	equip := p.getEquipmentStatModifiers()
+
+	// Apply active set bonus stats on top of equipment modifiers.
+	setMod := p.getSetBonusStatModifiers()
+	equip.StrengthMod += setMod.StrengthMod
+	equip.DexterityMod += setMod.DexterityMod
+	equip.VitalityMod += setMod.VitalityMod
+	equip.IntelligenceMod += setMod.IntelligenceMod
+	equip.LuckMod += setMod.LuckMod
+
 	p.MaxHP = 100 + (p.Stats.Vitality+p.TempModifiers.VitalityMod+equip.VitalityMod)*5
 	p.MaxMana = 20 + (p.Stats.Intelligence+p.TempModifiers.IntelligenceMod+equip.IntelligenceMod)*5
 	p.Damage = 5 + (p.Stats.Strength+equip.StrengthMod)*2
@@ -590,6 +616,32 @@ func (p *Player) RecalculateStats() {
 	if p.Mana > p.MaxMana {
 		p.Mana = p.MaxMana
 	}
+}
+
+// getSetBonusStatModifiers sums stat bonuses from all currently active item sets.
+func (p *Player) getSetBonusStatModifiers() StatModifiers {
+	mod := StatModifiers{}
+	activeSets := items.RecalculateSetBonuses(p.GetEquippedItemIDs(), SetBonusQuestState.VarnDefeated)
+	for _, s := range activeSets {
+		if s.Tier.PiecesRequired == 0 {
+			continue // partial set, no tier met
+		}
+		for stat, v := range s.Tier.StatBonus {
+			switch stat {
+			case "Strength":
+				mod.StrengthMod += v
+			case "Dexterity":
+				mod.DexterityMod += v
+			case "Vitality":
+				mod.VitalityMod += v
+			case "Intelligence":
+				mod.IntelligenceMod += v
+			case "Luck":
+				mod.LuckMod += v
+			}
+		}
+	}
+	return mod
 }
 
 // AddEXP grants experience and handles level ups.
@@ -648,6 +700,16 @@ func (p *Player) RefreshAbilities() {
 				p.SpellSlots = append(p.SpellSlots, it.GrantsAbility)
 			}
 		}
+	}
+
+	// Grant abilities from active set bonuses.
+	activeSets := items.RecalculateSetBonuses(p.GetEquippedItemIDs(), SetBonusQuestState.VarnDefeated)
+	for _, s := range activeSets {
+		if s.Tier.BonusAbility == "" {
+			continue
+		}
+		p.Abilities[s.Tier.BonusAbility] = true
+		// Set bonus abilities do not occupy spell bar slots — they are passive/triggered.
 	}
 }
 

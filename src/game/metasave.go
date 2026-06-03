@@ -30,7 +30,14 @@ type MetaSave struct {
 	TotalRemnants int             `json:"total_remnants"`
 	LoreUnlocked  []string        `json:"lore_unlocked,omitempty"`
 	HubState      map[string]bool `json:"hub_state,omitempty"`
-	Upgrades      map[string]int  `json:"upgrades,omitempty"`
+	Upgrades       map[string]int  `json:"upgrades,omitempty"`
+	ShopPurchases  []string        `json:"shop_purchases,omitempty"` // items purchased in hub shop this run; reset on run start
+	EchoFiles      []string        `json:"echo_files,omitempty"`
+
+	// v2 fields — Phase 7B Living Dungeon AI
+	RecentBehavior []BehaviorRecord `json:"recent_behavior,omitempty"`
+	CurrentProfile PlayerProfile    `json:"current_profile,omitempty"`
+	CurrentMood    int              `json:"current_mood,omitempty"` // DungeonMood as int
 }
 
 const metaSavePath = "meta.json"

@@ -6,11 +6,20 @@ import (
 	"image/color"
 
 	"dungeoneer/constants"
+	"dungeoneer/items"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/text"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 	"golang.org/x/image/font/basicfont"
 )
+
+// StatusEffectDisplay is the display model for one active effect.
+type StatusEffectDisplay struct {
+	TypeChar string // single char abbreviation
+	Color    color.NRGBA
+	Duration float64
+}
 
 // SkillSlot represents a single skill slot in the HUD.
 type SkillSlot struct {
@@ -37,16 +46,31 @@ type HUD struct {
 	SkillSlots     [6]SkillSlot
 	ActiveSkill    int
 
+	// ActiveSets holds the current set bonus state for display in the equipment screen.
+	// Updated by the game layer whenever equipment changes.
+	ActiveSets []items.ActiveSetBonus
+
 	OrbFrame      *ebiten.Image
 	HUDBackground *ebiten.Image
 
 	orbSize int
 	orbFill *ebiten.Image
+
+	// 9D fields
+	Minimap        *Minimap
+	CurrentFloor   int
+	TotalFloors    int
+	BiomeName      string // e.g. "Crypt", "Moss"
+	StatusEffects  []StatusEffectDisplay
 }
 
 // New creates a HUD with default sizes.
 func New() *HUD {
-	h := &HUD{orbSize: 96}
+	h := &HUD{
+		orbSize:       96,
+		Minimap:       &Minimap{},
+		StatusEffects: make([]StatusEffectDisplay, 0, 8),
+	}
 	h.initOrbResources()
 	return h
 }
@@ -56,7 +80,7 @@ func (h *HUD) initOrbResources() {
 	h.orbFill.Fill(color.Transparent)
 }
 
-// Update decrements any cooldown timers.
+// Update decrements any cooldown timers and handles minimap toggle.
 func (h *HUD) Update(dt float64) {
 	if h.DashCooldown > 0 {
 		h.DashCooldown -= dt
@@ -71,6 +95,9 @@ func (h *HUD) Update(dt float64) {
 				h.SkillSlots[i].Cooldown = 0
 			}
 		}
+	}
+	if h.Minimap != nil {
+		h.Minimap.ToggleOnKeyPress()
 	}
 }
 
@@ -94,6 +121,31 @@ func (h *HUD) Draw(screen *ebiten.Image, w, hgt int) {
 
 	h.drawGold(screen, w, hgt)
 	h.drawSkillBar(screen, w, hgt)
+
+	// Floor indicator (top-left, below the debug FPS line).
+	if h.CurrentFloor > 0 {
+		biome := h.BiomeName
+		if biome == "" {
+			biome = "Dungeon"
+		}
+		indicator := fmt.Sprintf("Floor %d / %d — %s", h.CurrentFloor, h.TotalFloors, biome)
+		ebitenutil.DebugPrintAt(screen, indicator, 10, 22)
+	}
+
+	// Status effect icons — row of colored squares just below floor indicator.
+	if len(h.StatusEffects) > 0 {
+		ex := 10
+		ey := 36
+		for _, eff := range h.StatusEffects {
+			box := ebiten.NewImage(10, 10)
+			box.Fill(eff.Color)
+			op := &ebiten.DrawImageOptions{}
+			op.GeoM.Translate(float64(ex), float64(ey))
+			screen.DrawImage(box, op)
+			ebitenutil.DebugPrintAt(screen, eff.TypeChar, ex+1, ey)
+			ex += 14
+		}
+	}
 }
 
 func (h *HUD) drawSkillBar(screen *ebiten.Image, w, hgt int) {
@@ -199,6 +251,61 @@ func (h *HUD) drawGold(screen *ebiten.Image, w, hgt int) {
 	y := hgt - h.orbSize - margin - 16
 	txt := fmt.Sprintf("G %d", h.Gold)
 	text.Draw(screen, txt, basicfont.Face7x13, orbX, y, color.RGBA{255, 215, 0, 255})
+}
+
+// DrawSetBonusPanel renders an overlay panel listing active (and partial) set bonuses.
+// Call this when the inventory/equipment screen is open, passing the screen top-left
+// anchor (sx, sy) for where the panel should appear.
+func (h *HUD) DrawSetBonusPanel(screen *ebiten.Image, sx, sy int) {
+	if len(h.ActiveSets) == 0 {
+		return
+	}
+	const (
+		lineH  = 16
+		padX   = 8
+		padY   = 6
+		panelW = 220
+	)
+
+	panelH := padY*2 + lineH + len(h.ActiveSets)*lineH*2
+	vector.DrawFilledRect(screen, float32(sx), float32(sy), float32(panelW), float32(panelH), color.RGBA{10, 10, 20, 210}, false)
+	vector.StrokeRect(screen, float32(sx), float32(sy), float32(panelW), float32(panelH), 1, color.RGBA{180, 140, 60, 255}, false)
+
+	cy := sy + padY
+	text.Draw(screen, "SET BONUSES", basicfont.Face7x13, sx+padX, cy+11, color.RGBA{255, 200, 80, 255})
+	cy += lineH
+
+	for _, s := range h.ActiveSets {
+		pip := fmt.Sprintf("%s (%d/%d)", s.SetName, s.PiecesOwned, s.PiecesTotal)
+		pipClr := color.RGBA{180, 180, 180, 255}
+		var statusLine string
+		if s.Tier.PiecesRequired > 0 {
+			pip += " [ACTIVE]"
+			pipClr = color.RGBA{80, 220, 80, 255}
+			if s.Tier.BonusAbility != "" {
+				statusLine = "  +" + s.Tier.BonusAbility
+			}
+		} else {
+			// Find the next tier requirement from the registry.
+			for _, set := range items.SetRegistry {
+				if set.ID == s.SetID {
+					for _, b := range set.Bonuses {
+						if s.PiecesOwned < b.PiecesRequired {
+							statusLine = fmt.Sprintf("  Need %d/%d pieces", b.PiecesRequired, s.PiecesTotal)
+							break
+						}
+					}
+					break
+				}
+			}
+		}
+		text.Draw(screen, pip, basicfont.Face7x13, sx+padX, cy+11, pipClr)
+		cy += lineH
+		if statusLine != "" {
+			ebitenutil.DebugPrintAt(screen, statusLine, sx+padX, cy)
+		}
+		cy += lineH
+	}
 }
 
 func drawOrb(dst *ebiten.Image, x, y, size int, percent float64, clr color.Color, frame *ebiten.Image, buf *ebiten.Image) {
