@@ -449,6 +449,9 @@ func (g *Game) handleGrapple() {
 		return
 	}
 	if g.isActionJustPressed(controls.ActionGrapple) {
+		if g.player.IsAbilityLocked("grapple") {
+			return
+		}
 		if g.player.Grapple.Active {
 			g.player.CancelGrapple()
 		} else if g.player.HasAbility("grapple") {
@@ -473,6 +476,9 @@ func (g *Game) handleDash() {
 
 	// Blink: mage movement — teleport toward cursor, wall-safe. 2s cooldown.
 	if g.player.HasAbility("blink") {
+		if g.player.IsAbilityLocked("blink") {
+			return
+		}
 		blinkInfo := spells.SpellInfo{Name: "blink", Cooldown: 2.0}
 		if g.player.Caster.Ready(blinkInfo) {
 			g.player.Caster.PutOnCooldown(blinkInfo)
@@ -483,6 +489,9 @@ func (g *Game) handleDash() {
 
 	// Dash: knight movement — directional burst.
 	if g.player.HasAbility("dash") && g.player.DashCharges > 0 && !g.player.IsDashing {
+		if g.player.IsAbilityLocked("dash") {
+			return
+		}
 		dirX, dirY := 0.0, 0.0
 		if g.player.MoveController.Mode == movement.VelocityMode {
 			dirX = g.player.MoveController.VelocityX

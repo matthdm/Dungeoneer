@@ -25,13 +25,13 @@ import "math"
 
 const (
 	// BodyDX is the horizontal cartesian offset from the tile anchor to the
-	// entity's visual body center. One unit east places it at the mid-point
-	// of the 64 px isometric diamond.
-	BodyDX = 1.0
+	// entity's visual body center. 1.25 units (with BodyDY = 0.25) places it
+	// exactly horizontally centered in the 64px isometric diamond.
+	BodyDX = 1.25
 
 	// BodyDY is the vertical (depth) cartesian offset from the tile anchor
 	// (feet) to the entity's body center.
-	BodyDY = 0.30
+	BodyDY = 0.25
 
 	// SpriteVerticalShift is the number of isometric-space pixels sprites are
 	// shifted upward during rendering. Apply as a negative Y delta in every

@@ -55,6 +55,8 @@ func (hp *HeroPanel) Update() {
 					hp.player.Stats.Vitality++
 				case "dex":
 					hp.player.Stats.Dexterity++
+				case "luck":
+					hp.player.Stats.Luck++
 				}
 				hp.player.UnspentPoints--
 				hp.player.RecalculateStats()
@@ -82,6 +84,11 @@ func (hp *HeroPanel) Update() {
 				case "dex":
 					if hp.player.Stats.Dexterity > 1 {
 						hp.player.Stats.Dexterity--
+						hp.player.UnspentPoints++
+					}
+				case "luck":
+					if hp.player.Stats.Luck > 1 {
+						hp.player.Stats.Luck--
 						hp.player.UnspentPoints++
 					}
 				}
@@ -123,19 +130,21 @@ func (hp *HeroPanel) Draw(screen *ebiten.Image) {
 		key  string
 		name string
 		val  int
+		desc string
 	}{
-		{"str", "Strength", hp.player.Stats.Strength},
-		{"int", "Intelligence", hp.player.Stats.Intelligence},
-		{"vit", "Vitality", hp.player.Stats.Vitality},
-		{"dex", "Dexterity", hp.player.Stats.Dexterity},
+		{"str", "Strength", hp.player.Stats.Strength, fmt.Sprintf("+%d melee dmg", hp.player.EffectiveStats().Strength*2)},
+		{"int", "Intelligence", hp.player.Stats.Intelligence, fmt.Sprintf("+%d spell power, +%d mana", hp.player.EffectiveStats().Intelligence/2, hp.player.EffectiveStats().Intelligence*5)},
+		{"vit", "Vitality", hp.player.Stats.Vitality, fmt.Sprintf("+%d HP, +%.1f%% armor", hp.player.EffectiveStats().Vitality*5, min(40.0, float64(hp.player.EffectiveStats().Vitality)*0.5))},
+		{"dex", "Dexterity", hp.player.Stats.Dexterity, fmt.Sprintf("+%d%% CDR", min(30, hp.player.EffectiveStats().Dexterity))},
+		{"luck", "Luck", hp.player.Stats.Luck, fmt.Sprintf("+%d%% drop quality", hp.player.EffectiveStats().Luck*3)},
 	}
 	hp.plus = make(map[string]image.Rectangle)
 	hp.minus = make(map[string]image.Rectangle)
 	for i, s := range stats {
-		lineY := statY + i*20
+		lineY := statY + i*35
 		ebitenutil.DebugPrintAt(screen, fmt.Sprintf("%s: %d", s.name, s.val), x, lineY)
-		pr := image.Rect(x+120, lineY-10, x+135, lineY+5)
-		mr := image.Rect(x+138, lineY-10, x+153, lineY+5)
+		pr := image.Rect(x+130, lineY-2, x+145, lineY+13)
+		mr := image.Rect(x+148, lineY-2, x+163, lineY+13)
 		hp.plus[s.key] = pr
 		hp.minus[s.key] = mr
 		if hp.player.UnspentPoints > 0 {
@@ -144,6 +153,7 @@ func (hp *HeroPanel) Draw(screen *ebiten.Image) {
 		if s.val > 1 {
 			ebitenutil.DebugPrintAt(screen, "[-]", mr.Min.X, mr.Min.Y)
 		}
+		ebitenutil.DebugPrintAt(screen, "  "+s.desc, x, lineY+13)
 	}
-	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Unspent Points: %d", hp.player.UnspentPoints), x, statY+len(stats)*20+10)
+	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("Unspent Points: %d", hp.player.UnspentPoints), x, statY+len(stats)*35+10)
 }

@@ -23,11 +23,18 @@ func rollGoldDrop(role string, floor int) int {
 }
 
 // awardGold adds gold to the player and tracks it in the run state.
+// Equipped "gold_find" item effects multiply the base drop amount.
 func (g *Game) awardGold(m *entities.Monster) {
 	if g.player == nil || g.FloorCtx == nil {
 		return
 	}
 	amount := rollGoldDrop(m.Role, g.FloorCtx.FloorNumber)
+	// Apply gold_find passive bonus from equipped items.
+	goldBonus := items.EvalPassiveGoldFind(g.player.Equipment)
+	amount = int(float64(amount) * (1.0 + goldBonus))
+	if amount < 1 {
+		amount = 1
+	}
 	g.player.Gold += amount
 	if g.RunState != nil {
 		g.RunState.GoldEarned += amount
@@ -43,7 +50,7 @@ func (g *Game) awardEXP(m *entities.Monster) {
 }
 
 // handleMonsterDeath handles all consequences of a monster dying:
-// EXP, gold, kill count, and loot drop.
+// EXP, gold, kill count, on_kill item effects, and loot drop.
 func (g *Game) handleMonsterDeath(m *entities.Monster) {
 	g.awardEXP(m)
 	g.awardGold(m)
@@ -57,6 +64,23 @@ func (g *Game) handleMonsterDeath(m *entities.Monster) {
 	if g.Audio != nil {
 		g.Audio.PlaySFX(audio.SFXEnemyDeath)
 	}
+
+	// Lifesteal: on_kill effects restore a percentage of MaxHP.
+	if g.player != nil && !g.player.IsDead {
+		if lifestealPct := items.EvalOnKillLifesteal(g.player.Equipment); lifestealPct > 0 {
+			healAmt := int(float64(g.player.MaxHP) * lifestealPct)
+			if healAmt > 0 {
+				g.player.Heal(healAmt)
+				g.HealNumbers = append(g.HealNumbers, entities.DamageNumber{
+					X:        float64(m.TileX),
+					Y:        float64(m.TileY),
+					Value:    healAmt,
+					MaxTicks: 40,
+				})
+			}
+		}
+	}
+
 	g.rollAndDropLoot(m)
 
 	// Check if the killed monster is the boss.
@@ -118,7 +142,11 @@ func (g *Game) rollAndDropLoot(m *entities.Monster) {
 	// the player always leaves floor 1 with at least one new ability.
 	if g.FloorCtx.FloorNumber == 1 && !g.FloorCtx.AbilityDropped &&
 		(m.Role == "elite" || m.Role == "boss") {
-		if result := items.RollAbilityItem(table, 1); result != nil {
+		luck := 0
+		if g.player != nil {
+			luck = g.player.EffectiveStats().Luck
+		}
+		if result := items.RollAbilityItem(table, 1, luck); result != nil {
 			if tmpl, ok := items.Registry[result.ItemID]; ok {
 				g.spawnDrop(m, tmpl, result.Count)
 			}
@@ -137,7 +165,11 @@ func (g *Game) rollAndDropLoot(m *entities.Monster) {
 	if !items.ShouldDrop(m.Role, g.FloorCtx.FloorNumber) {
 		return
 	}
-	result := items.RollLoot(table, g.FloorCtx.FloorNumber)
+	luck := 0
+	if g.player != nil {
+		luck = g.player.EffectiveStats().Luck
+	}
+	result := items.RollLoot(table, g.FloorCtx.FloorNumber, luck)
 	if result == nil {
 		return
 	}

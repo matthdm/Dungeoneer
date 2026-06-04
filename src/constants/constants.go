@@ -72,3 +72,13 @@ const (
 )
 
 var DebugMode = true
+
+// IsDebugMode returns whether the game is running in debug mode.
+func IsDebugMode() bool {
+	return DebugMode
+}
+
+// SetDebugMode sets the debug mode flag.
+func SetDebugMode(enabled bool) {
+	DebugMode = enabled
+}

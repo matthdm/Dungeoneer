@@ -46,8 +46,8 @@ func ShouldDrop(role string, floor int) bool {
 	return rand.Float64() < chance
 }
 
-// adjustedWeight scales an entry's weight by floor for rarity progression.
-func adjustedWeight(e LootEntry, floor int) float64 {
+// adjustedWeight scales an entry's weight by floor and luck for rarity progression.
+func adjustedWeight(e LootEntry, floor int, luck int) float64 {
 	w := e.Weight
 	switch e.Rarity {
 	case RarityCommon:
@@ -56,15 +56,25 @@ func adjustedWeight(e LootEntry, floor int) float64 {
 		w *= 1.0 + 0.01*float64(floor)
 	case RarityRare:
 		w *= 1.0 + 0.015*float64(floor)
+		luckMult := 1.0 + float64(luck)*0.03
+		if luckMult < 0.0 {
+			luckMult = 0.0
+		}
+		w *= luckMult
 	case RarityLegendary:
 		w *= 1.0 + 0.005*float64(floor)
+		luckMult := 1.0 + float64(luck)*0.03
+		if luckMult < 0.0 {
+			luckMult = 0.0
+		}
+		w *= luckMult
 	}
 	return w
 }
 
 // RollLoot picks an item from the loot table based on floor and luck.
 // Returns nil if no valid entry found.
-func RollLoot(table *LootTableDef, floor int) *LootResult {
+func RollLoot(table *LootTableDef, floor int, luck int) *LootResult {
 	if table == nil || len(table.Entries) == 0 {
 		return nil
 	}
@@ -85,7 +95,7 @@ func RollLoot(table *LootTableDef, floor int) *LootResult {
 		if !ok || tmpl.QuestLocked {
 			continue
 		}
-		w := adjustedWeight(e, floor)
+		w := adjustedWeight(e, floor, luck)
 		pool = append(pool, candidate{e, w})
 		total += w
 	}
@@ -105,7 +115,7 @@ func RollLoot(table *LootTableDef, floor int) *LootResult {
 
 // RollAbilityItem picks a random ability-granting item from the table,
 // ignoring quest-locked entries. Returns nil if no eligible ability item exists.
-func RollAbilityItem(table *LootTableDef, floor int) *LootResult {
+func RollAbilityItem(table *LootTableDef, floor int, luck int) *LootResult {
 	if table == nil {
 		return nil
 	}
@@ -123,7 +133,7 @@ func RollAbilityItem(table *LootTableDef, floor int) *LootResult {
 		if !ok || tmpl.QuestLocked || tmpl.GrantsAbility == "" {
 			continue
 		}
-		w := adjustedWeight(e, floor)
+		w := adjustedWeight(e, floor, luck)
 		pool = append(pool, candidate{e, w})
 		total += w
 	}
@@ -140,10 +150,10 @@ func RollAbilityItem(table *LootTableDef, floor int) *LootResult {
 	return &LootResult{ItemID: pool[len(pool)-1].entry.ItemID, Count: 1}
 }
 
-// RollChestLoot rolls loot for a chest based on its variant.
+// RollChestLoot rolls loot for a chest based on its variant and player's luck.
 // Wooden chests roll normal loot. Iron chests bias toward uncommon+. Gold/locked
 // chests guarantee ability items when possible, falling back to normal loot.
-func RollChestLoot(table *LootTableDef, variant string, floor int) []*LootResult {
+func RollChestLoot(table *LootTableDef, variant string, floor int, luck int) []*LootResult {
 	if table == nil {
 		return nil
 	}
@@ -151,19 +161,19 @@ func RollChestLoot(table *LootTableDef, variant string, floor int) []*LootResult
 	case "gold", "locked":
 		// Try for an ability item first; always produce at least one drop.
 		var results []*LootResult
-		if r := RollAbilityItem(table, floor); r != nil {
+		if r := RollAbilityItem(table, floor, luck); r != nil {
 			results = append(results, r)
 		}
 		// Second roll: normal loot (bonus drop for premium chests).
-		if r := RollLoot(table, floor); r != nil {
+		if r := RollLoot(table, floor, luck); r != nil {
 			results = append(results, r)
 		}
 		return results
 	case "iron":
 		// Bias toward uncommon/rare by re-rolling once and keeping the
 		// result with higher rarity weight.
-		r1 := RollLoot(table, floor)
-		r2 := RollLoot(table, floor)
+		r1 := RollLoot(table, floor, luck)
+		r2 := RollLoot(table, floor, luck)
 		if r1 == nil {
 			return nil
 		}
@@ -176,7 +186,7 @@ func RollChestLoot(table *LootTableDef, variant string, floor int) []*LootResult
 		}
 		return []*LootResult{r1}
 	default: // wooden
-		if r := RollLoot(table, floor); r != nil {
+		if r := RollLoot(table, floor, luck); r != nil {
 			return []*LootResult{r}
 		}
 		return nil

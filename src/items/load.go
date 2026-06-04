@@ -26,10 +26,16 @@ type sheetEntry struct {
 			Luck         int `json:"luck_mod"`
 		} `json:"stat_modifiers"`
 		Effect *struct {
-			Trigger      string `json:"trigger"`
-			Type         string `json:"type"`
-			MagnitudePct int    `json:"magnitude_pct"`
-			ChancePct    int    `json:"chance_pct"`
+			Trigger       string  `json:"trigger"`
+			Type          string  `json:"type"`
+			MagnitudePct  int     `json:"magnitude_pct"`
+			ChancePct     int     `json:"chance_pct"`
+			MagnitudeFlat int     `json:"magnitude_flat"`
+			ThresholdPct  int     `json:"threshold_pct"`
+			CooldownSec   float64 `json:"cooldown_s"`
+			DurationSec   float64 `json:"duration_s"`
+			IntervalSec   float64 `json:"interval_s"`
+			Element       string  `json:"element"`
 		} `json:"effect"`
 	} `json:"effects"`
 }
@@ -64,10 +70,16 @@ func LoadItemSheet(img *ebiten.Image, entries []sheetEntry) {
 		var eff *ItemEffect
 		if e.Effects.Effect != nil {
 			eff = &ItemEffect{
-				Trigger:      e.Effects.Effect.Trigger,
-				Type:         e.Effects.Effect.Type,
-				MagnitudePct: e.Effects.Effect.MagnitudePct,
-				ChancePct:    e.Effects.Effect.ChancePct,
+				Trigger:       e.Effects.Effect.Trigger,
+				Type:          e.Effects.Effect.Type,
+				MagnitudePct:  e.Effects.Effect.MagnitudePct,
+				ChancePct:     e.Effects.Effect.ChancePct,
+				MagnitudeFlat: e.Effects.Effect.MagnitudeFlat,
+				ThresholdPct:  e.Effects.Effect.ThresholdPct,
+				CooldownSec:   e.Effects.Effect.CooldownSec,
+				DurationSec:   e.Effects.Effect.DurationSec,
+				IntervalSec:   e.Effects.Effect.IntervalSec,
+				Element:       e.Effects.Effect.Element,
 			}
 		}
 		equippable := len(stats) > 0 || eff != nil
@@ -90,6 +102,7 @@ func LoadItemSheet(img *ebiten.Image, entries []sheetEntry) {
 		RegisterItem(tmpl)
 	}
 }
+
 
 // LoadDefaultItems loads the bundled item sheet and mapping, then applies
 // ability overrides to starter/quest items.

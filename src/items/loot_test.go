@@ -120,7 +120,7 @@ func TestAdjustedWeightFloorScaling(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			e := LootEntry{Weight: tt.baseW, Rarity: tt.rarity}
-			got := adjustedWeight(e, tt.floor)
+			got := adjustedWeight(e, tt.floor, 0)
 
 			if tt.wantGt >= 0 && got <= tt.wantGt {
 				t.Errorf("adjustedWeight(%s, floor=%d) = %v; want > %v", tt.rarity, tt.floor, got, tt.wantGt)
@@ -143,9 +143,9 @@ func TestAdjustedWeightCommonDecreases(t *testing.T) {
 	// 1 - 0.03*f <= 0.1  =>  f >= 30
 	const clampFloor = 30
 
-	prev := adjustedWeight(entry, 0)
+	prev := adjustedWeight(entry, 0, 0)
 	for floor := 1; floor <= clampFloor; floor++ {
-		cur := adjustedWeight(entry, floor)
+		cur := adjustedWeight(entry, floor, 0)
 		if cur >= prev {
 			t.Errorf("floor %d: common weight %v did not decrease from floor %d weight %v", floor, cur, floor-1, prev)
 		}
@@ -157,7 +157,7 @@ func TestAdjustedWeightCommonDecreases(t *testing.T) {
 	const eps = 1e-9
 	expected := baseW * 0.1
 	for floor := clampFloor; floor <= 100; floor++ {
-		cur := adjustedWeight(entry, floor)
+		cur := adjustedWeight(entry, floor, 0)
 		diff := cur - expected
 		if diff < -eps || diff > eps {
 			t.Errorf("floor %d: common weight %v should be ~%.2f (10%% of base, within %.1e)", floor, cur, expected, eps)
@@ -171,9 +171,9 @@ func TestAdjustedWeightRarityOrdering(t *testing.T) {
 	floor := 20
 	base := 1.0
 
-	uncommonW := adjustedWeight(LootEntry{Weight: base, Rarity: RarityUncommon}, floor)
-	rareW := adjustedWeight(LootEntry{Weight: base, Rarity: RarityRare}, floor)
-	legendaryW := adjustedWeight(LootEntry{Weight: base, Rarity: RarityLegendary}, floor)
+	uncommonW := adjustedWeight(LootEntry{Weight: base, Rarity: RarityUncommon}, floor, 0)
+	rareW := adjustedWeight(LootEntry{Weight: base, Rarity: RarityRare}, floor, 0)
+	legendaryW := adjustedWeight(LootEntry{Weight: base, Rarity: RarityLegendary}, floor, 0)
 
 	if uncommonW <= base {
 		t.Errorf("uncommon at floor %d: %v should be > base %v", floor, uncommonW, base)
@@ -264,5 +264,32 @@ func TestShouldDropChanceCapAt90(t *testing.T) {
 	// At cap 90%, accept 85%-95% range.
 	if rate < 0.80 || rate > 0.99 {
 		t.Errorf("ShouldDrop(normal, floor=30) empirical rate = %.3f; expected ~0.90 (range 0.80–0.99)", rate)
+	}
+}
+
+func TestAdjustedWeightLuckScaling(t *testing.T) {
+	// Rare and legendary items should have higher weights when luck > 0
+	base := 1.0
+	floor := 5
+
+	// Rare without luck vs with luck
+	rareNoLuck := adjustedWeight(LootEntry{Weight: base, Rarity: RarityRare}, floor, 0)
+	rareWithLuck := adjustedWeight(LootEntry{Weight: base, Rarity: RarityRare}, floor, 5)
+	if rareWithLuck <= rareNoLuck {
+		t.Errorf("rare item weight should increase with luck: got %v with luck, %v without", rareWithLuck, rareNoLuck)
+	}
+
+	// Legendary without luck vs with luck
+	legendaryNoLuck := adjustedWeight(LootEntry{Weight: base, Rarity: RarityLegendary}, floor, 0)
+	legendaryWithLuck := adjustedWeight(LootEntry{Weight: base, Rarity: RarityLegendary}, floor, 5)
+	if legendaryWithLuck <= legendaryNoLuck {
+		t.Errorf("legendary item weight should increase with luck: got %v with luck, %v without", legendaryWithLuck, legendaryNoLuck)
+	}
+
+	// Common should not scale with luck
+	commonNoLuck := adjustedWeight(LootEntry{Weight: base, Rarity: RarityCommon}, floor, 0)
+	commonWithLuck := adjustedWeight(LootEntry{Weight: base, Rarity: RarityCommon}, floor, 5)
+	if commonWithLuck != commonNoLuck {
+		t.Errorf("common item weight should not change with luck: got %v with luck, %v without", commonWithLuck, commonNoLuck)
 	}
 }

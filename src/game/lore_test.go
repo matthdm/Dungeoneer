@@ -35,3 +35,31 @@ func TestIsLoreUnlocked(t *testing.T) {
 		t.Error("entry_c should not be unlocked")
 	}
 }
+
+func TestUnlockLore(t *testing.T) {
+	meta := &MetaSave{}
+	
+	if !UnlockLore(meta, "lore1") {
+		t.Errorf("expected true when unlocking new lore")
+	}
+	if !IsLoreUnlocked(meta, "lore1") {
+		t.Errorf("expected lore1 to be unlocked")
+	}
+	
+	if UnlockLore(meta, "lore1") {
+		t.Errorf("expected false when unlocking already unlocked lore")
+	}
+	
+	// test LoadLoreRegistry errors
+	_, err := LoadLoreRegistry("non_existent_file.json")
+	if err == nil {
+		t.Errorf("expected error for missing file")
+	}
+	
+	tmp := t.TempDir() + "/bad.json"
+	os.WriteFile(tmp, []byte("bad json"), 0644)
+	_, err = LoadLoreRegistry(tmp)
+	if err == nil {
+		t.Errorf("expected error for bad json")
+	}
+}

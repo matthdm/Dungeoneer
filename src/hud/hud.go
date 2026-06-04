@@ -29,6 +29,7 @@ type SkillSlot struct {
 	Active   bool // true if this slot has an ability assigned
 	Enabled  bool // false if player lacks mana to cast
 	Name     string
+	Locked   bool // true if sealed/chained
 }
 
 // HUD renders a bottom-screen interface similar to classic action RPGs.
@@ -178,7 +179,18 @@ func (h *HUD) drawSkillBar(screen *ebiten.Image, w, hgt int) {
 				// Gray out when insufficient mana.
 				op.ColorScale.Scale(0.4, 0.4, 0.4, 1)
 			}
+			if s.Locked {
+				// Darken more if locked.
+				op.ColorScale.Scale(0.3, 0.3, 0.3, 1)
+			}
 			screen.DrawImage(ic, op)
+		}
+
+		if s.Locked {
+			// Draw red diagonal cross lines to represent chains locking the slot.
+			vector.StrokeLine(screen, float32(sx), float32(y), float32(sx+slot), float32(y+slot), 3, color.RGBA{220, 40, 40, 220}, false)
+			vector.StrokeLine(screen, float32(sx+slot), float32(y), float32(sx), float32(y+slot), 3, color.RGBA{220, 40, 40, 220}, false)
+			vector.DrawFilledRect(screen, float32(sx), float32(y), float32(slot), float32(slot), color.RGBA{50, 0, 0, 120}, false)
 		}
 
 		if cd := s.Cooldown; cd > 0 {

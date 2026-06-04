@@ -108,6 +108,11 @@ type Player struct {
 	SpellSlots []string
 	Abilities  map[string]bool
 
+	// Ability locking: used by the Varn chain_seal attack.
+	// LockedAbilities maps ability ID → remaining lock duration (seconds).
+	LockedAbilities    map[string]float64
+	AbilitiesLockTimer float64 // >0 = all abilities locked (seconds remaining)
+
 	// Melee combo state.
 	ComboHit   int     // current combo hit (0, 1, 2)
 	ComboTimer float64 // time remaining in combo window (resets on hit)
@@ -290,6 +295,30 @@ func (p *Player) Update(level *levels.Level, dt float64) {
 		p.TakeDamage(dmg)
 	})
 
+	// Tick item-effect cooldowns (passive on_low_hp, etc.).
+	items.TickEquippedEffectCooldowns(p.Equipment, dt)
+
+	// Tick periodic regen_hp effects from equipped items.
+	if healAmt := items.TickRegenEffects(p.Equipment, dt); healAmt > 0 {
+		p.Heal(healAmt)
+	}
+
+	// Tick ability lock timers.
+	if p.AbilitiesLockTimer > 0 {
+		p.AbilitiesLockTimer -= dt
+		if p.AbilitiesLockTimer < 0 {
+			p.AbilitiesLockTimer = 0
+		}
+	}
+	for id, remaining := range p.LockedAbilities {
+		remaining -= dt
+		if remaining <= 0 {
+			delete(p.LockedAbilities, id)
+		} else {
+			p.LockedAbilities[id] = remaining
+		}
+	}
+
 	// Tick melee combo window.
 	if p.ComboTimer > 0 {
 		p.ComboTimer -= dt
@@ -370,7 +399,7 @@ func (p *Player) Update(level *levels.Level, dt float64) {
 			p.MoveController.Path = nil
 			return
 		}
-		p.LeftFacing = next.X < p.TileX
+		p.LeftFacing = (next.X - p.TileX) - (next.Y - p.TileY) < 0
 	}
 	// If pure VelocityMode we will update tile coords after resolving movement
 
@@ -548,11 +577,110 @@ func (p *Player) CanAttack() bool {
 	return p.AttackTick >= p.AttackRate
 }
 
+// Heal restores hp, capped at MaxHP.
+func (p *Player) Heal(hp int) {
+	if hp <= 0 {
+		return
+	}
+	p.HP += hp
+	if p.HP > p.MaxHP {
+		p.HP = p.MaxHP
+	}
+}
+
+// TakeDamage applies incoming damage, accounting for:
+//   - Item passive damage_reduction and all_resistance effects
+//   - Vitality-derived passive armor (0.5% per point, cap 40%)
+//   - Active shields from the EffectHolder
+//   - on_low_hp item triggers (grants a temporary shield)
 func (p *Player) TakeDamage(dmg int) {
+	if dmg <= 0 {
+		return
+	}
+
+	// 1) Item passive reductions.
+	drPct := items.EvalPassiveDamageReduction(p.Equipment)
+	arPct := items.EvalPassiveAllResistance(p.Equipment)
+
+	// 2) Vitality armor: +0.5% flat reduction per point, cap 40%.
+	vitArmor := float64(p.EffectiveStats().Vitality) * 0.005
+	if vitArmor > 0.40 {
+		vitArmor = 0.40
+	}
+
+	totalReduction := drPct + arPct + vitArmor
+	if totalReduction > 0.90 {
+		totalReduction = 0.90
+	}
+	dmg = int(float64(dmg) * (1.0 - totalReduction))
+	if dmg < 1 {
+		dmg = 1 // always take at least 1 damage
+	}
+
+	// 3) Consume active shield effects first.
+	dmg = p.Effects.AbsorbDamage(dmg)
+
+	// 4) Apply remaining damage to HP.
 	p.HP -= dmg
 	if p.HP <= 0 {
 		p.HP = 0
 		p.IsDead = true
+	}
+
+	// 5) Check on_low_hp triggers: grant a temporary shield if the item fires.
+	hpPct := 0.0
+	if p.MaxHP > 0 {
+		hpPct = float64(p.HP) / float64(p.MaxHP)
+	}
+	for _, eff := range items.EvalOnLowHP(p.Equipment, hpPct) {
+		// Grant a shield whose value equals the item's MagnitudeFlat (or 10% MaxHP).
+		shieldHP := eff.MagnitudeFlat
+		if shieldHP <= 0 {
+			shieldHP = int(float64(p.MaxHP) * 0.10)
+		}
+		duration := eff.DurationSec
+		if duration <= 0 {
+			duration = 5.0
+		}
+		p.Effects.AddEffect(&StatusEffect{
+			Type:     EffectShield,
+			Duration: duration,
+			Value:    shieldHP,
+			Source:   "on_low_hp_item",
+		})
+		eff.PutOnCooldown()
+	}
+}
+
+// IsAbilityLocked returns true if the ability is currently sealed by a
+// chain_seal or similar boss effect.
+func (p *Player) IsAbilityLocked(id string) bool {
+	if p.AbilitiesLockTimer > 0 {
+		return true
+	}
+	if p.LockedAbilities == nil {
+		return false
+	}
+	_, locked := p.LockedAbilities[id]
+	return locked
+}
+
+// LockAbility seals a single ability for the given duration (seconds).
+func (p *Player) LockAbility(id string, duration float64) {
+	if p.LockedAbilities == nil {
+		p.LockedAbilities = make(map[string]float64)
+	}
+	existing := p.LockedAbilities[id]
+	if duration > existing {
+		p.LockedAbilities[id] = duration
+	}
+}
+
+// LockAllAbilitiesFor seals all abilities (dash, spells, grapple) for duration
+// seconds. Used by the Varn chain_seal boss attack.
+func (p *Player) LockAllAbilitiesFor(duration float64) {
+	if duration > p.AbilitiesLockTimer {
+		p.AbilitiesLockTimer = duration
 	}
 }
 

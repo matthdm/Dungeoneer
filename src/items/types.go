@@ -55,12 +55,74 @@ type Item struct {
 	Count int
 }
 
-// ItemEffect describes a special effect an item grants.
+// ItemEffect describes a special effect an item grants when equipped.
+// Fields map directly to items_structured_effects.json.
 type ItemEffect struct {
-	Trigger      string
-	Type         string
+	// Trigger determines when the effect fires.
+	// Values: "passive", "on_kill", "on_hit", "on_low_hp", "on_block",
+	//         "on_potion_use", "regen_hp"
+	Trigger string
+
+	// Type identifies the kind of effect.
+	// Values: "damage_reduction", "all_resistance", "lifesteal",
+	//         "crit_multiplier", "gold_find", "mana_cost_reduction",
+	//         "cooldown_reduction", "regen_hp", "heal", "bonus_healing",
+	//         "counterpulse", "damage_reduction_buff"
+	Type string
+
+	// MagnitudePct is the primary percentage magnitude (0–100+).
 	MagnitudePct int
-	ChancePct    int
+
+	// ChancePct is the probability the effect fires on a trigger (0–100).
+	// 0 means always fires when triggered.
+	ChancePct int
+
+	// MagnitudeFlat is a raw HP/mana value for flat effects (e.g. heal 10 HP).
+	MagnitudeFlat int
+
+	// ThresholdPct is an HP-percentage threshold for conditional triggers
+	// such as "on_low_hp" (e.g. 20 = fires when HP < 20%).
+	ThresholdPct int
+
+	// CooldownSec is the minimum seconds between activations for triggered effects.
+	CooldownSec float64
+
+	// DurationSec is how long a temporary buff/debuff lasts.
+	DurationSec float64
+
+	// IntervalSec is the tick interval for periodic effects (e.g. regen_hp every 10s).
+	IntervalSec float64
+
+	// Element is an optional element tag (e.g. "physical", "fire").
+	Element string
+
+	// --- runtime-only fields (not serialised) ---
+
+	// activeCooldown counts down (seconds) before this effect can fire again.
+	activeCooldown float64
+
+	// intervalAcc accumulates dt for periodic regen ticks.
+	intervalAcc float64
+}
+
+// TickCooldown advances the active cooldown timer by dt seconds.
+func (e *ItemEffect) TickCooldown(dt float64) {
+	if e.activeCooldown > 0 {
+		e.activeCooldown -= dt
+		if e.activeCooldown < 0 {
+			e.activeCooldown = 0
+		}
+	}
+}
+
+// IsReady returns true when the effect is not on cooldown.
+func (e *ItemEffect) IsReady() bool { return e.activeCooldown <= 0 }
+
+// PutOnCooldown resets the activation cooldown.
+func (e *ItemEffect) PutOnCooldown() {
+	if e.CooldownSec > 0 {
+		e.activeCooldown = e.CooldownSec
+	}
 }
 
 // ItemSave is a minimal representation for serialization.

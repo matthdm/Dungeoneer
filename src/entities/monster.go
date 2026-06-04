@@ -252,10 +252,11 @@ func (m *Monster) MoveTo(x, y int) {
 	m.Moving = true
 
 	// Update facing direction
-	if x > m.TileX {
-		m.LeftFacing = false
-	} else if x < m.TileX {
+	deltaIsoX := (x - m.TileX) - (y - m.TileY)
+	if deltaIsoX < 0 {
 		m.LeftFacing = true
+	} else if deltaIsoX > 0 {
+		m.LeftFacing = false
 	}
 }
 

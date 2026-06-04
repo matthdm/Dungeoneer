@@ -48,3 +48,43 @@ func TestMaxConcurrentSFX(t *testing.T) {
 		t.Errorf("maxConcurrent want 8, got %d", maxConcurrent)
 	}
 }
+
+func TestNewEngine(t *testing.T) {
+	// ebiten/audio Context creation might fail without an actual audio device in tests,
+	// but we should still call it to cover the function and its recovery.
+	e := NewEngine()
+	// Just verify it doesn't crash the test.
+	_ = e
+}
+
+func TestEngine_SetVolume_Ambient(t *testing.T) {
+	e := &Engine{ambVol: 1.0}
+	e.SetVolume(CategoryAmbient, 0.4)
+	if e.ambVol != 0.4 {
+		t.Errorf("ambVol want 0.4, got %.2f", e.ambVol)
+	}
+}
+
+func TestEngine_PlayMethods(t *testing.T) {
+	e := &Engine{} // mock engine without context
+	
+	// Test normal play
+	e.PlaySFX(SFXHit)
+	
+	// Test max concurrent
+	e.activeSFX = maxConcurrent
+	e.PlaySFX(SFXHit) // Should drop silently
+	
+	e.PlayMusic(MusicBoss)
+	e.StopMusic()
+	
+	e.PlayAmbient(AmbientCrypt)
+	e.StopAmbient()
+}
+
+func TestBiomeAmbient_Catacomb(t *testing.T) {
+	got := BiomeAmbient("catacomb")
+	if got != AmbientCrypt {
+		t.Errorf("BiomeAmbient('catacomb') want %q, got %q", AmbientCrypt, got)
+	}
+}

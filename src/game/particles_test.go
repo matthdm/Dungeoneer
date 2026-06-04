@@ -63,3 +63,34 @@ func TestParticlePool_CapAt512(t *testing.T) {
 		p.Emit(0, 0, 1, 1, 1, 1)
 	}
 }
+
+func TestSpellParticleColor(t *testing.T) {
+	colors := []string{
+		"fire", "lightning", "nature", "chaos", "arcane", "unknown",
+	}
+
+	for _, c := range colors {
+		r, g, b := SpellParticleColor(c)
+		if r == 0 && g == 0 && b == 0 {
+			t.Errorf("unexpected zero color for %s", c)
+		}
+	}
+}
+
+func TestDamageNumberColor(t *testing.T) {
+	colors := []string{
+		"fire", "lightning", "nature", "chaos", "unknown",
+	}
+
+	for _, c := range colors {
+		col := DamageNumberColor(c, false)
+		if col.A == 0 {
+			t.Errorf("unexpected alpha 0 for %s", c)
+		}
+	}
+
+	critCol := DamageNumberColor("fire", true)
+	if critCol.R != 255 || critCol.G != 220 || critCol.B != 0 {
+		t.Errorf("unexpected crit color")
+	}
+}

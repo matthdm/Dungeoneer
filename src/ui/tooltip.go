@@ -72,10 +72,43 @@ func DrawItemTooltip(dst *ebiten.Image, it *items.Item, x, y int) {
 	}
 
 	if it.Effect != nil {
-		txt := fmt.Sprintf("%s: %s %d%%", it.Effect.Trigger, it.Effect.Type, it.Effect.MagnitudePct)
-		if it.Effect.ChancePct != 0 {
-			txt += fmt.Sprintf(" (%d%% chance)", it.Effect.ChancePct)
+		eff := it.Effect
+		var effectDesc string
+		if eff.MagnitudePct != 0 {
+			effectDesc = fmt.Sprintf("%d%% %s", eff.MagnitudePct, formatEffectType(eff.Type))
+		} else if eff.MagnitudeFlat != 0 {
+			effectDesc = fmt.Sprintf("%+d %s", eff.MagnitudeFlat, formatEffectType(eff.Type))
+		} else {
+			effectDesc = formatEffectType(eff.Type)
 		}
+
+		if eff.Element != "" {
+			effectDesc += fmt.Sprintf(" (%s)", eff.Element)
+		}
+
+		triggerDesc := formatTrigger(eff.Trigger)
+		if eff.Trigger == "on_low_hp" {
+			threshold := eff.ThresholdPct
+			if threshold <= 0 {
+				threshold = 20
+			}
+			triggerDesc = fmt.Sprintf("At <%d%% HP", threshold)
+		}
+
+		txt := fmt.Sprintf("%s: %s", triggerDesc, effectDesc)
+		if eff.ChancePct != 0 {
+			txt += fmt.Sprintf(" (%d%% chance)", eff.ChancePct)
+		}
+		if eff.DurationSec != 0 {
+			txt += fmt.Sprintf(" for %.1fs", eff.DurationSec)
+		}
+		if eff.IntervalSec != 0 {
+			txt += fmt.Sprintf(" every %.1fs", eff.IntervalSec)
+		}
+		if eff.CooldownSec != 0 {
+			txt += fmt.Sprintf(" (cooldown %.1fs)", eff.CooldownSec)
+		}
+
 		lines = append(lines, tline{txt, color.RGBA{200, 180, 255, 255}})
 	}
 
@@ -118,5 +151,57 @@ func DrawItemTooltip(dst *ebiten.Image, it *items.Item, x, y int) {
 	for i, ln := range lines {
 		ty := y + padY + i*lineH + ascent
 		text.Draw(dst, ln.text, basicfont.Face7x13, x+padX, ty, ln.clr)
+	}
+}
+
+func formatEffectType(t string) string {
+	switch t {
+	case "damage_reduction":
+		return "Damage Reduction"
+	case "all_resistance":
+		return "All Resistance"
+	case "lifesteal":
+		return "Lifesteal"
+	case "crit_multiplier":
+		return "Crit Multiplier"
+	case "gold_find":
+		return "Gold Find"
+	case "mana_cost_reduction":
+		return "Mana Cost Reduction"
+	case "cooldown_reduction":
+		return "Cooldown Reduction"
+	case "regen_hp":
+		return "HP Regen"
+	case "heal":
+		return "Heal"
+	case "bonus_healing":
+		return "Bonus Healing"
+	case "counterpulse":
+		return "Counterpulse"
+	case "damage_reduction_buff":
+		return "Damage Reduction Buff"
+	default:
+		return t
+	}
+}
+
+func formatTrigger(t string) string {
+	switch t {
+	case "passive":
+		return "Passive"
+	case "on_kill":
+		return "On Kill"
+	case "on_hit":
+		return "On Hit"
+	case "on_low_hp":
+		return "On Low HP"
+	case "on_block":
+		return "On Block"
+	case "on_potion_use":
+		return "On Potion Use"
+	case "regen_hp":
+		return "Regen HP"
+	default:
+		return t
 	}
 }

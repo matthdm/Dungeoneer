@@ -151,6 +151,18 @@ func (bb *BossBehavior) Update(m *Monster, p *Player, level *levels.Level) {
 				bossChainPull(m, p, level)
 				p.TakeDamage(a.Damage)
 			}
+		case "chain_seal":
+			// Chain seal: locks the player's abilities and shows a pull line visual.
+			if dist <= a.Range {
+				a.Timer = 0
+				b.PullLineTicks = 14
+				b.PullLineX = p.TileX
+				b.PullLineY = p.TileY
+				p.LockAllAbilitiesFor(4.0)
+				if a.Damage > 0 {
+					p.TakeDamage(a.Damage)
+				}
+			}
 		}
 	}
 

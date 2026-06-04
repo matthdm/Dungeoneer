@@ -1,6 +1,9 @@
 package coords
 
-import "testing"
+import (
+	"math"
+	"testing"
+)
 
 func TestWorldPosCoordinateConversions(t *testing.T) {
 	pos := WorldPos{X: 3.5, Y: 7.25}
@@ -13,8 +16,8 @@ func TestWorldPosCoordinateConversions(t *testing.T) {
 	}
 
 	body := pos.BodyCenter()
-	if body.X != 4.5 || body.Y != 7.55 {
-		t.Fatalf("BodyCenter() = {%g, %g}, want {4.5, 7.55}", body.X, body.Y)
+	if body.X != 4.75 || body.Y != 7.50 {
+		t.Fatalf("BodyCenter() = {%g, %g}, want {4.75, 7.50}", body.X, body.Y)
 	}
 
 	isoX, isoY := pos.ToIso(64)
@@ -67,3 +70,68 @@ func TestWorldPosTileFloorsNegativeCoordinates(t *testing.T) {
 		t.Fatalf("TileY() = %d, want -1", got)
 	}
 }
+
+func TestWorldPosDistTo(t *testing.T) {
+	tests := []struct {
+		name  string
+		p1    WorldPos
+		p2    WorldPos
+		want  float64
+	}{
+		{
+			name: "same position",
+			p1:   WorldPos{X: 1.5, Y: 2.5},
+			p2:   WorldPos{X: 1.5, Y: 2.5},
+			want: 0.0,
+		},
+		{
+			name: "horizontal distance",
+			p1:   WorldPos{X: 1.0, Y: 0.0},
+			p2:   WorldPos{X: 4.0, Y: 0.0},
+			want: 3.0,
+		},
+		{
+			name: "vertical distance",
+			p1:   WorldPos{X: 0.0, Y: -1.0},
+			p2:   WorldPos{X: 0.0, Y: 4.0},
+			want: 5.0,
+		},
+		{
+			name: "diagonal 3-4-5 triangle",
+			p1:   WorldPos{X: 0.0, Y: 0.0},
+			p2:   WorldPos{X: 3.0, Y: 4.0},
+			want: 5.0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.p1.DistTo(tt.p2)
+			if math.Abs(got-tt.want) > 1e-9 {
+				t.Errorf("DistTo() = %g, want %g", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestPackageToIso(t *testing.T) {
+	tests := []struct {
+		x, y     float64
+		tileSize int
+		wantX    float64
+		wantY    float64
+	}{
+		{x: 0, y: 0, tileSize: 64, wantX: 0, wantY: 0},
+		{x: 3.5, y: 7.25, tileSize: 64, wantX: -120, wantY: 172},
+		{x: 2, y: 1, tileSize: 128, wantX: 64, wantY: 96},
+	}
+
+	for _, tt := range tests {
+		gotX, gotY := ToIso(tt.x, tt.y, tt.tileSize)
+		if gotX != tt.wantX || gotY != tt.wantY {
+			t.Errorf("ToIso(%g, %g, %d) = (%g, %g), want (%g, %g)",
+				tt.x, tt.y, tt.tileSize, gotX, gotY, tt.wantX, tt.wantY)
+		}
+	}
+}
+

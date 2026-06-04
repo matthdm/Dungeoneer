@@ -23,12 +23,13 @@ func (g *Game) syncHUDSpellSlots() {
 	for i := range g.HUD.SkillSlots {
 		if i < len(g.player.SpellSlots) {
 			abilityID := g.player.SpellSlots[i]
-			cost := spellManaCost(abilityID)
+			cost := g.spellManaCost(abilityID)
 			g.HUD.SkillSlots[i].Active = true
 			g.HUD.SkillSlots[i].ManaCost = cost
 			g.HUD.SkillSlots[i].Enabled = g.player.Mana >= cost
 			g.HUD.SkillSlots[i].Name = abilityID
 			g.HUD.SkillSlots[i].Icon = g.abilityIcon(abilityID)
+			g.HUD.SkillSlots[i].Locked = g.player.IsAbilityLocked(abilityID)
 			// Sync cooldown from caster.
 			if g.player.Caster != nil {
 				g.HUD.SkillSlots[i].Cooldown = g.player.Caster.Cooldowns[abilitySpellName(abilityID)]
@@ -306,26 +307,60 @@ func (g *Game) hasLineOfSight(x1, y1, x2, y2 int) bool {
 	return true
 }
 
-// spellManaCost returns the mana cost for a spell ability ID.
-func spellManaCost(abilityID string) int {
+func (g *Game) getSpellDamage(baseDmg int) int {
+	if g.player == nil {
+		return baseDmg
+	}
+	intBonus := g.player.EffectiveStats().Intelligence / 2
+	return baseDmg + intBonus
+}
+
+func (g *Game) getSpellCooldown(baseCD float64) float64 {
+	if g.player == nil {
+		return baseCD
+	}
+	itemCDR := items.EvalPassiveCooldownReduction(g.player.Equipment)
+	dexCDR := float64(g.player.EffectiveStats().Dexterity) * 0.01
+	if dexCDR > 0.30 {
+		dexCDR = 0.30
+	}
+	cdr := itemCDR + dexCDR
+	if cdr > 0.80 {
+		cdr = 0.80
+	}
+	return baseCD * (1.0 - cdr)
+}
+
+// spellManaCost returns the mana cost for a spell ability ID, scaling down with item effects.
+func (g *Game) spellManaCost(abilityID string) int {
+	var baseCost int
 	switch abilityID {
 	case "fireball":
-		return 8
+		baseCost = 8
 	case "chaos_ray":
-		return 12
+		baseCost = 12
 	case "lightning":
-		return 6
+		baseCost = 6
 	case "lightning_storm":
-		return 25
+		baseCost = 25
 	case "fractal_bloom":
-		return 20
+		baseCost = 20
 	case "fractal_canopy":
-		return 15
+		baseCost = 15
 	case "arcane_spray":
-		return 5
+		baseCost = 5
 	default:
-		return 0
+		baseCost = 0
 	}
+	if g.player == nil {
+		return baseCost
+	}
+	reduction := items.EvalPassiveManaCostReduction(g.player.Equipment)
+	cost := int(float64(baseCost) * (1.0 - reduction))
+	if cost < 0 {
+		cost = 0
+	}
+	return cost
 }
 
 // castSpellSlot dispatches a spell cast for the given spell bar index (0-5).
@@ -335,7 +370,10 @@ func (g *Game) castSpellSlot(index int) {
 		return
 	}
 	abilityID := g.player.SpellSlots[index]
-	cost := spellManaCost(abilityID)
+	if g.player.IsAbilityLocked(abilityID) {
+		return
+	}
+	cost := g.spellManaCost(abilityID)
 	// Channeled spray startup cost check is done inside tryCastArcaneSpray.
 	if abilityID != "arcane_spray" && g.player.Mana < cost {
 		return
@@ -397,8 +435,14 @@ func (g *Game) handlePrimaryAttack(tx, ty float64, cx, cy int) {
 
 	switch {
 	case g.player.HasAbility("slash_combo"):
+		if g.player.IsAbilityLocked("slash_combo") {
+			return
+		}
 		g.handleSlashCombo(tx, ty)
 	case g.player.HasAbility("arcane_bolt"):
+		if g.player.IsAbilityLocked("arcane_bolt") {
+			return
+		}
 		g.handleArcaneBolt(tx, ty)
 	default:
 		// Fallback: basic click-on-enemy melee (no ability needed).
@@ -444,6 +488,10 @@ func (g *Game) handleSlashCombo(tx, ty float64) {
 
 func (g *Game) applySlashDamage(slash *spells.SlashArc) {
 	dmg := int(float64(slash.Info.Damage) * spells.SlashComboHits[slash.ComboHit].DamageMult)
+	critMult, isCrit := items.EvalOnHitCrit(g.player.Equipment)
+	if isCrit {
+		dmg = int(float64(dmg) * critMult)
+	}
 	for _, m := range g.Monsters {
 		if m.IsDead {
 			continue
@@ -460,7 +508,12 @@ func (g *Game) applySlashDamage(slash *spells.SlashArc) {
 }
 
 func (g *Game) handleArcaneBolt(tx, ty float64) {
-	info := spells.SpellInfo{Name: "arcane_bolt", Level: 1, Cooldown: 0.3, Damage: 3, Cost: 2}
+	reduction := items.EvalPassiveManaCostReduction(g.player.Equipment)
+	cost := int(float64(2) * (1.0 - reduction))
+	if cost < 0 {
+		cost = 0
+	}
+	info := spells.SpellInfo{Name: "arcane_bolt", Level: 1, Cooldown: g.getSpellCooldown(0.3), Damage: g.getSpellDamage(3), Cost: cost}
 	c := g.player.Caster
 	if !c.Ready(info) {
 		return
@@ -487,7 +540,12 @@ func (g *Game) handleBasicMelee(cx, cy int) {
 		if m.TileX == cx && m.TileY == cy &&
 			entities.IsAdjacentRanged(g.player.TileX, g.player.TileY, m.TileX, m.TileY, 2) &&
 			g.player.CanAttack() {
-			died := m.TakeDamage(g.player.Damage, &g.HitMarkers, &g.DamageNumbers)
+			dmg := g.player.Damage
+			critMult, isCrit := items.EvalOnHitCrit(g.player.Equipment)
+			if isCrit {
+				dmg = int(float64(dmg) * critMult)
+			}
+			died := m.TakeDamage(dmg, &g.HitMarkers, &g.DamageNumbers)
 			g.player.AttackTick = 0
 			if died {
 				g.handleMonsterDeath(m)
@@ -497,7 +555,7 @@ func (g *Game) handleBasicMelee(cx, cy int) {
 }
 
 func (g *Game) tryCastArcaneSpray(casterX, casterY, targetX, targetY float64, c *spells.Caster) bool {
-	info := spells.SpellInfo{Name: "arcane_spray", Level: 1, Cooldown: 0.15, Damage: 3, Cost: 5}
+	info := spells.SpellInfo{Name: "arcane_spray", Level: 1, Cooldown: g.getSpellCooldown(0.15), Damage: g.getSpellDamage(3), Cost: g.spellManaCost("arcane_spray")}
 
 	// Already channeling — key is held, updateChanneledSpray handles it.
 	if g.ActiveSpray != nil && g.ActiveSpray.Channeling {
@@ -511,6 +569,7 @@ func (g *Game) tryCastArcaneSpray(casterX, casterY, targetX, targetY float64, c 
 	}
 	c.PutOnCooldown(info)
 	spray := spells.NewArcaneSpray(info, casterX, casterY, targetX, targetY)
+	spray.ManaDrain = float64(info.Cost)
 	g.sprayManaDrainAcc = 0
 	g.ActiveSpray = spray
 	g.ActiveSpells = append(g.ActiveSpells, spray)
@@ -580,7 +639,7 @@ func (g *Game) handleBlink(px, py, tx, ty float64) {
 }
 
 func (g *Game) tryCastFireball(casterX, casterY, targetX, targetY float64, c *spells.Caster) bool {
-	info := spells.SpellInfo{Name: "fireball", Level: 1, Cooldown: 1.0, Damage: 5, Cost: 8}
+	info := spells.SpellInfo{Name: "fireball", Level: 1, Cooldown: g.getSpellCooldown(1.0), Damage: g.getSpellDamage(5), Cost: g.spellManaCost("fireball")}
 	if !c.Ready(info) {
 		return false
 	}
@@ -591,7 +650,7 @@ func (g *Game) tryCastFireball(casterX, casterY, targetX, targetY float64, c *sp
 }
 
 func (g *Game) tryCastChaosRay(casterX, casterY, targetX, targetY float64, c *spells.Caster) bool {
-	info := spells.SpellInfo{Name: "chaosray", Level: 1, Cooldown: 1.0, Damage: 8, Cost: 12}
+	info := spells.SpellInfo{Name: "chaosray", Level: 1, Cooldown: g.getSpellCooldown(1.0), Damage: g.getSpellDamage(8), Cost: g.spellManaCost("chaos_ray")}
 	if !c.Ready(info) {
 		return false
 	}
@@ -603,7 +662,7 @@ func (g *Game) tryCastChaosRay(casterX, casterY, targetX, targetY float64, c *sp
 }
 
 func (g *Game) tryCastLightningStrike(targetX, targetY float64, c *spells.Caster) bool {
-	info := spells.SpellInfo{Name: "lightning", Level: 1, Cooldown: 0.01, Damage: 8, Cost: 6}
+	info := spells.SpellInfo{Name: "lightning", Level: 1, Cooldown: g.getSpellCooldown(0.01), Damage: g.getSpellDamage(8), Cost: g.spellManaCost("lightning")}
 	if !c.Ready(info) {
 		return false
 	}
@@ -614,7 +673,7 @@ func (g *Game) tryCastLightningStrike(targetX, targetY float64, c *spells.Caster
 }
 
 func (g *Game) tryCastLightningStorm(centerX, centerY float64, c *spells.Caster) bool {
-	info := spells.SpellInfo{Name: "lightningstorm", Level: 1, Cooldown: 3.0, Damage: 8, Cost: 25}
+	info := spells.SpellInfo{Name: "lightningstorm", Level: 1, Cooldown: g.getSpellCooldown(3.0), Damage: g.getSpellDamage(8), Cost: g.spellManaCost("lightning_storm")}
 	if !c.Ready(info) {
 		return false
 	}
@@ -625,7 +684,7 @@ func (g *Game) tryCastLightningStorm(centerX, centerY float64, c *spells.Caster)
 }
 
 func (g *Game) tryCastFractalBloom(centerX, centerY float64, c *spells.Caster) bool {
-	info := spells.SpellInfo{Name: "fractalbloom", Level: 1, Cooldown: 4.0, Damage: 6, Cost: 20}
+	info := spells.SpellInfo{Name: "fractalbloom", Level: 1, Cooldown: g.getSpellCooldown(4.0), Damage: g.getSpellDamage(6), Cost: g.spellManaCost("fractal_bloom")}
 	if !c.Ready(info) {
 		return false
 	}
@@ -636,7 +695,7 @@ func (g *Game) tryCastFractalBloom(centerX, centerY float64, c *spells.Caster) b
 }
 
 func (g *Game) tryCastFractalCanopy(centerX, centerY float64, c *spells.Caster) bool {
-	info := spells.SpellInfo{Name: "fractalcanopy", Level: 1, Cooldown: 5.0, Damage: 0, Cost: 15}
+	info := spells.SpellInfo{Name: "fractalcanopy", Level: 1, Cooldown: g.getSpellCooldown(5.0), Damage: 0, Cost: g.spellManaCost("fractal_canopy")}
 	if !c.Ready(info) {
 		return false
 	}

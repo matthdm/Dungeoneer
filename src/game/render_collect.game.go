@@ -111,7 +111,7 @@ func (g *Game) collectItemDropRenderables(scale, cx, cy float64) []Renderable {
 		ts := float64(g.currentLevel.TileSize)
 		op := &ebiten.DrawImageOptions{}
 		op.GeoM.Scale(0.5, 0.5)
-		op.GeoM.Translate(-w/4, ts/4-h/4)
+		op.GeoM.Translate(-w/4+ts/2, ts/4-h/4)
 		op.GeoM.Translate(xi, yi)
 		op.GeoM.Translate(-g.camX, g.camY)
 		op.GeoM.Scale(scale, scale)
@@ -132,7 +132,7 @@ func (g *Game) collectItemDropRenderables(scale, cx, cy float64) []Renderable {
 		})
 		if inFOV {
 			spark := &ebiten.DrawImageOptions{}
-			spark.GeoM.Translate(-2, ts/4-h/4-4)
+			spark.GeoM.Translate(-2+ts/2, ts/4-h/4-4)
 			spark.GeoM.Translate(xi, yi)
 			spark.GeoM.Translate(-g.camX, g.camY)
 			spark.GeoM.Scale(scale, scale)

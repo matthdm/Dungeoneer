@@ -436,7 +436,7 @@ func NewGame() (*Game, error) {
 
 	g.HUD = hud.New()
 	g.ShowHUD = true
-	panelRect := image.Rect(g.w/2-150, g.h/2-150, g.w/2+150, g.h/2+150)
+	panelRect := image.Rect(g.w/2-150, g.h/2-185, g.w/2+150, g.h/2+185)
 	g.HeroPanel = ui.NewHeroPanel(panelRect, g.player)
 	g.InventoryScreen = ui.NewInventoryScreen()
 	g.LoreLibrary = ui.NewLoreLibrary(640, 480)
@@ -1213,7 +1213,7 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	}
 
 	if g.HeroPanel != nil {
-		panel := image.Rect(g.w/2-150, g.h/2-150, g.w/2+150, g.h/2+150)
+		panel := image.Rect(g.w/2-150, g.h/2-185, g.w/2+150, g.h/2+185)
 		g.HeroPanel.SetRect(panel)
 	}
 

@@ -20,9 +20,10 @@ func (b *IdleBehavior) Update(npc *NPC, playerX, playerY int, dt float64) {
 	dy := playerY - npc.TileY
 	dist := math.Sqrt(float64(dx*dx + dy*dy))
 	if dist <= b.FacePlayerRadius {
-		if dx < 0 {
+		deltaIsoX := dx - dy
+		if deltaIsoX < 0 {
 			npc.LeftFacing = true
-		} else if dx > 0 {
+		} else if deltaIsoX > 0 {
 			npc.LeftFacing = false
 		}
 	}

@@ -54,12 +54,14 @@ func NewVarnChainkeeper(ss *sprites.SpriteSheet, x, y int, isNGPlus bool) *Boss 
 				{ID: "chain_pull", Type: "pull_player", Damage: 10, Range: 8.0, Cooldown: 4.0},
 				{ID: "chain_eruption", Type: "aoe", Damage: 15, AOERadius: 3, Cooldown: 5.0},
 				{ID: "chain_frenzy", Type: "melee", Damage: 8, Range: 1.5, Cooldown: 1.0},
+				{ID: "chain_seal", Type: "chain_seal", Damage: 0, Range: 5.0, Cooldown: 12.0},
 			},
 			// Phase 2 — Final frenzy: longer reach, heavier damage, shorter cooldowns.
 			{
 				{ID: "chain_pull", Type: "pull_player", Damage: 15, Range: 10.0, Cooldown: 2.5},
 				{ID: "chain_eruption", Type: "aoe", Damage: 20, AOERadius: 4, Cooldown: 3.5},
 				{ID: "chain_frenzy", Type: "melee", Damage: 12, Range: 1.5, Cooldown: 0.7},
+				{ID: "chain_seal", Type: "chain_seal", Damage: 0, Range: 5.0, Cooldown: 12.0},
 			},
 		},
 	}

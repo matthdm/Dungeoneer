@@ -758,7 +758,11 @@ func (g *Game) openChest(c *entities.Chest) {
 		// Locked chests use premium loot regardless of visual tier.
 		lootVariant = "locked"
 	}
-	results := items.RollChestLoot(table, lootVariant, g.FloorCtx.FloorNumber)
+	luck := 0
+	if g.player != nil {
+		luck = g.player.EffectiveStats().Luck
+	}
+	results := items.RollChestLoot(table, lootVariant, g.FloorCtx.FloorNumber, luck)
 	for _, r := range results {
 		tmpl, ok := items.Registry[r.ItemID]
 		if !ok {
