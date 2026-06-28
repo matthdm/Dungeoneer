@@ -1,0 +1,77 @@
+[
+  {
+    "id": "item_0_1",
+    "text": "Cast in the forges beneath the Hollow Citadel, this emblem bore the crest of an order that swore itself to the dungeon's first descent. The knights who wore it never came back up the same.",
+    "line": "The order it served no longer has a name."
+  },
+  {
+    "id": "item_0_60",
+    "text": "Soft-soled and worn smooth from ten thousand corridors, these boots belonged to a knight who valued survival over honor. The leather remembers every corridor it passed through.",
+    "line": "They know the way down better than you do."
+  },
+  {
+    "id": "item_2_44",
+    "text": "Grey as ash, wide as silence. The arcanists of the deep levels wore these to mark their rank — or perhaps their resignation. The brim still holds a faint charge, like a word held too long on the tongue.",
+    "line": "A scholar's hat for a place that forgot scholarship."
+  },
+  {
+    "id": "item_0_2",
+    "text": "The Arcane Emblem is not a weapon — it is a permission. Whoever shaped the dungeon's first wards carved these sigils to let certain things pass through. You are now one of those things.",
+    "line": "Whatever shaped this place still lets it work."
+  },
+  {
+    "id": "item_0_9",
+    "text": "Cut from a single sapphire by a mage who claimed she had seen the dungeon's end. She blinked past walls when the corridors closed. The gem still holds the fold in it, a wrinkle in distance.",
+    "line": "Distance is a suggestion, not a rule."
+  },
+  {
+    "id": "item_2_24",
+    "text": "Forged in the kiln-rooms beneath the Hollow Citadel, this emblem was carried by arcanists who never returned. The heat sealed into its face has no source anyone still living can name.",
+    "line": "Still warm from fires long dead."
+  },
+  {
+    "id": "item_0_3",
+    "text": "This emblem was etched with sigils that were never meant to be combined. Whoever combined them did so once, judging by the scorch pattern on the reverse side, and then not again.",
+    "line": "Order and ruin share the same edge here."
+  },
+  {
+    "id": "item_0_26",
+    "text": "The Rage Emblem was issued to berserkers who descended into the dungeon's lower strata before the first seals held. Those who wore it into battle were difficult to tell from the things they fought.",
+    "line": "The line between fury and surrender is thinner than you think."
+  },
+  {
+    "id": "item_0_35",
+    "text": "Azazel's name is pressed into this metal in a script that predates the dungeon itself. To hold it is to feel something notice you — not with malice, but with the patient attention of a trap that has been waiting a very long time.",
+    "line": "He gave this away. Consider what that means."
+  },
+  {
+    "id": "item_2_63",
+    "text": "The pages of this tome are made from something that grows in the dungeon's deepest chambers, pressed flat and dried until they resemble vellum. Pressed between them, still bright, are the spores that make them dangerous.",
+    "line": "Roots remember what they once reached toward."
+  },
+  {
+    "id": "item_2_55",
+    "text": "This tome was written in a language with no living speakers — though its practitioners were not always living when they spoke. The canopy it summons is not botanical. It is something that learned to grow in the absence of light.",
+    "line": "What grows in the dark does not need the sun to reach."
+  },
+  {
+    "id": "item_0_63",
+    "text": "Lighter than they look and quieter than they should be. These boots were made for corridors that punish noise, in a workshop no one has found since the dungeon's middle tiers closed off. The craftsmanship is precise in ways that feel deliberate.",
+    "line": "Speed was always the better armor."
+  },
+  {
+    "id": "item_2_35",
+    "text": "These carriers fold space at the ankle joint — a technique the mage-engineers of the Hollow Citadel called transient anchoring, and which the knights who borrowed them called cheating. Both descriptions are accurate.",
+    "line": "The gap between here and there is negotiable."
+  },
+  {
+    "id": "item_1_12",
+    "text": "The leather is cracked and heat-stained, and the brass fixtures glow faint orange no matter how long they sit in the dark. Whoever wore these last descended into the buried levels and came back with burns on their palms and something behind their eyes they never explained.",
+    "line": "The flame buried here was not meant to stay buried."
+  },
+  {
+    "id": "iron_key",
+    "text": "Crude, heavy, and identical to ten thousand others the dungeon has swallowed. The locks it fits were never meant to be found, only to hold. The fact that you have the key says nothing good about who left it here.",
+    "line": "Someone wanted this found. Be careful what you open."
+  }
+]

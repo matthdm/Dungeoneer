@@ -46,6 +46,10 @@ type RunState struct {
 	GoldEarned    int            `json:"gold_earned"`           // total gold collected this run
 	StartTime     time.Time      `json:"start_time"`
 	QuestFlags    map[string]int `json:"quest_flags"`           // per-run NPC/quest state; resets each run
+
+	BiomesIntroduced map[string]bool `json:"biomes_introduced"` // per-run, biome key → seen
+	EventsSeen       []string        `json:"events_seen"`       // per-run, event IDs seen
+	EnemyIntrosSeen  map[string]bool `json:"enemy_intros_seen"` // per-run, "role_biome" → fired
 }
 
 // DefaultRunFloors is the starting number of floors for a new run.
@@ -61,12 +65,15 @@ const DefaultRunFloors = 7
 func NewRunState(totalFloors int) *RunState {
 	biomes := assignBiomes(totalFloors)
 	return &RunState{
-		Active:       true,
-		CurrentFloor: 1,
-		TotalFloors:  totalFloors,
-		Biomes:       biomes,
-		StartTime:    time.Now(),
-		QuestFlags:   make(map[string]int),
+		Active:           true,
+		CurrentFloor:     1,
+		TotalFloors:      totalFloors,
+		Biomes:           biomes,
+		StartTime:        time.Now(),
+		QuestFlags:       make(map[string]int),
+		BiomesIntroduced: make(map[string]bool),
+		EventsSeen:       []string{},
+		EnemyIntrosSeen:  make(map[string]bool),
 	}
 }
 

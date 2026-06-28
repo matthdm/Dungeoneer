@@ -22,7 +22,9 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"image/png"
 	"math"
+	"os"
 	"strings"
 	"time"
 
@@ -36,6 +38,9 @@ var controlToggle bool = false
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	cx, cy := float64(g.w/2), float64(g.h/2)
+
+	// Ensure background is fully opaque black for screenshots
+	screen.Fill(color.Black)
 
 	switch g.State {
 	case StateMainMenu:
@@ -109,12 +114,24 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if g.EchoShrine != nil {
 		g.EchoShrine.Draw(screen)
 	}
+	if eventPanelOpen && g.ActiveEvent != nil {
+		g.drawEventPanel(screen)
+	}
 	if g.ActiveToast != nil {
 		g.ActiveToast.Draw(screen, g.w, g.h)
 	}
 	// Fade overlay drawn last so it covers everything.
 	if g.Transition != nil {
 		g.Transition.Draw(screen)
+	}
+
+	if g.ScreenshotFile != "" {
+		f, err := os.Create(g.ScreenshotFile)
+		if err == nil {
+			png.Encode(f, screen)
+			f.Close()
+		}
+		os.Exit(0)
 	}
 }
 

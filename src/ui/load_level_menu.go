@@ -13,11 +13,12 @@ import (
 
 type LoadLevelMenu struct {
 	Menu        *Menu
-	OnLevelLoad func(*levels.Level) // Callback to set loaded level
-	OnCancel    func()              // Callback to return to previous menu
+	OnLevelLoad  func(*levels.Level) // Callback to set loaded level
+	OnCancel     func()              // Callback to return to previous menu
+	CustomLevels map[string]func() *levels.Level
 }
 
-func NewLoadLevelMenu(w, h int, onLoad func(*levels.Level), onCancel func()) *LoadLevelMenu {
+func NewLoadLevelMenu(w, h int, customLevels map[string]func() *levels.Level, onLoad func(*levels.Level), onCancel func()) *LoadLevelMenu {
 	menuStyle := DefaultMenuStyles()
 
 	menuWidth := 400
@@ -31,8 +32,9 @@ func NewLoadLevelMenu(w, h int, onLoad func(*levels.Level), onCancel func()) *Lo
 
 	llm := &LoadLevelMenu{
 		Menu:        menu,
-		OnLevelLoad: onLoad,
-		OnCancel:    onCancel,
+		OnLevelLoad:  onLoad,
+		OnCancel:     onCancel,
+		CustomLevels: customLevels,
 	}
 	llm.populateMenuOptions()
 	return llm
@@ -49,6 +51,25 @@ func (llm *LoadLevelMenu) populateMenuOptions() {
 	}
 
 	var options []MenuOption
+
+	// Add custom dynamic levels first
+	if llm.CustomLevels != nil {
+		for name, genFunc := range llm.CustomLevels {
+			n := name
+			gf := genFunc
+			options = append(options, MenuOption{
+				Text: n,
+				Action: func() {
+					level := gf()
+					if llm.OnLevelLoad != nil {
+						llm.OnLevelLoad(level)
+					}
+					llm.Menu.Hide()
+				},
+			})
+		}
+	}
+
 	for _, file := range files {
 		filename := file // capture for closure
 		options = append(options, MenuOption{

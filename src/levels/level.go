@@ -45,6 +45,9 @@ const (
 	TagDeadEnd    RoomTag = "dead_end"
 	TagCommon     RoomTag = "common"
 
+	// Event room tag — one per floor, shows an interactive event panel on entry.
+	TagEvent RoomTag = "event"
+
 	// Modifier tags (stackable).
 	TagDecorated RoomTag = "decorated"
 	TagLoot      RoomTag = "loot"

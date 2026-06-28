@@ -125,6 +125,10 @@ func DrawItemTooltip(dst *ebiten.Image, it *items.Item, x, y int) {
 		}
 	}
 
+	if it.FlavorText != "" {
+		lines = append(lines, tline{it.FlavorText, color.RGBA{160, 140, 120, 255}})
+	}
+
 	// Measure width and height.
 	w := minW
 	for _, ln := range lines {

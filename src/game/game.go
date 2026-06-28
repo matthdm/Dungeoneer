@@ -130,6 +130,10 @@ type Game struct {
 	BossBar            *hud.BossHealthBar
 	BossRoom           *levels.Room // arena room on boss floor
 
+	// Event system (event_room.go)
+	ActiveEvent *EventDef    // set when player enters an event room; nil = no active event
+	EventRoom   *levels.Room // the event-tagged room for this floor; nil = none
+
 	// Phase 3
 	NPCs          []*entities.NPC
 	DialoguePanel *ui.DialoguePanel
@@ -181,6 +185,9 @@ type Game struct {
 	// Options menu
 	Options       *OptionsData
 	previousState GameState
+
+	TestLevel      string
+	ScreenshotFile string
 }
 
 const (
@@ -214,11 +221,14 @@ const (
 	StateOptions
 )
 
-func NewGame() (*Game, error) {
+func NewGame(testLevel, screenshotFile string) (*Game, error) {
 	ss, err := sprites.LoadSpriteSheet(constants.DefaultTileSize)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load sprite sheet: %s", err)
 	}
+
+
+
 	fbSprites, err := spells.LoadFireballSprites()
 	if err != nil {
 		return nil, err
@@ -246,8 +256,22 @@ func NewGame() (*Game, error) {
 	if _, err := LoadLoreRegistry("data/lore.json"); err != nil {
 		fmt.Printf("lore: could not load data/lore.json: %v\n", err)
 	}
+	if err := LoadBiomeFlavor("data/biome_flavor.json"); err != nil {
+		fmt.Printf("biome_flavor: could not load: %v\n", err)
+	}
+	if err := LoadEnemyFlavor("data/enemy_flavor.json"); err != nil {
+		fmt.Printf("enemy_flavor: could not load: %v\n", err)
+	}
+	if err := items.LoadItemFlavor("data/items_flavor.json"); err != nil {
+		fmt.Printf("items_flavor: could not load: %v\n", err)
+	}
+	if err := LoadEventDefs("data/events.json"); err != nil {
+		fmt.Printf("events: could not load: %v\n", err)
+	}
 
 	g := &Game{
+		TestLevel:       testLevel,
+		ScreenshotFile:  screenshotFile,
 		currentWorld:    world,
 		currentLevel:    l,
 		isPaused:        false,
@@ -294,7 +318,12 @@ func NewGame() (*Game, error) {
 	// Main Menu
 	g.Menu = mm
 	// Load Level Menu
-	g.LoadLevelMenu = ui.NewLoadLevelMenu(g.w, g.h,
+	customLevels := map[string]func() *levels.Level{
+		"[Designer] The Forgotten Sanctuary": func() *levels.Level {
+			return levels.GenerateForgottenSanctuary(32, 32, g.spriteSheet, 42)
+		},
+	}
+	g.LoadLevelMenu = ui.NewLoadLevelMenu(g.w, g.h, customLevels,
 		func(loaded *levels.Level) {
 			newWorld := levels.NewLayeredLevel(loaded)
 			g.currentWorld = newWorld
@@ -468,6 +497,24 @@ func NewGame() (*Game, error) {
 		}
 	}
 
+	if g.TestLevel == "forgotten_sanctuary" {
+		l := levels.GenerateForgottenSanctuary(32, 32, g.spriteSheet, 42)
+		newWorld := levels.NewLayeredLevel(l)
+		g.currentWorld = newWorld
+		g.currentLevel = l
+		g.State = StatePlaying
+		
+		g.player.TileX, g.player.TileY = 16, 16
+		g.player.MoveController.TargetX, g.player.MoveController.TargetY = 16.5, 16.5
+		g.player.MoveController.InterpX, g.player.MoveController.InterpY = 16.5, 16.5
+		isoX, isoY := g.cartesianToIso(16.5, 16.5)
+		g.camX, g.camY = isoX, -isoY
+		g.camScale, g.camScaleTo = 0.75, 0.75
+		g.UpdateSeenTiles(*l)
+		g.spawnEntitiesFromLevel()
+		menumanager.Manager().CloseActiveMenu()
+	}
+
 	return g, nil
 }
 
@@ -535,6 +582,9 @@ func (g *Game) AddItemToPlayer(it *items.Item) bool {
 		return false
 	}
 	if g.player.Inventory.AddItem(it) {
+		if it.FlavorLine != "" {
+			g.pendingToasts = append(g.pendingToasts, it.FlavorLine)
+		}
 		return true
 	}
 	g.ShowHint("Inventory full")
@@ -1051,6 +1101,7 @@ func (g *Game) updatePlaying() error {
 	for _, m := range g.Monsters {
 		m.Update(g.player, g.currentLevel)
 	}
+	g.checkEnemyIntros()
 
 	// Tick death fade-out for recently killed monsters.
 	for _, m := range g.Monsters {
@@ -1088,6 +1139,9 @@ func (g *Game) updatePlaying() error {
 			g.triggerBossEncounter()
 		}
 	}
+
+	// Event room entry check.
+	g.checkEventRoomEntry()
 
 	// Boss health bar sync.
 	if g.CurrentBoss != nil && g.BossBar != nil && g.CurrentBoss.IsActive {

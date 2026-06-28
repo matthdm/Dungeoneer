@@ -68,6 +68,23 @@ func TagRooms(l *Level, spawnX, spawnY, exitX, exitY int, bossFloor bool) {
 			r.AddTag(TagCommon)
 		}
 	}
+
+	// Step 8: Tag one dead-end room as an event room (not on boss floors).
+	// Prefer dead-ends not already used for sanctuary or treasure.
+	if !bossFloor {
+		for i := range l.Rooms {
+			r := &l.Rooms[i]
+			if r.HasTag(TagDeadEnd) &&
+				!r.HasTag(TagSpawn) &&
+				!r.HasTag(TagExit) &&
+				!r.HasTag(TagSanctuary) &&
+				!r.HasTag(TagBossArena) &&
+				!r.HasTag(TagTreasure) {
+				r.AddTag(TagEvent)
+				break
+			}
+		}
+	}
 }
 
 // countRoomExits counts how many walkable border tiles connect each room to

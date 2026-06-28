@@ -1,0 +1,27 @@
+{
+  "crypt": [
+    "The dead here have been waiting a long time. I can feel them watching.",
+    "Stone and rot. Whatever sealed this place in, they sealed something worse in with it.",
+    "Even the silence here sounds like it's holding its breath."
+  ],
+  "moss": [
+    "The dungeon is bleeding green down here. Living things don't belong in places like this.",
+    "Water finds its way through every crack. So do things that shouldn't exist.",
+    "The walls breathe. I've stopped pretending otherwise."
+  ],
+  "gallery": [
+    "Someone arranged these halls like a cathedral. I wonder what they worshipped.",
+    "The stonework is too precise. Too deliberate. Something was meant to be displayed here.",
+    "Beautiful, in the way that traps are beautiful."
+  ],
+  "brick": [
+    "Old construction. The kind built to last centuries and abandoned in decades.",
+    "These walls have absorbed too much. You can feel it pressing back against your torch.",
+    "Mortar and intention. Whoever built this knew exactly what they were building."
+  ],
+  "catacomb": [
+    "Bones stacked like records. Every one of them died thinking they were the last.",
+    "The passages narrow here. The dead crowd close.",
+    "This is what accumulation looks like. Centuries of endings, stacked and shelved."
+  ]
+}

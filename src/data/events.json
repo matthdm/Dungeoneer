@@ -1,0 +1,288 @@
+[
+  {
+    "id": "weeping_statue",
+    "title": "The Weeping Statue",
+    "trigger": "entry",
+    "text": "A marble figure weeps black tears into a cracked basin. The water moves against gravity. Something in the air tastes like copper and old smoke.",
+    "choices": [
+      {
+        "label": "Drink from the basin",
+        "preview": "Cold. Wrong. Powerful.",
+        "effects": [
+          {"type": "lose_hp", "value": 12},
+          {"type": "give_item", "id": "item_0_35"}
+        ]
+      },
+      {
+        "label": "Shatter the basin",
+        "preview": "Some offerings should not be accepted.",
+        "effects": [
+          {"type": "set_flag", "id": "shattered_weeping_statue"}
+        ]
+      },
+      {
+        "label": "Walk away",
+        "preview": "",
+        "effects": []
+      }
+    ]
+  },
+  {
+    "id": "chained_prisoner",
+    "title": "The Prisoner",
+    "trigger": "entry",
+    "text": "A figure slumps against the far wall, bound by chains that have rusted into the stone. It lifts its head. Its eyes are wrong — too still, too aware. 'I have been here since the first floor was carved,' it says. 'I remember when this place was a cathedral.'",
+    "choices": [
+      {
+        "label": "Ask what it remembers",
+        "preview": "Knowledge has a price.",
+        "effects": [
+          {"type": "set_flag", "id": "prisoner_knowledge"},
+          {"type": "lose_hp", "value": 6}
+        ]
+      },
+      {
+        "label": "Offer it your blood to free it",
+        "preview": "It does not want your pity.",
+        "effects": [
+          {"type": "lose_hp", "value": 15},
+          {"type": "gain_remnants", "value": 25}
+        ]
+      },
+      {
+        "label": "Leave it chained",
+        "preview": "Some burdens are not yours to carry.",
+        "effects": []
+      }
+    ]
+  },
+  {
+    "id": "knights_ash",
+    "title": "Ash in Armor",
+    "trigger": "entry",
+    "text": "A pile of grey ash fills a full suit of plate armor, collapsed in the posture of prayer. The ash has not scattered. A sword rests in what used to be hands. The blade is still bright.",
+    "choices": [
+      {
+        "label": "Take the sword",
+        "preview": "It is heavier than it looks.",
+        "effects": [
+          {"type": "give_item", "id": "item_1_12"},
+          {"type": "set_flag", "id": "took_knights_sword"}
+        ]
+      },
+      {
+        "label": "Scatter the ash",
+        "preview": "Let whatever it was be gone.",
+        "effects": [
+          {"type": "gain_remnants", "value": 20},
+          {"type": "set_flag", "id": "scattered_knights_ash"}
+        ]
+      },
+      {
+        "label": "Leave it undisturbed",
+        "preview": "",
+        "effects": []
+      }
+    ]
+  },
+  {
+    "id": "black_mirror",
+    "title": "The Mirror",
+    "trigger": "entry",
+    "text": "A standing mirror, too tall to have fit through any door, shows you something that is almost your reflection. The figure in the glass is doing what you do — but slower, as if watching you instead. It puts its hand flat against the glass from the other side.",
+    "choices": [
+      {
+        "label": "Press your hand against it",
+        "preview": "Cold bleeds through. Something shifts.",
+        "effects": [
+          {"type": "lose_hp", "value": 8},
+          {"type": "gain_remnants", "value": 30}
+        ]
+      },
+      {
+        "label": "Shatter the mirror",
+        "preview": "Seven years of something.",
+        "effects": [
+          {"type": "curse_item"}
+        ]
+      },
+      {
+        "label": "Turn your back on it",
+        "preview": "",
+        "effects": []
+      }
+    ]
+  },
+  {
+    "id": "iron_altar",
+    "title": "The Iron Altar",
+    "trigger": "entry",
+    "text": "A crude altar of iron bolts and fused bones dominates the room. Something was offered here recently — the blood is still wet. A hollow in the altar holds exactly the shape of a key.",
+    "choices": [
+      {
+        "label": "Place something of value in the hollow",
+        "preview": "Trade for trade.",
+        "effects": [
+          {"type": "lose_hp", "value": 10},
+          {"type": "give_item", "id": "iron_key"}
+        ]
+      },
+      {
+        "label": "Examine the bones",
+        "preview": "They were human. Not all of them.",
+        "effects": [
+          {"type": "set_flag", "id": "examined_iron_altar"}
+        ]
+      },
+      {
+        "label": "Pass through quickly",
+        "preview": "",
+        "effects": []
+      }
+    ]
+  },
+  {
+    "id": "moss_oracle",
+    "title": "The Green Oracle",
+    "trigger": "entry",
+    "text": "At the center of a moss-covered chamber, roots have grown through the stone floor and woven themselves into the rough shape of a seated figure. When you enter, sap runs from its hollow eyes. It does not speak. It holds out what might be a hand.",
+    "choices": [
+      {
+        "label": "Take what it offers",
+        "preview": "Something wet. Something alive.",
+        "effects": [
+          {"type": "give_item", "id": "item_2_55"},
+          {"type": "set_flag", "id": "accepted_oracle_gift"}
+        ]
+      },
+      {
+        "label": "Refuse and wait",
+        "preview": "The roots retract. A path opens.",
+        "effects": [
+          {"type": "gain_remnants", "value": 15}
+        ]
+      },
+      {
+        "label": "Leave",
+        "preview": "",
+        "effects": []
+      }
+    ]
+  },
+  {
+    "id": "gallery_portrait",
+    "title": "The Portrait",
+    "trigger": "entry",
+    "text": "A massive portrait hangs in a gilded frame cracked by age. The subject is a knight in dark armor — the paint is thick and old. As you watch, the figure in the portrait shifts its weight. It has been waiting a long time. It meets your eyes.",
+    "choices": [
+      {
+        "label": "Reach into the frame",
+        "preview": "The paint is cold and resistant.",
+        "effects": [
+          {"type": "lose_hp", "value": 10},
+          {"type": "give_item", "id": "item_0_35"},
+          {"type": "set_flag", "id": "touched_portrait"}
+        ]
+      },
+      {
+        "label": "Burn the painting",
+        "preview": "It screams like wood. Or something else.",
+        "effects": [
+          {"type": "gain_remnants", "value": 20},
+          {"type": "curse_item"}
+        ]
+      },
+      {
+        "label": "Look away and move on",
+        "preview": "",
+        "effects": []
+      }
+    ]
+  },
+  {
+    "id": "whispering_well",
+    "title": "The Whispering Well",
+    "trigger": "entry",
+    "text": "The well has no rope and no bucket. When you look over the edge, you cannot see the bottom. But you can hear something down there saying your name — or something close to it. It knows what you are looking for. It says it can help.",
+    "choices": [
+      {
+        "label": "Throw something valuable down",
+        "preview": "It goes quiet. Then grateful.",
+        "effects": [
+          {"type": "lose_hp", "value": 5},
+          {"type": "gain_remnants", "value": 28}
+        ]
+      },
+      {
+        "label": "Shout back",
+        "preview": "It learns your voice. You learn nothing.",
+        "effects": [
+          {"type": "set_flag", "id": "spoke_to_well"}
+        ]
+      },
+      {
+        "label": "Back away from the edge",
+        "preview": "",
+        "effects": []
+      }
+    ]
+  },
+  {
+    "id": "candle_circle",
+    "title": "The Circle",
+    "trigger": "entry",
+    "text": "Thirteen candles have been arranged in a perfect circle, all lit, though there is no wax beneath them. The air inside the circle is several degrees warmer. Someone was here recently. The floor inside the circle is clean — nothing else in this dungeon is clean.",
+    "choices": [
+      {
+        "label": "Step inside the circle",
+        "preview": "It closes around you. Then lets go.",
+        "effects": [
+          {"type": "lose_hp", "value": 7},
+          {"type": "gain_remnants", "value": 22}
+        ]
+      },
+      {
+        "label": "Snuff the candles",
+        "preview": "The room goes very dark.",
+        "effects": [
+          {"type": "set_flag", "id": "snuffed_candle_circle"},
+          {"type": "curse_item"}
+        ]
+      },
+      {
+        "label": "Walk around it",
+        "preview": "",
+        "effects": []
+      }
+    ]
+  },
+  {
+    "id": "bleeding_door",
+    "title": "The Door That Bleeds",
+    "trigger": "entry",
+    "text": "A door stands alone in the center of the room, attached to nothing, leading nowhere visible. Dark fluid seeps from the seam where door meets frame. It is warm to the touch. On the other side, you can hear ordinary sounds: wind, maybe footsteps, a voice too distant to understand.",
+    "choices": [
+      {
+        "label": "Open the door",
+        "preview": "What comes through is not what you expected.",
+        "effects": [
+          {"type": "give_item", "id": "item_2_55"},
+          {"type": "lose_hp", "value": 14}
+        ]
+      },
+      {
+        "label": "Seal the frame with whatever you have",
+        "preview": "The sounds stop. Good.",
+        "effects": [
+          {"type": "gain_remnants", "value": 18},
+          {"type": "set_flag", "id": "sealed_bleeding_door"}
+        ]
+      },
+      {
+        "label": "Leave it closed",
+        "preview": "",
+        "effects": []
+      }
+    ]
+  }
+]

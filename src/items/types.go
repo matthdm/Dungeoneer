@@ -47,6 +47,9 @@ type ItemTemplate struct {
 	SetID         string          // item set membership (empty = no set)
 	QuestLocked   bool            // true = excluded from loot tables, quest reward only
 	Quality       string          // "common", "uncommon", "rare", "legendary" — controls border/title color
+
+	FlavorText string // full paragraph shown italic in tooltip; empty = omit
+	FlavorLine string // one-liner queued as toast on pickup; empty = omit
 }
 
 // Item represents an inventory instance.

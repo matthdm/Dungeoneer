@@ -66,6 +66,8 @@ type Monster struct {
 	IsEcho       bool    // true for echo entities; skips loot tables and XP on death
 	EchoLifetime float64 // for HeroEcho: remaining seconds (0 = permanent)
 
+	IntroFired bool // true after the first-encounter flavor line has fired for this monster's role+biome
+
 	// Phase 2 additions
 	Role               string               // "melee", "ranged", "elite", "swarm", "caster", "ambush"
 	Siblings           []*Monster           // for swarm coordination

@@ -473,6 +473,19 @@ func (g *Game) startFloorWithContext(ctx FloorContext) {
 		}
 	}
 
+	// Biome entry line — fires once per biome per run.
+	if g.RunState != nil {
+		biomeKey := string(ctx.Biome)
+		if !g.RunState.BiomesIntroduced[biomeKey] {
+			g.RunState.BiomesIntroduced[biomeKey] = true
+			if line := GetBiomeFlavorLine(biomeKey, ctx.FloorNumber); line != "" {
+				g.pendingToasts = append(g.pendingToasts, line)
+			}
+		}
+	}
+	// Assign event room for this floor (implemented in event_room.go by another agent).
+	g.assignEventRoom()
+
 	// Start biome ambient audio.
 	if g.Audio != nil {
 		g.Audio.PlayAmbient(audio.BiomeAmbient(string(ctx.Biome)))

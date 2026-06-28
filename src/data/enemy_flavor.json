@@ -1,0 +1,16 @@
+{
+  "melee": "It comes straight at me. No hesitation. That's either courage or hunger.",
+  "melee_crypt": "It moves like something that's been sleeping too long and is still half-dreaming.",
+  "melee_moss": "Wet footsteps. Fast. It knows this ground better than I do.",
+  "ranged": "It stopped before I saw it. Already calculating angles.",
+  "ranged_gallery": "It uses the columns. Every shot is deliberate. This one has been hunting longer than I have.",
+  "ranged_catacomb": "The shot came from the dark. It was waiting. They all wait down here.",
+  "elite": "Bigger than the rest. Slower, but that's not comfort — it means it doesn't need to be fast.",
+  "elite_crypt": "The old dead are different. They remember more. That makes them worse.",
+  "swarm": "One would be nothing. There are never just one.",
+  "swarm_moss": "The growth carries them. They move like spores — scattered until they're not.",
+  "caster": "It's reaching for something I can't see. I need to close the distance before it finishes.",
+  "caster_brick": "Something learned the words down here. That shouldn't be possible.",
+  "ambush": "I didn't hear it. I didn't see it. The only reason I'm still standing is that it wanted me scared first.",
+  "ambush_catacomb": "The bones shifted. By the time I understood what that meant, it was already behind me."
+}
