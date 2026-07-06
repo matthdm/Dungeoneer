@@ -1,0 +1,12 @@
+{
+  "name": "Chaos Knight — Floor 7",
+  "class": "knight",
+  "artifacts": ["ashbound_chain", "blood_price", "ironbreaker_gauntlets", "stone_skin_idol", "marrow_ring", "soul_harvest", ""],
+  "stats": { "Strength": 16, "Dexterity": 8, "Vitality": 6, "Intelligence": 8, "Luck": 4 },
+  "floor": 7,
+  "biome": "void_halls",
+  "enemy_pool": ["melee", "ranged", "elite"],
+  "iterations": 1000,
+  "skill_rotation": ["slot_1", "slot_2", "slot_3", "auto", "auto", "slot_2", "auto", "slot_3", "auto", "auto"],
+  "stat_priority": ["str", "str", "str"]
+}

@@ -9,7 +9,14 @@
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('keys:', list\\(d.keys\\(\\)\\)[:10]\\)\")",
       "Bash(go test *)",
       "Bash(go get *)",
-      "Bash(grep -v \"//\\\\|GenParams\\\\|BiomeConfig\")"
+      "Bash(grep -v \"//\\\\|GenParams\\\\|BiomeConfig\")",
+      "Bash(./benchmarker.exe)",
+      "Bash(./cmd/benchmarker/benchmarker)",
+      "Bash(go run *)",
+      "WebFetch(domain:wiki.guildwars.com)",
+      "PowerShell(cd C:\\\\Github\\\\Dungeoneer\\\\src; \\(Select-String -Path \"items\\\\load.go\" -Pattern \"RegisterItem\"\\).Count)",
+      "Bash(.\\\\benchmarker.exe)",
+      "Bash(go build *)"
     ]
   }
 }

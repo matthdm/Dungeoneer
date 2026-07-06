@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"math"
 
 	"dungeoneer/constants"
 	"dungeoneer/items"
@@ -23,13 +24,23 @@ type StatusEffectDisplay struct {
 
 // SkillSlot represents a single skill slot in the HUD.
 type SkillSlot struct {
-	Icon     *ebiten.Image
-	Cooldown float64
-	ManaCost int
-	Active   bool // true if this slot has an ability assigned
-	Enabled  bool // false if player lacks mana to cast
-	Name     string
-	Locked   bool // true if sealed/chained
+	Icon        *ebiten.Image
+	Cooldown    float64
+	MaxCooldown float64 // set on activation; used for radial sweep fraction
+	ManaCost    int
+	Active      bool // true if this slot has an ability assigned
+	Enabled     bool // false if player lacks mana to cast
+	Name        string
+	Locked      bool // true if sealed/chained
+
+	// Casino-style engagement animation timers (all count down to 0).
+	FlashTimer  float64 // activation glow (starts at 0.35 on skill fire)
+	ReadyFlash  float64 // gold ready-pulse (starts at 0.5 when cd expires)
+
+	// Active buff duration bar (shadow, root, taunt, burn).
+	DurationTimer float64
+	MaxDuration   float64
+	DurationColor color.NRGBA
 }
 
 // HUD renders a bottom-screen interface similar to classic action RPGs.
@@ -47,6 +58,10 @@ type HUD struct {
 	SkillSlots     [6]SkillSlot
 	ActiveSkill    int
 
+	// Kill streak counter and pulse animation.
+	KillStreak  int
+	StreakPulse float64 // counts down from 0.3 on each new kill
+
 	// ActiveSets holds the current set bonus state for display in the equipment screen.
 	// Updated by the game layer whenever equipment changes.
 	ActiveSets []items.ActiveSetBonus
@@ -54,15 +69,16 @@ type HUD struct {
 	OrbFrame      *ebiten.Image
 	HUDBackground *ebiten.Image
 
-	orbSize int
-	orbFill *ebiten.Image
+	orbSize    int
+	orbFill    *ebiten.Image
+	whitePixel *ebiten.Image // 1×1 white; reused for DrawTriangles fills
 
 	// 9D fields
-	Minimap        *Minimap
-	CurrentFloor   int
-	TotalFloors    int
-	BiomeName      string // e.g. "Crypt", "Moss"
-	StatusEffects  []StatusEffectDisplay
+	Minimap       *Minimap
+	CurrentFloor  int
+	TotalFloors   int
+	BiomeName     string // e.g. "Crypt", "Moss"
+	StatusEffects []StatusEffectDisplay
 }
 
 // New creates a HUD with default sizes.
@@ -79,6 +95,48 @@ func New() *HUD {
 func (h *HUD) initOrbResources() {
 	h.orbFill = ebiten.NewImage(h.orbSize, h.orbSize)
 	h.orbFill.Fill(color.Transparent)
+	if h.whitePixel == nil {
+		h.whitePixel = ebiten.NewImage(1, 1)
+		h.whitePixel.Fill(color.White)
+	}
+}
+
+// SyncSkillCooldown sets the cooldown for slot i and triggers a ready-flash
+// when the cooldown transitions from active to zero (the GW2 "ding" moment).
+func (h *HUD) SyncSkillCooldown(i int, cd float64) {
+	if i < 0 || i >= len(h.SkillSlots) {
+		return
+	}
+	prev := h.SkillSlots[i].Cooldown
+	h.SkillSlots[i].Cooldown = cd
+	if prev > 0.02 && cd <= 0.02 && h.SkillSlots[i].Active {
+		h.SkillSlots[i].ReadyFlash = 0.5
+	}
+}
+
+// TickAnimations decrements animation-only timers (flash, pulse, streak).
+// Call this from the game Update loop — NOT from Draw.
+func (h *HUD) TickAnimations(dt float64) {
+	for i := range h.SkillSlots {
+		if h.SkillSlots[i].FlashTimer > 0 {
+			h.SkillSlots[i].FlashTimer -= dt
+			if h.SkillSlots[i].FlashTimer < 0 {
+				h.SkillSlots[i].FlashTimer = 0
+			}
+		}
+		if h.SkillSlots[i].ReadyFlash > 0 {
+			h.SkillSlots[i].ReadyFlash -= dt
+			if h.SkillSlots[i].ReadyFlash < 0 {
+				h.SkillSlots[i].ReadyFlash = 0
+			}
+		}
+	}
+	if h.StreakPulse > 0 {
+		h.StreakPulse -= dt
+		if h.StreakPulse < 0 {
+			h.StreakPulse = 0
+		}
+	}
 }
 
 // Update decrements any cooldown timers and handles minimap toggle.
@@ -133,18 +191,24 @@ func (h *HUD) Draw(screen *ebiten.Image, w, hgt int) {
 		ebitenutil.DebugPrintAt(screen, indicator, 10, 22)
 	}
 
-	// Status effect icons — row of colored squares just below floor indicator.
+	// Status effect icons — larger, readable row below floor indicator.
 	if len(h.StatusEffects) > 0 {
+		const iconW, iconH = 36, 16
 		ex := 10
-		ey := 36
+		ey := 38
 		for _, eff := range h.StatusEffects {
-			box := ebiten.NewImage(10, 10)
-			box.Fill(eff.Color)
-			op := &ebiten.DrawImageOptions{}
-			op.GeoM.Translate(float64(ex), float64(ey))
-			screen.DrawImage(box, op)
-			ebitenutil.DebugPrintAt(screen, eff.TypeChar, ex+1, ey)
-			ex += 14
+			// Tinted background panel.
+			vector.DrawFilledRect(screen, float32(ex), float32(ey), float32(iconW), float32(iconH),
+				color.RGBA{eff.Color.R / 4, eff.Color.G / 4, eff.Color.B / 4, 200}, false)
+			vector.StrokeRect(screen, float32(ex), float32(ey), float32(iconW), float32(iconH),
+				1, color.RGBA{eff.Color.R, eff.Color.G, eff.Color.B, 220}, false)
+			// Abbreviation + duration.
+			label := eff.TypeChar
+			if eff.Duration > 0 {
+				label = fmt.Sprintf("%s%.1f", eff.TypeChar, eff.Duration)
+			}
+			ebitenutil.DebugPrintAt(screen, label, ex+3, ey+2)
+			ex += iconW + 4
 		}
 	}
 }
@@ -161,65 +225,208 @@ func (h *HUD) drawSkillBar(screen *ebiten.Image, w, hgt int) {
 		s := h.SkillSlots[i]
 
 		if !s.Active {
-			// Empty slot: dark border, dimmed.
-			vector.StrokeRect(screen, float32(sx), float32(y), float32(slot), float32(slot), 2, color.RGBA{80, 80, 80, 180}, false)
-			text.Draw(screen, fmt.Sprintf("%d", i+1), basicfont.Face7x13, sx+slot/2-4, y+slot+12, color.RGBA{80, 80, 80, 180})
+			vector.DrawFilledRect(screen, float32(sx), float32(y), float32(slot), float32(slot), color.RGBA{18, 18, 18, 160}, false)
+			vector.StrokeRect(screen, float32(sx), float32(y), float32(slot), float32(slot), 2, color.RGBA{70, 70, 70, 180}, false)
+			text.Draw(screen, fmt.Sprintf("%d", i+1), basicfont.Face7x13, sx+slot/2-4, y+slot+12, color.RGBA{70, 70, 70, 180})
 			continue
 		}
 
-		// Active slot border.
-		vector.StrokeRect(screen, float32(sx), float32(y), float32(slot), float32(slot), 2, color.White, false)
+		// Dark background so icon reads clearly.
+		vector.DrawFilledRect(screen, float32(sx), float32(y), float32(slot), float32(slot), color.RGBA{18, 18, 18, 200}, false)
 
+		// Icon.
 		if ic := s.Icon; ic != nil {
 			iw, ih := ic.Size()
 			op := &ebiten.DrawImageOptions{}
 			op.GeoM.Scale(float64(slot)/float64(iw), float64(slot)/float64(ih))
 			op.GeoM.Translate(float64(sx), float64(y))
 			if !s.Enabled {
-				// Gray out when insufficient mana.
 				op.ColorScale.Scale(0.4, 0.4, 0.4, 1)
 			}
 			if s.Locked {
-				// Darken more if locked.
 				op.ColorScale.Scale(0.3, 0.3, 0.3, 1)
 			}
 			screen.DrawImage(ic, op)
 		}
 
+		// Radial clock-sweep cooldown overlay.
+		if s.Cooldown > 0 && s.MaxCooldown > 0 {
+			frac := s.Cooldown / s.MaxCooldown
+			if frac > 1 {
+				frac = 1
+			}
+			h.drawCooldownSweep(screen, sx, y, slot, frac)
+			// Countdown text centred on the icon.
+			cdTxt := fmt.Sprintf("%.1f", s.Cooldown)
+			bnd := text.BoundString(basicfont.Face7x13, cdTxt)
+			tx := sx + (slot-bnd.Dx())/2
+			text.Draw(screen, cdTxt, basicfont.Face7x13, tx, y+slot/2+6, color.RGBA{255, 255, 255, 220})
+		}
+
+		// Near-miss throb: last 0.5 s → pulsing amber border (slot machine "almost").
+		if s.Cooldown > 0 && s.Cooldown < 0.5 {
+			phase := s.Cooldown / 0.5 // 1→0 as we approach ready
+			pulse := 0.5 + 0.5*math.Sin(phase*math.Pi*10)
+			a8 := uint8(120 + int(135*pulse))
+			g8 := uint8(100 + int(120*float64(1-phase)))
+			vector.StrokeRect(screen,
+				float32(sx-1), float32(y-1), float32(slot+2), float32(slot+2),
+				3, color.RGBA{255, g8, 0, a8}, false)
+		}
+
+		// Ready-flash: gold burst for 0.5 s after skill comes off cooldown.
+		if s.ReadyFlash > 0 {
+			t := float32(s.ReadyFlash / 0.5)
+			vector.StrokeRect(screen,
+				float32(sx-2), float32(y-2), float32(slot+4), float32(slot+4),
+				3, color.RGBA{255, uint8(180 + 75*t), 0, uint8(180 + 75*t)}, false)
+		}
+
+		// Activation flash: warm gold overlay for 0.35 s after the skill fires.
+		if s.FlashTimer > 0 {
+			alpha := uint8(160 * (s.FlashTimer / 0.35))
+			vector.DrawFilledRect(screen, float32(sx), float32(y), float32(slot), float32(slot),
+				color.RGBA{255, 210, 50, alpha}, false)
+		}
+
+		// Duration bar: thin coloured strip at bottom of icon for active buffs.
+		if s.DurationTimer > 0 && s.MaxDuration > 0 {
+			frac := float32(s.DurationTimer / s.MaxDuration)
+			if frac > 1 {
+				frac = 1
+			}
+			barH := float32(5)
+			barY := float32(y+slot) - barH
+			vector.DrawFilledRect(screen, float32(sx), barY, float32(slot), barH, color.RGBA{30, 30, 30, 200}, false)
+			vector.DrawFilledRect(screen, float32(sx), barY, float32(slot)*frac, barH,
+				color.RGBA{s.DurationColor.R, s.DurationColor.G, s.DurationColor.B, s.DurationColor.A}, false)
+		}
+
+		// Locked: red diagonal cross.
 		if s.Locked {
-			// Draw red diagonal cross lines to represent chains locking the slot.
 			vector.StrokeLine(screen, float32(sx), float32(y), float32(sx+slot), float32(y+slot), 3, color.RGBA{220, 40, 40, 220}, false)
 			vector.StrokeLine(screen, float32(sx+slot), float32(y), float32(sx), float32(y+slot), 3, color.RGBA{220, 40, 40, 220}, false)
 			vector.DrawFilledRect(screen, float32(sx), float32(y), float32(slot), float32(slot), color.RGBA{50, 0, 0, 120}, false)
 		}
 
-		if cd := s.Cooldown; cd > 0 {
-			overlay := float32(slot) * float32(cd) / 5
-			vector.DrawFilledRect(screen, float32(sx), float32(y)+float32(slot)-overlay, float32(slot), overlay, color.RGBA{0, 0, 0, 150}, false)
-		}
-
+		// Slot border: warm gold when active, cool grey when on cooldown.
 		if i == h.ActiveSkill {
 			vector.StrokeRect(screen, float32(sx-2), float32(y-2), float32(slot+4), float32(slot+4), 2, color.RGBA{255, 220, 60, 255}, false)
+		} else if s.Cooldown > 0 {
+			vector.StrokeRect(screen, float32(sx), float32(y), float32(slot), float32(slot), 2, color.RGBA{80, 80, 80, 200}, false)
+		} else {
+			vector.StrokeRect(screen, float32(sx), float32(y), float32(slot), float32(slot), 2, color.RGBA{160, 140, 90, 220}, false)
 		}
 
 		// Key number.
 		text.Draw(screen, fmt.Sprintf("%d", i+1), basicfont.Face7x13, sx+slot/2-4, y+slot+12, color.White)
 
-		// Mana cost below key number.
+		// Mana cost.
 		if s.ManaCost > 0 {
 			costClr := color.RGBA{100, 160, 255, 255}
 			if !s.Enabled {
 				costClr = color.RGBA{255, 80, 80, 255}
 			}
-			costTxt := fmt.Sprintf("%d", s.ManaCost)
-			text.Draw(screen, costTxt, basicfont.Face7x13, sx+slot/2-4, y+slot+24, costClr)
+			text.Draw(screen, fmt.Sprintf("%d", s.ManaCost), basicfont.Face7x13, sx+slot/2-4, y+slot+24, costClr)
 		}
+	}
+
+	// Kill streak counter above the skill bar.
+	if h.KillStreak > 0 {
+		h.drawKillStreak(screen, x, barW, y)
 	}
 
 	if h.DashEnabled {
 		h.drawDashCharges(screen, x, barW, y)
 	}
 	h.drawEXPBar(screen, x, barW, y)
+}
+
+// drawCooldownSweep renders a GW2-style radial dark overlay over a skill icon.
+// frac=1 means just activated (full sweep); frac=0 means ready (no overlay).
+// The arc starts at 12 o'clock and sweeps clockwise.
+func (h *HUD) drawCooldownSweep(screen *ebiten.Image, x, y, size int, frac float64) {
+	if frac <= 0 {
+		return
+	}
+	if frac > 1 {
+		frac = 1
+	}
+	cx := float32(x + size/2)
+	cy := float32(y + size/2)
+	r := float32(size)/2 + 1
+
+	startAngle := float32(-math.Pi / 2) // 12 o'clock
+	endAngle := startAngle + float32(frac*2*math.Pi)
+
+	var path vector.Path
+	path.MoveTo(cx, cy)
+	path.LineTo(cx, cy-r) // start at 12 o'clock
+	path.Arc(cx, cy, r, startAngle, endAngle, vector.Clockwise)
+	path.Close()
+
+	vs, is := path.AppendVerticesAndIndicesForFilling(nil, nil)
+	for i := range vs {
+		vs[i].SrcX = 1
+		vs[i].SrcY = 1
+		vs[i].ColorR = 0
+		vs[i].ColorG = 0
+		vs[i].ColorB = 0
+		vs[i].ColorA = 0.68
+	}
+	if h.whitePixel == nil {
+		h.whitePixel = ebiten.NewImage(1, 1)
+		h.whitePixel.Fill(color.White)
+	}
+	op := &ebiten.DrawTrianglesOptions{}
+	op.FillRule = ebiten.FillRuleNonZero
+	screen.DrawTriangles(vs, is, h.whitePixel, op)
+}
+
+// drawKillStreak renders a kill-streak counter above the skill bar.
+// Color and scale escalate to reward sustained pressure (Vampire Survivors-style combo).
+func (h *HUD) drawKillStreak(screen *ebiten.Image, barX, barW, barY int) {
+	var clr color.RGBA
+	switch {
+	case h.KillStreak >= 10:
+		clr = color.RGBA{255, 50, 50, 255}  // red: carnage tier
+	case h.KillStreak >= 5:
+		clr = color.RGBA{255, 120, 0, 255}  // orange: rampage
+	case h.KillStreak >= 3:
+		clr = color.RGBA{255, 210, 0, 255}  // gold: on fire
+	default:
+		clr = color.RGBA{210, 210, 210, 255}
+	}
+
+	// Glow background scales with streak tier.
+	label := fmt.Sprintf("x%d STREAK", h.KillStreak)
+	bnd := text.BoundString(basicfont.Face7x13, label)
+	tx := barX + (barW-bnd.Dx())/2
+	ty := barY - 28
+
+	if h.KillStreak >= 3 {
+		padX, padY := float32(6), float32(4)
+		vector.DrawFilledRect(screen,
+			float32(tx)-padX, float32(ty)-14-padY,
+			float32(bnd.Dx())+padX*2, float32(bnd.Dy())+padY*2+8,
+			color.RGBA{clr.R / 5, clr.G / 5, clr.B / 5, 180}, false)
+		vector.StrokeRect(screen,
+			float32(tx)-padX, float32(ty)-14-padY,
+			float32(bnd.Dx())+padX*2, float32(bnd.Dy())+padY*2+8,
+			1, color.RGBA{clr.R, clr.G, clr.B, 100}, false)
+	}
+
+	// Pulse the alpha on new kill.
+	alpha := clr.A
+	if h.StreakPulse > 0 {
+		boost := uint8(55 * (h.StreakPulse / 0.3))
+		if int(alpha)+int(boost) > 255 {
+			alpha = 255
+		} else {
+			alpha += boost
+		}
+	}
+	text.Draw(screen, label, basicfont.Face7x13, tx, ty, color.RGBA{clr.R, clr.G, clr.B, alpha})
 }
 
 func (h *HUD) drawDashCharges(screen *ebiten.Image, barX, barW, barY int) {

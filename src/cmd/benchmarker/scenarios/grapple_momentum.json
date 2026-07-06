@@ -1,0 +1,12 @@
+{
+  "name": "Grapple Momentum — Floor 5",
+  "class": "knight",
+  "artifacts": ["ironbreaker_gauntlets", "ember_mantle", "soul_harvest", "quicksilver_talisman", "iron_will_band", "lifedrinker_robe", "grave_reaper"],
+  "stats": { "Strength": 16, "Dexterity": 12, "Vitality": 10, "Intelligence": 4, "Luck": 10 },
+  "floor": 5,
+  "biome": "dungeon",
+  "enemy_pool": ["melee", "ranged", "elite"],
+  "iterations": 1000,
+  "skill_rotation": ["slot_1", "auto", "auto", "auto", "slot_7", "auto", "auto", "auto", "auto", "auto", "auto", "auto"],
+  "stat_priority": ["str", "str", "vit"]
+}

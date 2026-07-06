@@ -1,0 +1,12 @@
+{
+  "name": "Nature Bloom Farm — Floor 6",
+  "class": "mage",
+  "artifacts": ["ember_mantle", "stone_skin_idol", "arcane_tempo_ring", "fractal_bloom", "resonance_crystal", "soul_harvest", "fractal_canopy"],
+  "stats": { "Strength": 4, "Dexterity": 4, "Vitality": 8, "Intelligence": 18, "Luck": 6 },
+  "floor": 6,
+  "biome": "dungeon",
+  "enemy_pool": ["melee", "ranged", "elite"],
+  "iterations": 1000,
+  "skill_rotation": ["slot_4", "auto", "slot_4", "slot_7", "auto", "slot_4"],
+  "stat_priority": ["int", "int", "vit"]
+}

@@ -1,0 +1,12 @@
+{
+  "name": "Knight Slash Build — Floor 5",
+  "class": "knight",
+  "artifacts": ["shroud_cloak", "ironbreaker_gauntlets", "ember_mantle"],
+  "stats": { "Strength": 16, "Dexterity": 8, "Vitality": 14, "Intelligence": 4, "Luck": 6 },
+  "floor": 5,
+  "biome": "crypt",
+  "enemy_pool": ["melee", "ranged", "elite"],
+  "iterations": 1000,
+  "skill_rotation": ["slot_1", "auto", "auto", "slot_2", "auto", "auto", "slot_3", "auto"],
+  "stat_priority": ["str", "str", "vit"]
+}

@@ -1,0 +1,12 @@
+{
+  "name": "Iron Flurry — Floor 4",
+  "class": "knight",
+  "artifacts": ["ironbreaker_gauntlets", "ember_mantle", "quicksilver_talisman", "soul_harvest", "lifedrinker_robe", "", "grave_reaper"],
+  "stats": { "Strength": 18, "Dexterity": 10, "Vitality": 15, "Intelligence": 4, "Luck": 6 },
+  "floor": 4,
+  "biome": "crypt",
+  "enemy_pool": ["melee", "ranged", "elite"],
+  "iterations": 1000,
+  "skill_rotation": ["slot_1", "auto", "auto", "auto", "slot_1", "auto", "auto", "auto", "slot_7", "auto", "auto", "auto", "auto", "auto", "auto", "auto"],
+  "stat_priority": ["str", "str", "vit"]
+}

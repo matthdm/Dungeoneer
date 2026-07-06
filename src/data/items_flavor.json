@@ -73,5 +73,120 @@
     "id": "iron_key",
     "text": "Crude, heavy, and identical to ten thousand others the dungeon has swallowed. The locks it fits were never meant to be found, only to hold. The fact that you have the key says nothing good about who left it here.",
     "line": "Someone wanted this found. Be careful what you open."
+  },
+  {
+    "id": "ironbreaker_gauntlets",
+    "text": "The gauntlets remember every wall they've broken through. They're still looking for the next one.",
+    "line": "The stone remembers the blow."
+  },
+  {
+    "id": "shroud_cloak",
+    "text": "Woven from shadow that refused to disperse. The wearer doesn't disappear — the world simply forgets them.",
+    "line": "Gone before you heard the footstep."
+  },
+  {
+    "id": "wardens_medallion",
+    "text": "Carried by the last warden of a keep that no longer exists. The enemies still come.",
+    "line": "Here. Face me."
+  },
+  {
+    "id": "ashbound_chain",
+    "text": "Used to restrain something that shouldn't have been caught. Then something that shouldn't have been kept.",
+    "line": "Hold."
+  },
+  {
+    "id": "grave_reaper",
+    "text": "The edge doesn't cut. It decides.",
+    "line": "Not a killing blow. A sentence."
+  },
+  {
+    "id": "ember_mantle",
+    "text": "The warmth is wrong. It doesn't radiate outward — it pulls heat inward, toward something cold at the center.",
+    "line": "It burns on the inside too."
+  },
+  {
+    "id": "stone_skin_idol",
+    "text": "Carved from the bedrock of the dungeon's lowest accessible tier. Whatever lived down there didn't need to move fast — it needed to not die. The stone remembers that priority.",
+    "line": "Let them hit. It won't matter."
+  },
+  {
+    "id": "shadows_return",
+    "text": "Shadow assassins who survived long enough learned to do more than vanish — they learned to vanish twice. The pendant is a reminder carved into copper: the dark comes back if you call it.",
+    "line": "The shadow remembers where you were."
+  },
+  {
+    "id": "void_mirror_pendant",
+    "text": "A mirror that reflects nothing visible. Hold it up and you see a room that takes longer to fade than it should, as though the pendant is negotiating with time on your behalf.",
+    "line": "The moment stretches for those who know how to ask."
+  },
+  {
+    "id": "arcane_surge",
+    "text": "The mage-engineers called this the overclock. You fill every ability slot with something burning and then squeeze the crystal until everything that was waiting detonates at once. None of them survived testing. The crystal did.",
+    "line": "Everything at once. That's the point."
+  },
+  {
+    "id": "arcane_tempo_ring",
+    "text": "Inscribed with the notation system of a dead school of magic — one obsessed not with the strength of spells but with their interval. They believed the gap between casts was where power was lost. They were right.",
+    "line": "The pause is where you die. Close it."
+  },
+  {
+    "id": "blood_price",
+    "text": "An old contract. The terms are simple: you give something vital and something distant bleeds in proportion. The dungeon offered this deal to many people. Most accepted. Few read the second clause.",
+    "line": "What you give, it gives back — somewhere else."
+  },
+  {
+    "id": "soul_harvest",
+    "text": "The weapon drinks what leaves the body at the moment of death. Not blood. The other thing. Whoever forged it didn't have a word for it in the language they were using, so they named the weapon instead.",
+    "line": "They were going to die anyway."
+  },
+  {
+    "id": "voidweave_wraps",
+    "text": "Spun from thread that took longer to process than it should have — the weavers kept losing track of how much time had passed. They worked slowly. The wraps came out larger than the loom.",
+    "line": "Everything you wear lasts longer down here."
+  },
+  {
+    "id": "arcane_tempo_belt",
+    "text": "Worn by a school of combat mages who believed rotation was the whole discipline. They trained until their spell cycling became involuntary. The belt kept count so they didn't have to.",
+    "line": "Keep moving. The cooldown is the enemy."
+  },
+  {
+    "id": "blood_vow_amulet",
+    "text": "The oath pressed into the metal is unambiguous: bleed and become stronger. The dungeon has seen a thousand versions of this deal. The ones who wore it longest were the ones who stayed closest to the edge.",
+    "line": "Not dead yet. That's enough."
+  },
+  {
+    "id": "resonance_crystal",
+    "text": "A shard of something that hummed in response to suffering — specifically, to ongoing suffering. Prolonged exposure to pain made it sing. The scholars who catalogued it didn't ask where it came from.",
+    "line": "The longer it hurts, the harder it hits."
+  },
+  {
+    "id": "lifedrinker_robe",
+    "text": "The stitching is wrong in a way that's hard to articulate — the robe seems to tighten slightly after each kill, as though it's drawing something in. It fits better than it should. That's probably the point.",
+    "line": "Every death feeds the one still standing."
+  },
+  {
+    "id": "iron_will_band",
+    "text": "Plain iron, no inscription, no ornamentation. Knights who wore them said they felt the blows differently — not less painful, but more purposeful, as though the impact was going somewhere instead of just landing.",
+    "line": "Hit until it means something."
+  },
+  {
+    "id": "marrow_ring",
+    "text": "Wearing it feels like giving something up. You are. The ring draws from the marrow, takes the buffer that keeps you upright, and trades it for something sharper. Some who wore it said they didn't miss what it took.",
+    "line": "Less to lose. More to gain."
+  },
+  {
+    "id": "hollow_sigil",
+    "text": "The void doesn't care what you spend — it cares that you spend something. This sigil reroutes the transaction. Your mana stays where it is. The cost comes from somewhere more personal.",
+    "line": "The void accepts all currencies."
+  },
+  {
+    "id": "thornweave_vest",
+    "text": "Grown in the dungeon's second tier by something that learned to grow inward instead of outward. The thorns face the wrong way. That was the design.",
+    "line": "Touch me and find out."
+  },
+  {
+    "id": "quicksilver_talisman",
+    "text": "A talisman from a tradition that believed speed was a form of honesty — you hit before the lie had time to form. The quicksilver inside never settles. Neither do the people who carry it for long.",
+    "line": "First. Always first."
   }
 ]

@@ -1,0 +1,13 @@
+{
+  "name": "Enemy Test: Regenerator vs Arcane Farmer (regen outraces slow DPS)",
+  "class": "mage",
+  "artifacts": ["arcane_tempo_ring", "arcane_tempo_belt", "arcane_bolt", "arcane_spray", "lightning", "", ""],
+  "stats": { "Strength": 4, "Dexterity": 6, "Vitality": 8, "Intelligence": 18, "Luck": 8 },
+  "floor": 5,
+  "biome": "arcane_halls",
+  "enemy_pool": ["elite"],
+  "iterations": 1000,
+  "skill_rotation": ["slot_3", "auto", "slot_4", "slot_3", "slot_5", "auto"],
+  "enemy_build": "the_regenerator",
+  "stat_priority": ["int", "int", "vit"]
+}

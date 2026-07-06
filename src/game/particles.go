@@ -108,7 +108,7 @@ func (p *ParticlePool) Draw(screen *ebiten.Image) {
 // SpellParticleColor returns the particle color for a given spell/damage type.
 func SpellParticleColor(dmgType string) (r, g, b float32) {
 	switch dmgType {
-	case "fire", "fireball":
+	case "fire", "fireball", "flame":
 		return 1.0, 0.4, 0.1
 	case "lightning", "lightning_storm", "lightning_aura":
 		return 0.5, 0.8, 1.0
@@ -116,8 +116,14 @@ func SpellParticleColor(dmgType string) (r, g, b float32) {
 		return 0.3, 1.0, 0.3
 	case "chaos", "chaos_ray":
 		return 0.8, 0.2, 1.0
-	case "arcane", "arcane_bolt":
+	case "arcane", "arcane_bolt", "arcane_spray":
 		return 0.9, 0.9, 1.0
+	case "shadow":
+		return 0.5, 0.2, 0.9
+	case "void":
+		return 0.3, 0.1, 0.6
+	case "iron":
+		return 0.7, 0.85, 1.0
 	default:
 		return 1.0, 1.0, 1.0
 	}

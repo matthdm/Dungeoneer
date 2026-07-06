@@ -1,0 +1,12 @@
+{
+  "name": "Arcane Surge Build — Floor 8",
+  "class": "mage",
+  "artifacts": ["arcane_tempo_ring", "ashbound_chain", "ironbreaker_gauntlets", "wardens_medallion", "soul_harvest", "void_mirror_pendant", "arcane_surge"],
+  "stats": { "Strength": 4, "Dexterity": 4, "Vitality": 8, "Intelligence": 22, "Luck": 6 },
+  "floor": 4,
+  "biome": "arcane_halls",
+  "enemy_pool": ["melee", "ranged", "elite"],
+  "iterations": 1000,
+  "skill_rotation": ["slot_2", "slot_3", "slot_4", "slot_5", "slot_7", "auto", "auto", "auto", "auto", "auto", "auto", "auto", "auto", "auto", "auto", "auto"],
+  "stat_priority": ["int", "int", "vit"]
+}

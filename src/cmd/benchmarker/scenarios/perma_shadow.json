@@ -1,0 +1,12 @@
+{
+  "name": "Perma Shadow — Floor 8",
+  "class": "knight",
+  "artifacts": ["shroud_cloak", "ashbound_chain", "blood_price", "shadows_return", "void_mirror_pendant", "voidweave_wraps", "grave_reaper"],
+  "stats": { "Strength": 10, "Dexterity": 20, "Vitality": 12, "Intelligence": 4, "Luck": 8 },
+  "floor": 8,
+  "biome": "crypt",
+  "enemy_pool": ["melee", "ranged", "elite"],
+  "iterations": 1000,
+  "skill_rotation": ["slot_1", "slot_2", "auto", "auto", "auto", "slot_1", "slot_2", "auto", "auto", "auto", "slot_7", "auto", "auto", "auto", "auto", "auto", "auto", "auto", "auto", "auto"],
+  "stat_priority": ["str", "vit", "str"]
+}

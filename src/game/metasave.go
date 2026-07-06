@@ -38,6 +38,10 @@ type MetaSave struct {
 	RecentBehavior []BehaviorRecord `json:"recent_behavior,omitempty"`
 	CurrentProfile PlayerProfile    `json:"current_profile,omitempty"`
 	CurrentMood    int              `json:"current_mood,omitempty"` // DungeonMood as int
+
+	// v3 fields — Artifact library (combat redesign)
+	ArtifactCollection []string `json:"artifact_collection,omitempty"` // all artifact IDs owned across runs
+	ArtifactLoadout    [7]string `json:"artifact_loadout,omitempty"`   // equipped loadout: indices 0-5 regular, 6 = elite slot
 }
 
 const metaSavePath = "meta.json"

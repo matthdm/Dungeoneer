@@ -1,0 +1,13 @@
+{
+  "name": "Enemy Test: Veilbane vs Perma Shadow (breaks shadow uptime)",
+  "class": "knight",
+  "artifacts": ["shroud_cloak", "shadows_return", "void_mirror_pendant", "ashbound_chain", "grave_reaper", "", ""],
+  "stats": { "Strength": 8, "Dexterity": 12, "Vitality": 6, "Intelligence": 4, "Luck": 8 },
+  "floor": 8,
+  "biome": "dungeon",
+  "enemy_pool": ["elite"],
+  "iterations": 1000,
+  "skill_rotation": ["slot_1", "slot_4", "auto", "slot_5", "slot_1", "auto"],
+  "enemy_build": "the_veilbane",
+  "stat_priority": ["str", "vit", "str"]
+}

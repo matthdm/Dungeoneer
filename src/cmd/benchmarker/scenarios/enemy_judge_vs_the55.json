@@ -1,0 +1,13 @@
+{
+  "name": "Enemy Test: Judge vs The 55 (should destroy low-HP build)",
+  "class": "knight",
+  "artifacts": ["stone_skin_idol", "wardens_medallion", "grave_reaper", "ashbound_chain", "", "", ""],
+  "stats": { "Strength": 8, "Dexterity": 6, "Vitality": -8, "Intelligence": 4, "Luck": 8 },
+  "floor": 6,
+  "biome": "dungeon",
+  "enemy_pool": ["elite"],
+  "iterations": 1000,
+  "skill_rotation": ["slot_3", "slot_4", "auto", "auto"],
+  "enemy_build": "the_judge",
+  "stat_priority": ["vit", "vit", "str"]
+}

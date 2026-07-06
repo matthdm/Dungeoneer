@@ -1,6 +1,7 @@
 package game
 
 import (
+	"dungeoneer/combat"
 	"dungeoneer/entities"
 	"dungeoneer/images"
 	"dungeoneer/items"
@@ -11,7 +12,7 @@ import (
 // buildDevEntries constructs the DevOverlay entries wired to live game state.
 // All closures capture g, so toggles take effect immediately.
 func (g *Game) buildDevEntries() []ui.DevEntry {
-	return []ui.DevEntry{
+	entries := []ui.DevEntry{
 		// ── Rendering ──────────────────────────────────────────────────────
 		{Label: "RENDERING", IsHeader: true},
 		{
@@ -221,9 +222,87 @@ func (g *Game) buildDevEntries() []ui.DevEntry {
 			Toggle:   func() { g.devToggleAbility("fractal_canopy", items.AbilitySlotSpell) },
 		},
 
-		// ── Class Switcher ────────────────────────────────────────────────
-		{Label: "CLASS", IsHeader: true},
+		// ── Combat Testing ───────────────────────────────────────────────
+		{Label: "COMBAT TESTING", IsHeader: true},
 		{
+			Label:    "Combat State Overlay",
+			IsActive: func() bool { return g.ShowCombatDebug },
+			Toggle:   func() { g.ShowCombatDebug = !g.ShowCombatDebug },
+		},
+		{
+			Label: "Spawn: Melee Enemy",
+			Toggle: func() {
+				floor := 1
+				if g.RunState != nil {
+					floor = g.RunState.CurrentFloor
+				}
+				g.devSpawnCombatEnemy("melee", floor)
+			},
+		},
+		{
+			Label: "Spawn: Ranged Enemy",
+			Toggle: func() {
+				floor := 1
+				if g.RunState != nil {
+					floor = g.RunState.CurrentFloor
+				}
+				g.devSpawnCombatEnemy("ranged", floor)
+			},
+		},
+		{
+			Label: "Spawn: Elite Enemy",
+			Toggle: func() {
+				floor := 1
+				if g.RunState != nil {
+					floor = g.RunState.CurrentFloor
+				}
+				g.devSpawnCombatEnemy("elite", floor)
+			},
+		},
+		{
+			Label:  "Reset Player State",
+			Toggle: func() { g.devResetPlayerState() },
+		},
+		{Label: "-- BUILDS --", IsHeader: true},
+	}
+
+	// Build entries generated from scenario files. Each entry reads the JSON,
+	// applies the build on activation. Using a closure-captured copy of path.
+	scenarioPairs := []struct{ label, file string }{
+		{"W1 Iron Flurry", "cmd/benchmarker/scenarios/iron_flurry.json"},
+		{"W2 Arcane Farmer", "cmd/benchmarker/scenarios/arcane_farmer.json"},
+		{"W3 Nature Sustain", "cmd/benchmarker/scenarios/nature_sustain.json"},
+		{"W4 Shadow Burst", "cmd/benchmarker/scenarios/shadow_burst.json"},
+		{"W5 Burn DoT", "cmd/benchmarker/scenarios/burn_dot.json"},
+		{"W6 Tank Mage", "cmd/benchmarker/scenarios/tank_mage.json"},
+		{"M1 CC Chain", "cmd/benchmarker/scenarios/cc_chain.json"},
+		{"M2 Nature Bloom Farm", "cmd/benchmarker/scenarios/nature_bloom_farm.json"},
+		{"M3 Grapple Momentum", "cmd/benchmarker/scenarios/grapple_momentum.json"},
+		{"M4 Chaos Knight", "cmd/benchmarker/scenarios/chaos_knight.json"},
+		{"M5 Arcane Surge", "cmd/benchmarker/scenarios/arcane_surge_build.json"},
+		{"M6 The 55", "cmd/benchmarker/scenarios/the_55.json"},
+		{"M7 Perma Shadow", "cmd/benchmarker/scenarios/perma_shadow.json"},
+		{"M8 Void Sacrifice", "cmd/benchmarker/scenarios/void_sacrifice.json"},
+	}
+	for _, sp := range scenarioPairs {
+		label := sp.label
+		file := sp.file
+		entries = append(entries, ui.DevEntry{
+			Label: "Load: " + label,
+			Toggle: func() {
+				s, err := combat.LoadScenario(file)
+				if err != nil {
+					return
+				}
+				g.devLoadBuild(s)
+			},
+		})
+	}
+
+	entries = append(entries,
+		// ── Class Switcher ────────────────────────────────────────────────
+		ui.DevEntry{Label: "CLASS", IsHeader: true},
+		ui.DevEntry{
 			Label:    "Play as Knight",
 			IsActive: func() bool { return g.player != nil && g.player.Class == entities.ClassKnight },
 			Toggle: func() {
@@ -241,7 +320,7 @@ func (g *Game) buildDevEntries() []ui.DevEntry {
 				g.player.EquipStarter()
 			},
 		},
-		{
+		ui.DevEntry{
 			Label:    "Play as Mage",
 			IsActive: func() bool { return g.player != nil && g.player.Class == entities.ClassMage },
 			Toggle: func() {
@@ -259,7 +338,8 @@ func (g *Game) buildDevEntries() []ui.DevEntry {
 				g.player.EquipStarter()
 			},
 		},
-	}
+	)
+	return entries
 }
 
 // devToggleAbility grants or revokes an ability directly (bypassing equipment).

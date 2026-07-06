@@ -1,0 +1,12 @@
+{
+  "name": "CC Chain — Floor 7",
+  "class": "knight",
+  "artifacts": ["shroud_cloak", "ashbound_chain", "ironbreaker_gauntlets", "shadows_return", "void_mirror_pendant", "voidweave_wraps", "grave_reaper"],
+  "stats": { "Strength": 14, "Dexterity": 16, "Vitality": 12, "Intelligence": 4, "Luck": 6 },
+  "floor": 7,
+  "biome": "crypt",
+  "enemy_pool": ["melee", "ranged", "elite"],
+  "iterations": 1000,
+  "skill_rotation": ["slot_2", "slot_1", "slot_3", "auto", "auto", "slot_1", "slot_2", "auto", "slot_3", "auto", "slot_7", "auto", "auto", "auto", "auto", "auto"],
+  "stat_priority": ["str", "vit", "str"]
+}

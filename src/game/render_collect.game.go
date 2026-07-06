@@ -96,6 +96,9 @@ func (g *Game) collectTileRenderables(scale, cx, cy float64) []Renderable {
 func (g *Game) collectItemDropRenderables(scale, cx, cy float64) []Renderable {
 	var out []Renderable
 	for _, d := range g.ItemDrops {
+		if d.Item.Icon == nil {
+			continue
+		}
 		if d.TileX < 0 || d.TileY < 0 || d.TileX >= g.currentLevel.W || d.TileY >= g.currentLevel.H {
 			continue
 		}

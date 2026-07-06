@@ -11,6 +11,7 @@
 package game
 
 import (
+	"dungeoneer/combat"
 	"dungeoneer/constants"
 	"dungeoneer/entities"
 	"dungeoneer/fov"
@@ -104,6 +105,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	if g.LoreLibrary != nil {
 		g.LoreLibrary.Draw(screen)
+	}
+	if g.ArtifactLibrary != nil && g.ArtifactLibrary.Visible {
+		g.ArtifactLibrary.Draw(screen)
+	}
+	if g.ArtifactLoadout != nil && g.ArtifactLoadout.Visible {
+		g.ArtifactLoadout.Draw(screen)
 	}
 	if g.Shop != nil {
 		g.Shop.Draw(screen)
@@ -229,6 +236,7 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 	}
 	g.drawSpells(target, scale, cx, cy)
 	g.drawMonsterProjectiles(target, scale, cx, cy)
+	g.drawTargetRing(target, scale, cx, cy)
 
 	//g.drawTiles(target, scale, cx, cy)
 	//g.drawPathPreview(target, scale, cx, cy)
@@ -282,6 +290,94 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 				g.HUD.StatusEffects = append(g.HUD.StatusEffects, buildStatusEffectDisplay(eff))
 			}
 		}
+		// Inject new-engine condition states into the HUD status display.
+		if na, ok := g.CombatAdapt.(*NewCombatAdapter); ok {
+			cs := na.combatState
+			if cs.InShadow {
+				g.HUD.StatusEffects = append(g.HUD.StatusEffects, hud.StatusEffectDisplay{
+					TypeChar: "S", Color: color.NRGBA{120, 60, 200, 255}, Duration: cs.ShadowTimer,
+				})
+			}
+			if cs.TauntTimer > 0 {
+				g.HUD.StatusEffects = append(g.HUD.StatusEffects, hud.StatusEffectDisplay{
+					TypeChar: "T", Color: color.NRGBA{200, 80, 40, 255}, Duration: cs.TauntTimer,
+				})
+			}
+			if cs.TargetRooted {
+				g.HUD.StatusEffects = append(g.HUD.StatusEffects, hud.StatusEffectDisplay{
+					TypeChar: "R", Color: color.NRGBA{80, 180, 255, 255}, Duration: cs.RootTimer,
+				})
+			}
+			if cs.BurnActive {
+				g.HUD.StatusEffects = append(g.HUD.StatusEffects, hud.StatusEffectDisplay{
+					TypeChar: "F", Color: color.NRGBA{255, 140, 0, 255}, Duration: cs.BurnTimer,
+				})
+			}
+			// Sync skill cooldowns from engine (authoritative for new-engine path).
+			// SyncSkillCooldown detects the >0→0 transition and triggers the ready-flash.
+			for i := 0; i < 6; i++ {
+				g.HUD.SyncSkillCooldown(i, cs.ArtifactCooldowns[i])
+			}
+
+			// Duration bars: show active buff windows inside the matching skill slot.
+			for i := 0; i < 6; i++ {
+				id := cs.EquippedArtifacts[i]
+				if id == "" {
+					continue
+				}
+				eff, hasEff := combat.ArtifactEffects[id]
+				switch id {
+				case "shroud_cloak":
+					if cs.InShadow {
+						g.HUD.SkillSlots[i].DurationTimer = cs.ShadowTimer
+						if hasEff {
+							g.HUD.SkillSlots[i].MaxDuration = eff.DurationSec
+						}
+						g.HUD.SkillSlots[i].DurationColor = color.NRGBA{120, 60, 200, 255}
+					} else {
+						g.HUD.SkillSlots[i].DurationTimer = 0
+					}
+				case "wardens_medallion":
+					if cs.TauntTimer > 0 {
+						g.HUD.SkillSlots[i].DurationTimer = cs.TauntTimer
+						if hasEff {
+							g.HUD.SkillSlots[i].MaxDuration = eff.DurationSec
+						}
+						g.HUD.SkillSlots[i].DurationColor = color.NRGBA{200, 80, 40, 255}
+					} else {
+						g.HUD.SkillSlots[i].DurationTimer = 0
+					}
+				case "ashbound_chain":
+					if cs.TargetRooted {
+						g.HUD.SkillSlots[i].DurationTimer = cs.RootTimer
+						if hasEff {
+							g.HUD.SkillSlots[i].MaxDuration = eff.DurationSec
+						}
+						g.HUD.SkillSlots[i].DurationColor = color.NRGBA{80, 180, 255, 255}
+					} else {
+						g.HUD.SkillSlots[i].DurationTimer = 0
+					}
+				case "ember_mantle":
+					if cs.BurnActive {
+						g.HUD.SkillSlots[i].DurationTimer = cs.BurnTimer
+						if hasEff {
+							g.HUD.SkillSlots[i].MaxDuration = eff.BurnDurationSec
+						}
+						g.HUD.SkillSlots[i].DurationColor = color.NRGBA{255, 140, 0, 255}
+					} else {
+						g.HUD.SkillSlots[i].DurationTimer = 0
+					}
+				}
+			}
+
+			// Kill streak sync: trigger pulse on new kills.
+			if cs.KillStreak != g.HUD.KillStreak {
+				if cs.KillStreak > g.HUD.KillStreak {
+					g.HUD.StreakPulse = 0.3
+				}
+				g.HUD.KillStreak = cs.KillStreak
+			}
+		}
 		g.HUD.Draw(screen, g.w, g.h)
 	}
 	// Draw minimap (only during dungeon runs, not in hub).
@@ -324,6 +420,10 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 	if g.DevTools != nil {
 		g.DevTools.Draw(screen)
 	}
+	g.drawCombatDebugOverlay(screen)
+	// Target panel: monster name + health bar, top-center of screen.
+	g.drawTargetPanel(screen)
+
 	// Draw particles on top of world, below UI overlays.
 	if g.Particles != nil {
 		g.Particles.Draw(screen)

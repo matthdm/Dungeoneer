@@ -1,0 +1,12 @@
+{
+  "name": "Shadow Burst — Floor 5",
+  "class": "knight",
+  "artifacts": ["shroud_cloak", "ashbound_chain", "quicksilver_talisman", "soul_harvest", "lifedrinker_robe", "", "grave_reaper"],
+  "stats": { "Strength": 12, "Dexterity": 18, "Vitality": 10, "Intelligence": 4, "Luck": 8 },
+  "floor": 5,
+  "biome": "crypt",
+  "enemy_pool": ["melee", "ranged", "elite"],
+  "iterations": 1000,
+  "skill_rotation": ["slot_2", "slot_1", "auto", "auto", "auto", "auto", "slot_1", "slot_2", "auto", "auto", "slot_7", "auto", "auto", "auto", "auto", "auto"],
+  "stat_priority": ["str", "str", "vit"]
+}

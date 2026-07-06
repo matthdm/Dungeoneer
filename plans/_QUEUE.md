@@ -8,9 +8,11 @@ Single source of truth for what's active, queued, blocked, and done. Update this
 
 The one plan currently being worked. There is only ever one active plan at a time.
 
-> **Active:** `7A-echoes-of-self.md`
+> **Active:** `8A-item-sets.md`
 >
-> ⚠️ Phase 6 (6A/6B/6C) is implemented but **untested**. Manual test plan T1–T9 must be completed before marking Phase 6 fully done. See CLAUDE.md for test scenarios.
+> Set registry, set bonuses (2-piece and 3-piece), tooltip + HUD UI. 3 starter sets: Stormcaller, Fractalist, Chainbreaker.
+>
+> ⚠️ Phase 6 (6A/6B/6C) is implemented but **untested**. Manual test plan T1–T9 remains deferred. See CLAUDE.md for test scenarios.
 
 ---
 
@@ -20,8 +22,6 @@ Plans ready to be picked up next. Top of list = next active. When the active pla
 
 | # | Plan | Size | Depends On | Notes |
 |---|------|------|------------|-------|
-| 1 | `7B-living-dungeon-ai.md` | Large | `7A` | Behavior tracker, dungeon mood, adaptive gen params. |
-| 2 | `8A-item-sets.md` | Medium | `7A`, `7B` | Set registry, set bonuses, tooltip + HUD UI. |
 | 3 | `8B-hub-shop-upgrades.md` | Large | `8A` | Shop NPC, upgrade station, 8 starter upgrades. |
 | 6 | `8B-hub-shop-upgrades.md` | Large | `8A` | Shop NPC, upgrade station, 8 starter upgrades. |
 | 7 | `9A-polish-transitions-camera.md` | Small | `8B` | Fade transitions, screen shake, boss intro pan. |
@@ -66,6 +66,9 @@ Most recent first.
 
 | Date | Plan | Notes |
 |------|------|-------|
+| 2026-07-05 | `7A-echoes-of-self.md` | Echo recorder, 3 entity types (Wicked/Hero/Memory), ghost tint, spawner, Echo Shrine UI, Remnant award on WickedEcho death. |
+| 2026-07-04 | `7B-living-dungeon-ai.md` | BehaviorTracker, PlayerProfile, DungeonMood inference, GenParamsDelta, dungeon whispers. All wired; build and tests pass. |
+| 2026-06-29 | `CR1-combat-overhaul.md` | GW1-style artifact combat: 23 items, 14 builds, decoupled engine, benchmarker. All 14 builds verified ≥90% survival. |
 | 2026-06-02 | `6C-lore-system` | Lore registry, 15 entries, unlock_lore action, lore library UI, hub pedestal. ⚠️ Untested. |
 | 2026-06-02 | `6B-ng-plus-dialogue` | meta_flag conditions, SelectTree NG+ branching, varn_ng1/2/3+betrayed trees. ⚠️ Untested. |
 | 2026-06-02 | `6A-full-meta-save` | MetaSave v1, milestones (4), toast UI, run-end stat tracking, hub guards. ⚠️ Untested. |

@@ -67,6 +67,7 @@ type Monster struct {
 	EchoLifetime float64 // for HeroEcho: remaining seconds (0 = permanent)
 
 	IntroFired bool // true after the first-encounter flavor line has fired for this monster's role+biome
+	IsRooted   bool // set by new combat engine (ashbound_chain); blocks movement this frame
 
 	// Phase 2 additions
 	Role               string               // "melee", "ranged", "elite", "swarm", "caster", "ambush"
@@ -133,7 +134,7 @@ func (m *Monster) Update(player *Player, level *levels.Level) {
 			m.IsDead = true
 		}
 	})
-	if m.Behavior != nil {
+	if m.Behavior != nil && !m.IsRooted {
 		m.Behavior.Update(m, player, level)
 	}
 	m.UpdateFlashStatus()

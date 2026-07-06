@@ -1,0 +1,12 @@
+{
+  "name": "The 55 — Floor 6",
+  "class": "knight",
+  "artifacts": ["stone_skin_idol", "soul_harvest", "ironbreaker_gauntlets", "wardens_medallion", "thornweave_vest", "lifedrinker_robe", "grave_reaper"],
+  "stats": { "Strength": 12, "Dexterity": 6, "Vitality": -8, "Intelligence": 4, "Luck": 4 },
+  "floor": 6,
+  "biome": "dungeon",
+  "enemy_pool": ["melee", "ranged", "elite"],
+  "iterations": 1000,
+  "skill_rotation": ["slot_3", "slot_4", "slot_7", "auto"],
+  "stat_priority": ["vit", "vit", "str"]
+}

@@ -1,0 +1,12 @@
+{
+  "name": "Mage Nuker — Floor 7",
+  "class": "mage",
+  "artifacts": ["chaos_ray", "fractal_bloom", "lightning"],
+  "stats": { "Strength": 4, "Dexterity": 8, "Vitality": 8, "Intelligence": 20, "Luck": 8 },
+  "floor": 7,
+  "biome": "catacomb",
+  "enemy_pool": ["melee", "ranged", "elite", "caster"],
+  "iterations": 1000,
+  "skill_rotation": ["slot_1", "slot_2", "auto", "slot_3", "auto", "auto"],
+  "stat_priority": ["int", "int", "vit"]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "Enemy Test: Crucible vs Void Sacrifice (blood_price feeds the enemy)",
+  "class": "any",
+  "artifacts": ["blood_price", "soul_harvest", "ashbound_chain", "marrow_ring", "blood_vow_amulet", "hollow_sigil", "grave_reaper"],
+  "stats": { "Strength": 8, "Dexterity": 6, "Vitality": 4, "Intelligence": 4, "Luck": 8 },
+  "floor": 7,
+  "biome": "dungeon",
+  "enemy_pool": ["elite"],
+  "iterations": 1000,
+  "skill_rotation": ["slot_1", "auto", "slot_1", "slot_3", "auto", "slot_7"],
+  "enemy_build": "the_crucible",
+  "stat_priority": ["vit", "vit", "str"]
+}

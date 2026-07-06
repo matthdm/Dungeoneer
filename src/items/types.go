@@ -50,6 +50,11 @@ type ItemTemplate struct {
 
 	FlavorText string // full paragraph shown italic in tooltip; empty = omit
 	FlavorLine string // one-liner queued as toast on pickup; empty = omit
+
+	// Artifact library fields
+	IsArtifact     bool   // true = this item is an artifact (persists in ArtifactCollection)
+	ArtifactDomain string // "shadow", "flame", "void", "nature", "iron", "arcane"
+	IsElite        bool   // true = occupies the elite slot (slot 6) in the loadout
 }
 
 // Item represents an inventory instance.

@@ -84,9 +84,10 @@ type Game struct {
 	sprayManaDrainAcc float64
 	fireballSprites   [][]*ebiten.Image
 
-	SpellDebug bool
-	GodMode    bool // infinite HP
-	InfMana    bool // infinite mana
+	SpellDebug      bool
+	GodMode         bool // infinite HP
+	InfMana         bool // infinite mana
+	ShowCombatDebug bool // combat state overlay (dev menu)
 
 	RaycastWalls             []fov.Line
 	ShowRays                 bool
@@ -139,9 +140,11 @@ type Game struct {
 	DialoguePanel *ui.DialoguePanel
 
 	// Phase 4G+ UI
-	LoreLibrary   *ui.LoreLibrary
-	ActiveToast   *ui.Toast
-	pendingToasts []string
+	LoreLibrary     *ui.LoreLibrary
+	ArtifactLibrary *ui.ArtifactLibrary
+	ArtifactLoadout *ui.ArtifactLoadout
+	ActiveToast     *ui.Toast
+	pendingToasts   []string
 
 	// Phase 8B: hub shop and upgrade station
 	Shop           *ui.Shop
@@ -188,6 +191,13 @@ type Game struct {
 
 	TestLevel      string
 	ScreenshotFile string
+
+	// New combat engine fields (Phase combat redesign)
+	CombatAdapt     CombatAdapter    // active adapter (legacy or new); never nil after NewGame
+	TargetedMonster *entities.Monster // nil = no target
+	KillStreak      int
+	AutoAttackTimer float64
+	IsAutoAttacking bool
 }
 
 const (
@@ -469,6 +479,8 @@ func NewGame(testLevel, screenshotFile string) (*Game, error) {
 	g.HeroPanel = ui.NewHeroPanel(panelRect, g.player)
 	g.InventoryScreen = ui.NewInventoryScreen()
 	g.LoreLibrary = ui.NewLoreLibrary(640, 480)
+	g.ArtifactLibrary = ui.NewArtifactLibrary(640, 480)
+	g.ArtifactLoadout = ui.NewArtifactLoadout(640, 480)
 	g.Shop = ui.NewShop(640, 480)
 	g.UpgradeStation = ui.NewUpgradeStation(640, 480)
 	g.EchoShrine = ui.NewEchoShrine(640, 480)
@@ -478,6 +490,14 @@ func NewGame(testLevel, screenshotFile string) (*Game, error) {
 	g.ScreenShake = &ScreenShake{}
 	g.Particles = NewParticlePool()
 	g.Audio = gaudio.NewEngine() // nil if audio context unavailable; all methods nil-safe
+
+	// Wire combat adapter (legacy or new engine) via dev_settings.json.
+	devSettings := LoadDevSettings()
+	if devSettings.UseLegacyCombat {
+		g.CombatAdapt = &LegacyCombatAdapter{}
+	} else {
+		g.CombatAdapt = &NewCombatAdapter{}
+	}
 
 	// Wire spell impact callback so particles emit on hits without a circular import.
 	spells.OnSpellImpact = func(wx, wy float64, spellType string) {
@@ -959,6 +979,16 @@ func (g *Game) updatePlaying() error {
 		g.LoreLibrary.Update()
 		return nil
 	}
+	// Artifact library input guard: consume all input while open (hub only).
+	if g.ArtifactLibrary != nil && g.ArtifactLibrary.Visible {
+		g.ArtifactLibrary.Update()
+		return nil
+	}
+	// Artifact loadout input guard: consume all input while screen is open.
+	if g.ArtifactLoadout != nil && g.ArtifactLoadout.Visible {
+		g.ArtifactLoadout.Update()
+		return nil
+	}
 	// Hub shop input guard: consume all input while open.
 	if g.Shop != nil && g.Shop.Active {
 		g.Shop.Update()
@@ -986,6 +1016,15 @@ func (g *Game) updatePlaying() error {
 
 	// Handle controls (mouse, keys, etc.)
 	g.handleInput()
+
+	// Tick combat adapter (auto-attack state, momentum, status).
+	if g.CombatAdapt != nil {
+		g.CombatAdapt.ProcessTick(g, g.DeltaTime)
+	}
+	// Tick HUD animation timers (flash, ready-pulse, streak glow).
+	if g.HUD != nil {
+		g.HUD.TickAnimations(g.DeltaTime)
+	}
 
 	// Update seen/visible memory arrays based on current level size
 	//g.UpdateSeenTiles(*g.currentLevel)
@@ -1184,6 +1223,11 @@ func (g *Game) updatePlaying() error {
 		}
 	}
 
+	// Hub-only keyboard shortcuts (L = artifact library, etc.).
+	if g.IsInHub {
+		g.updateHubInput()
+	}
+
 	// Hub portal interaction
 	if g.IsInHub && g.hubPortalX >= 0 && g.hubPortalY >= 0 {
 		portalX, portalY := g.interactionCenterForTile(g.hubPortalX, g.hubPortalY)
@@ -1286,6 +1330,12 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	}
 	if g.LoreLibrary != nil {
 		g.LoreLibrary.Resize(g.w, g.h)
+	}
+	if g.ArtifactLibrary != nil {
+		g.ArtifactLibrary.Resize(g.w, g.h)
+	}
+	if g.ArtifactLoadout != nil {
+		g.ArtifactLoadout.Resize(g.w, g.h)
 	}
 	if g.Shop != nil {
 		g.Shop.Resize(g.w, g.h)

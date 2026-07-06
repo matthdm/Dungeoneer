@@ -35,6 +35,10 @@ const (
 	// Interaction
 	ActionInteract ActionID = "interact"
 
+	// Targeting (new combat engine)
+	ActionTargetNearest ActionID = "target_nearest" // C — select nearest visible enemy
+	ActionMoveToAttack  ActionID = "move_to_attack"  // Space — move to target and auto-attack
+
 	// Game
 	ActionInventory     ActionID = "inventory"
 	ActionHeroPanel     ActionID = "hero_panel"
@@ -69,9 +73,11 @@ var defaultBindings = map[ActionID]KeyBinding{
 	ActionMenuCancel:  {Primary: ebiten.KeyEscape},
 
 	// Player abilities
-	ActionDash:     {Primary: ebiten.KeyShift},
-	ActionGrapple:  {Primary: ebiten.KeyF},
-	ActionInteract: {Primary: ebiten.KeyE},
+	ActionDash:          {Primary: ebiten.KeyShift},
+	ActionGrapple:       {Primary: ebiten.KeyF},
+	ActionInteract:      {Primary: ebiten.KeyE},
+	ActionTargetNearest: {Primary: ebiten.KeyC},
+	ActionMoveToAttack:  {Primary: ebiten.KeySpace},
 
 	// Combat Spells
 	ActionSpell1: {Primary: ebiten.Key1},
@@ -162,6 +168,8 @@ func GetAllActionIDs() []ActionID {
 		ActionInventory,
 		ActionHeroPanel,
 		ActionInteract,
+		ActionTargetNearest,
+		ActionMoveToAttack,
 		ActionTogglePause,
 		ActionShowHUD,
 		ActionToggleKeybind,
@@ -188,6 +196,8 @@ func GetActionLabel(action ActionID) string {
 		ActionSpell5:        "Spell 5 - Fractal Bloom",
 		ActionSpell6:        "Spell 6 - Fractal Canopy",
 		ActionInteract:      "Interact",
+		ActionTargetNearest: "Target Nearest Enemy",
+		ActionMoveToAttack:  "Move to Attack",
 		ActionInventory:     "Open Inventory",
 		ActionHeroPanel:     "Toggle Hero Panel",
 		ActionTogglePause:   "Pause Game",

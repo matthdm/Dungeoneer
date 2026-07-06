@@ -1,0 +1,12 @@
+{
+  "name": "Tank Mage — Floor 5",
+  "class": "mage",
+  "artifacts": ["wardens_medallion", "stone_skin_idol", "arcane_tempo_ring", "lightning", "voidweave_wraps", "soul_harvest", ""],
+  "stats": { "Strength": 4, "Dexterity": 4, "Vitality": 18, "Intelligence": 14, "Luck": 4 },
+  "floor": 3,
+  "biome": "arcane_halls",
+  "enemy_pool": ["melee", "ranged", "elite"],
+  "iterations": 1000,
+  "skill_rotation": ["slot_1", "slot_4", "auto", "auto", "auto", "auto", "auto", "auto", "auto", "auto"],
+  "stat_priority": ["vit", "int", "int"]
+}

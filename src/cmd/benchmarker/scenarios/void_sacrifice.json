@@ -1,0 +1,12 @@
+{
+  "name": "Void Sacrifice — Floor 7",
+  "class": "knight",
+  "artifacts": ["blood_price", "ashbound_chain", "soul_harvest", "stone_skin_idol", "hollow_sigil", "marrow_ring", "grave_reaper"],
+  "stats": { "Strength": 8, "Dexterity": 8, "Vitality": 10, "Intelligence": 4, "Luck": 4 },
+  "floor": 4,
+  "biome": "void_halls",
+  "enemy_pool": ["melee", "ranged", "elite"],
+  "iterations": 1000,
+  "skill_rotation": ["slot_2", "slot_1", "auto", "auto", "auto", "slot_1", "auto", "slot_7", "auto", "auto", "auto", "auto"],
+  "stat_priority": ["vit", "vit", "str"]
+}

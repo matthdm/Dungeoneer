@@ -1,0 +1,12 @@
+{
+  "name": "Nature Sustain — Floor 4",
+  "class": "knight",
+  "artifacts": ["wardens_medallion", "stone_skin_idol", "thornweave_vest", "lifedrinker_robe", "voidweave_wraps", "soul_harvest", ""],
+  "stats": { "Strength": 6, "Dexterity": 4, "Vitality": 20, "Intelligence": 4, "Luck": 4 },
+  "floor": 4,
+  "biome": "dungeon",
+  "enemy_pool": ["melee", "ranged", "elite"],
+  "iterations": 1000,
+  "skill_rotation": ["slot_1", "auto", "auto", "auto", "auto", "auto", "auto", "auto", "auto", "auto"],
+  "stat_priority": ["vit", "vit", "str"]
+}

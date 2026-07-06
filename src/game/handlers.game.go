@@ -208,6 +208,12 @@ func (g *Game) handleClicks() {
 			}
 		}
 
+		// Notify combat adapter of the click position (cartesian tile-unit space).
+		// LegacyCombatAdapter no-ops this; NewCombatAdapter uses it for targeting.
+		if g.CombatAdapt != nil {
+			g.CombatAdapt.HandleTargetSelect(g, tx, ty)
+		}
+
 		// Primary attack dispatch — ability determines attack type.
 		g.handlePrimaryAttack(tx, ty, cx, cy)
 	}
@@ -267,14 +273,20 @@ func (g *Game) handleLevelHotkeys() {
 			g.HeroPanel.Toggle()
 		}
 	}
-	// Spell casting: dispatch through player's SpellSlots (ability-gated).
+	// Skill activation: route through the active combat adapter.
+	// LegacyCombatAdapter.HandleSkillActivation delegates to castSpellSlot;
+	// NewCombatAdapter queues the action for the new engine.
 	spellActions := []controls.ActionID{
 		controls.ActionSpell1, controls.ActionSpell2, controls.ActionSpell3,
 		controls.ActionSpell4, controls.ActionSpell5, controls.ActionSpell6,
 	}
 	for i, action := range spellActions {
 		if g.isActionJustPressed(action) && g.player != nil {
-			g.castSpellSlot(i)
+			if g.CombatAdapt != nil {
+				g.CombatAdapt.HandleSkillActivation(g, i)
+			} else {
+				g.castSpellSlot(i)
+			}
 		}
 	}
 	if g.State == StateGameOver && ebiten.IsKeyPressed(ebiten.KeyV) {
@@ -341,6 +353,7 @@ func (g *Game) handleInputPlaying() {
 	g.handleHoverTile()
 	g.handleDoorInteract()
 	g.handleClicks()
+	g.handleCombatAdapterInput()
 	g.handleLevelHotkeys()
 }
 
@@ -511,6 +524,24 @@ func (g *Game) handleDash() {
 			dirY = g.player.LastMoveDirY
 		}
 		g.player.StartDash(dirX, dirY)
+	}
+}
+
+func (g *Game) handleCombatAdapterInput() {
+	if g.CombatAdapt == nil {
+		return
+	}
+
+	// C key — target nearest enemy.
+	if g.isActionJustPressed(controls.ActionTargetNearest) {
+		g.CombatAdapt.HandleTargetNearest(g)
+	}
+
+	// Space — move to target and begin auto-attacking.
+	// Only fires during gameplay, not when menus/dialogues are blocking input
+	// (those states return early in handleInputPlaying before we get here).
+	if g.isActionJustPressed(controls.ActionMoveToAttack) {
+		g.CombatAdapt.HandleMoveToAttack(g)
 	}
 }
 

@@ -17,6 +17,7 @@ import (
 	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 // loadHub loads the hand-crafted hub level from levels/hub.json.
@@ -368,9 +369,7 @@ func (g *Game) StartRun() {
 	}
 	g.RunState = NewRunState(DefaultRunFloors)
 	g.seedNPCPhaseFlags()
-	g.IsInHub = false
-	g.FullBright = false
-	g.startFloor(1)
+	g.beginRunWithLoadout()
 }
 
 // seedNPCPhaseFlags initialises per-run QuestFlags from MetaSave at run start.
@@ -969,4 +968,91 @@ func (g *Game) openEchoShrine() {
 		g.openEchoShrine() // refresh
 	}
 	g.EchoShrine.Open(entries)
+}
+
+// updateHubInput handles hub-only keyboard shortcuts that are not tied to
+// proximity interactions. Called from updatePlaying when g.IsInHub is true.
+func (g *Game) updateHubInput() {
+	// L — open artifact library.
+	if inpututil.IsKeyJustPressed(ebiten.KeyL) {
+		if g.ArtifactLibrary != nil && g.Meta != nil {
+			g.ArtifactLibrary.Open(g.Meta.ArtifactCollection)
+		}
+	}
+}
+
+// beginRunWithLoadout shows the artifact loadout screen before starting a run.
+// When the player confirms, the chosen loadout is saved to MetaSave, the
+// artifact abilities are equipped, and the first floor is generated.
+// If the loadout UI is unavailable it falls back to starting immediately.
+func (g *Game) beginRunWithLoadout() {
+	if g.ArtifactLoadout == nil || g.Meta == nil {
+		// Fallback: start without loadout screen.
+		g.IsInHub = false
+		g.FullBright = false
+		g.startFloor(1)
+		return
+	}
+	g.ArtifactLoadout.Open(g.Meta.ArtifactLoadout, g.Meta.ArtifactCollection)
+	g.ArtifactLoadout.OnConfirm = func(loadout [7]string) {
+		g.Meta.ArtifactLoadout = loadout
+		SaveMeta(g.Meta)
+		g.IsInHub = false
+		g.FullBright = false
+		g.equipArtifactLoadout()
+		g.startFloor(1)
+	}
+	g.ArtifactLoadout.OnCancel = func() {
+		// Player cancelled — stay in hub. RunState was already created; reset it.
+		g.RunState = nil
+	}
+}
+
+// equipArtifactLoadout reads g.Meta.ArtifactLoadout and populates the player's
+// SpellSlots directly from the chosen artifacts. Called immediately before
+// startFloor(1) so the HUD reflects the chosen build from floor 1.
+//
+// Only artifacts with AbilitySlot == AbilitySlotSpell are placed into SpellSlots
+// (slots 0-5). Dash/grapple/primary artifacts activate the relevant ability flag
+// but do not occupy a spell bar slot, matching the behaviour of RefreshAbilities.
+func (g *Game) equipArtifactLoadout() {
+	if g.player == nil || g.Meta == nil {
+		return
+	}
+	if g.player.Abilities == nil {
+		g.player.Abilities = make(map[string]bool)
+	}
+	// Slot 6 is the elite artifact slot; all 7 indices are iterated.
+	for _, artifactID := range g.Meta.ArtifactLoadout {
+		if artifactID == "" {
+			continue
+		}
+		tmpl, ok := items.Registry[artifactID]
+		if !ok || !tmpl.IsArtifact || tmpl.GrantsAbility == "" {
+			continue
+		}
+		ability := tmpl.GrantsAbility
+		switch tmpl.AbilitySlot {
+		case items.AbilitySlotSpell:
+			// Avoid duplicates; cap at 6 spell slots.
+			found := false
+			for _, s := range g.player.SpellSlots {
+				if s == ability {
+					found = true
+					break
+				}
+			}
+			if !found && len(g.player.SpellSlots) < 6 {
+				g.player.SpellSlots = append(g.player.SpellSlots, ability)
+			}
+			g.player.Abilities[ability] = true
+		default:
+			// Dash, grapple, primary — just grant the ability flag.
+			g.player.Abilities[ability] = true
+		}
+	}
+	// Sync HUD spell slots so the bar is populated before the first frame.
+	if g.HUD != nil {
+		g.syncHUDSpellSlots()
+	}
 }

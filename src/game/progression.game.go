@@ -5,7 +5,11 @@ import (
 	"dungeoneer/entities"
 	"dungeoneer/items"
 	"dungeoneer/progression"
+	"math/rand/v2"
 )
+
+// echoRemnantRand is a package-level source for echo remnant drops.
+var echoRemnantRand = rand.New(rand.NewPCG(0, 0))
 
 // rollGoldDrop returns the gold amount for killing a monster of the given role on a given floor.
 func rollGoldDrop(role string, floor int) int {
@@ -52,6 +56,20 @@ func (g *Game) awardEXP(m *entities.Monster) {
 // handleMonsterDeath handles all consequences of a monster dying:
 // EXP, gold, kill count, on_kill item effects, and loot drop.
 func (g *Game) handleMonsterDeath(m *entities.Monster) {
+	// Echo entities skip normal XP/gold/loot. WickedEcho drops Remnants instead.
+	if m.IsEcho {
+		if m.Name == "Wicked Echo" && g.Meta != nil {
+			drop := 5 + echoRemnantRand.IntN(11) // 5–15 Remnants
+			g.Meta.Remnants += drop
+			g.Meta.TotalRemnants += drop
+			SaveMeta(g.Meta)
+			if g.Audio != nil {
+				g.Audio.PlaySFX(audio.SFXEnemyDeath)
+			}
+		}
+		return
+	}
+
 	g.awardEXP(m)
 	g.awardGold(m)
 	if g.RunState != nil && g.RunState.Active {

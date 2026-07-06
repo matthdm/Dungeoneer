@@ -40,11 +40,20 @@ func (g *Game) syncHUDSpellSlots() {
 	}
 }
 
-// abilityIcon returns the icon image for an ability, looking up the first item
-// in the registry that grants this ability. Falls back to SpriteMap.
+// abilityIcon returns the icon image for an ability.
+// It checks three sources in order:
+//  1. Items whose GrantsAbility matches the ability ID (normal equipment path).
+//  2. Items whose ID matches directly (dev builds write artifact IDs to SpellSlots).
+//  3. Named tome fallbacks for legacy spells.
 func (g *Game) abilityIcon(abilityID string) *ebiten.Image {
 	for _, tmpl := range items.Registry {
 		if tmpl.GrantsAbility == abilityID && tmpl.Icon != nil {
+			return tmpl.Icon
+		}
+	}
+	// Artifact ID direct lookup (dev/benchmarker builds use artifact IDs in SpellSlots).
+	for _, tmpl := range items.Registry {
+		if tmpl.ID == abilityID && tmpl.Icon != nil {
 			return tmpl.Icon
 		}
 	}

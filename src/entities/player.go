@@ -116,6 +116,12 @@ type Player struct {
 	// Melee combo state.
 	ComboHit   int     // current combo hit (0, 1, 2)
 	ComboTimer float64 // time remaining in combo window (resets on hit)
+
+	// Combat engine defensive state — set each frame by NewCombatAdapter before
+	// monster attacks execute. Read in TakeDamage to enforce engine protections.
+	IsInvulnerable    bool // shadow invulnerability (shroud_cloak); TakeDamage no-ops
+	DamageReductionPct int  // 0–100; % incoming DR from taunt (wardens_medallion)
+	IncomingDamageCap  int  // 0 = no cap; >0 = max dmg per hit (stone_skin_idol)
 }
 
 // Pos returns the player's current world position as a WorldPos.
@@ -229,6 +235,13 @@ func (p *Player) Draw(screen *ebiten.Image, tileSize int, camX, camY, camScale, 
 	op.GeoM.Translate(0, -verticalOffset+p.BobOffset)
 	if p.IsDashing {
 		op.ColorScale.Scale(1.3, 1.3, 1.3, 1)
+	}
+	// Shadow invulnerability: blue-tinted, semi-transparent to signal invuln window.
+	if p.IsInvulnerable {
+		op.ColorScale.SetR(0.4)
+		op.ColorScale.SetG(0.5)
+		op.ColorScale.SetB(1.3)
+		op.ColorScale.ScaleAlpha(0.65)
 	}
 
 	// 3) Flip if facing right
@@ -596,6 +609,20 @@ func (p *Player) Heal(hp int) {
 func (p *Player) TakeDamage(dmg int) {
 	if dmg <= 0 {
 		return
+	}
+
+	// Combat engine guards (new engine only; zero-values are safe no-ops).
+	if p.IsInvulnerable {
+		return
+	}
+	if p.IncomingDamageCap > 0 && dmg > p.IncomingDamageCap {
+		dmg = p.IncomingDamageCap
+	}
+	if p.DamageReductionPct > 0 {
+		dmg = int(float64(dmg) * (1.0 - float64(p.DamageReductionPct)/100.0))
+		if dmg < 1 {
+			dmg = 1
+		}
 	}
 
 	// 1) Item passive reductions.

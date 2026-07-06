@@ -1,0 +1,12 @@
+{
+  "name": "Burn DoT — Floor 4",
+  "class": "knight",
+  "artifacts": ["ironbreaker_gauntlets", "ember_mantle", "arcane_tempo_ring", "resonance_crystal", "arcane_tempo_belt", "soul_harvest", ""],
+  "stats": { "Strength": 8, "Dexterity": 8, "Vitality": 10, "Intelligence": 14, "Luck": 6 },
+  "floor": 4,
+  "biome": "dungeon",
+  "enemy_pool": ["melee", "ranged", "elite"],
+  "iterations": 1000,
+  "skill_rotation": ["slot_1", "auto", "auto", "auto"],
+  "stat_priority": ["str", "str", "vit"]
+}
