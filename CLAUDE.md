@@ -8,7 +8,7 @@ YOU MAY NOT COMMIT ANYTHING EVER, ONLY MATTHEW MORALES WILL COMMIT.
 
 Dungeoneer is a 2D isometric dark-fantasy roguelike in Go on Ebiten v2.8. Real-time tile combat, procedurally generated floors, item-gated abilities, and NPCs that ascend into the run's final boss. Single-player, offline. Source lives in `src/` (~24K lines of Go); the `dungeoneer` Go module sits there too.
 
-## Current state — last updated 2026-06-02
+## Current state — last updated 2026-09-13
 
 - **Phases 1, 2, 3: complete.** Run loop, combat depth (6 enemy roles, status effects, multi-phase boss), NPCs & dialogue (room-tag placement, branching JSON trees, Varn arc through phase 2 + boss).
 - **Phase 4: complete.** Ability gating, 13 ability items, stat modifiers, gold economy, item quality tiers, loot refinement, chest variants, RunState serialization, mid-run save/load.
@@ -18,7 +18,12 @@ Dungeoneer is a 2D isometric dark-fantasy roguelike in Go on Ebiten v2.8. Real-t
   - 6A: MetaSave v1 (`CompletedRuns`, `TotalDeaths`, `TotalRemnants`, `LoreUnlocked`, `HubState`, `Upgrades`, `Betrayed`), milestone system (4 milestones), toast UI.
   - 6B: `meta_flag_gte/equals` conditions, `SelectTree` NG+ branching (betrayed → ng{N} → phase), `varn_ng1/2/3.json` + `varn_betrayed.json` with new quest content, `set_betrayed` cross-run persistence.
   - 6C: Lore registry, 15 lore entries in `data/lore.json`, `unlock_lore` action, lore library UI, hub lore pedestal (milestone-gated), `NPC.OnInteract`.
-- **Phases 7–10: not started.** Echoes, living dungeon AI, item sets, hub shop/upgrades, polish, additional NPCs, Abaddon.
+- **Phase 7: complete.** 7A Echoes of Self (recorder, Wicked/Hero/Memory echo types, ghost tint, Echo Shrine UI). 7B Living Dungeon AI (BehaviorTracker, PlayerProfile, DungeonMood inference, adaptive GenParams, dungeon whispers).
+- **CR1 Combat Overhaul: complete (2026-07-06).** A parallel, non-phase-numbered rewrite — see `plans/COMPLETED/CR1-combat-overhaul.md`. Full GW1-style artifact-driven combat: decoupled `src/combat/` engine (zero Ebiten deps), 23 artifacts across 6 domains, 14 verified builds (≥90% survival), standalone benchmarker, artifact library + loadout UI, bespoke skill visuals. Runs behind `src/dev_settings.json` → `use_legacy_combat` toggle; both paths are safe. This was the real focus of the last several sessions even though `plans/_QUEUE.md` had marked it (and moved past it) prematurely on 2026-06-29 — the queue has now been corrected to reflect its true 2026-07-06 completion.
+- **Active: Void Rift VFX pilot (in progress, ~1/7 tasks).** A new Kage-shader visual-effects pipeline, piloted on two new CR1 void-domain artifacts (`void_rift_catalyst`, `voidbound_pendant`) rather than retrofitted onto existing spells. Spec + task-by-task implementation plan live under `docs/superpowers/specs/2026-07-26-void-rift-vfx-pilot-design.md` and `docs/superpowers/plans/2026-07-26-void-rift-vfx-pilot.md` (tracked as the Active plan in `plans/_QUEUE.md` despite the nonstandard location). Only Task 1 (`src/spells/vfx_shaders.go` — shader primitives) is done; the artifacts are not yet registered in `src/combat/skills.go`/`src/items/load.go`, no visuals are wired into the game layer, and no dev-menu test entry exists.
+- **Phases 8–10: not started.** Item sets, hub shop/upgrades, polish, additional NPCs, Abaddon. (`8A-item-sets.md` was briefly and incorrectly marked Active in the queue while still in drafted-only state; corrected — it's queued, not started.)
+
+> **Housekeeping note:** as of 2026-09-13, everything since commit `b02d69b` (2026-07-05) — the rest of the CR1 playtest-fix work plus the entire Void Rift pilot — was sitting uncommitted in the working tree. Verify a clean commit exists before starting new work; don't assume `git log` reflects the true state of `src/`.
 
 ## Where to look (by task type)
 

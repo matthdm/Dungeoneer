@@ -1,6 +1,6 @@
 {
-  "remnants": 1204,
-  "run_count": 100,
+  "remnants": 1218,
+  "run_count": 103,
   "best_floor": 7,
   "total_kills": 195,
   "npc_meta": {
@@ -38,7 +38,7 @@
   "version": 1,
   "completed_runs": 1,
   "total_deaths": 1,
-  "total_remnants": 448,
+  "total_remnants": 462,
   "hub_state": {
     "echo_shrine_unlocked": true,
     "lore_library_unlocked": true,

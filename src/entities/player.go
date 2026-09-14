@@ -108,6 +108,11 @@ type Player struct {
 	SpellSlots []string
 	Abilities  map[string]bool
 
+	// LoadoutAbilities holds abilities granted by the pre-run artifact loadout.
+	// They have no backing equipped item, so RefreshAbilities re-applies them
+	// after rebuilding from equipment (otherwise any equip wipes the build).
+	LoadoutAbilities []string
+
 	// Ability locking: used by the Varn chain_seal attack.
 	// LockedAbilities maps ability ID → remaining lock duration (seconds).
 	LockedAbilities    map[string]float64
@@ -857,6 +862,32 @@ func (p *Player) RefreshAbilities() {
 		}
 	}
 
+	// Re-apply loadout-granted abilities — they come from the pre-run artifact
+	// loadout, not from worn items, and must survive equipment changes.
+	for _, ability := range p.LoadoutAbilities {
+		p.Abilities[ability] = true
+		slot := items.AbilitySlotSpell
+		for _, tmpl := range items.Registry {
+			if tmpl.GrantsAbility == ability {
+				slot = tmpl.AbilitySlot
+				break
+			}
+		}
+		if slot != items.AbilitySlotSpell {
+			continue // dash/grapple/primary: flag only, no bar slot
+		}
+		found := false
+		for _, s := range p.SpellSlots {
+			if s == ability {
+				found = true
+				break
+			}
+		}
+		if !found && len(p.SpellSlots) < 6 {
+			p.SpellSlots = append(p.SpellSlots, ability)
+		}
+	}
+
 	// Grant abilities from active set bonuses.
 	activeSets := items.RecalculateSetBonuses(p.GetEquippedItemIDs(), SetBonusQuestState.VarnDefeated)
 	for _, s := range activeSets {
@@ -872,6 +903,7 @@ func (p *Player) RefreshAbilities() {
 func (p *Player) ClearAbilities() {
 	p.Abilities = map[string]bool{}
 	p.SpellSlots = nil
+	p.LoadoutAbilities = nil
 }
 
 // EquipStarter equips class-appropriate starting items and refreshes abilities.

@@ -24,9 +24,10 @@ type ArcaneBolt struct {
 	trailIdx int
 	trailLen int
 
-	Impact   bool
-	Finished bool
-	age      float64
+	Impact     bool
+	Finished   bool
+	VisualOnly bool // engine owns damage; bolt only animates and shows impact
+	age        float64
 }
 
 func NewArcaneBolt(info SpellInfo, startX, startY, targetX, targetY float64) *ArcaneBolt {

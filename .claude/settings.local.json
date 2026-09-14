@@ -16,7 +16,19 @@
       "WebFetch(domain:wiki.guildwars.com)",
       "PowerShell(cd C:\\\\Github\\\\Dungeoneer\\\\src; \\(Select-String -Path \"items\\\\load.go\" -Pattern \"RegisterItem\"\\).Count)",
       "Bash(.\\\\benchmarker.exe)",
-      "Bash(go build *)"
+      "Bash(go build *)",
+      "PowerShell(go run ./cmd/benchmarker --scenario cmd/benchmarker/scenarios/iron_flurry.json)",
+      "PowerShell(go run ./cmd/benchmarker --scenario cmd/benchmarker/scenarios/arcane_farmer.json)",
+      "PowerShell(go run ./cmd/benchmarker --scenario cmd/benchmarker/scenarios/perma_shadow.json)",
+      "PowerShell(go run ./cmd/benchmarker --scenario cmd/benchmarker/scenarios/the_55.json)",
+      "PowerShell(go test ./combat/... -count=1)",
+      "Bash(curl -s -A \"Mozilla/5.0\" \"https://wiki.guildwars.com/wiki/Gallery_of_high_resolution_skill_icons\" -o /tmp/gw_gallery.html)",
+      "Read(//tmp/**)",
+      "Read(//c//**)",
+      "Bash(xargs grep -n \"^func \")",
+      "Bash(curl -s -A \"Mozilla/5.0\" \"https://wiki.guildwars.com/wiki/Gallery_of_high_resolution_skill_icons\" -o \"C:/Users/matth/AppData/Local/Temp/claude/c--Github-Dungeoneer/db54e510-9e79-4fff-bc9a-0196097fb237/scratchpad/gw_gallery.html\")",
+      "Bash(python3 -c ' *)",
+      "Bash(python3 download_icons.py)"
     ]
   }
 }

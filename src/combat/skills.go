@@ -45,6 +45,11 @@ type ArtifactEffect struct {
 	// hollow_sigil routing
 	VoidCostsHP bool // hollow_sigil: void-domain skill costs HP instead of mana
 
+	// ManaCost is deducted on activation when the state models mana
+	// (PlayerMaxMana > 0). Sims that don't populate mana are unaffected,
+	// so benchmark results stay comparable.
+	ManaCost int
+
 	// Spell-type fields — registered game spells (fireball, lightning, etc.).
 	// Visuals stay in spells.game.go; the engine owns damage calculation.
 	IsProjectile      bool    // single-target projectile (fireball, arcane_bolt)
@@ -156,40 +161,42 @@ var ArtifactEffects = map[string]ArtifactEffect{
 	},
 
 	// ── Game spells (registered for engine damage; visuals stay in spells.game.go) ──
+	// Mana costs match the legacy spellManaCost table so the HUD's cost display
+	// stays truthful whichever combat path is live.
 	"fireball": {
 		Cooldown: 3.0, Domain: "flame", IsProjectile: true, AOERadius: 2.0,
-		SpellDamageBase: 25, SpellDamagePerINT: 2.0,
+		SpellDamageBase: 25, SpellDamagePerINT: 2.0, ManaCost: 8,
 	},
 	"arcane_bolt": {
 		Cooldown: 0.8, Domain: "arcane", IsProjectile: true,
-		SpellDamageBase: 12, SpellDamagePerINT: 1.5,
+		SpellDamageBase: 12, SpellDamagePerINT: 1.5, ManaCost: 2,
 	},
 	"arcane_spray": {
 		Cooldown: 1.5, Domain: "arcane", AOERadius: 2.0,
-		SpellDamageBase: 8, SpellDamagePerINT: 1.0,
+		SpellDamageBase: 8, SpellDamagePerINT: 1.0, ManaCost: 5,
 	},
 	"lightning": {
 		Cooldown: 2.0, Domain: "arcane", IsChain: true, ChainCount: 3,
-		SpellDamageBase: 20, SpellDamagePerINT: 1.5,
+		SpellDamageBase: 20, SpellDamagePerINT: 1.5, ManaCost: 6,
 	},
 	// AoE fields: SpellDamageBase is DPS; engine applies DPS × DurationSec as one hit.
 	"lightning_storm": {
 		Cooldown: 6.0, Domain: "arcane", IsAOEField: true, DurationSec: 3.0,
-		SpellDamageBase: 15, SpellDamagePerINT: 1.0,
+		SpellDamageBase: 15, SpellDamagePerINT: 1.0, ManaCost: 25,
 	},
 	"fractal_bloom": {
 		Cooldown: 3.0, Domain: "nature", AOERadius: 2.0,
-		SpellDamageBase: 18, SpellDamagePerINT: 1.0,
+		SpellDamageBase: 18, SpellDamagePerINT: 1.0, ManaCost: 20,
 	},
 	// fractal_canopy: nature AoE field, 4s; total dmg = DPS × duration
 	"fractal_canopy": {
 		Cooldown: 8.0, Domain: "nature", IsAOEField: true, DurationSec: 4.0,
-		SpellDamageBase: 10, SpellDamagePerINT: 0.8,
+		SpellDamageBase: 10, SpellDamagePerINT: 0.8, ManaCost: 15,
 	},
 	// chaos_ray: high-damage void beam (elite-tier)
 	"chaos_ray": {
 		Cooldown: 5.0, Domain: "void",
-		SpellDamageBase: 40, SpellDamagePerINT: 2.5,
+		SpellDamageBase: 40, SpellDamagePerINT: 2.5, ManaCost: 12,
 	},
 	// slash_combo: rapid melee strikes — knight's active skill, STR-scaling
 	"slash_combo": {

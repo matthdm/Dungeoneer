@@ -5,18 +5,18 @@
     "total_floors": 7,
     "biomes": [
       "crypt",
-      "brick",
       "gallery",
+      "crypt",
       "brick",
-      "gallery",
       "moss",
-      "gallery"
+      "brick",
+      "crypt"
     ],
     "kill_count": 0,
     "floors_cleared": 0,
     "remnant_earned": 0,
     "gold_earned": 0,
-    "start_time": "2026-07-05T21:17:29.5508717-07:00",
+    "start_time": "2026-07-06T17:51:45.4256266-07:00",
     "quest_flags": {
       "forgotten_soldier_met": 1,
       "hollow_monk_met": 1,
@@ -32,15 +32,15 @@
     "events_seen": [],
     "enemy_intros_seen": {}
   },
-  "floor_seed": 8322255171164050361,
+  "floor_seed": 4849717631373156911,
   "player": {
-    "tile_x": 61,
-    "tile_y": 48,
-    "interp_x": 61,
-    "interp_y": 48,
+    "tile_x": 17,
+    "tile_y": 43,
+    "interp_x": 17,
+    "interp_y": 43,
     "hp": 105,
     "max_hp": 105,
-    "mana": 55,
+    "mana": 49,
     "max_mana": 55,
     "inventory": [
       [
@@ -149,72 +149,40 @@
   },
   "monsters": [
     {
-      "tile_x": 40,
-      "tile_y": 42,
-      "hp": 30,
-      "max_hp": 30,
+      "tile_x": 45,
+      "tile_y": 56,
+      "hp": 20,
+      "max_hp": 20,
       "level": 1,
-      "role": "melee"
+      "role": "ranged"
     },
     {
-      "tile_x": 59,
-      "tile_y": 24,
-      "hp": 30,
-      "max_hp": 30,
+      "tile_x": 45,
+      "tile_y": 55,
+      "hp": 20,
+      "max_hp": 20,
       "level": 1,
-      "role": "melee"
-    },
-    {
-      "tile_x": 59,
-      "tile_y": 59,
-      "hp": 30,
-      "max_hp": 30,
-      "level": 1,
-      "role": "melee"
-    },
-    {
-      "tile_x": 12,
-      "tile_y": 39,
-      "hp": 30,
-      "max_hp": 30,
-      "level": 1,
-      "role": "melee"
-    },
-    {
-      "tile_x": 44,
-      "tile_y": 5,
-      "hp": 30,
-      "max_hp": 30,
-      "level": 1,
-      "role": "melee"
-    },
-    {
-      "tile_x": 43,
-      "tile_y": 2,
-      "hp": 30,
-      "max_hp": 30,
-      "level": 1,
-      "role": "melee"
-    },
-    {
-      "tile_x": 52,
-      "tile_y": 10,
-      "hp": 30,
-      "max_hp": 30,
-      "level": 1,
-      "role": "melee"
-    },
-    {
-      "tile_x": 49,
-      "tile_y": 10,
-      "hp": 30,
-      "max_hp": 30,
-      "level": 1,
-      "role": "melee"
+      "role": "ranged"
     },
     {
       "tile_x": 31,
-      "tile_y": 33,
+      "tile_y": 13,
+      "hp": 30,
+      "max_hp": 30,
+      "level": 1,
+      "role": "melee"
+    },
+    {
+      "tile_x": 22,
+      "tile_y": 55,
+      "hp": 20,
+      "max_hp": 20,
+      "level": 1,
+      "role": "ranged"
+    },
+    {
+      "tile_x": 25,
+      "tile_y": 48,
       "hp": 30,
       "max_hp": 30,
       "level": 1,
@@ -222,27 +190,75 @@
     },
     {
       "tile_x": 26,
-      "tile_y": 31,
+      "tile_y": 49,
       "hp": 30,
       "max_hp": 30,
       "level": 1,
       "role": "melee"
     },
     {
-      "tile_x": 44,
-      "tile_y": 27,
-      "hp": 20,
-      "max_hp": 20,
+      "tile_x": 52,
+      "tile_y": 12,
+      "hp": 30,
+      "max_hp": 30,
       "level": 1,
-      "role": "ranged"
+      "role": "melee"
     },
     {
-      "tile_x": 42,
-      "tile_y": 29,
-      "hp": 20,
-      "max_hp": 20,
+      "tile_x": 40,
+      "tile_y": 43,
+      "hp": 30,
+      "max_hp": 30,
       "level": 1,
-      "role": "ranged"
+      "role": "melee"
+    },
+    {
+      "tile_x": 4,
+      "tile_y": 18,
+      "hp": 30,
+      "max_hp": 30,
+      "level": 1,
+      "role": "melee"
+    },
+    {
+      "tile_x": 25,
+      "tile_y": 8,
+      "hp": 30,
+      "max_hp": 30,
+      "level": 1,
+      "role": "melee"
+    },
+    {
+      "tile_x": 50,
+      "tile_y": 54,
+      "hp": 30,
+      "max_hp": 30,
+      "level": 1,
+      "role": "melee"
+    },
+    {
+      "tile_x": 50,
+      "tile_y": 55,
+      "hp": 30,
+      "max_hp": 30,
+      "level": 1,
+      "role": "melee"
+    },
+    {
+      "tile_x": 41,
+      "tile_y": 33,
+      "hp": 30,
+      "max_hp": 30,
+      "level": 1,
+      "role": "melee"
+    },
+    {
+      "tile_x": 36,
+      "tile_y": 61,
+      "hp": 50,
+      "max_hp": 50,
+      "level": 1,
+      "role": "melee"
     }
   ]
 }

@@ -32,6 +32,7 @@ const (
 	EventKillMomentum EventType = "kill_momentum"
 	EventHPSpent      EventType = "hp_spent"  // blood_price, hollow_sigil; Value = HP deducted
 	EventLevelUp      EventType = "level_up"  // Value = new level; Tag = stat points e.g. "str str vit"
+	EventManaChanged  EventType = "mana_changed" // Value = mana spent this activation
 )
 
 // DefaultCombatEngine is the concrete implementation of CombatEngine.
@@ -60,15 +61,34 @@ const (
 	maxMomentumPct     = 0.25  // cap at 25% total reduction
 )
 
+// scanArtifacts calls fn for every registered artifact the player carries —
+// active slots first, then slot-less passives from worn equipment. fn returns
+// false to stop the scan early.
+func scanArtifacts(state *CombatState, fn func(id string, eff ArtifactEffect) bool) {
+	for _, id := range state.EquippedArtifacts {
+		if eff, ok := ArtifactEffects[id]; ok {
+			if !fn(id, eff) {
+				return
+			}
+		}
+	}
+	for _, id := range state.PassiveArtifacts {
+		if eff, ok := ArtifactEffects[id]; ok {
+			if !fn(id, eff) {
+				return
+			}
+		}
+	}
+}
+
 // applyKillPassives checks equipped artifacts for on-kill passives (e.g. soul_harvest)
 // and applies their effects. Call this immediately after any kill event is recorded.
 // Multiple heal-on-kill artifacts each contribute — there is no break.
 func applyKillPassives(state *CombatState, events *[]Event) {
 	totalHeal := 0
-	for _, id := range state.EquippedArtifacts {
-		eff, ok := ArtifactEffects[id]
-		if !ok || !eff.IsPassive {
-			continue
+	scanArtifacts(state, func(_ string, eff ArtifactEffect) bool {
+		if !eff.IsPassive {
+			return true
 		}
 		if eff.HealOnKillPct > 0 {
 			healAmt := int(float64(state.PlayerMaxHP) * float64(eff.HealOnKillPct) / 100.0)
@@ -90,7 +110,8 @@ func applyKillPassives(state *CombatState, events *[]Event) {
 			}
 			totalHeal += healAmt
 		}
-	}
+		return true
+	})
 	if totalHeal > 0 {
 		state.PlayerHP += totalHeal
 		if state.PlayerHP > state.PlayerMaxHP {
@@ -117,8 +138,8 @@ func recordKill(state *CombatState, events *[]Event) {
 // equipped artifacts. Call once per damage event to apply marrow_ring, blood_vow_amulet, etc.
 func passiveDmgBonusMult(state *CombatState) float64 {
 	bonus := 0
-	for _, id := range state.EquippedArtifacts {
-		if eff, ok := ArtifactEffects[id]; ok && eff.IsPassive {
+	scanArtifacts(state, func(_ string, eff ArtifactEffect) bool {
+		if eff.IsPassive {
 			bonus += eff.DamageBonusPct
 			if eff.DamageBonusLowHPPct > 0 && state.PlayerHP*2 < state.PlayerMaxHP {
 				bonus += eff.DamageBonusLowHPPct
@@ -127,7 +148,8 @@ func passiveDmgBonusMult(state *CombatState) float64 {
 				bonus += eff.DoTDmgBonusPct * state.ActiveDoTCount
 			}
 		}
-	}
+		return true
+	})
 	return 1.0 + float64(bonus)/100.0
 }
 
@@ -188,19 +210,63 @@ func (e *DefaultCombatEngine) Tick(state CombatState, actions []Action) (CombatS
 					break // blink blocked
 				}
 			}
+			effect, hasEffect := ArtifactEffects[artifactID]
+			hasLiveTarget := state.HasTarget && !state.TargetIsDead
+
+			// Melee-reach skills (weapon-multiplier strikes and executes) need a
+			// live target in attack range; ranged spells and self-buffs do not.
+			if hasEffect && (effect.DamageMultiplier > 0 || effect.IsExecute) &&
+				!effect.IsBlinkStrike && // blink is a gap-closer: usable from range
+				(!hasLiveTarget || !state.TargetInRange) {
+				break
+			}
+
+			// Mana: enforced only when the state models mana (PlayerMaxMana > 0),
+			// so simulations without a mana model are unaffected. hollow_sigil
+			// void skills pay HP instead (charged in the VoidCostsHP block below).
+			if hasEffect && effect.ManaCost > 0 && state.PlayerMaxMana > 0 {
+				voidPaysHP := false
+				if effect.Domain == "void" && effect.HPCostPct == 0 {
+					scanArtifacts(&state, func(_ string, eqEff ArtifactEffect) bool {
+						if eqEff.VoidCostsHP {
+							voidPaysHP = true
+							return false
+						}
+						return true
+					})
+				}
+				if !voidPaysHP {
+					cost := effect.ManaCost
+					if state.ManaCostReductionPct > 0 {
+						cost = int(float64(cost) * (1.0 - float64(state.ManaCostReductionPct)/100.0))
+						if cost < 0 {
+							cost = 0
+						}
+					}
+					if state.PlayerMana < cost {
+						break // not enough mana — skill does not fire
+					}
+					if cost > 0 {
+						state.PlayerMana -= cost
+						events = append(events, Event{Type: EventManaChanged, Value: cost, Tag: artifactID})
+					}
+				}
+			}
+
 			// Determine cooldown from registry; fall back to stub.
 			cd := skillStubCooldown
-			if effect, ok := ArtifactEffects[artifactID]; ok {
+			if hasEffect {
 				cd = effect.Cooldown
 			}
 			state.ArtifactCooldowns[idx] = cd
 			events = append(events, Event{
 				Type: EventSkillFired,
 				Tag:  artifactID,
+				X:    a.TargetX,
+				Y:    a.TargetY,
 			})
 
 			// Apply skill effects.
-			effect, hasEffect := ArtifactEffects[artifactID]
 			if hasEffect {
 				// Duration modifier from SkillDurationPct
 				durationMult := 1.0 + float64(state.SkillDurationPct)/100.0
@@ -230,7 +296,7 @@ func (e *DefaultCombatEngine) Tick(state CombatState, actions []Action) (CombatS
 						}
 					}
 				}
-				if effect.SurgeDmgPerCooldown > 0 {
+				if effect.SurgeDmgPerCooldown > 0 && hasLiveTarget {
 					// Count how many artifact slots are currently on cooldown (excluding self)
 					cdCount := 0
 					for i, cd := range state.ArtifactCooldowns {
@@ -258,16 +324,18 @@ func (e *DefaultCombatEngine) Tick(state CombatState, actions []Action) (CombatS
 						state.PlayerHP = 1 // don't let it kill you
 					}
 					events = append(events, Event{Type: EventHPSpent, Value: hpCost})
-					dmg := effect.DamageFlat
-					events = append(events, Event{Type: EventDamageDealt, Value: dmg, X: state.TargetX, Y: state.TargetY})
-					state.TargetHP -= dmg
-					if state.TargetHP <= 0 && !state.TargetIsDead {
-						recordKill(&state, &events)
+					if hasLiveTarget {
+						dmg := effect.DamageFlat
+						events = append(events, Event{Type: EventDamageDealt, Value: dmg, X: state.TargetX, Y: state.TargetY})
+						state.TargetHP -= dmg
+						if state.TargetHP <= 0 && !state.TargetIsDead {
+							recordKill(&state, &events)
+						}
 					}
 				}
 				// Spell damage: registered game spells with INT/STR scaling.
 				// AoE fields use DurationSec as a time multiplier (total = DPS × secs).
-				if effect.SpellDamageBase > 0 || effect.SpellDamagePerINT > 0 || effect.SpellDamagePerSTR > 0 {
+				if (effect.SpellDamageBase > 0 || effect.SpellDamagePerINT > 0 || effect.SpellDamagePerSTR > 0) && hasLiveTarget {
 					spellDmg := effect.SpellDamageBase
 					spellDmg += int(float64(state.PlayerIntelligence) * effect.SpellDamagePerINT)
 					spellDmg += int(float64(state.PlayerStrength) * effect.SpellDamagePerSTR)
@@ -313,18 +381,18 @@ func (e *DefaultCombatEngine) Tick(state CombatState, actions []Action) (CombatS
 				// Skip skills that already pay an HP cost via HPCostPct (e.g. blood_price)
 				// to avoid double-charging the same activation.
 				if effect.Domain == "void" && effect.HPCostPct == 0 {
-					for _, equippedID := range state.EquippedArtifacts {
-						if eqEff, ok := ArtifactEffects[equippedID]; ok && eqEff.VoidCostsHP {
+					scanArtifacts(&state, func(_ string, eqEff ArtifactEffect) bool {
+						if eqEff.VoidCostsHP {
 							const voidHPCost = 10
-							hpCost := voidHPCost
-							state.PlayerHP -= hpCost
+							state.PlayerHP -= voidHPCost
 							if state.PlayerHP < 1 {
 								state.PlayerHP = 1
 							}
-							events = append(events, Event{Type: EventHPSpent, Value: hpCost, Tag: "hollow_sigil"})
-							break // one hollow_sigil is enough; don't double-charge
+							events = append(events, Event{Type: EventHPSpent, Value: voidHPCost, Tag: "hollow_sigil"})
+							return false // one hollow_sigil is enough; don't double-charge
 						}
-					}
+						return true
+					})
 				}
 			}
 		}
@@ -385,8 +453,8 @@ func (e *DefaultCombatEngine) Tick(state CombatState, actions []Action) (CombatS
 			state.AutoAttackTimer = effectiveInterval
 
 			// Check for passive burn from equipped artifacts (ember_mantle).
-			for _, id := range state.EquippedArtifacts {
-				if eff, ok := ArtifactEffects[id]; ok && eff.IsPassive && eff.BurnDPS > 0 {
+			scanArtifacts(&state, func(_ string, eff ArtifactEffect) bool {
+				if eff.IsPassive && eff.BurnDPS > 0 {
 					durationMult := 1.0 + float64(state.SkillDurationPct)/100.0
 					if !state.BurnActive {
 						state.ActiveDoTCount++ // new DoT stack started
@@ -394,14 +462,15 @@ func (e *DefaultCombatEngine) Tick(state CombatState, actions []Action) (CombatS
 					state.BurnActive = true
 					state.BurnDPS = eff.BurnDPS
 					state.BurnTimer = eff.BurnDurationSec * durationMult
-					break
+					return false
 				}
-			}
+				return true
+			})
 
 			// Check for shadow hit → shroud_cloak cooldown reset (shadows_return).
 			if state.InShadow {
-				for i, id := range state.EquippedArtifacts {
-					if eff, ok := ArtifactEffects[id]; ok && eff.ShroudCooldownReset > 0 {
+				scanArtifacts(&state, func(_ string, eff ArtifactEffect) bool {
+					if eff.ShroudCooldownReset > 0 {
 						// Find shroud_cloak slot and reduce its cooldown.
 						for j, sid := range state.EquippedArtifacts {
 							if sid == "shroud_cloak" && state.ArtifactCooldowns[j] > 0 {
@@ -411,9 +480,9 @@ func (e *DefaultCombatEngine) Tick(state CombatState, actions []Action) (CombatS
 								}
 							}
 						}
-						_ = i
 					}
-				}
+					return true
+				})
 			}
 
 			// Check kill from auto-attack.
@@ -489,8 +558,8 @@ func (e *DefaultCombatEngine) Tick(state CombatState, actions []Action) (CombatS
 
 	// 8. Passive HP drain (blood_vow_amulet: 5 HP/s).
 	// We accumulate fractional drain per tick to avoid int(5 * 1/60) = 0 truncation.
-	for _, id := range state.EquippedArtifacts {
-		if eff, ok := ArtifactEffects[id]; ok && eff.IsPassive && eff.HPDrainPerSec > 0 {
+	scanArtifacts(&state, func(_ string, eff ArtifactEffect) bool {
+		if eff.IsPassive && eff.HPDrainPerSec > 0 {
 			state.HPDrainAccum += float64(eff.HPDrainPerSec) * dt
 			if state.HPDrainAccum >= 1.0 {
 				drain := int(state.HPDrainAccum)
@@ -501,9 +570,20 @@ func (e *DefaultCombatEngine) Tick(state CombatState, actions []Action) (CombatS
 				}
 			}
 		}
-	}
+		return true
+	})
 
-	// 9. Tick burn DoT and emit damage.
+	// 9. Tick burn DoT and emit damage. A burn cannot outlive its target: if the
+	// target is gone (cleared or dead), drop the DoT so a future target doesn't
+	// inherit it.
+	if state.BurnActive && !state.HasTarget {
+		state.BurnActive = false
+		state.BurnDPS = 0
+		state.BurnTimer = 0
+		if state.ActiveDoTCount > 0 {
+			state.ActiveDoTCount--
+		}
+	}
 	if state.BurnActive && state.BurnTimer > 0 && !state.TargetIsDead {
 		state.BurnTimer -= dt
 		burnThisTick := int(float64(state.BurnDPS) * dt)

@@ -36,6 +36,12 @@ type CombatState struct {
 	EquippedArtifacts [7]string
 	ArtifactCooldowns [7]float64
 
+	// PassiveArtifacts holds artifact IDs whose passive effects apply but which
+	// occupy no activation slot — in the game these come from worn equipment
+	// (the spell bar only holds actives). Sims may leave this nil and put
+	// passives in EquippedArtifacts as before; the engine scans both.
+	PassiveArtifacts []string
+
 	DeltaTime float64
 
 	// Raw stat values — used by spell damage scaling (INT) and melee skill scaling (STR).
@@ -48,6 +54,7 @@ type CombatState struct {
 	CooldownReductionPct int  // -N% to all active skill cooldowns (e.g. 20 = -20%)
 	AttackSpeedPct       int  // +N% attack speed bonus (e.g. 15 = attacks 15% faster)
 	SkillDurationPct     int  // +N% to all skill/effect durations
+	ManaCostReductionPct int  // -N% to skill mana costs (item passives; 100 = free casting)
 
 	// Enemy capability fields — set when fighting a named EnemyBuild archetype.
 	// The Living Dungeon AI populates these before combat begins.

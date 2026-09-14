@@ -2,7 +2,7 @@
 
 This document defines the implementation order for all systems. Each phase builds on the previous. Within each phase, items are listed in dependency order.
 
-**Last updated:** 2026-06-01
+**Last updated:** 2026-09-13
 
 ---
 
@@ -212,37 +212,45 @@ Requires Phase 5 (at least one defeated major NPC to trigger NG+ content).
 
 ---
 
-## Phase 7: Echoes & Living Dungeon
+## Phase 7: Echoes & Living Dungeon ✅ COMPLETE
 
 *Goal: The player's past lives haunt the dungeon. The dungeon adapts to the player.*
 
-These systems both depend on accumulated meta-save data (multiple completed runs). They can be developed in parallel.
+These systems both depend on accumulated meta-save data (multiple completed runs). They were developed in parallel; both shipped 2026-07-04/05. See `plans/_QUEUE.md` Completed table for `7A-echoes-of-self.md` and `7B-living-dungeon-ai.md`.
 
-### 7A: Echoes of Self
-
-| # | Task | Dependencies | New Files | Touches |
-|---|---|---|---|---|
-| 7.1 | Echo Recorder — capture player position, HP, equipment, and cause of death each tick during a run | Phase 6 | `game/echo_recorder.go` | `game/game.go` |
-| 7.2 | Echo Data Model — `EchoRecord` struct with path, actions, HP history, death cause, serialized to `echoes/*.json` | 7.1 | `entities/echo.go` | `game/metasave.go` |
-| 7.3 | Echo Spawner — spawn up to N echoes per floor (configurable via upgrades), placed near historical death locations | 7.2 | — | `game/hub.go` |
-| 7.4 | Wicked Echo — enemy-type echo, same stats as death snapshot, miniboss difficulty, drops Remnants on defeat | 7.3 | — | `entities/echo.go`, `game/encounters.go` |
-| 7.5 | Hero Echo — ally-type echo, assists in combat for a limited time, disappears after encounter | 7.3 | — | `entities/echo.go` |
-| 7.6 | Memory Fragment — static ghost NPC, non-hostile, triggers lore dialogue or stat hint | 7.3 | — | `entities/echo.go`, `game/npc.game.go` |
-| 7.7 | Echo Visual Style — ghost shader (blue/purple tint, transparency, flicker), distinct from living entities | 7.3 | — | `entities/echo.go`, `game/draw.game.go` |
-| 7.8 | Echo Shrine UI — hub interface for viewing stored echoes, selecting echo type preference, banishing old echoes | 7.3 | `ui/echo_shrine.go` | `game/game.go`, `game/hub.go` |
-
-### 7B: Living Dungeon AI
+### 7A: Echoes of Self ✅
 
 | # | Task | Dependencies | New Files | Touches |
 |---|---|---|---|---|
-| 7.9 | Behavior Tracker — record combat style, spell usage, enemy avoidance, rooms skipped, risk tolerance per run | Phase 6 | `game/behavior_tracker.go` | `game/game.go` |
-| 7.10 | Player Profile — aggregate behavior across last N runs into `PlayerProfile` struct, save in MetaSave | 7.9 | — | `game/metasave.go` |
-| 7.11 | Dungeon Mood — infer `DungeonMood` traits (Spiteful, Chaotic, Cautious, Deceptive) from PlayerProfile | 7.10 | `game/dungeon_ai.go` | — |
-| 7.12 | Adaptive GenParams — DungeonMood modifies `GenParams`: room density, corridor length, trap frequency, enemy composition bias | 7.11 | — | `game/hub.go`, `levels/generate64.go` |
-| 7.13 | Counter-Strategy Spawning — if player favors melee, spawn more ranged; if player rushes, spawn more ambushes | 7.11 | — | `game/encounters.go`, `game/biome.go` |
-| 7.14 | Dungeon Whispers — flavor text on floor entry reflecting dungeon mood ("The walls feel watchful...", "Something remembers your fire...") | 7.11 | — | `game/hub.go`, `ui/toast.go` |
+| ✅ 7.1 | Echo Recorder — capture player position, HP, equipment, and cause of death each tick during a run | Phase 6 | `game/echo_recorder.go` | `game/game.go` |
+| ✅ 7.2 | Echo Data Model — `EchoRecord` struct with path, actions, HP history, death cause, serialized to `echoes/*.json` | 7.1 | `entities/echo.go` | `game/metasave.go` |
+| ✅ 7.3 | Echo Spawner — spawn up to N echoes per floor (configurable via upgrades), placed near historical death locations | 7.2 | — | `game/hub.go` |
+| ✅ 7.4 | Wicked Echo — enemy-type echo, same stats as death snapshot, miniboss difficulty, drops Remnants on defeat | 7.3 | — | `entities/echo.go`, `game/encounters.go` |
+| ✅ 7.5 | Hero Echo — ally-type echo, assists in combat for a limited time, disappears after encounter | 7.3 | — | `entities/echo.go` |
+| ✅ 7.6 | Memory Fragment — static ghost NPC, non-hostile, triggers lore dialogue or stat hint | 7.3 | — | `entities/echo.go`, `game/npc.game.go` |
+| ✅ 7.7 | Echo Visual Style — ghost shader (blue/purple tint, transparency, flicker), distinct from living entities | 7.3 | — | `entities/echo.go`, `game/draw.game.go` |
+| ✅ 7.8 | Echo Shrine UI — hub interface for viewing stored echoes, selecting echo type preference, banishing old echoes | 7.3 | `ui/echo_shrine.go` | `game/game.go`, `game/hub.go` |
 
-**Milestone: Past runs manifest as echoes. The dungeon evolves to challenge the player's habits.**
+### 7B: Living Dungeon AI ✅
+
+| # | Task | Dependencies | New Files | Touches |
+|---|---|---|---|---|
+| ✅ 7.9 | Behavior Tracker — record combat style, spell usage, enemy avoidance, rooms skipped, risk tolerance per run | Phase 6 | `game/behavior_tracker.go` | `game/game.go` |
+| ✅ 7.10 | Player Profile — aggregate behavior across last N runs into `PlayerProfile` struct, save in MetaSave | 7.9 | — | `game/metasave.go` |
+| ✅ 7.11 | Dungeon Mood — infer `DungeonMood` traits (Spiteful, Chaotic, Cautious, Deceptive) from PlayerProfile | 7.10 | `game/dungeon_ai.go` | — |
+| ✅ 7.12 | Adaptive GenParams — DungeonMood modifies `GenParams`: room density, corridor length, trap frequency, enemy composition bias | 7.11 | — | `game/hub.go`, `levels/generate64.go` |
+| ✅ 7.13 | Counter-Strategy Spawning — if player favors melee, spawn more ranged; if player rushes, spawn more ambushes | 7.11 | — | `game/encounters.go`, `game/biome.go` |
+| ✅ 7.14 | Dungeon Whispers — flavor text on floor entry reflecting dungeon mood ("The walls feel watchful...", "Something remembers your fire...") | 7.11 | — | `game/hub.go`, `ui/toast.go` |
+
+**Milestone: Past runs manifest as echoes. The dungeon evolves to challenge the player's habits.** ✅
+
+---
+
+## CR1: GW1-Style Combat Overhaul ✅ COMPLETE (parallel, non-phase-numbered)
+
+*A full rewrite of combat from flat melee/spell to a Guild Wars 1–inspired artifact-driven build system — developed in parallel with Phases 4–7 rather than as a numbered phase. Completed 2026-07-06.* See `plans/COMPLETED/CR1-combat-overhaul.md` for full detail: decoupled `src/combat/` engine, 23 artifacts across 6 domains, 14 verified builds, standalone benchmarker, artifact library + loadout UI.
+
+**Active follow-on:** Void Rift VFX pilot (Kage-shader visual pipeline, piloted on 2 new void-domain artifacts) — in progress, see `docs/superpowers/plans/2026-07-26-void-rift-vfx-pilot.md`, tracked as Active in `plans/_QUEUE.md`.
 
 ---
 

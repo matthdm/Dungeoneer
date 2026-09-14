@@ -59,6 +59,7 @@ type Fireball struct {
 	ImpactImg   *ebiten.Image
 	Finished    bool
 	MonsterCast bool // true if cast by a monster (hits player, not monsters)
+	VisualOnly  bool // true when damage is owned by the combat engine; the projectile only animates
 }
 
 func NewFireball(info SpellInfo, startX, startY, targetX, targetY float64, sprites [][]*ebiten.Image, impact *ebiten.Image) *Fireball {

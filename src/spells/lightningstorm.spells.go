@@ -23,6 +23,7 @@ type LightningStorm struct {
 	ImpactImg        *ebiten.Image
 	spawned          []*LightningStrike
 	Finished         bool
+	VisualOnly       bool // engine owns damage; spawned strikes are marked pre-applied
 	validStrikeTiles []struct{ X, Y int }
 }
 

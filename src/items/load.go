@@ -595,11 +595,16 @@ func registerNewArtifacts() {
 		Quality:     RarityUncommon,
 	})
 
-	// Assign placeholder domain icons to all artifact items that have no icon yet.
-	// These coloured squares are visible in-world until real art ships.
+	// Assign icons to all artifact items that have no icon yet: a bespoke
+	// hand-composed glyph where one exists, falling back to the flat domain
+	// square for anything not yet illustrated.
 	for _, tmpl := range Registry {
 		if tmpl.IsArtifact && tmpl.Icon == nil {
-			tmpl.Icon = artifactIcon(tmpl.ArtifactDomain)
+			if ic := bespokeArtifactIcon(tmpl.ID); ic != nil {
+				tmpl.Icon = ic
+			} else {
+				tmpl.Icon = artifactIcon(tmpl.ArtifactDomain)
+			}
 		}
 	}
 }

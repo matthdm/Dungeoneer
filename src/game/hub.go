@@ -1022,6 +1022,9 @@ func (g *Game) equipArtifactLoadout() {
 	if g.player.Abilities == nil {
 		g.player.Abilities = make(map[string]bool)
 	}
+	// Fresh run: loadout abilities recorded here survive RefreshAbilities
+	// (they have no backing equipped item).
+	g.player.LoadoutAbilities = nil
 	// Slot 6 is the elite artifact slot; all 7 indices are iterated.
 	for _, artifactID := range g.Meta.ArtifactLoadout {
 		if artifactID == "" {
@@ -1032,6 +1035,7 @@ func (g *Game) equipArtifactLoadout() {
 			continue
 		}
 		ability := tmpl.GrantsAbility
+		g.player.LoadoutAbilities = append(g.player.LoadoutAbilities, ability)
 		switch tmpl.AbilitySlot {
 		case items.AbilitySlotSpell:
 			// Avoid duplicates; cap at 6 spell slots.

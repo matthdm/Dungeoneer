@@ -8,9 +8,9 @@ Single source of truth for what's active, queued, blocked, and done. Update this
 
 The one plan currently being worked. There is only ever one active plan at a time.
 
-> **Active:** `8A-item-sets.md`
+> **Active:** [`../docs/superpowers/plans/2026-07-26-void-rift-vfx-pilot.md`](../docs/superpowers/plans/2026-07-26-void-rift-vfx-pilot.md)
 >
-> Set registry, set bonuses (2-piece and 3-piece), tooltip + HUD UI. 3 starter sets: Stormcaller, Fractalist, Chainbreaker.
+> Void Rift VFX shader pilot — Kage-shader glow/rift primitives proving out a new visual pipeline on two new CR1 void-domain artifacts (`void_rift_catalyst`, `voidbound_pendant`). Lives outside `plans/` (written under `docs/superpowers/`) but is tracked here as the actual in-flight work — do not treat it as untracked ad-hoc work. **Status as of 2026-09-13: Task 1/7 done** (`src/spells/vfx_shaders.go` — shader primitives compiled once, verified in build). Tasks 2–7 (register artifacts, wire visuals, dev-menu entry, manual verification) not started. Design spec: `docs/superpowers/specs/2026-07-26-void-rift-vfx-pilot-design.md`.
 >
 > ⚠️ Phase 6 (6A/6B/6C) is implemented but **untested**. Manual test plan T1–T9 remains deferred. See CLAUDE.md for test scenarios.
 
@@ -22,16 +22,16 @@ Plans ready to be picked up next. Top of list = next active. When the active pla
 
 | # | Plan | Size | Depends On | Notes |
 |---|------|------|------------|-------|
-| 3 | `8B-hub-shop-upgrades.md` | Large | `8A` | Shop NPC, upgrade station, 8 starter upgrades. |
-| 6 | `8B-hub-shop-upgrades.md` | Large | `8A` | Shop NPC, upgrade station, 8 starter upgrades. |
-| 7 | `9A-polish-transitions-camera.md` | Small | `8B` | Fade transitions, screen shake, boss intro pan. |
-| 8 | `9B-polish-visual-effects.md` | Medium | `9A` | Particle system, damage numbers, death fades. |
-| 9 | `9C-polish-audio.md` | Medium | `9B` | Audio engine, SFX hookups, music, volume wiring. |
-| 10 | `9D-polish-hud-navigation.md` | Small | `9A` | Minimap, floor indicator, status effect icons. |
-| 11 | `10A-additional-npcs.md` | XL | `9D`, `9C` | Seris, Mira, Kael — full arcs + boss fights. |
-| 12 | `10B-abaddon-meta-narrative.md` | Large | `10A` | Abaddon, alignment system, endgame dialogue. |
-| 13 | `10C-world-expansion.md` | Large | `10B` | 4 new biomes, hub evolution, cross-NPC dialogue. |
-| 14 | `11A-glyph-language.md` | Large | `10C`, `10B` | NG+ glyph cipher system — inscription stones, fragment items, codex UI, 25–30 authored shrine messages. |
+| 1 | `8A-item-sets.md` | Large | — | Set registry, set bonuses (2-piece and 3-piece), tooltip + HUD UI. 3 starter sets: Stormcaller, Fractalist, Chainbreaker. Not yet started (drafted 2026-04-30 only) — was incorrectly marked Active while unstarted; demoted here until Void Rift pilot completes. |
+| 2 | `8B-hub-shop-upgrades.md` | Large | `8A` | Shop NPC, upgrade station, 8 starter upgrades. |
+| 3 | `9A-polish-transitions-camera.md` | Small | `8B` | Fade transitions, screen shake, boss intro pan. |
+| 4 | `9B-polish-visual-effects.md` | Medium | `9A` | Particle system, damage numbers, death fades. |
+| 5 | `9C-polish-audio.md` | Medium | `9B` | Audio engine, SFX hookups, music, volume wiring. |
+| 6 | `9D-polish-hud-navigation.md` | Small | `9A` | Minimap, floor indicator, status effect icons. |
+| 7 | `10A-additional-npcs.md` | XL | `9D`, `9C` | Seris, Mira, Kael — full arcs + boss fights. |
+| 8 | `10B-abaddon-meta-narrative.md` | Large | `10A` | Abaddon, alignment system, endgame dialogue. |
+| 9 | `10C-world-expansion.md` | Large | `10B` | 4 new biomes, hub evolution, cross-NPC dialogue. |
+| 10 | `11A-glyph-language.md` | Large | `10C`, `10B` | NG+ glyph cipher system — inscription stones, fragment items, codex UI, 25–30 authored shrine messages. |
 
 ### Backlog (schedule when triggered)
 
@@ -66,9 +66,9 @@ Most recent first.
 
 | Date | Plan | Notes |
 |------|------|-------|
+| 2026-07-06 | `CR1-combat-overhaul.md` | GW1-style artifact combat: 23 items, 14 builds, decoupled engine, benchmarker. All 14 builds verified ≥90% survival. Corrected completion date — plan was marked done 2026-06-29 but continued to accumulate real work (spell migration, bespoke artifact visuals, playtest fixes, mana routing) through 2026-07-06; that follow-on work was never reflected here until this reconciliation pass. Moved to `plans/COMPLETED/` (first plan to actually follow that step — see `_PROTOCOL.md` session-end #6; historical entries below predate this and were never physically moved). |
 | 2026-07-05 | `7A-echoes-of-self.md` | Echo recorder, 3 entity types (Wicked/Hero/Memory), ghost tint, spawner, Echo Shrine UI, Remnant award on WickedEcho death. |
 | 2026-07-04 | `7B-living-dungeon-ai.md` | BehaviorTracker, PlayerProfile, DungeonMood inference, GenParamsDelta, dungeon whispers. All wired; build and tests pass. |
-| 2026-06-29 | `CR1-combat-overhaul.md` | GW1-style artifact combat: 23 items, 14 builds, decoupled engine, benchmarker. All 14 builds verified ≥90% survival. |
 | 2026-06-02 | `6C-lore-system` | Lore registry, 15 entries, unlock_lore action, lore library UI, hub pedestal. ⚠️ Untested. |
 | 2026-06-02 | `6B-ng-plus-dialogue` | meta_flag conditions, SelectTree NG+ branching, varn_ng1/2/3+betrayed trees. ⚠️ Untested. |
 | 2026-06-02 | `6A-full-meta-save` | MetaSave v1, milestones (4), toast UI, run-end stat tracking, hub guards. ⚠️ Untested. |

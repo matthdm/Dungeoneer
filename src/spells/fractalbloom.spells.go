@@ -65,6 +65,7 @@ type FractalBloom struct {
 	spawned    []*FractalNode
 	elapsed    float64
 	Finished   bool
+	VisualOnly bool // engine owns damage; spawned nodes are marked pre-applied
 }
 
 // NewFractalBloom builds all explosion nodes upfront. The root

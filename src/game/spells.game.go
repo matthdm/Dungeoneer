@@ -30,8 +30,12 @@ func (g *Game) syncHUDSpellSlots() {
 			g.HUD.SkillSlots[i].Name = abilityID
 			g.HUD.SkillSlots[i].Icon = g.abilityIcon(abilityID)
 			g.HUD.SkillSlots[i].Locked = g.player.IsAbilityLocked(abilityID)
-			// Sync cooldown from caster.
-			if g.player.Caster != nil {
+			// Sync cooldown from caster (legacy) or the combat engine (new path).
+			if na, ok := g.CombatAdapt.(*NewCombatAdapter); ok {
+				if cd, mapped := na.BarCooldown(i); mapped {
+					g.HUD.SkillSlots[i].Cooldown = cd
+				}
+			} else if g.player.Caster != nil {
 				g.HUD.SkillSlots[i].Cooldown = g.player.Caster.Cooldowns[abilitySpellName(abilityID)]
 			}
 		} else {
@@ -136,9 +140,13 @@ func (g *Game) updateSpells() {
 
 						if distSq <= fb.Radius*fb.Radius {
 							fb.Impact = true
-							tx := int(math.Floor(fb.X))
-							ty := int(math.Floor(fb.Y))
-							g.applyFireballDamage(fb, tx, ty)
+							// VisualOnly: the combat engine already dealt the damage;
+							// the projectile just detonates for show.
+							if !fb.VisualOnly {
+								tx := int(math.Floor(fb.X))
+								ty := int(math.Floor(fb.Y))
+								g.applyFireballDamage(fb, tx, ty)
+							}
 							break
 						}
 					}
@@ -153,11 +161,17 @@ func (g *Game) updateSpells() {
 		}
 		if storm, ok := sp.(*spells.LightningStorm); ok {
 			for _, ns := range storm.TakeSpawns() {
+				if storm.VisualOnly {
+					ns.DamageApplied = true // engine owns damage
+				}
 				remaining = append(remaining, ns)
 			}
 		}
 		if bloom, ok := sp.(*spells.FractalBloom); ok {
 			for _, n := range bloom.TakeSpawns() {
+				if bloom.VisualOnly {
+					n.DamageApplied = true // engine owns damage
+				}
 				remaining = append(remaining, n)
 			}
 		}
@@ -611,8 +625,11 @@ func (g *Game) checkArcaneBoltHits(ab *spells.ArcaneBolt, prevX, prevY float64, 
 			ab.Impact = true
 			ab.X = hitX
 			ab.Y = hitY
-			if m.TakeDamage(ab.Info.Damage, &g.HitMarkers, &g.DamageNumbers) {
-				g.handleMonsterDeath(m)
+			// VisualOnly: the combat engine already dealt the damage.
+			if !ab.VisualOnly {
+				if m.TakeDamage(ab.Info.Damage, &g.HitMarkers, &g.DamageNumbers) {
+					g.handleMonsterDeath(m)
+				}
 			}
 			if spells.OnSpellImpact != nil {
 				spells.OnSpellImpact(m.InterpX, m.InterpY, "arcane_bolt")
