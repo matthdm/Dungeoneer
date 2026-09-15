@@ -332,12 +332,12 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 			}
 			// Sync skill cooldowns from engine (authoritative for new-engine path).
 			// SyncSkillCooldown detects the >0→0 transition and triggers the ready-flash.
-			for i := 0; i < 6; i++ {
+			for i := 0; i < 7; i++ {
 				g.HUD.SyncSkillCooldown(i, cs.ArtifactCooldowns[i])
 			}
 
 			// Duration bars: show active buff windows inside the matching skill slot.
-			for i := 0; i < 6; i++ {
+			for i := 0; i < 7; i++ {
 				id := cs.EquippedArtifacts[i]
 				if id == "" {
 					continue

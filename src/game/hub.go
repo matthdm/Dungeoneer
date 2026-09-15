@@ -1008,53 +1008,53 @@ func (g *Game) beginRunWithLoadout() {
 	}
 }
 
-// equipArtifactLoadout reads g.Meta.ArtifactLoadout and populates the player's
-// SpellSlots directly from the chosen artifacts. Called immediately before
-// startFloor(1) so the HUD reflects the chosen build from floor 1.
+// equipArtifactLoadout reads g.Meta.ArtifactLoadout and equips each chosen
+// artifact as a REAL item in player.Equipment, one per real named equipment
+// slot (entities.EquipmentSlotOrder: Head/Chest/Weapon/Offhand/Feet/Ring1/
+// Ring2 — 7 slots for 7 loadout picks). Abilities are granted exclusively
+// through RefreshAbilities walking player.Equipment — never through a flag
+// set by hand — so a loadout-granted ability is indistinguishable from one
+// earned by picking up and equipping the item mid-run, AND the inventory
+// screen's equipment paperdoll (which reads p.Equipment by these same slot
+// names) actually shows what's equipped instead of appearing empty. Called
+// immediately before startFloor(1) so the HUD reflects the chosen build from
+// floor 1.
 //
-// Only artifacts with AbilitySlot == AbilitySlotSpell are placed into SpellSlots
-// (slots 0-5). Dash/grapple/primary artifacts activate the relevant ability flag
-// but do not occupy a spell bar slot, matching the behaviour of RefreshAbilities.
+// Slot 6 is the elite artifact; all 7 indices are equipped identically.
+// RefreshAbilities visits equipment in this same declared order, so the first
+// 6 AbilitySlotSpell items fill the spell bar (slots 0-5) exactly as a real
+// build would, and the elite (processed last, in "Ring2") grants its ability
+// flag without displacing them — it has its own dedicated bar position
+// (index 6, key "7"; see buildEquipped / syncHUDSpellSlots, both read
+// straight from player.Equipment["Ring2"], not from Meta.ArtifactLoadout[6]
+// — that field is only remembered for redisplaying picks in the loadout
+// screen and is never trusted as live equipped state).
 func (g *Game) equipArtifactLoadout() {
 	if g.player == nil || g.Meta == nil {
 		return
 	}
-	if g.player.Abilities == nil {
-		g.player.Abilities = make(map[string]bool)
+	if g.player.Equipment == nil {
+		g.player.Equipment = entities.NewEquipmentSlots()
 	}
-	// Fresh run: loadout abilities recorded here survive RefreshAbilities
-	// (they have no backing equipped item).
-	g.player.LoadoutAbilities = nil
-	// Slot 6 is the elite artifact slot; all 7 indices are iterated.
-	for _, artifactID := range g.Meta.ArtifactLoadout {
+	for i, artifactID := range g.Meta.ArtifactLoadout {
+		if i >= len(entities.EquipmentSlotOrder) {
+			break
+		}
+		slot := entities.EquipmentSlotOrder[i]
 		if artifactID == "" {
+			g.player.Equipment[slot] = nil
 			continue
 		}
 		tmpl, ok := items.Registry[artifactID]
-		if !ok || !tmpl.IsArtifact || tmpl.GrantsAbility == "" {
+		if !ok || !tmpl.IsArtifact {
+			g.player.Equipment[slot] = nil
 			continue
 		}
-		ability := tmpl.GrantsAbility
-		g.player.LoadoutAbilities = append(g.player.LoadoutAbilities, ability)
-		switch tmpl.AbilitySlot {
-		case items.AbilitySlotSpell:
-			// Avoid duplicates; cap at 6 spell slots.
-			found := false
-			for _, s := range g.player.SpellSlots {
-				if s == ability {
-					found = true
-					break
-				}
-			}
-			if !found && len(g.player.SpellSlots) < 6 {
-				g.player.SpellSlots = append(g.player.SpellSlots, ability)
-			}
-			g.player.Abilities[ability] = true
-		default:
-			// Dash, grapple, primary — just grant the ability flag.
-			g.player.Abilities[ability] = true
-		}
+		g.player.Equipment[slot] = items.NewItem(artifactID)
 	}
+	g.player.RefreshAbilities()
+	g.player.RecalculateStats()
+
 	// Sync HUD spell slots so the bar is populated before the first frame.
 	if g.HUD != nil {
 		g.syncHUDSpellSlots()

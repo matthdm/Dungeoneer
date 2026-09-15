@@ -7,6 +7,7 @@ import (
 	"dungeoneer/items"
 	"dungeoneer/levels"
 	"dungeoneer/ui"
+	"sort"
 )
 
 // buildDevEntries constructs the DevOverlay entries wired to live game state.
@@ -164,62 +165,62 @@ func (g *Game) buildDevEntries() []ui.DevEntry {
 		{
 			Label:    "Grant: Slash Combo",
 			IsActive: func() bool { return g.player != nil && g.player.HasAbility("slash_combo") },
-			Toggle:   func() { g.devToggleAbility("slash_combo", items.AbilitySlotPrimary) },
+			Toggle:   func() { g.devToggleAbility("slash_combo") },
 		},
 		{
 			Label:    "Grant: Arcane Bolt",
 			IsActive: func() bool { return g.player != nil && g.player.HasAbility("arcane_bolt") },
-			Toggle:   func() { g.devToggleAbility("arcane_bolt", items.AbilitySlotPrimary) },
+			Toggle:   func() { g.devToggleAbility("arcane_bolt") },
 		},
 		{
 			Label:    "Grant: Arcane Spray",
 			IsActive: func() bool { return g.player != nil && g.player.HasAbility("arcane_spray") },
-			Toggle:   func() { g.devToggleAbility("arcane_spray", items.AbilitySlotSpell) },
+			Toggle:   func() { g.devToggleAbility("arcane_spray") },
 		},
 		{
 			Label:    "Grant: Dash",
 			IsActive: func() bool { return g.player != nil && g.player.HasAbility("dash") },
-			Toggle:   func() { g.devToggleAbility("dash", items.AbilitySlotDash) },
+			Toggle:   func() { g.devToggleAbility("dash") },
 		},
 		{
 			Label:    "Grant: Blink",
 			IsActive: func() bool { return g.player != nil && g.player.HasAbility("blink") },
-			Toggle:   func() { g.devToggleAbility("blink", items.AbilitySlotDash) },
+			Toggle:   func() { g.devToggleAbility("blink") },
 		},
 		{
 			Label:    "Grant: Grapple",
 			IsActive: func() bool { return g.player != nil && g.player.HasAbility("grapple") },
-			Toggle:   func() { g.devToggleAbility("grapple", items.AbilitySlotGrapple) },
+			Toggle:   func() { g.devToggleAbility("grapple") },
 		},
 		{
 			Label:    "Grant: Fireball",
 			IsActive: func() bool { return g.player != nil && g.player.HasAbility("fireball") },
-			Toggle:   func() { g.devToggleAbility("fireball", items.AbilitySlotSpell) },
+			Toggle:   func() { g.devToggleAbility("fireball") },
 		},
 		{
 			Label:    "Grant: Chaos Ray",
 			IsActive: func() bool { return g.player != nil && g.player.HasAbility("chaos_ray") },
-			Toggle:   func() { g.devToggleAbility("chaos_ray", items.AbilitySlotSpell) },
+			Toggle:   func() { g.devToggleAbility("chaos_ray") },
 		},
 		{
 			Label:    "Grant: Lightning",
 			IsActive: func() bool { return g.player != nil && g.player.HasAbility("lightning") },
-			Toggle:   func() { g.devToggleAbility("lightning", items.AbilitySlotSpell) },
+			Toggle:   func() { g.devToggleAbility("lightning") },
 		},
 		{
 			Label:    "Grant: Lightning Storm",
 			IsActive: func() bool { return g.player != nil && g.player.HasAbility("lightning_storm") },
-			Toggle:   func() { g.devToggleAbility("lightning_storm", items.AbilitySlotSpell) },
+			Toggle:   func() { g.devToggleAbility("lightning_storm") },
 		},
 		{
 			Label:    "Grant: Fractal Bloom",
 			IsActive: func() bool { return g.player != nil && g.player.HasAbility("fractal_bloom") },
-			Toggle:   func() { g.devToggleAbility("fractal_bloom", items.AbilitySlotSpell) },
+			Toggle:   func() { g.devToggleAbility("fractal_bloom") },
 		},
 		{
 			Label:    "Grant: Fractal Canopy",
 			IsActive: func() bool { return g.player != nil && g.player.HasAbility("fractal_canopy") },
-			Toggle:   func() { g.devToggleAbility("fractal_canopy", items.AbilitySlotSpell) },
+			Toggle:   func() { g.devToggleAbility("fractal_canopy") },
 		},
 
 		// ── Combat Testing ───────────────────────────────────────────────
@@ -343,25 +344,86 @@ func (g *Game) buildDevEntries() []ui.DevEntry {
 	return entries
 }
 
-// devToggleAbility grants or revokes an ability directly (bypassing equipment).
-func (g *Game) devToggleAbility(abilityID string, slot items.AbilitySlotType) {
+// devToggleAbility grants or revokes an ability by equipping (or unequipping)
+// the real item that GrantsAbility == abilityID — the same
+// player.Equipment + RefreshAbilities path a real pickup/equip uses, so a
+// dev-granted ability is indistinguishable from a legitimately-earned one to
+// HasAbility, item stat bonuses, and set-bonus counting. A previous version
+// wrote directly into player.Abilities, which desynced HasAbility from the
+// equipment the inventory screen shows and let elite-only abilities (e.g.
+// chaos_ray, lightning_storm, fractal_canopy) be granted with no backing
+// elite artifact ever placed in the loadout. Elite items are equipped into
+// the elite slot (EquipmentSlotOrder[6]) and mirrored into
+// Meta.ArtifactLoadout[6] so the elite HUD bar position picks them up,
+// matching equipArtifactLoadout/devLoadBuild.
+func (g *Game) devToggleAbility(abilityID string) {
 	if g.player == nil {
 		return
 	}
+	if g.player.Equipment == nil {
+		g.player.Equipment = entities.NewEquipmentSlots()
+	}
+
 	if g.player.HasAbility(abilityID) {
-		delete(g.player.Abilities, abilityID)
-		// Remove from spell slots if present.
-		filtered := g.player.SpellSlots[:0]
-		for _, s := range g.player.SpellSlots {
-			if s != abilityID {
-				filtered = append(filtered, s)
+		for _, slot := range entities.EquipmentSlotOrder {
+			it := g.player.Equipment[slot]
+			if it == nil || it.GrantsAbility != abilityID {
+				continue
+			}
+			g.player.Equipment[slot] = nil
+			if slot == entities.EquipmentSlotOrder[6] && g.Meta != nil && g.Meta.ArtifactLoadout[6] == it.ID {
+				g.Meta.ArtifactLoadout[6] = ""
 			}
 		}
-		g.player.SpellSlots = filtered
 	} else {
-		g.player.Abilities[abilityID] = true
-		if slot == items.AbilitySlotSpell && len(g.player.SpellSlots) < 6 {
-			g.player.SpellSlots = append(g.player.SpellSlots, abilityID)
+		id, tmpl := itemTemplateForAbility(abilityID)
+		if tmpl == nil {
+			return
+		}
+		if tmpl.IsElite {
+			slot := entities.EquipmentSlotOrder[6]
+			g.player.Equipment[slot] = items.NewItem(id)
+			if g.Meta != nil {
+				g.Meta.ArtifactLoadout[6] = id
+			}
+		} else {
+			placed := false
+			for i := 0; i < 6; i++ {
+				slot := entities.EquipmentSlotOrder[i]
+				if g.player.Equipment[slot] == nil {
+					g.player.Equipment[slot] = items.NewItem(id)
+					placed = true
+					break
+				}
+			}
+			if !placed {
+				return // no free non-elite slot to equip into
+			}
 		}
 	}
+
+	g.player.RefreshAbilities()
+	g.player.RecalculateStats()
+	if g.HUD != nil {
+		g.syncHUDSpellSlots()
+	}
+}
+
+// itemTemplateForAbility returns the (id, template) of the first item in the
+// registry — in stable ID order — whose GrantsAbility matches abilityID.
+// Some abilities (dash, blink) are granted by more than one item; any of
+// them satisfies HasAbility, so picking deterministically just keeps dev
+// tool behavior reproducible across runs.
+func itemTemplateForAbility(abilityID string) (string, *items.ItemTemplate) {
+	ids := make([]string, 0, len(items.Registry))
+	for id := range items.Registry {
+		ids = append(ids, id)
+	}
+	sort.Strings(ids)
+	for _, id := range ids {
+		if tmpl := items.Registry[id]; tmpl.GrantsAbility == abilityID {
+			return id, tmpl
+		}
+	}
+	return "", nil
 }

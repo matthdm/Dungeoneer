@@ -18,10 +18,11 @@ type NewCombatAdapter struct {
 	combatState    combat.CombatState
 	pendingActions []combat.Action // skill activations queued by HandleSkillActivation
 
-	// slotTrans maps spell-bar index (0-5) → EquippedArtifacts index for the
-	// current tick, so keypresses land on the right engine slot when the
-	// loadout order differs from the spell bar order.
-	slotTrans [6]int
+	// slotTrans maps spell-bar index (0-5, plus 6 for the elite slot) →
+	// EquippedArtifacts index for the current tick, so keypresses land on the
+	// right engine slot when the loadout order differs from the spell bar
+	// order.
+	slotTrans [7]int
 
 	burnParticleTimer float64 // seconds until next burn particle burst on target
 }
@@ -186,7 +187,11 @@ func (a *NewCombatAdapter) HandleSkillActivation(g *Game, slotIdx int) {
 //     IDs ("ironbreaker_slam") resolve to the item IDs ("ironbreaker_gauntlets")
 //     the engine registry is keyed by, so slotTrans is the identity for
 //     populated bar slots.
-//   - Slot 6 is the elite from the MetaSave loadout.
+//   - Slot 6 is the elite artifact actually equipped in the elite equipment
+//     slot (EquipmentSlotOrder[6]) — read from player.Equipment, never from
+//     Meta.ArtifactLoadout[6] directly, so a stale/leftover loadout pick that
+//     was never (re-)equipped this run can never show up as active. Meta's
+//     copy is bookkeeping for the pre-run loadout screen only.
 //   - PassiveArtifacts carries worn equipment with passive engine effects
 //     (ember_mantle burn, quicksilver attack speed, stone_skin cap, …) that
 //     never occupy a bar slot.
@@ -205,8 +210,13 @@ func (a *NewCombatAdapter) buildEquipped(g *Game) {
 		a.combatState.EquippedArtifacts[si] = artifactIDForAbility(ability)
 		a.slotTrans[si] = si
 	}
-	if g.Meta != nil {
-		a.combatState.EquippedArtifacts[6] = canonicalArtifactID(g.Meta.ArtifactLoadout[6])
+	if eliteIt := g.player.Equipment[entities.EquipmentSlotOrder[6]]; eliteIt != nil {
+		// The elite slot has its own dedicated bar position (index 6, key "7")
+		// wired straight to engine slot 6 — it never shares SpellSlots with the
+		// 6 regular picks, so this mapping is unconditional rather than
+		// derived from SpellSlots like the loop above.
+		a.combatState.EquippedArtifacts[6] = canonicalArtifactID(eliteIt.ID)
+		a.slotTrans[6] = 6
 	}
 
 	a.combatState.PassiveArtifacts = a.combatState.PassiveArtifacts[:0]

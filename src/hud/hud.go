@@ -55,7 +55,7 @@ type HUD struct {
 	ExpCurrent     int
 	ExpNeeded      int
 	Gold           int
-	SkillSlots     [6]SkillSlot
+	SkillSlots     [7]SkillSlot // 0-5 regular loadout, 6 = elite artifact slot
 	ActiveSkill    int
 
 	// Kill streak counter and pulse animation.
@@ -216,11 +216,11 @@ func (h *HUD) Draw(screen *ebiten.Image, w, hgt int) {
 func (h *HUD) drawSkillBar(screen *ebiten.Image, w, hgt int) {
 	slot := 64
 	pad := 6
-	barW := slot*6 + pad*5
+	barW := slot*7 + pad*6
 	x := (w - barW) / 2
 	y := hgt - slot - 20
 
-	for i := 0; i < 6; i++ {
+	for i := 0; i < 7; i++ {
 		sx := x + i*(slot+pad)
 		s := h.SkillSlots[i]
 

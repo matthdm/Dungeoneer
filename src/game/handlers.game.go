@@ -284,6 +284,7 @@ func (g *Game) handleLevelHotkeys() {
 	spellActions := []controls.ActionID{
 		controls.ActionSpell1, controls.ActionSpell2, controls.ActionSpell3,
 		controls.ActionSpell4, controls.ActionSpell5, controls.ActionSpell6,
+		controls.ActionSpell7, // elite artifact slot — engine slot 6
 	}
 	for i, action := range spellActions {
 		if g.isActionJustPressed(action) && g.player != nil {

@@ -4,6 +4,7 @@ import (
 	"dungeoneer/combat"
 	"dungeoneer/entities"
 	"dungeoneer/images"
+	"dungeoneer/items"
 	"fmt"
 	"image/color"
 	"math"
@@ -13,10 +14,17 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
-// devLoadBuild applies a combat.Scenario to the live player so the new combat
-// engine sees the correct artifact loadout and base stats. Artifact IDs are
-// written directly into SpellSlots (slots 0-5) and Meta.ArtifactLoadout[6],
-// mirroring the benchmarker's approach so ArtifactEffects lookups resolve.
+// devLoadBuild applies a combat.Scenario to the live player as REAL equipped
+// items, not a shortcut. Abilities are granted exclusively through equipped
+// items (RefreshAbilities walks player.Equipment) — a previous version of
+// this function wrote artifact IDs directly into player.Abilities, keyed by
+// item ID instead of the GrantsAbility ID every other check in the game
+// expects, so dev-loaded builds looked equipped (SpellSlots/HUD showed them)
+// but HasAbility(...) and item stat bonuses silently never worked. Routing
+// through player.Equipment + RefreshAbilities is the same mechanism a real
+// item pickup/equip uses, so a dev-loaded build is indistinguishable from a
+// legitimately-earned one to every other system (abilities, mandatory item
+// stats, set-bonus counting).
 func (g *Game) devLoadBuild(s combat.Scenario) {
 	if g.player == nil {
 		return
@@ -42,25 +50,45 @@ func (g *Game) devLoadBuild(s combat.Scenario) {
 	g.player.Stats.Vitality = s.Stats.Vitality
 	g.player.Stats.Intelligence = s.Stats.Intelligence
 
-	// 3. Clear current abilities and spell slots.
+	// 3. Clear current equipment, abilities, and elite loadout so a previous
+	// build's items don't linger — ClearAbilities alone leaves Equipment
+	// (and the persistent elite pick) untouched.
+	g.player.Equipment = entities.NewEquipmentSlots()
 	g.player.ClearAbilities()
-	g.player.SpellSlots = g.player.SpellSlots[:0]
-
-	// 4. Write artifact IDs directly into SpellSlots[0:6] so the new combat
-	// adapter can find them in ArtifactEffects by their original ID.
-	for i, id := range s.Artifacts {
-		if id == "" {
-			continue
-		}
-		if i < 6 {
-			g.player.SpellSlots = append(g.player.SpellSlots, id)
-			g.player.Abilities[id] = true
-		} else if i == 6 && g.Meta != nil {
-			g.Meta.ArtifactLoadout[6] = id
+	if g.Meta != nil {
+		for i := range g.Meta.ArtifactLoadout {
+			g.Meta.ArtifactLoadout[i] = ""
 		}
 	}
 
-	// 5. Recalculate derived stats (MaxHP, MaxMana, Damage, AttackRate).
+	// 4. Equip every scenario artifact as a REAL item in player.Equipment, one
+	// per real named equipment slot (entities.EquipmentSlotOrder) — the same
+	// 7 slots the inventory screen's equipment paperdoll renders, so a
+	// dev-loaded build actually shows up there instead of leaving the
+	// inventory looking empty. RefreshAbilities visits equipment in that same
+	// declared order, so the first 6 AbilitySlotSpell items fill the spell
+	// bar exactly as they would from a real loadout, and index 6 (the elite)
+	// grants its ability flag without displacing them, mirroring
+	// equipArtifactLoadout's real-run behavior (hub.go).
+	for i, id := range s.Artifacts {
+		if i >= len(entities.EquipmentSlotOrder) {
+			break
+		}
+		if id == "" {
+			continue
+		}
+		if _, ok := items.Registry[id]; !ok {
+			continue
+		}
+		g.player.Equipment[entities.EquipmentSlotOrder[i]] = items.NewItem(id)
+		if i == 6 && g.Meta != nil {
+			g.Meta.ArtifactLoadout[6] = id
+		}
+	}
+	g.player.RefreshAbilities()
+
+	// 5. Recalculate derived stats (MaxHP, MaxMana, Damage, AttackRate) —
+	// now genuinely picks up every equipped item's stat bonuses.
 	g.player.RecalculateStats()
 
 	// 6. Restore HP and Mana to new maximums.

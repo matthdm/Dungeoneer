@@ -108,11 +108,6 @@ type Player struct {
 	SpellSlots []string
 	Abilities  map[string]bool
 
-	// LoadoutAbilities holds abilities granted by the pre-run artifact loadout.
-	// They have no backing equipped item, so RefreshAbilities re-applies them
-	// after rebuilding from equipment (otherwise any equip wipes the build).
-	LoadoutAbilities []string
-
 	// Ability locking: used by the Varn chain_seal attack.
 	// LockedAbilities maps ability ID → remaining lock duration (seconds).
 	LockedAbilities    map[string]float64
@@ -142,14 +137,19 @@ func (p *Player) BodyX() float64 { return p.Pos().BodyCenter().X }
 func (p *Player) BodyY() float64 { return p.Pos().BodyCenter().Y }
 
 
-var equipmentSlotOrder = []string{
+// EquipmentSlotOrder is the canonical list of the player's 7 equipment slots,
+// in the order RefreshAbilities visits them. Exported so callers that equip
+// items directly by slot (e.g. the CR1 artifact loadout, dev-menu build
+// loading) use the same 7 slots the equipment UI already renders, instead of
+// inventing slot keys the UI has no rectangle for.
+var EquipmentSlotOrder = []string{
 	"Head", "Chest", "Weapon", "Offhand", "Feet", "Ring1", "Ring2",
 }
 
 // NewEquipmentSlots returns a fresh equipment map with all canonical slots.
 func NewEquipmentSlots() map[string]*items.Item {
-	slots := make(map[string]*items.Item, len(equipmentSlotOrder))
-	for _, slot := range equipmentSlotOrder {
+	slots := make(map[string]*items.Item, len(EquipmentSlotOrder))
+	for _, slot := range EquipmentSlotOrder {
 		slots[slot] = nil
 	}
 	return slots
@@ -735,6 +735,15 @@ func (p *Player) getEquipmentStatModifiers() StatModifiers {
 		if v, ok := it.Stats["Intelligence"]; ok {
 			mod.IntelligenceMod += v
 		}
+		// MaxMana is expressed as an Intelligence bonus rather than a direct
+		// pool add, so it flows through the same derived-stat formula as
+		// everything else (MaxMana = 20 + Intelligence*5, RecalculateStats) —
+		// every CR1 artifact carries this in its Stats map, but nothing read
+		// it before, so the "+N Max Mana" on every artifact tooltip was
+		// cosmetic only.
+		if v, ok := it.Stats["MaxMana"]; ok {
+			mod.IntelligenceMod += v
+		}
 		if v, ok := it.Stats["Luck"]; ok {
 			mod.LuckMod += v
 		}
@@ -826,9 +835,9 @@ func (p *Player) RefreshAbilities() {
 	p.Abilities = map[string]bool{}
 	p.SpellSlots = nil
 
-	slots := make([]string, 0, len(equipmentSlotOrder))
-	seen := make(map[string]bool, len(equipmentSlotOrder))
-	for _, slot := range equipmentSlotOrder {
+	slots := make([]string, 0, len(EquipmentSlotOrder))
+	seen := make(map[string]bool, len(EquipmentSlotOrder))
+	for _, slot := range EquipmentSlotOrder {
 		slots = append(slots, slot)
 		seen[slot] = true
 	}
@@ -862,32 +871,6 @@ func (p *Player) RefreshAbilities() {
 		}
 	}
 
-	// Re-apply loadout-granted abilities — they come from the pre-run artifact
-	// loadout, not from worn items, and must survive equipment changes.
-	for _, ability := range p.LoadoutAbilities {
-		p.Abilities[ability] = true
-		slot := items.AbilitySlotSpell
-		for _, tmpl := range items.Registry {
-			if tmpl.GrantsAbility == ability {
-				slot = tmpl.AbilitySlot
-				break
-			}
-		}
-		if slot != items.AbilitySlotSpell {
-			continue // dash/grapple/primary: flag only, no bar slot
-		}
-		found := false
-		for _, s := range p.SpellSlots {
-			if s == ability {
-				found = true
-				break
-			}
-		}
-		if !found && len(p.SpellSlots) < 6 {
-			p.SpellSlots = append(p.SpellSlots, ability)
-		}
-	}
-
 	// Grant abilities from active set bonuses.
 	activeSets := items.RecalculateSetBonuses(p.GetEquippedItemIDs(), SetBonusQuestState.VarnDefeated)
 	for _, s := range activeSets {
@@ -903,7 +886,6 @@ func (p *Player) RefreshAbilities() {
 func (p *Player) ClearAbilities() {
 	p.Abilities = map[string]bool{}
 	p.SpellSlots = nil
-	p.LoadoutAbilities = nil
 }
 
 // EquipStarter equips class-appropriate starting items and refreshes abilities.

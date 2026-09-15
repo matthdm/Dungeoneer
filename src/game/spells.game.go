@@ -21,6 +21,9 @@ func (g *Game) syncHUDSpellSlots() {
 		return
 	}
 	for i := range g.HUD.SkillSlots {
+		if i == 6 {
+			continue // elite slot: populated separately below, not from SpellSlots
+		}
 		if i < len(g.player.SpellSlots) {
 			abilityID := g.player.SpellSlots[i]
 			cost := g.spellManaCost(abilityID)
@@ -40,6 +43,34 @@ func (g *Game) syncHUDSpellSlots() {
 			}
 		} else {
 			g.HUD.SkillSlots[i] = hud.SkillSlot{}
+		}
+	}
+
+	// Elite slot (bar index 6): driven by whatever is actually equipped in
+	// the elite equipment slot (EquipmentSlotOrder[6]), never by
+	// Meta.ArtifactLoadout[6] directly — that field is only the pre-run
+	// loadout screen's remembered pick and can go stale (a run that skips
+	// the loadout screen, or re-equips a different elite mid-run, must not
+	// show a phantom artifact that isn't actually equipped). The elite item
+	// grants its ability flag via RefreshAbilities but deliberately never
+	// displaces one of the 6 regular spell-bar slots (see
+	// equipArtifactLoadout / devLoadBuild).
+	g.HUD.SkillSlots[6] = hud.SkillSlot{}
+	if eliteIt := g.player.Equipment[entities.EquipmentSlotOrder[6]]; eliteIt != nil {
+		if tmpl := eliteIt.ItemTemplate; tmpl != nil && tmpl.GrantsAbility != "" {
+			abilityID := tmpl.GrantsAbility
+			cost := g.spellManaCost(abilityID)
+			g.HUD.SkillSlots[6].Active = true
+			g.HUD.SkillSlots[6].ManaCost = cost
+			g.HUD.SkillSlots[6].Enabled = g.player.Mana >= cost
+			g.HUD.SkillSlots[6].Name = abilityID
+			g.HUD.SkillSlots[6].Icon = g.abilityIcon(abilityID)
+			g.HUD.SkillSlots[6].Locked = g.player.IsAbilityLocked(abilityID)
+			if na, ok := g.CombatAdapt.(*NewCombatAdapter); ok {
+				if cd, mapped := na.BarCooldown(6); mapped {
+					g.HUD.SkillSlots[6].Cooldown = cd
+				}
+			}
 		}
 	}
 }
