@@ -3,3 +3,4 @@ src/images/skill-icons/
 src/*.exe
 src/meta.json
 src/runsave.json
+src/controls.json
