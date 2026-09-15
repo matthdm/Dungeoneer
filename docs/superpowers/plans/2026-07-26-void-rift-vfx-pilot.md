@@ -31,7 +31,7 @@
 - Produces: `drawRift(screen *ebiten.Image, sx, sy, radius float32, coreCol, rimCol [3]float32, t float64)` — procedural collapsing-rift quad (dark swirling core + bright rim), normal alpha blend.
 - Produces (internal): `drawShaderQuad(screen *ebiten.Image, shader *ebiten.Shader, sx, sy, halfSize float32, uniforms map[string]interface{}, blend ebiten.Blend)` — shared quad-builder both wrappers use.
 
-- [ ] **Step 1: Write the shader sources and draw helpers**
+- [x] **Step 1: Write the shader sources and draw helpers**
 
 ```go
 package spells
@@ -161,7 +161,7 @@ func drawRift(screen *ebiten.Image, sx, sy, radius float32, coreCol, rimCol [3]f
 }
 ```
 
-- [ ] **Step 2: Verify it compiles and the shaders parse**
+- [x] **Step 2: Verify it compiles and the shaders parse**
 
 Run: `cd src && go build ./...`
 Expected: no output (clean build). If either `ebiten.NewShader` call panics at program init due to a Kage syntax error, the build itself won't catch it (compilation happens at runtime) — instead run:
@@ -169,7 +169,7 @@ Expected: no output (clean build). If either `ebiten.NewShader` call panics at p
 Run: `cd src && go vet ./spells/...`
 Expected: no output. Then do a smoke run via the `run` skill (Task 7 covers full manual verification) — if the Kage source has a syntax error, the game will panic immediately on launch with the shader compile error message, which is the fastest signal.
 
-- [ ] **Step 3: No unit test for this task**
+- [x] **Step 3: No unit test for this task**
 
 This file is pure rendering (shader source + draw calls) — there is no meaningful assertion beyond "it compiles and doesn't panic," which Step 2 already covers. Visual correctness is verified in Task 7 via screenshot review, consistent with the spec's Verification section (no automated visual-quality test exists or is proposed).
 
@@ -186,7 +186,7 @@ This file is pure rendering (shader source + draw calls) — there is no meaning
 - Produces: `combat.ArtifactEffects["void_rift_catalyst"]`, `combat.ArtifactEffects["voidbound_pendant"]` — consumed by Task 3 (visual spawn), Task 5 (`spawnSkillVisual` case), Task 6 (icon/flavor lookup by item ID).
 - Produces: item IDs `"void_rift_catalyst"` (ability ID `"void_rift_blast"`) and `"voidbound_pendant"` (ability ID `"voidbound_ward"`) in `items.Registry`.
 
-- [ ] **Step 1: Write the failing engine tests**
+- [x] **Step 1: Write the failing engine tests**
 
 Create `src/combat/voidrift_test.go`:
 
@@ -271,12 +271,12 @@ func TestVoidboundPendantIsRegisteredAsPassive(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `cd src && go test ./combat/... -run TestVoidRift -v` and `go test ./combat/... -run TestVoidboundPendant -v`
 Expected: FAIL — `ArtifactEffects["void_rift_catalyst"]` / `["voidbound_pendant"]` don't exist yet (test dereferences a zero-value `ArtifactEffect{}`, so `TestVoidboundPendantIsRegisteredAsPassive` fails on the `!ok` check; the other two fail because no `EventSkillFired`/`EventDamageDealt` is emitted for an unregistered artifact ID).
 
-- [ ] **Step 3: Add the ArtifactEffects entries**
+- [x] **Step 3: Add the ArtifactEffects entries**
 
 In `src/combat/skills.go`, add to the `var ArtifactEffects = map[string]ArtifactEffect{...}` map literal (anywhere inside the map body — by convention, group with the other void-domain entries near `ashbound_chain`/`grave_reaper`):
 
@@ -296,12 +296,12 @@ In `src/combat/skills.go`, add to the `var ArtifactEffects = map[string]Artifact
 	},
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `cd src && go test ./combat/... -run "TestVoidRift|TestVoidboundPendant" -v`
 Expected: `PASS` for all three tests.
 
-- [ ] **Step 5: Register both items in `src/items/load.go`**
+- [x] **Step 5: Register both items in `src/items/load.go`**
 
 Inside `registerNewArtifacts()` (`src/items/load.go`), add two `RegisterItem` calls — place them after the `ember_mantle` block (end of Wave 1) to keep the void pair together:
 
@@ -338,7 +338,7 @@ Inside `registerNewArtifacts()` (`src/items/load.go`), add two `RegisterItem` ca
 	})
 ```
 
-- [ ] **Step 6: Build and run the full combat test suite**
+- [x] **Step 6: Build and run the full combat test suite**
 
 Run: `cd src && go build ./... && go test ./combat/... ./items/... -v`
 Expected: build clean; all tests `PASS`, including the pre-existing suite (no regressions).
@@ -354,7 +354,7 @@ Expected: build clean; all tests `PASS`, including the pre-existing suite (no re
 - Consumes: `drawGlow`, `drawRift` (Task 1); `isoToScreenFloat` (existing package-level helper already used throughout `src/spells`); `easeOutQuad` (existing helper in `src/spells/artifacts.spells.go`).
 - Produces: `spells.NewVoidRift(x, y float64) *VoidRift`, implementing the `Spell` interface (`Update`, `Draw`, `IsFinished`) — consumed by Task 5's `spawnSkillVisual` case.
 
-- [ ] **Step 1: Write the visual**
+- [x] **Step 1: Write the visual**
 
 ```go
 package spells
@@ -425,7 +425,7 @@ func (v *VoidRift) Draw(screen *ebiten.Image, tileSize int, camX, camY, camScale
 func (v *VoidRift) IsFinished() bool { return v.Finished }
 ```
 
-- [ ] **Step 2: Build**
+- [x] **Step 2: Build**
 
 Run: `cd src && go build ./...`
 Expected: clean build. No unit test here for the same reason as Task 1 — this is a rendering-only file (age/duration lifecycle logic is trivial and structurally identical to the already-unverified-by-test `GroundSlam`/`RootBind` in `artifacts.spells.go`, which the codebase doesn't test either). Verified visually in Task 7.
@@ -441,7 +441,7 @@ Expected: clean build. No unit test here for the same reason as Task 1 — this 
 - Consumes: `drawGlow` (Task 1), `isoToScreenFloat`.
 - Produces: `spells.VoidboundAura` struct with `Update(dt float64)` and `Draw(screen *ebiten.Image, tileSize int, worldX, worldY float64, camX, camY, camScale, cx, cy float64)`. **Deliberately does not implement the `Spell` interface** — it has no finite lifetime and is never appended to `ActiveSpells`. Consumed by Task 5's `Game.VoidboundAura` field and `drawVoidboundAura` method.
 
-- [ ] **Step 1: Write the aura**
+- [x] **Step 1: Write the aura**
 
 ```go
 package spells
@@ -477,7 +477,7 @@ func (a *VoidboundAura) Draw(screen *ebiten.Image, tileSize int, worldX, worldY 
 }
 ```
 
-- [ ] **Step 2: Build**
+- [x] **Step 2: Build**
 
 Run: `cd src && go build ./...`
 Expected: clean build.
@@ -497,7 +497,7 @@ Expected: clean build.
 - Consumes: `spells.NewVoidRift` (Task 3), `spells.VoidboundAura` (Task 4), `combat.ArtifactEffects` entries (Task 2).
 - Produces: `Game.hasArtifactEquipped(id string) bool`, `Game.drawVoidboundAura(screen *ebiten.Image, scale, cx, cy float64)` — internal wiring, not consumed elsewhere in this plan.
 
-- [ ] **Step 1: Add the `VoidboundAura` field to `Game`**
+- [x] **Step 1: Add the `VoidboundAura` field to `Game`**
 
 In `src/game/game.go`, find the line:
 ```go
@@ -508,7 +508,7 @@ and add immediately after it:
 	VoidboundAura     *spells.VoidboundAura // lazily created in drawVoidboundAura; nil until first drawn
 ```
 
-- [ ] **Step 2: Add the `spawnSkillVisual` case**
+- [x] **Step 2: Add the `spawnSkillVisual` case**
 
 In `src/game/spell_visuals.go`, inside the `switch id {` block of `spawnSkillVisual` (around line 137, right after the `case "blood_price_strike":` line and before `default:`), add:
 
@@ -519,7 +519,7 @@ In `src/game/spell_visuals.go`, inside the `switch id {` block of `spawnSkillVis
 
 This follows the exact convention of the other artifact-skill cases (`void_bind`, `execute`, `arcane_surge_blast`) — it acts on the locked target (`lockX, lockY`), which `handleSkillFired` in `new_adapter.go` already resolves to the target's body center before calling `spawnSkillVisual`.
 
-- [ ] **Step 3: Add the `hasArtifactEquipped` helper**
+- [x] **Step 3: Add the `hasArtifactEquipped` helper**
 
 In `src/game/new_adapter.go`, immediately after the closing brace of `buildEquipped` (after the line `}` that ends the function containing `a.combatState.PassiveArtifacts = append(...)`), add:
 
@@ -550,7 +550,7 @@ func (g *Game) hasArtifactEquipped(id string) bool {
 }
 ```
 
-- [ ] **Step 4: Add `drawVoidboundAura` and call it from `drawPlaying`**
+- [x] **Step 4: Add `drawVoidboundAura` and call it from `drawPlaying`**
 
 In `src/game/draw.game.go`, add this method near `drawSpells` (after its closing brace, around line 220):
 
@@ -581,7 +581,7 @@ and add immediately after it:
 	g.drawVoidboundAura(target, scale, cx, cy)
 ```
 
-- [ ] **Step 5: Advance the aura's animation clock**
+- [x] **Step 5: Advance the aura's animation clock**
 
 In `src/game/spells.game.go`, at the top of `updateSpells()` (before `var remaining []spells.Spell`), add:
 
@@ -591,7 +591,7 @@ In `src/game/spells.game.go`, at the top of `updateSpells()` (before `var remain
 	}
 ```
 
-- [ ] **Step 6: Build**
+- [x] **Step 6: Build**
 
 Run: `cd src && go build ./...`
 Expected: clean build.
@@ -608,7 +608,7 @@ Expected: clean build.
 - Consumes: item IDs `"void_rift_catalyst"`, `"voidbound_pendant"` (Task 2).
 - No new exported symbols consumed by later tasks — this is leaf content.
 
-- [ ] **Step 1: Add icon generators**
+- [x] **Step 1: Add icon generators**
 
 In `src/items/artifact_icons.go`, add two entries to the `iconGenerators` map (after the `"quicksilver_talisman"` line):
 
@@ -649,7 +649,7 @@ func drawPendantIcon(img *ebiten.Image) {
 }
 ```
 
-- [ ] **Step 2: Add flavor text**
+- [x] **Step 2: Add flavor text**
 
 In `src/data/items_flavor.json`, add two entries to the top-level JSON array (after the opening `[` — position doesn't matter, the loader matches by `id`):
 
@@ -666,7 +666,7 @@ In `src/data/items_flavor.json`, add two entries to the top-level JSON array (af
   },
 ```
 
-- [ ] **Step 3: Build**
+- [x] **Step 3: Build**
 
 Run: `cd src && go build ./...`
 Expected: clean build. `go vet ./items/...` should also be run to catch any unused-variable issues in the new icon functions:
@@ -743,3 +743,7 @@ This is the actual acceptance test for this pilot — per the spec's Verificatio
 - **Spec coverage:** all 7 integration points listed in the spec's table are covered (Tasks 2, 3, 4, 5, 6, 7). The spec's "no `src/combat/` changes unless existing fields prove insufficient" open question is resolved concretely in Task 2 — `DamageMultiplier` + `IsRoot` + `DurationSec` suffice, zero engine changes made. The spec's UV-distortion language is explicitly corrected in Global Constraints rather than silently reinterpreted.
 - **Type consistency checked:** `VoidRift` (Task 3) and `VoidboundAura` (Task 4) intentionally have different method signatures — `VoidRift` implements `Spell` (`Update(level, dt)`, `Draw(screen, tileSize, camX, camY, camScale, cx, cy)`, `IsFinished()`), `VoidboundAura` does not (`Update(dt)` only, `Draw` takes explicit `worldX, worldY`). This is called out in both tasks' Interfaces blocks so the distinction isn't lost by an implementer working the tasks out of order.
 - **No placeholders:** every step has complete, runnable code — no "add error handling" or "similar to Task N" shortcuts.
+
+## Progress Log
+
+- **2026-09-15:** Status audit found Tasks 1–6 already code-complete in the working tree (uncommitted) — `go build ./...` clean, `go test ./combat/... ./items/... ./game/...` all `ok` (including the 3 new `voidrift_test.go` cases). Checkboxes above corrected to match. Only Task 7 Step 5 (manual in-game verification + screenshot-based visual tuning per spec Open Question #2) remains — deferred for a later session per user direction. Nothing in this plan or the CR1 work behind it has been committed yet; see CLAUDE.md housekeeping note.

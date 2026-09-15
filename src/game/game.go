@@ -80,6 +80,7 @@ type Game struct {
 	Controls *controls.Controls
 
 	ActiveSpells      []spells.Spell
+	VoidboundAura     *spells.VoidboundAura // lazily created in drawVoidboundAura; nil until first drawn
 	ActiveSpray       *spells.ArcaneSpray // currently channeled spray (nil if none)
 	sprayManaDrainAcc float64
 	fireballSprites   [][]*ebiten.Image

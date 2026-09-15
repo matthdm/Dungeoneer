@@ -105,6 +105,9 @@ func abilitySpellName(abilityID string) string {
 }
 
 func (g *Game) updateSpells() {
+	if g.VoidboundAura != nil {
+		g.VoidboundAura.Update(g.DeltaTime)
+	}
 	var remaining []spells.Spell
 	for _, sp := range g.ActiveSpells {
 		prevX, prevY := 0.0, 0.0

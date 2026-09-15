@@ -219,6 +219,22 @@ func (g *Game) drawSpells(target *ebiten.Image, scale, cx, cy float64) {
 	}
 }
 
+// drawVoidboundAura renders the Voidbound Aura while voidbound_pendant is
+// active. The aura is not a Spell and is never appended to ActiveSpells — it
+// persists for as long as the pendant is equipped, gated here each frame.
+func (g *Game) drawVoidboundAura(screen *ebiten.Image, scale, cx, cy float64) {
+	if g.player == nil || g.currentLevel == nil {
+		return
+	}
+	if !g.hasArtifactEquipped("voidbound_pendant") {
+		return
+	}
+	if g.VoidboundAura == nil {
+		g.VoidboundAura = &spells.VoidboundAura{}
+	}
+	g.VoidboundAura.Draw(screen, g.currentLevel.TileSize, g.player.BodyX(), g.player.BodyY(), g.camX, g.camY, scale, cx, cy)
+}
+
 func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 	scaleLater := g.camScale > 1
 	target := screen
@@ -235,6 +251,7 @@ func (g *Game) drawPlaying(screen *ebiten.Image, cx, cy float64) {
 		target.DrawImage(r.Image, r.Options)
 	}
 	g.drawSpells(target, scale, cx, cy)
+	g.drawVoidboundAura(target, scale, cx, cy)
 	g.drawMonsterProjectiles(target, scale, cx, cy)
 	g.drawTargetRing(target, scale, cx, cy)
 

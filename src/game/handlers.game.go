@@ -174,6 +174,11 @@ func (g *Game) handleClicks() {
 		if g.player.CanMoveTo(tx, ty, g.currentLevel) {
 			path := pathing.AStar(g.currentLevel, g.player.TileX, g.player.TileY, tx, ty)
 			if len(path) > 0 {
+				// Same rationale as handlePlayerVelocity: a manual right-click
+				// move is the player breaking engagement, not the engine's
+				// forced approach-to-range — stop auto-attacking so ProcessTick
+				// doesn't overwrite this path back toward the old target.
+				g.IsAutoAttacking = false
 				g.player.MoveController.SetPath(path)
 				g.player.PathPreview = nil
 			}
@@ -444,6 +449,13 @@ func (g *Game) handlePlayerVelocity() {
 
 	// Only enable velocity mode if a direction is pressed
 	if dx != 0 || dy != 0 {
+		// Manual movement breaks engagement: without this, ProcessTick's
+		// forced-approach (new_adapter.go, "move toward target if out of
+		// range and auto-attacking") re-issues an A* path back to the target
+		// every single tick this stays true, fighting the player's own input
+		// and producing a rubberband. The target itself stays selected (HUD
+		// panel/ring persist) — only the forced chase/auto-attack stops.
+		g.IsAutoAttacking = false
 		g.player.MoveController.SetVelocityFromInput(dx, dy)
 		g.player.MoveController.Mode = movement.VelocityMode
 		mag := math.Hypot(dx, dy)

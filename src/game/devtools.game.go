@@ -283,6 +283,7 @@ func (g *Game) buildDevEntries() []ui.DevEntry {
 		{"M6 The 55", "cmd/benchmarker/scenarios/the_55.json"},
 		{"M7 Perma Shadow", "cmd/benchmarker/scenarios/perma_shadow.json"},
 		{"M8 Void Sacrifice", "cmd/benchmarker/scenarios/void_sacrifice.json"},
+		{"Void Rift Test", "cmd/benchmarker/scenarios/void_rift_test.json"},
 	}
 	for _, sp := range scenarioPairs {
 		label := sp.label

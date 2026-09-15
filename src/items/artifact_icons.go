@@ -60,6 +60,8 @@ var iconGenerators = map[string]iconGen{
 	"hollow_sigil":          {"void", drawSigilIcon},
 	"thornweave_vest":       {"nature", drawThornVestIcon},
 	"quicksilver_talisman":  {"iron", drawTalismanIcon},
+	"void_rift_catalyst":    {"void", drawRiftIcon},
+	"voidbound_pendant":     {"void", drawPendantIcon},
 }
 
 // ─── shared helpers ─────────────────────────────────────────────────────────
@@ -401,6 +403,34 @@ func drawTalismanIcon(img *ebiten.Image) {
 	for i := 0; i < len(pts)-1; i++ {
 		vector.StrokeLine(img, pts[i][0], pts[i][1], pts[i+1][0], pts[i+1][1], 1.5, bolt, true)
 	}
+}
+
+// drawRiftIcon: a jagged dark tear ringed by a bright event-horizon —
+// void_rift_catalyst.
+func drawRiftIcon(img *ebiten.Image) {
+	rim := color.NRGBA{190, 130, 255, 255}
+	dark := color.NRGBA{35, 15, 55, 255}
+	pts := [][2]float32{{16, 6}, {21, 13}, {26, 16}, {20, 19}, {16, 27}, {12, 19}, {6, 16}, {11, 13}}
+	for i := 1; i < len(pts)-1; i++ {
+		drawFilledTriangle(img, pts[0], pts[i], pts[i+1], dark)
+	}
+	for i := 0; i < len(pts); i++ {
+		p1 := pts[i]
+		p2 := pts[(i+1)%len(pts)]
+		vector.StrokeLine(img, p1[0], p1[1], p2[0], p2[1], 1.2, rim, true)
+	}
+	vector.DrawFilledCircle(img, 16, 16, 2, color.NRGBA{230, 210, 255, 255}, true)
+}
+
+// drawPendantIcon: a teardrop pendant on a chain, warping the space around
+// it — voidbound_pendant.
+func drawPendantIcon(img *ebiten.Image) {
+	chain := color.NRGBA{150, 100, 220, 200}
+	vector.StrokeLine(img, 12, 5, 16, 11, 1, chain, true)
+	vector.StrokeLine(img, 20, 5, 16, 11, 1, chain, true)
+	gem := color.NRGBA{130, 60, 190, 255}
+	drawFlameShape(img, 16, 27, 6.5, gem)
+	vector.StrokeCircle(img, 16, 18, 9, 1, color.NRGBA{190, 130, 255, 140}, true)
 }
 
 // ─── low-level primitives ──────────────────────────────────────────────────

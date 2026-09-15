@@ -1,3 +1,5 @@
 src/images/skill-icons/
 .superpowers/
 src/*.exe
+src/meta.json
+src/runsave.json

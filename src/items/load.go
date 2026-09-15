@@ -331,6 +331,38 @@ func registerNewArtifacts() {
 		ArtifactDomain: "flame",
 	})
 
+	// ── Void Rift VFX pilot pair (2026-07-26) ─────────────────────────────
+	RegisterItem(&ItemTemplate{
+		ID:             "void_rift_catalyst",
+		Name:           "Void Rift Catalyst",
+		Type:           ItemWeapon,
+		Description:    "Tear open a collapsing rift at your target: deal damage and root them for 1.5s. +6 Max Mana.",
+		Stackable:      false,
+		MaxStack:       1,
+		Equippable:     true,
+		Stats:          map[string]int{"MaxMana": 6},
+		GrantsAbility:  "void_rift_blast",
+		AbilitySlot:    AbilitySlotSpell,
+		Quality:        RarityRare,
+		IsArtifact:     true,
+		ArtifactDomain: "void",
+	})
+	RegisterItem(&ItemTemplate{
+		ID:             "voidbound_pendant",
+		Name:           "Voidbound Pendant",
+		Type:           ItemArmor,
+		Description:    "Passive: a warping void aura extends all your skill durations by 15%. +6 Max Mana.",
+		Stackable:      false,
+		MaxStack:       1,
+		Equippable:     true,
+		Stats:          map[string]int{"MaxMana": 6},
+		GrantsAbility:  "voidbound_ward",
+		AbilitySlot:    AbilitySlotSpell,
+		Quality:        RarityRare,
+		IsArtifact:     true,
+		ArtifactDomain: "void",
+	})
+
 	// ── Wave 2: meta-build skill artifacts ────────────────────────────────
 
 	// "The 55" tank core — incoming damage capped at 12% max HP

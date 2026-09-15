@@ -122,8 +122,12 @@ func (s *ShadowStrike) Draw(screen *ebiten.Image, tileSize int, camX, camY, camS
 	progress := s.age / s.Duration
 	alpha := float32(1 - progress)
 
+	// coords.BodyDX/BodyDY replaces the older ad hoc "+1 X only" chest-alignment
+	// nudge (see the original in blink.spells.go) with the same named constant
+	// every other bespoke CR1 visual in this file uses — same offset, just no
+	// longer a magic number, and now also accounts for the Y component.
 	project := func(wx, wy float64) (float32, float32) {
-		sx, sy := isoToScreenFloat(wx+1, wy, tileSize)
+		sx, sy := isoToScreenFloat(wx+coords.BodyDX, wy+coords.BodyDY, tileSize)
 		return float32((sx-camX)*camScale + cx), float32((sy+camY)*camScale + cy)
 	}
 	ox, oy := project(s.StartX, s.StartY)

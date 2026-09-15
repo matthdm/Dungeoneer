@@ -1,5 +1,15 @@
 [
   {
+    "id": "void_rift_catalyst",
+    "text": "It does not open a door. It opens an absence — a place the dungeon forgot to finish building — and whatever stands there falls halfway out of the world for as long as the tear holds.",
+    "line": "Something briefly stops existing where you point it."
+  },
+  {
+    "id": "voidbound_pendant",
+    "text": "Worn close to the skin, the pendant keeps a fraction of a second in reserve at all times — borrowed from wherever the rifts lead, spent back into every spell you hold a moment longer than it should last.",
+    "line": "Time moves slower near the pendant. Not for you."
+  },
+  {
     "id": "item_0_1",
     "text": "Cast in the forges beneath the Hollow Citadel, this emblem bore the crest of an order that swore itself to the dungeon's first descent. The knights who wore it never came back up the same.",
     "line": "The order it served no longer has a name."

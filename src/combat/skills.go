@@ -100,6 +100,20 @@ var ArtifactEffects = map[string]ArtifactEffect{
 		IsExecute:           true,
 		ExecuteThresholdPct: 20,
 	},
+	// Void Rift VFX pilot pair (2026-07-26)
+	"void_rift_catalyst": {
+		Cooldown:         9.0,
+		Domain:           "void",
+		DamageMultiplier: 1.4,
+		IsRoot:           true,
+		DurationSec:      1.5,
+	},
+	"voidbound_pendant": {
+		Cooldown:         0,
+		Domain:           "void",
+		IsPassive:        true,
+		SkillDurationPct: 15,
+	},
 	"ember_mantle": {
 		Cooldown:        0,
 		Domain:          "flame",

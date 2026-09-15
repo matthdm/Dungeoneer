@@ -59,20 +59,24 @@ func canonicalArtifactID(id string) string {
 // (EventDamageDealt), so the projectile/field only animates. Returns false when
 // the skill has no bespoke visual (caller falls back to a particle burst).
 //
-// Two different target conventions are in play, matching what legacy casting
-// always did:
+// Two different target conventions are in play:
 //
-//   - groundX/groundY is the raw hovered tile (no offset) — this is the
-//     cursor-aimed convention every legacy ground-cast spell used. Only
-//     fireball and chaos_ray additionally offset by BodyDX/BodyDY (legacy
-//     castSpellSlot added that explicitly); lightning, lightning_storm,
-//     fractal_bloom, and fractal_canopy strike the raw tile as-is. Using the
-//     targeted monster's body center here instead (an extra ~1.25 tiles east)
-//     is what caused lightning to visibly land one tile off from the cursor.
-//   - lockX/lockY is the current target's body center (or the ground position
-//     if there's no target) — used by artifact skills that act ON the locked
-//     target (root, execute, blink-strike, sacrifice lance), which is a
-//     monster-targeting system with no legacy cursor-aim equivalent.
+//   - groundX/groundY is the raw hovered tile (no offset) — the cursor-aimed
+//     fallback used only when there is no locked target (fractal_canopy, a
+//     self-anchored heal field, always uses this; it never chases a target).
+//   - lockX/lockY is the current target's body center when one is locked, or
+//     groundX/groundY+BodyDX/BodyDY otherwise (see handleSkillFired). Every
+//     damage-dealing ground-cast spell (fireball, chaos_ray, lightning,
+//     lightning_storm, fractal_bloom) now casts at lockX/lockY: the engine
+//     already resolves damage against the true target position regardless of
+//     where the cursor was hovering, so the visual must land there too, or a
+//     locked-target cast reads as a miss even though it connected. An earlier
+//     version of this switch used the raw ground tile for these instead,
+//     which was wrong in the exact case that mattered most — casting at a
+//     locked target while the mouse wasn't precisely over it.
+//   - Artifact skills (root, execute, blink-strike, sacrifice lance) always
+//     used lockX/lockY already — this brings the legacy ground-cast spells in
+//     line with that same convention instead of being the odd one out.
 func (g *Game) spawnSkillVisual(id string, groundX, groundY, lockX, lockY float64, killed bool) bool {
 	if g.player == nil || g.currentLevel == nil {
 		return false
@@ -83,22 +87,22 @@ func (g *Game) spawnSkillVisual(id string, groundX, groundY, lockX, lockY float6
 
 	switch id {
 	case "fireball":
-		fb := spells.NewFireball(info, bx, by, groundX+coords.BodyDX, groundY+coords.BodyDY, g.fireballSprites, g.spriteSheet.FireBurst)
+		fb := spells.NewFireball(info, bx, by, lockX, lockY, g.fireballSprites, g.spriteSheet.FireBurst)
 		fb.VisualOnly = true
 		g.ActiveSpells = append(g.ActiveSpells, fb)
 	case "chaos_ray":
-		cr := spells.NewChaosRay(info, bx, by, groundX+coords.BodyDX, groundY+coords.BodyDY)
+		cr := spells.NewChaosRay(info, bx, by, lockX, lockY)
 		g.ActiveSpells = append(g.ActiveSpells, cr)
 	case "lightning":
-		ls := spells.NewLightningStrike(info, groundX, groundY, g.spriteSheet.ArcaneBurst)
+		ls := spells.NewLightningStrike(info, lockX, lockY, g.spriteSheet.ArcaneBurst)
 		ls.DamageApplied = true // engine owns damage
 		g.ActiveSpells = append(g.ActiveSpells, ls)
 	case "lightning_storm":
-		storm := spells.NewLightningStorm(info, groundX, groundY, 3, 0.2, 3.0, g.player.Caster, g.spriteSheet.ArcaneBurst, g.currentLevel)
+		storm := spells.NewLightningStorm(info, lockX, lockY, 3, 0.2, 3.0, g.player.Caster, g.spriteSheet.ArcaneBurst, g.currentLevel)
 		storm.VisualOnly = true
 		g.ActiveSpells = append(g.ActiveSpells, storm)
 	case "fractal_bloom":
-		bloom := spells.NewFractalBloom(info, groundX, groundY, g.player.Caster, g.spriteSheet.ArcaneBurst, g.currentLevel, 3, 0.7, 0.2)
+		bloom := spells.NewFractalBloom(info, lockX, lockY, g.player.Caster, g.spriteSheet.ArcaneBurst, g.currentLevel, 3, 0.7, 0.2)
 		bloom.VisualOnly = true
 		g.ActiveSpells = append(g.ActiveSpells, bloom)
 	case "fractal_canopy":
@@ -136,6 +140,8 @@ func (g *Game) spawnSkillVisual(id string, groundX, groundY, lockX, lockY float6
 		g.ActiveSpells = append(g.ActiveSpells, spells.NewArcaneSurgeNuke(lockX, lockY))
 	case "blood_price_strike":
 		g.ActiveSpells = append(g.ActiveSpells, spells.NewBloodPriceStrike(bx, by, lockX, lockY))
+	case "void_rift_blast":
+		g.ActiveSpells = append(g.ActiveSpells, spells.NewVoidRift(lockX, lockY))
 	default:
 		return false
 	}

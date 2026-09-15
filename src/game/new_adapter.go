@@ -231,6 +231,31 @@ func (a *NewCombatAdapter) buildEquipped(g *Game) {
 	}
 }
 
+// hasArtifactEquipped reports whether the given canonical artifact ID is
+// currently active on the player — either occupying a spell-bar slot
+// (EquippedArtifacts, which is how dev-menu scenario loads place even
+// passive items — see devLoadBuild in combat_debug.go) or worn as
+// passive-only equipment (PassiveArtifacts). Used by persistent visual
+// effects that aren't tied to a single triggered EventSkillFired, such as
+// the Voidbound Aura.
+func (g *Game) hasArtifactEquipped(id string) bool {
+	na, ok := g.CombatAdapt.(*NewCombatAdapter)
+	if !ok {
+		return false
+	}
+	for _, eq := range na.combatState.EquippedArtifacts {
+		if eq == id {
+			return true
+		}
+	}
+	for _, eq := range na.combatState.PassiveArtifacts {
+		if eq == id {
+			return true
+		}
+	}
+	return false
+}
+
 func (a *NewCombatAdapter) ProcessTick(g *Game, dt float64) {
 	if g.player == nil {
 		return
@@ -281,7 +306,7 @@ func (a *NewCombatAdapter) ProcessTick(g *Game, dt float64) {
 	attackRange := 1.5 // knight default (tile units)
 	attackInterval := 0.8
 	if g.player.Class == entities.ClassMage {
-		attackRange = 6.0
+		attackRange = 8.0
 		attackInterval = 1.0
 	}
 
@@ -294,7 +319,14 @@ func (a *NewCombatAdapter) ProcessTick(g *Game, dt float64) {
 		mx = m.BodyX()
 		my = m.BodyY()
 		dist := math.Sqrt((mx-px)*(mx-px) + (my-py)*(my-py))
-		inRange = dist <= attackRange
+		// Distance alone isn't enough: without a line-of-sight check, a monster
+		// within attackRange but behind a wall was still "in range" — the
+		// engine would auto-attack and deal damage every tick with no
+		// projectile ever able to reach the target, since the visual (Fireball,
+		// ArcaneBolt, ...) independently stops itself at the first blocked
+		// tile. hasLineOfSight (spells.game.go) is the same tile-tracing check
+		// already used for AOE/splash LOS gating elsewhere in this package.
+		inRange = dist <= attackRange && g.hasLineOfSight(g.player.TileX, g.player.TileY, m.TileX, m.TileY)
 	}
 
 	// 4. Move toward target if out of range and auto-attacking.
@@ -515,6 +547,18 @@ func (a *NewCombatAdapter) ProcessTick(g *Game, dt float64) {
 				}
 			}
 
+		case combat.EventAutoAttack:
+			// The engine's per-tick auto-attack (state.AutoAttackTimer, engine.go)
+			// emits this alongside EventDamageDealt for every repeat swing/shot
+			// after the initial cast — but until now nothing here handled it, so
+			// only the FIRST arcane_bolt (spawned via EventSkillFired on the
+			// initial click) ever got a projectile; every automatic follow-up
+			// shot dealt damage silently. Melee doesn't need this case: its
+			// swing visual is spawned directly by handlePrimaryAttack on click,
+			// not through this event.
+			if g.player.HasAbility("arcane_bolt") {
+				g.spawnSkillVisual("arcane_bolt", ev.X, ev.Y, ev.X, ev.Y, false)
+			}
 		case combat.EventSkillFired:
 			a.handleSkillFired(g, ev, m, mx, my)
 		case combat.EventStreakChange:

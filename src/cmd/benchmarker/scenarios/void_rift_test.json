@@ -1,0 +1,12 @@
+{
+  "name": "Void Rift VFX Test",
+  "class": "knight",
+  "artifacts": ["void_rift_catalyst", "voidbound_pendant", "", "", "", "", ""],
+  "stats": { "Strength": 12, "Dexterity": 10, "Vitality": 12, "Intelligence": 6, "Luck": 6 },
+  "floor": 3,
+  "biome": "crypt",
+  "enemy_pool": ["melee"],
+  "iterations": 1,
+  "skill_rotation": ["slot_1", "auto"],
+  "stat_priority": ["str", "vit"]
+}
