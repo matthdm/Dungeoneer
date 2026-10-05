@@ -10,23 +10,16 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
-// drawTargetRing draws a pulsing red ring under the targeted monster.
-// Called from drawPlaying before/during the entity layer draw.
-//
-// Coordinate transform mirrors worldToScreenPoint (tileCentered=false):
-//
-//	isoX, isoY = cartesianToIso(worldX, worldY)
-//	sx = (isoX - camX) * scale + cx
-//	sy = (isoY + camY) * scale + cy
+// drawTargetRing draws a pulsing red ring on the floor around the targeted
+// monster's feet (its BodyCenter() in world space).
 func (g *Game) drawTargetRing(target *ebiten.Image, scale, cx, cy float64) {
 	if g.TargetedMonster == nil || g.TargetedMonster.IsDead {
 		return
 	}
 	m := g.TargetedMonster
 
-	// Center the ring on the tile diamond center (same tileCentered=true offset that
-	// entity renders apply), not the raw tile anchor which is the upper-left corner.
-	sx, sy := g.worldToScreenPoint(m.InterpX, m.InterpY, scale, cx, cy, true)
+	gx, gy := g.groundToScreen(m.BodyX(), m.BodyY(), scale, cx, cy)
+	sx, sy := float32(gx), float32(gy)
 
 	// Horizontal radius in screen pixels: 0.5 tiles wide in iso space.
 	ts := float64(g.currentLevel.TileSize)

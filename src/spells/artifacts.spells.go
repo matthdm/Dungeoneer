@@ -48,7 +48,7 @@ func (s *GroundSlam) Draw(screen *ebiten.Image, tileSize int, camX, camY, camSca
 	ringRadius := s.Radius * easeOutQuad(progress)
 
 	project := func(wx, wy float64) (float32, float32) {
-		sx, sy := isoToScreenFloat(wx+coords.BodyDX, wy+coords.BodyDY, tileSize)
+		sx, sy := groundIso(wx, wy, tileSize)
 		return float32((sx-camX)*camScale + cx), float32((sy+camY)*camScale + cy)
 	}
 
@@ -60,8 +60,8 @@ func (s *GroundSlam) Draw(screen *ebiten.Image, tileSize int, camX, camY, camSca
 		ang := float64(i) / cracks * 2 * math.Pi
 		midR := ringRadius * 0.55
 		x0, y0 := project(s.OriginX, s.OriginY)
-		x1, y1 := project(s.OriginX+math.Cos(ang)*midR, s.OriginY+math.Sin(ang)*midR*0.5)
-		x2, y2 := project(s.OriginX+math.Cos(ang)*ringRadius, s.OriginY+math.Sin(ang)*ringRadius*0.5)
+		x1, y1 := project(s.OriginX+math.Cos(ang)*midR, s.OriginY+math.Sin(ang)*midR)
+		x2, y2 := project(s.OriginX+math.Cos(ang)*ringRadius, s.OriginY+math.Sin(ang)*ringRadius)
 		vector.StrokeLine(screen, x0, y0, x1, y1, 2, crackCol, true)
 		vector.StrokeLine(screen, x1, y1, x2, y2, 1.5, crackCol, true)
 	}
@@ -73,11 +73,11 @@ func (s *GroundSlam) Draw(screen *ebiten.Image, tileSize int, camX, camY, camSca
 	for i := 0; i < segs; i++ {
 		t1 := float64(i) / segs * 2 * math.Pi
 		t2 := float64(i+1) / segs * 2 * math.Pi
-		x1, y1 := project(s.OriginX+math.Cos(t1)*ringRadius, s.OriginY+math.Sin(t1)*ringRadius*0.5)
-		x2, y2 := project(s.OriginX+math.Cos(t2)*ringRadius, s.OriginY+math.Sin(t2)*ringRadius*0.5)
+		x1, y1 := project(s.OriginX+math.Cos(t1)*ringRadius, s.OriginY+math.Sin(t1)*ringRadius)
+		x2, y2 := project(s.OriginX+math.Cos(t2)*ringRadius, s.OriginY+math.Sin(t2)*ringRadius)
 		vector.StrokeLine(screen, x1, y1, x2, y2, 3, outerCol, true)
-		ix1, iy1 := project(s.OriginX+math.Cos(t1)*ringRadius*0.75, s.OriginY+math.Sin(t1)*ringRadius*0.375)
-		ix2, iy2 := project(s.OriginX+math.Cos(t2)*ringRadius*0.75, s.OriginY+math.Sin(t2)*ringRadius*0.375)
+		ix1, iy1 := project(s.OriginX+math.Cos(t1)*ringRadius*0.75, s.OriginY+math.Sin(t1)*ringRadius*0.75)
+		ix2, iy2 := project(s.OriginX+math.Cos(t2)*ringRadius*0.75, s.OriginY+math.Sin(t2)*ringRadius*0.75)
 		vector.StrokeLine(screen, ix1, iy1, ix2, iy2, 4, innerCol, true)
 	}
 
@@ -122,12 +122,8 @@ func (s *ShadowStrike) Draw(screen *ebiten.Image, tileSize int, camX, camY, camS
 	progress := s.age / s.Duration
 	alpha := float32(1 - progress)
 
-	// coords.BodyDX/BodyDY replaces the older ad hoc "+1 X only" chest-alignment
-	// nudge (see the original in blink.spells.go) with the same named constant
-	// every other bespoke CR1 visual in this file uses — same offset, just no
-	// longer a magic number, and now also accounts for the Y component.
 	project := func(wx, wy float64) (float32, float32) {
-		sx, sy := isoToScreenFloat(wx+coords.BodyDX, wy+coords.BodyDY, tileSize)
+		sx, sy := bodyIso(wx, wy, tileSize)
 		return float32((sx-camX)*camScale + cx), float32((sy+camY)*camScale + cy)
 	}
 	ox, oy := project(s.StartX, s.StartY)
@@ -195,7 +191,7 @@ func (t *TauntPulse) Draw(screen *ebiten.Image, tileSize int, camX, camY, camSca
 	alpha := float32(1 - progress)
 
 	project := func(wx, wy float64) (float32, float32) {
-		sx, sy := isoToScreenFloat(wx+coords.BodyDX, wy+coords.BodyDY, tileSize)
+		sx, sy := groundIso(wx, wy, tileSize)
 		return float32((sx-camX)*camScale + cx), float32((sy+camY)*camScale + cy)
 	}
 	ox, oy := project(t.X, t.Y)
@@ -217,7 +213,7 @@ func (t *TauntPulse) Draw(screen *ebiten.Image, tileSize int, camX, camY, camSca
 
 	// Rotating shield glyph above the caster's head: three chevrons spinning
 	// slowly, fading with the pulse.
-	glyphY := oy - float32(18)*float32(camScale)
+	glyphY := oy - float32(coords.BodyHeightPx(tileSize)+34)*float32(camScale)
 	spin := progress * 4
 	for i := 0; i < 3; i++ {
 		ang := spin*math.Pi + float64(i)*2*math.Pi/3
@@ -265,7 +261,7 @@ func (r *RootBind) Draw(screen *ebiten.Image, tileSize int, camX, camY, camScale
 	cinch := math.Min(progress/0.4, 1.0) // chains snap shut over the first 40%
 
 	project := func(wx, wy float64) (float32, float32) {
-		sx, sy := isoToScreenFloat(wx+coords.BodyDX, wy+coords.BodyDY, tileSize)
+		sx, sy := groundIso(wx, wy, tileSize)
 		return float32((sx-camX)*camScale + cx), float32((sy+camY)*camScale + cy)
 	}
 	cx0, cy0 := project(r.X, r.Y)
@@ -338,7 +334,7 @@ func (e *ReaperExecute) Draw(screen *ebiten.Image, tileSize int, camX, camY, cam
 	}
 
 	project := func(wx, wy float64) (float32, float32) {
-		sx, sy := isoToScreenFloat(wx+coords.BodyDX, wy+coords.BodyDY, tileSize)
+		sx, sy := bodyIso(wx, wy, tileSize)
 		return float32((sx-camX)*camScale + cx), float32((sy+camY)*camScale + cy)
 	}
 	center, _ := project(e.X, e.Y)
@@ -411,7 +407,7 @@ func (n *ArcaneSurgeNuke) Draw(screen *ebiten.Image, tileSize int, camX, camY, c
 	progress := n.age / n.Duration
 
 	project := func(wx, wy float64) (float32, float32) {
-		sx, sy := isoToScreenFloat(wx+coords.BodyDX, wy+coords.BodyDY, tileSize)
+		sx, sy := bodyIso(wx, wy, tileSize)
 		return float32((sx-camX)*camScale + cx), float32((sy+camY)*camScale + cy)
 	}
 	ox, oy := project(n.X, n.Y)
@@ -475,7 +471,7 @@ func (b *BloodPriceStrike) Draw(screen *ebiten.Image, tileSize int, camX, camY, 
 	progress := b.age / b.Duration
 
 	project := func(wx, wy float64) (float32, float32) {
-		sx, sy := isoToScreenFloat(wx+coords.BodyDX, wy+coords.BodyDY, tileSize)
+		sx, sy := bodyIso(wx, wy, tileSize)
 		return float32((sx-camX)*camScale + cx), float32((sy+camY)*camScale + cy)
 	}
 	ox, oy := project(b.CasterX, b.CasterY)

@@ -126,8 +126,8 @@ func (f *Fireball) Update(level *levels.Level, dt float64) {
 	ty := int(math.Floor(f.Y))
 	if !level.IsWalkable(tx, ty) {
 		f.Impact = true
-		f.X = float64(tx)
-		f.Y = float64(ty)
+		c := coords.TileCenter(tx, ty)
+		f.X, f.Y = c.X, c.Y
 	}
 }
 
@@ -135,13 +135,7 @@ func (f *Fireball) Draw(screen *ebiten.Image, tileSize int, camX, camY, camScale
 	if f.Finished {
 		return
 	}
-	// f.X/f.Y is drawn as-is, unlike the stationary artifact-skill visuals'
-	// chest-alignment nudge: this is a travelling projectile whose path
-	// starts at the caster's own already-correct BodyCenter() (chest). A
-	// draw-time nudge would apply to every point on the path, including
-	// that origin, dragging it down toward the caster's feet — arcane_bolt
-	// (same caster-to-target shape) draws its own X/Y unmodified for the
-	// same reason.
+	// f.X/f.Y is a world ground point; the fireball flies at body height.
 	var img *ebiten.Image
 	if f.Impact {
 		img = f.ImpactImg
@@ -152,7 +146,7 @@ func (f *Fireball) Draw(screen *ebiten.Image, tileSize int, camX, camY, camScale
 		return
 	}
 
-	sx, sy := isoToScreenFloat(f.X, f.Y, tileSize)
+	sx, sy := bodyIso(f.X, f.Y, tileSize)
 	op := &ebiten.DrawImageOptions{}
 	// arcane_bolt draws a vector.DrawFilledCircle, which is inherently
 	// centered on (sx, sy). Fireball blits a rectangular sprite frame
@@ -170,7 +164,7 @@ func (f *Fireball) Draw(screen *ebiten.Image, tileSize int, camX, camY, camScale
 
 // DebugDraw visualizes the angle and animation row
 func (f *Fireball) DebugDraw(screen *ebiten.Image, tileSize int, camX, camY, camScale, cx, cy float64) {
-	sx, sy := isoToScreenFloat(f.X, f.Y, tileSize)
+	sx, sy := bodyIso(f.X, f.Y, tileSize)
 	sx = (sx-camX)*camScale + cx
 	sy = (sy+camY)*camScale + cy
 	msg := fmt.Sprintf("%.1f° row %d", f.Angle*180/math.Pi, f.dirIndex)
@@ -178,10 +172,3 @@ func (f *Fireball) DebugDraw(screen *ebiten.Image, tileSize int, camX, camY, cam
 }
 
 func (f *Fireball) IsFinished() bool { return f.Finished }
-
-// isoToScreenFloat converts cartesian world coordinates to isometric screen
-// coordinates. Delegates to coords.ToIso — the single source of truth for
-// the projection formula used across the entire codebase.
-func isoToScreenFloat(x, y float64, tileSize int) (float64, float64) {
-	return coords.ToIso(x, y, tileSize)
-}

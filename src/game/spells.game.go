@@ -1,6 +1,7 @@
 package game
 
 import (
+	"dungeoneer/coords"
 	"math"
 
 	"dungeoneer/audio"
@@ -213,10 +214,11 @@ func (g *Game) updateChanneledSpray() {
 		return
 	}
 
-	// Update origin and direction to follow the player/cursor.
-	px := g.player.MoveController.InterpX
-	py := g.player.MoveController.InterpY
-	spray.UpdateChannel(px, py, float64(g.hoverTileX), float64(g.hoverTileY))
+	// Update origin and direction to follow the player/cursor: from the
+	// player's body toward the cursor, both in world space — the same frame
+	// IsInCone tests monsters in and the particles are drawn in.
+	aim := g.cursorAim()
+	spray.UpdateChannel(g.player.BodyX(), g.player.BodyY(), aim.X, aim.Y)
 
 	// Stop spray when the player releases the spell key.
 	sprayHeld := false
@@ -305,14 +307,14 @@ func (g *Game) applyFireballDamage(fb *spells.Fireball, cx, cy int) {
 					g.handleMonsterDeath(m)
 				}
 				if spells.OnSpellImpact != nil {
-					spells.OnSpellImpact(m.InterpX, m.InterpY, "fireball")
+					spells.OnSpellImpact(m.BodyX(), m.BodyY(), "fireball")
 				}
 			}
 		}
 	}
 	// Also emit at the impact center even if no monsters were hit.
 	if spells.OnSpellImpact != nil {
-		spells.OnSpellImpact(float64(cx), float64(cy), "fireball")
+		spells.OnSpellImpact(float64(cx)+0.5, float64(cy)+0.5, "fireball")
 	}
 }
 
@@ -404,30 +406,32 @@ func (g *Game) castSpellSlot(index int) {
 		return
 	}
 
-	// Cast from the player's body center so projectiles and rays visually
-	// originate from the sprite rather than the invisible feet anchor.
+	// Everything is a world ground point. Body-height spells (projectiles,
+	// beams, the spray) go from the player's body toward the cursor's
+	// body-height aim point, so they pass through the cursor. Ground spells
+	// land on the floor exactly under the cursor.
 	gx := g.player.BodyX()
 	gy := g.player.BodyY()
-	tx := float64(g.hoverTileX)
-	ty := float64(g.hoverTileY)
+	aim := g.cursorAim()
+	ground := g.cursorGround()
 	c := g.player.Caster
 
 	cast := false
 	switch abilityID {
 	case "fireball":
-		cast = g.tryCastFireball(gx, gy, tx, ty, c)
+		cast = g.tryCastFireball(gx, gy, aim.X, aim.Y, c)
 	case "chaos_ray":
-		cast = g.tryCastChaosRay(gx, gy, tx, ty, c)
+		cast = g.tryCastChaosRay(gx, gy, aim.X, aim.Y, c)
 	case "lightning":
-		cast = g.tryCastLightningStrike(tx, ty, c)
+		cast = g.tryCastLightningStrike(ground.X, ground.Y, c)
 	case "lightning_storm":
-		cast = g.tryCastLightningStorm(tx, ty, c)
+		cast = g.tryCastLightningStorm(ground.X, ground.Y, c)
 	case "fractal_bloom":
-		cast = g.tryCastFractalBloom(tx, ty, c)
+		cast = g.tryCastFractalBloom(ground.X, ground.Y, c)
 	case "fractal_canopy":
-		cast = g.tryCastFractalCanopy(tx, ty, c)
+		cast = g.tryCastFractalCanopy(ground.X, ground.Y, c)
 	case "arcane_spray":
-		cast = g.tryCastArcaneSpray(gx, gy, tx, ty, c)
+		cast = g.tryCastArcaneSpray(gx, gy, aim.X, aim.Y, c)
 	}
 
 	if cast {
@@ -451,8 +455,8 @@ func (g *Game) castSpellSlot(index int) {
 }
 
 // handlePrimaryAttack dispatches left-click based on the player's primary ability.
-// tx, ty are the cursor position in fractional cartesian space.
-// cx, cy are the snapped tile coords (for fallback melee).
+// tx, ty is the cursor's body-height aim point in world space (Game.cursorAim).
+// cx, cy is the tile under the cursor (for fallback melee).
 func (g *Game) handlePrimaryAttack(tx, ty float64, cx, cy int) {
 	if g.player == nil {
 		return
@@ -476,11 +480,8 @@ func (g *Game) handlePrimaryAttack(tx, ty float64, cx, cy int) {
 }
 
 func (g *Game) handleSlashCombo(tx, ty float64) {
-	// Use the player's body center as the arc origin so the detection radius
-	// is measured from the same point the visual arc is drawn from. Using feet
-	// (px, py) made the effective origin ~1 tile away from the sprite body,
-	// causing the monster's body center to fall outside the radius even when
-	// visually adjacent.
+	// Origin, aim point, the arc that is drawn and the monsters tested
+	// against it are all world points: the arc on screen is the hit area.
 	bx := g.player.BodyX()
 	by := g.player.BodyY()
 	dirAngle := math.Atan2(ty-by, tx-bx)
@@ -526,7 +527,7 @@ func (g *Game) applySlashDamage(slash *spells.SlashArc) {
 				g.handleMonsterDeath(m)
 			}
 			if spells.OnSpellImpact != nil {
-				spells.OnSpellImpact(m.InterpX, m.InterpY, "arcane")
+				spells.OnSpellImpact(m.BodyX(), m.BodyY(), "arcane")
 			}
 		}
 	}
@@ -549,8 +550,7 @@ func (g *Game) handleArcaneBolt(tx, ty float64) {
 	c.PutOnCooldown(info)
 	g.player.Mana -= info.Cost
 
-	// Emit from the player's body center so the bolt travels from the
-	// character's visual position, not the feet anchor.
+	// Body to aim point, in world space.
 	bx := g.player.BodyX()
 	by := g.player.BodyY()
 	bolt := spells.NewArcaneBolt(info, bx, by, tx, ty)
@@ -634,36 +634,26 @@ func (g *Game) checkArcaneBoltHits(ab *spells.ArcaneBolt, prevX, prevY float64, 
 				}
 			}
 			if spells.OnSpellImpact != nil {
-				spells.OnSpellImpact(m.InterpX, m.InterpY, "arcane_bolt")
+				spells.OnSpellImpact(m.BodyX(), m.BodyY(), "arcane_bolt")
 			}
 			return
 		}
 	}
 }
 
-// handleBlink teleports the player along a line, stopping at walls.
-func (g *Game) handleBlink(px, py, tx, ty float64) {
+// handleBlink teleports the player toward a world ground point, stopping at
+// walls.
+func (g *Game) handleBlink(toward coords.WorldPos) {
 	if g.player == nil || g.currentLevel == nil {
 		return
 	}
-	destX, destY := spells.FindBlinkTarget(g.currentLevel, px, py, tx, ty)
-	// Only blink if we'd actually move.
-	if math.Hypot(destX-px, destY-py) < 0.5 {
+	from := g.player.Pos().BodyCenter()
+	dest, ok := g.blinkDestination(from, toward)
+	if !ok {
 		return
 	}
-
-	// Teleport the player.
-	g.player.MoveController.Stop()
-	g.player.MoveController.InterpX = destX
-	g.player.MoveController.InterpY = destY
-	g.player.TileX = int(math.Floor(destX))
-	g.player.TileY = int(math.Floor(destY))
-	g.player.CollisionBox.X = destX
-	g.player.CollisionBox.Y = destY - (g.player.CollisionBox.Height / 2)
-
-	// Spawn visual effect.
-	effect := spells.NewBlinkEffect(px, py, destX, destY)
-	g.ActiveSpells = append(g.ActiveSpells, effect)
+	g.teleportPlayerBodyTo(dest)
+	g.ActiveSpells = append(g.ActiveSpells, spells.NewBlinkEffect(from.X, from.Y, dest.X, dest.Y))
 }
 
 func (g *Game) tryCastFireball(casterX, casterY, targetX, targetY float64, c *spells.Caster) bool {
@@ -672,9 +662,6 @@ func (g *Game) tryCastFireball(casterX, casterY, targetX, targetY float64, c *sp
 		return false
 	}
 	c.PutOnCooldown(info)
-	// Projectile: caster origin is already BodyCenter() (chest); target is
-	// the raw ground point, matching arcane_bolt's convention exactly — no
-	// offset needed for either end of a travelling projectile.
 	fb := spells.NewFireball(info, casterX, casterY, targetX, targetY, g.fireballSprites, g.spriteSheet.FireBurst)
 	g.ActiveSpells = append(g.ActiveSpells, fb)
 	return true
@@ -699,7 +686,6 @@ func (g *Game) tryCastLightningStrike(targetX, targetY float64, c *spells.Caster
 		return false
 	}
 	c.PutOnCooldown(info)
-	// Point-and-click ground spell: casts exactly on the hovered tile, no offset.
 	ls := spells.NewLightningStrike(info, targetX, targetY, g.spriteSheet.ArcaneBurst)
 	g.ActiveSpells = append(g.ActiveSpells, ls)
 	return true
@@ -711,7 +697,6 @@ func (g *Game) tryCastLightningStorm(centerX, centerY float64, c *spells.Caster)
 		return false
 	}
 	c.PutOnCooldown(info)
-	// Point-and-click ground spell: centered exactly on the hovered tile, no offset.
 	storm := spells.NewLightningStorm(info, centerX, centerY, 3, 0.2, 3.0, c, g.spriteSheet.ArcaneBurst, g.currentLevel)
 	g.ActiveSpells = append(g.ActiveSpells, storm)
 	return true
@@ -765,7 +750,7 @@ func (g *Game) applyChaosRayDamage(cr *spells.ChaosRay) {
 					g.handleMonsterDeath(m)
 				}
 				if spells.OnSpellImpact != nil {
-					spells.OnSpellImpact(m.InterpX, m.InterpY, "chaos_ray")
+					spells.OnSpellImpact(m.BodyX(), m.BodyY(), "chaos_ray")
 				}
 				break
 			}
@@ -809,7 +794,7 @@ func (g *Game) applyLightningDamage(l *spells.LightningStrike, cx, cy int) {
 		}
 	}
 	if spells.OnSpellImpact != nil {
-		spells.OnSpellImpact(float64(cx), float64(cy), "lightning")
+		spells.OnSpellImpact(float64(cx)+0.5, float64(cy)+0.5, "lightning")
 	}
 }
 
@@ -832,7 +817,7 @@ func (g *Game) applyFractalDamage(n *spells.FractalNode, cx, cy int) {
 		}
 	}
 	if spells.OnSpellImpact != nil {
-		spells.OnSpellImpact(float64(cx), float64(cy), "nature")
+		spells.OnSpellImpact(float64(cx)+0.5, float64(cy)+0.5, "nature")
 	}
 }
 
@@ -841,8 +826,8 @@ func (g *Game) applyFractalCanopyHealing(fc *spells.FractalCanopy) {
 		return
 	}
 
-	dx := g.player.MoveController.InterpX - fc.X
-	dy := g.player.MoveController.InterpY - fc.Y
+	dx := g.player.BodyX() - fc.X
+	dy := g.player.BodyY() - fc.Y
 	dist := math.Hypot(dx, dy)
 	if dist > fc.Radius {
 		return
@@ -873,8 +858,8 @@ func (g *Game) applyFractalCanopyHealing(fc *spells.FractalCanopy) {
 	}
 
 	g.HealNumbers = append(g.HealNumbers, entities.DamageNumber{
-		X:        g.player.MoveController.InterpX,
-		Y:        g.player.MoveController.InterpY,
+		X:        g.player.BodyX(),
+		Y:        g.player.BodyY(),
 		Value:    healAmt,
 		Ticks:    0,
 		MaxTicks: 40,

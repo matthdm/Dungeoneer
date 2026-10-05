@@ -157,7 +157,7 @@ func (fc *FractalCanopy) Draw(screen *ebiten.Image, tileSize int, camX, camY, ca
 		return
 	}
 	// base glow
-	sx, sy := isoToScreenFloat(fc.X, fc.Y, tileSize)
+	sx, sy := groundIso(fc.X, fc.Y, tileSize)
 	baseCol := color.NRGBA{R: 100, G: 255, B: 120, A: 200}
 	glow := ebiten.NewImage(4, 4)
 	glow.Fill(baseCol)
@@ -188,7 +188,7 @@ func (fc *FractalCanopy) Draw(screen *ebiten.Image, tileSize int, camX, camY, ca
 			if abs(dx)+abs(dy) <= radius {
 				tx := centerTileX + dx
 				ty := centerTileY + dy
-				drawAOETile(screen, tx+2, ty+1, tileSize, camX, camY, camScale, cx, cy, aoeColor)
+				drawAOETile(screen, tx, ty, tileSize, camX, camY, camScale, cx, cy, aoeColor)
 			}
 		}
 	}

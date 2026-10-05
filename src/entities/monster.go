@@ -359,9 +359,10 @@ func (m *Monster) TakeDamage(dmg int, markers *[]HitMarker, damageNumbers *[]Dam
 	}
 
 	// Add red X marker on hit
+	body := m.Pos().BodyCenter()
 	*markers = append(*markers, HitMarker{
-		X:        m.InterpX,
-		Y:        m.InterpY,
+		X:        body.X,
+		Y:        body.Y,
 		Ticks:    0,
 		MaxTicks: 30, // 0.5 seconds at 60 TPS
 	})
@@ -369,8 +370,8 @@ func (m *Monster) TakeDamage(dmg int, markers *[]HitMarker, damageNumbers *[]Dam
 	// Add damage number at the monster's continuous world position so it
 	// appears where the sprite is, not at the snapped tile center.
 	*damageNumbers = append(*damageNumbers, DamageNumber{
-		X:        m.InterpX,
-		Y:        m.InterpY,
+		X:        body.X,
+		Y:        body.Y,
 		Value:    dmg,
 		Ticks:    0,
 		MaxTicks: 30,

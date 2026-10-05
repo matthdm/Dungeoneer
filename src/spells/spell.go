@@ -1,6 +1,7 @@
 package spells
 
 import (
+	"dungeoneer/coords"
 	"dungeoneer/levels"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -8,7 +9,7 @@ import (
 
 // OnSpellImpact is an optional callback invoked when a spell deals damage at a
 // world position. Set by the game package at startup to avoid a circular import.
-// worldX, worldY are cartesian tile-space coordinates; spellType matches the
+// worldX, worldY are a world ground point (see package coords); spellType matches the
 // spell name used in SpellParticleColor (e.g. "fireball", "lightning").
 var OnSpellImpact func(worldX, worldY float64, spellType string)
 
@@ -57,4 +58,23 @@ func (c *Caster) Ready(info SpellInfo) bool {
 
 func (c *Caster) PutOnCooldown(info SpellInfo) {
 	c.Cooldowns[info.Name] = info.Cooldown
+}
+
+// Every spell stores its positions as world ground points (see package
+// coords): entity locations come from BodyCenter(), cursor targets from the
+// game's cursor pick. Nothing here adds an offset to line a visual up. The
+// only choice a Draw method makes is which of these two projections to use.
+
+// groundIso projects a world ground point to isometric pixels. Use it for
+// effects that lie on the floor: rings, cracks, ground-targeted impacts.
+func groundIso(x, y float64, tileSize int) (float64, float64) {
+	return coords.GroundToIso(x, y, tileSize)
+}
+
+// bodyIso projects a world ground point and lifts it to body height. Use it
+// for effects that travel between or sit on bodies: projectiles, beams,
+// melee arcs, impact flashes on a target.
+func bodyIso(x, y float64, tileSize int) (float64, float64) {
+	sx, sy := coords.GroundToIso(x, y, tileSize)
+	return sx, sy - coords.BodyHeightPx(tileSize)
 }

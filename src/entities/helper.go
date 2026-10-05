@@ -5,9 +5,9 @@ import (
 	"math"
 )
 
-// isoToScreenFloat converts cartesian world coordinates to isometric screen
-// coordinates. Delegates to coords.ToIso — the single source of truth for
-// the projection formula.
+// isoToScreenFloat returns the blit origin (top-left) of a tile-sized sprite
+// cell anchored at (x, y). It is for drawing sprites only — it is not the
+// screen position of the world point (x, y); see coords.GroundToIso for that.
 func isoToScreenFloat(x, y float64, tileSize int) (float64, float64) {
 	return coords.ToIso(x, y, tileSize)
 }

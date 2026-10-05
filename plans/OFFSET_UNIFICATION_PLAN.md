@@ -7,6 +7,89 @@
 
 ---
 
+## 2026-10-05 — Root cause found and fixed (read this first)
+
+Everything below this section is the historical analysis. It treated the
+problem as "int tiles vs float positions" and tried to converge on the right
+offset. That was never the real problem. **There is no correct offset, because
+three different coordinate frames were in use and no single constant can
+reconcile three frames.**
+
+### The measurement that settles it
+
+Floor tile art (spritesheet cell 10,4) is a 64×64 cell whose diamond occupies
+only the **bottom half**: top vertex at pixel (32,32), centre (32,48). Tiles
+and characters are blitted with the cell's top-left at `ToIso(x, y)`. So the
+world-space corner of tile (x, y) is on screen at `ToIso(x, y) + (32, 32)`,
+not at `ToIso(x, y)`. `ToIso` is a sprite blit origin, not a point projection.
+
+### The three frames that were being mixed
+
+| Frame | Who used it | Relation to true world space |
+|---|---|---|
+| Stored entity position (`InterpX/Y`, tile indices, hover tile) | movement, pathing, tile damage, cursor tile | true world, but an entity's feet are at +0.5,+0.5 |
+| "BodyCenter" (`+1.5, +0.5`) | hit tests, spell origins | true world shifted by (1.5, 0.5) — it is `ToIso`'s frame |
+| Height | "chest" alignment | not a ground position at all; 16 px of screen lift |
+
+`(1.5, 0.5)` projects to exactly (32, 32) px: the old `BodyDX/BodyDY` were the
+blit-origin correction and the chest lift folded into one world-space number.
+Any code that combined two of these frames was wrong by that amount, in a
+direction that depends on where the target stands. Concrete bugs this caused:
+
+- Engine range check measured player stored position to monster "BodyCenter":
+  melee reach was ~1.5 tiles longer to the west than to the east.
+- Monster projectiles flew stored-position to stored-position but were hit
+  tested against the offset body centre: they could only connect from some angles.
+- Fireball / bolt wall checks did `floor()` on an offset position, so they hit
+  walls 1.5 tiles away from the wall that was drawn.
+- Cursor-aimed projectiles flew from an offset origin to an un-offset hover tile.
+- Body-anchored visuals added the offset a second time (64 px off).
+- AoE tile highlights used `+2,+1`, lightning used `+30,+30`, slash `+BodyDX`
+  on X only, blink `+1`: each a separate eyeballed copy of the same correction.
+- The wall debug overlay drew the top half of the cell, so the tool used to
+  tune the offsets was itself half a tile off.
+
+### The fix
+
+One world frame, one projection, height in screen space. See the package doc
+in `src/coords/worldpos.go`.
+
+- `coords.GroundToIso` / `coords.IsoToGround` are the only place the
+  grid-to-art relationship exists.
+- `WorldPos.BodyCenter()` is now `+0.5,+0.5`: the ground point an entity
+  stands on. It is geometry, not a tuning value. `BodyDX/BodyDY`, their dev
+  menu sliders and `TileCenterIso` are deleted.
+- `coords.BodyHeightPx` lifts body-height effects at draw time. Spells pick
+  `groundIso` or `bodyIso` (`src/spells/spell.go`); the game package uses
+  `groundToScreen` / `bodyToScreen` / `cursorGround` / `cursorAim`
+  (`src/game/worldspace.go`).
+- Every combat and spell call site was moved onto those. No call site adds a
+  constant any more.
+- Engine-path skill visuals now land where the engine applied the damage (the
+  locked target) instead of at the cursor.
+
+Verified by unit tests (`coords/ground_test.go`, `spells/frame_test.go`,
+`entities/projectile_frame_test.go`) and by rendering real frames at 0.75×,
+1× and 3× zoom with hitbox, wall and AoE overlays on: wall outlines sit on
+wall bases, AoE diamonds sit on floor diamonds, the hit circle sits at the
+feet, body effects sit on the sprite.
+
+### What was NOT changed (still open)
+
+- **Wall collision** (`collision.PlayerSpriteAnchor = {0.21, 0.75}`) is the
+  last eyeballed offset. In the unified model a feet-centred box would be
+  `{0.5, 0.5 + Height/2}`. Not changed: it alters movement feel and needs a
+  playtest, and it is not an attack/spell issue.
+- **Interaction prompts** (`interactionAnchorOffset = 0.65`, NPC/chest hint
+  label positions) still use their own anchors. Only their debug circles were
+  moved onto the ground projection.
+- **FOV debug drawing** (`fov/utils.go worldToScreen`) still uses the raw
+  blit-origin projection; a test pins it.
+- Entities still store the cell origin, not the feet. Changing that would
+  touch movement, pathing and save files for no behavioural gain.
+
+---
+
 ## Table of Contents
 
 1. [Problem Statement](#problem-statement)
@@ -381,9 +464,9 @@ lines were enabled.
 2. Click near the diamond top corner, center, left edge, right edge, and bottom
    corner.
 3. Expected: every click inside the diamond targets the highlighted tile, and
-   every click outside targets a neighboring tile. If this fails, inspect the
-   `tx - 1.5`, `ty - 0.5` anchor offsets in `game/handlers.game.go` before
-   changing melee hit rules.
+   every click outside targets a neighboring tile. Cursor picking is now
+   `coords.IsoToGround` (see `game/worldspace.go`); `coords/ground_test.go`
+   covers this case.
 
 ---
 
@@ -402,6 +485,8 @@ _Update this section as work proceeds so the next session knows where you left o
 | | Phase 5 | Not started | Cleanup: `constants.IsoBodyDX` alias, remove dead `Draw` methods, level editor audit |
 | 2026-05-01 | Phases 0, 1, 3, 4, 5 | **Code complete; playtest open** | Added `coords` and collision unit tests; added `SpriteAnchor` collision offsets; removed wall visual offset constants; routed `game.cartesianToIso()` through `coords.ToIso`; documented manual regression cases for visual/collision validation |
 | 2026-05-01 | Phase 0 | **Projection reference folded in** | Added `coords.FromIso()` and tests against Clint Bellanger's `(64,96)->(2,1)` reference example; `game.isoToCartesian()` now delegates to `coords.FromIso()` |
+
+| 2026-10-05 | Root cause | **Fixed in code; playtest open** | See the section at the top of this file. One world frame + one ground projection; all combat/spell sites migrated; `BodyDX/BodyDY` removed. Build clean, new tests pass, frames rendered at three zoom levels look aligned. Uncommitted. |
 
 ### What was NOT changed (intentional)
 

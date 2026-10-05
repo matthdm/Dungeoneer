@@ -90,8 +90,8 @@ func (g *Game) handleMonsterDeath(m *entities.Monster) {
 			if healAmt > 0 {
 				g.player.Heal(healAmt)
 				g.HealNumbers = append(g.HealNumbers, entities.DamageNumber{
-					X:        float64(m.TileX),
-					Y:        float64(m.TileY),
+					X:        m.BodyX(),
+					Y:        m.BodyY(),
 					Value:    healAmt,
 					MaxTicks: 40,
 				})

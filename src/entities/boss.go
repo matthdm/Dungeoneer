@@ -133,11 +133,8 @@ func (bb *BossBehavior) Update(m *Monster, p *Player, level *levels.Level) {
 			// Projectile attack: fires a moving projectile toward the player.
 			if dist <= a.Range && dist > 1 {
 				a.Timer = 0
-				proj := NewMonsterProjectile(
-					float64(m.TileX), float64(m.TileY),
-					float64(p.TileX), float64(p.TileY),
-					0.12, a.Damage,
-				)
+				from, to := m.Pos().BodyCenter(), p.Pos().BodyCenter()
+				proj := NewMonsterProjectile(from.X, from.Y, to.X, to.Y, 0.12, a.Damage)
 				m.PendingProjectiles = append(m.PendingProjectiles, proj)
 			}
 		case "pull_player":

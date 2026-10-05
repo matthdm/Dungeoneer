@@ -65,14 +65,15 @@ func (c *CasterBehavior) Update(m *Monster, p *Player, level *levels.Level) {
 	if dist <= float64(c.AttackRange) {
 		if c.CastCounter >= c.CastCooldown {
 			c.CastCounter = 0
-			// Use continuous positions for origin and target so spells fire
-			// from where the sprite is drawn and track the player's visual position.
+			// Body to body, in world space: the same points the fireball's
+			// hit test and its sprite use.
+			from, to := m.Pos().BodyCenter(), p.Pos().BodyCenter()
 			m.PendingSpells = append(m.PendingSpells, PendingSpellCast{
 				SpellName: c.SpellName,
-				OriginX:   m.InterpX,
-				OriginY:   m.InterpY,
-				TargetX:   p.MoveController.InterpX,
-				TargetY:   p.MoveController.InterpY,
+				OriginX:   from.X,
+				OriginY:   from.Y,
+				TargetX:   to.X,
+				TargetY:   to.Y,
 				Damage:    m.Damage,
 			})
 		}

@@ -44,9 +44,8 @@ func (fn *FractalNode) Draw(screen *ebiten.Image, tileSize int, camX, camY, camS
 	if fn.ImpactImg == nil {
 		return
 	}
-	// Point-and-click ground spell: fn.X/fn.Y is already the raw hovered
-	// tile — no offset needed.
-	sx, sy := isoToScreenFloat(fn.X, fn.Y, tileSize)
+	// fn.X/fn.Y is a world ground point (the centre of the node's tile).
+	sx, sy := groundIso(fn.X, fn.Y, tileSize)
 	op := &ebiten.DrawImageOptions{}
 	// Center the sprite frame on (sx, sy) — see Fireball.Draw for why an
 	// uncentered image blit reads as landing off-target.
@@ -117,12 +116,12 @@ func (fb *FractalBloom) buildNodes(x, y float64, dmg int, radius int, depth int,
 		if rand.Float64() > 0.7 {
 			continue
 		}
-		tx := int(math.Round(x)) + d[0]
-		ty := int(math.Round(y)) + d[1]
+		tx := int(math.Floor(x)) + d[0]
+		ty := int(math.Floor(y)) + d[1]
 		if !level.IsWalkable(tx, ty) {
 			continue
 		}
-		fb.buildNodes(float64(tx), float64(ty), childDamage, childRadius, depth+1, maxDepth, dropoff, t+delay, delay, level)
+		fb.buildNodes(float64(tx)+0.5, float64(ty)+0.5, childDamage, childRadius, depth+1, maxDepth, dropoff, t+delay, delay, level)
 	}
 }
 

@@ -52,10 +52,11 @@ func (a *NewCombatAdapter) getEngine() *combat.DefaultCombatEngine {
 
 func (a *NewCombatAdapter) HandleTargetSelect(g *Game, worldX, worldY float64) {
 	// Find the monster closest to (worldX, worldY) within a click radius.
-	// worldX/worldY are in cartesian tile-unit space (same space as BodyX/BodyY).
-	// Click radius: 1.3 tiles — the click lands on the ground plane while the
-	// sprite is tall, so a tight radius made targeting feel pixel-precise.
-	// Nearest-within wins, so adjacent monsters still resolve correctly.
+	// worldX/worldY is the cursor's body-height aim point (Game.cursorAim), in
+	// the same world space as BodyX/BodyY: clicking the middle of a monster's
+	// sprite gives exactly its BodyCenter(). The 1.3-tile radius is leniency
+	// for clicking heads and feet; nearest-within wins, so adjacent monsters
+	// still resolve correctly.
 	const clickRadiusSq = 1.3 * 1.3
 	var best *entities.Monster
 	bestDist := clickRadiusSq
@@ -146,8 +147,8 @@ func (a *NewCombatAdapter) HandleSkillActivation(g *Game, slotIdx int) {
 	// spells thrown into a pack still connect (within a generous 4-tile radius).
 	if g.TargetedMonster == nil || g.TargetedMonster.IsDead {
 		const acquireRadiusSq = 4.0 * 4.0
-		cx := float64(g.hoverTileX) + coords.BodyDX
-		cy := float64(g.hoverTileY) + coords.BodyDY
+		aim := g.cursorAim()
+		cx, cy := aim.X, aim.Y
 		var best *entities.Monster
 		bestDist := acquireRadiusSq
 		for _, m := range g.Monsters {
@@ -173,8 +174,8 @@ func (a *NewCombatAdapter) HandleSkillActivation(g *Game, slotIdx int) {
 	a.pendingActions = append(a.pendingActions, combat.Action{
 		Type:    combat.ActionActivateSkill,
 		SlotIdx: slotIdx,
-		TargetX: float64(g.hoverTileX),
-		TargetY: float64(g.hoverTileY),
+		TargetX: g.cursorGround().X,
+		TargetY: g.cursorGround().Y,
 	})
 }
 
@@ -308,9 +309,11 @@ func (a *NewCombatAdapter) ProcessTick(g *Game, dt float64) {
 		attackInterval = 1.0
 	}
 
-	// 3. Compute distance from player to monster in tile units.
-	px := g.player.MoveController.InterpX
-	py := g.player.MoveController.InterpY
+	// 3. Compute distance from player to monster in tile units. Both ends are
+	// BodyCenter() world points — the engine's PlayerX/Y and TargetX/Y, the
+	// range check and every visual spawned from these share one frame.
+	px := g.player.BodyX()
+	py := g.player.BodyY()
 	inRange := false
 	mx, my := 0.0, 0.0
 	if m != nil {
@@ -453,9 +456,7 @@ func (a *NewCombatAdapter) ProcessTick(g *Game, dt float64) {
 		if a.burnParticleTimer <= 0 {
 			a.burnParticleTimer = 0.18
 			if g.Particles != nil {
-				isoX, isoY := g.cartesianToIso(mx, my)
-				sx := (isoX-g.camX)*g.camScale + float64(g.w/2)
-				sy := (isoY+g.camY)*g.camScale + float64(g.h/2)
+				sx, sy := g.bodyToWindow(mx, my)
 				g.Particles.Emit(sx, sy, 5, 1.0, 0.38, 0.04) // orange-red flame
 			}
 		}
@@ -555,7 +556,9 @@ func (a *NewCombatAdapter) ProcessTick(g *Game, dt float64) {
 			// swing visual is spawned directly by handlePrimaryAttack on click,
 			// not through this event.
 			if g.player.HasAbility("arcane_bolt") {
-				g.spawnSkillVisual("arcane_bolt", ev.X, ev.Y, ev.X, ev.Y, false)
+				// ev.X/ev.Y is the target's BodyCenter() — where the damage landed.
+				hit := coords.WorldPos{X: ev.X, Y: ev.Y}
+				g.spawnSkillVisual("arcane_bolt", hit, hit, true, false)
 			}
 		case combat.EventSkillFired:
 			a.handleSkillFired(g, ev, m, mx, my)
@@ -626,15 +629,16 @@ func (a *NewCombatAdapter) handleSkillFired(g *Game, ev combat.Event, m *entitie
 		}
 	}
 
-	// groundX/Y is the raw hovered tile the cast action carried — the cursor-
-	// aim convention every legacy ground-cast spell (fireball, lightning, ...)
-	// used, with no target-lock offset. lockX/Y is the current target's body
-	// center (or the ground position if untargeted) — for artifact skills that
-	// act on the locked target rather than the cursor.
-	groundX, groundY := ev.X, ev.Y
-	lockX, lockY := groundX+coords.BodyDX, groundY+coords.BodyDY
-	if m != nil {
-		lockX, lockY = mx, my
+	// cursor is the world ground point under the mouse when the skill was
+	// pressed. target is where the engine applied the skill: the locked
+	// monster's BodyCenter(), which is also the centre the AoE/chain checks in
+	// ProcessTick measure from. Visuals are spawned at the point the damage was
+	// dealt, so what the player sees is what the engine did.
+	cursor := coords.WorldPos{X: ev.X, Y: ev.Y}
+	target := cursor
+	hasTarget := m != nil
+	if hasTarget {
+		target = coords.WorldPos{X: mx, Y: my}
 	}
 
 	// Legacy spell visual in visual-only mode; artifact skills get their own
@@ -649,12 +653,9 @@ func (a *NewCombatAdapter) handleSkillFired(g *Game, ev combat.Event, m *entitie
 			spellID = tmpl.GrantsAbility
 		}
 	}
-	if !g.spawnSkillVisual(spellID, groundX, groundY, lockX, lockY, a.combatState.TargetIsDead) {
+	if !g.spawnSkillVisual(spellID, cursor, target, hasTarget, a.combatState.TargetIsDead) {
 		if g.Particles != nil && g.currentLevel != nil {
-			tx, ty := lockX, lockY
-			isoX, isoY := g.cartesianToIso(tx, ty)
-			sx := (isoX-g.camX)*g.camScale + float64(g.w/2)
-			sy := (isoY+g.camY)*g.camScale + float64(g.h/2)
+			sx, sy := g.bodyToWindow(target.X, target.Y)
 			domain := ev.Tag
 			if hasEffect {
 				domain = effect.Domain

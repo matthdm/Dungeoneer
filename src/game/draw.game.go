@@ -11,6 +11,7 @@
 package game
 
 import (
+	"dungeoneer/coords"
 	"dungeoneer/combat"
 	"dungeoneer/constants"
 	"dungeoneer/entities"
@@ -456,13 +457,14 @@ func (g *Game) drawCombatDebugOverlays(target *ebiten.Image, scale, cx, cy float
 	}
 
 	if g.ShowHitboxes {
-		// Player body hitbox — use canonical body center.
+		// Player body hitbox.
 		if g.player != nil {
 			g.drawActorHitEllipse(target, g.player.BodyX(), g.player.BodyY(), 0.35, 0.82, scale, cx, cy, color.NRGBA{R: 0, G: 230, B: 255, A: 230}, 1.5)
 		}
 
-		// Enemy combat hit volumes — use BodyX/BodyY so visualization matches
-		// detection (both in body-center space, not feet-anchor space).
+		// Enemy combat hit volumes: the ground circle is exactly what hit
+		// tests measure against (BodyCenter() ± radius in world space); the
+		// tall ellipse is the same circle lifted onto the body.
 		for _, m := range g.Monsters {
 			if m == nil || m.IsDead {
 				continue
@@ -480,7 +482,7 @@ func (g *Game) drawCombatDebugOverlays(target *ebiten.Image, scale, cx, cy float
 			if !ok || ab == nil || ab.IsFinished() {
 				continue
 			}
-			g.drawWorldCircle(target, ab.X, ab.Y, ab.Radius, scale, cx, cy, color.NRGBA{R: 255, G: 0, B: 255, A: 230}, 1.5, false)
+			g.drawWorldCircle(target, ab.X, ab.Y, ab.Radius, scale, cx, cy, color.NRGBA{R: 255, G: 0, B: 255, A: 230}, 1.5, true)
 		}
 		for _, p := range g.MonsterProjectiles {
 			if p == nil || p.Finished {
@@ -500,76 +502,82 @@ func (g *Game) drawCombatDebugOverlays(target *ebiten.Image, scale, cx, cy float
 			if r <= 0 {
 				r = 2
 			}
-			g.drawWorldCircle(target, n.InterpX, n.InterpY, r, scale, cx, cy, color.NRGBA{R: 255, G: 240, B: 80, A: 170}, 1.2, true)
+			nb := n.Pos().BodyCenter()
+			g.drawWorldCircle(target, nb.X, nb.Y, r, scale, cx, cy, color.NRGBA{R: 255, G: 240, B: 80, A: 170}, 1.2, false)
 		}
 
 		// Floor exit interaction radius.
 		if g.ExitEntity != nil && g.RunState != nil && g.RunState.Active {
+			// The check compares stored positions; shifting both ends to
+			// body centres gives the same circle on the ground.
 			exitX, exitY := g.interactionCenterForTile(g.ExitEntity.TileX, g.ExitEntity.TileY)
+			exitC := coords.WorldPos{X: exitX, Y: exitY}.BodyCenter()
 			g.drawWorldCircle(
 				target,
-				exitX,
-				exitY,
+				exitC.X,
+				exitC.Y,
 				3.0,
 				scale, cx, cy,
 				color.NRGBA{R: 80, G: 255, B: 120, A: 170},
 				1.2,
-				true,
+				false,
 			)
 		}
 
 		// Hub portal interaction radius.
 		if g.IsInHub && g.hubPortalX >= 0 && g.hubPortalY >= 0 {
 			portalX, portalY := g.interactionCenterForTile(g.hubPortalX, g.hubPortalY)
+			portalC := coords.WorldPos{X: portalX, Y: portalY}.BodyCenter()
 			g.drawWorldCircle(
 				target,
-				portalX,
-				portalY,
+				portalC.X,
+				portalC.Y,
 				hubPortalInteractRadius,
 				scale, cx, cy,
 				color.NRGBA{R: 80, G: 220, B: 255, A: 170},
 				1.2,
-				true,
+				false,
 			)
 		}
 	}
 }
 
 
-func (g *Game) drawActorHitEllipse(target *ebiten.Image, feetX, feetY, radiusTiles, heightTiles, scale, cx, cy float64, c color.NRGBA, strokeWidth float32) {
+// drawActorHitEllipse draws an actor's hit volume: (bodyX, bodyY) is its
+// BodyCenter() in world space and radiusTiles the radius hit tests use.
+func (g *Game) drawActorHitEllipse(target *ebiten.Image, bodyX, bodyY, radiusTiles, heightTiles, scale, cx, cy float64, c color.NRGBA, strokeWidth float32) {
 	if radiusTiles <= 0 {
 		return
 	}
-	// tileCentered=false: callers pass the actual body center in cartesian space.
-	sx, sy := g.worldToScreenPoint(feetX, feetY, scale, cx, cy, false)
+	// Exact logical footprint on the floor.
+	g.drawWorldCircle(target, bodyX, bodyY, radiusTiles, scale, cx, cy, c, strokeWidth, false)
 
-	// Measure screen-space horizontal radius from the world axis that maps to iso X.
-	sx2, sy2 := g.worldToScreenPoint(feetX+radiusTiles, feetY-radiusTiles, scale, cx, cy, false)
-	rx := float32(math.Hypot(float64(sx2-sx), float64(sy2-sy)))
+	// The same radius as a tall ellipse around the body, to read as volume.
+	bsx, bsy := g.bodyToScreen(bodyX, bodyY, scale, cx, cy)
+	// Screen half-width of a world circle: its widest points lie along the
+	// (+1,-1) world diagonal.
+	d := radiusTiles / math.Sqrt2
+	ex, _ := g.bodyToScreen(bodyX+d, bodyY-d, scale, cx, cy)
+	rx := float32(ex - bsx)
 	if rx < 2 {
 		rx = 2
 	}
-
-	// Vertical radius is intentionally taller than floor circles to read as body volume.
 	ts := float64(g.currentLevel.TileSize)
-	ry := float32(heightTiles * ts * scale * 0.6)
-	if ry < rx*1.35 {
-		ry = rx * 1.35
-	}
-	centerY := sy + ry*0.14
-
-	g.drawScreenEllipse(target, sx, centerY, rx, ry, c, strokeWidth)
+	ry := float32(heightTiles * ts * scale * 0.3)
+	faded := c
+	faded.A /= 2
+	g.drawScreenEllipse(target, float32(bsx), float32(bsy), rx, ry, faded, strokeWidth)
 }
 
+// drawWallDebugOverlay outlines the floor diamond of every unwalkable tile:
+// the projected world-space corners of the tile, i.e. exactly the area that
+// walkability, projectile wall hits and cursor picks treat as that tile.
 func (g *Game) drawWallDebugOverlay(target *ebiten.Image, scale, cx, cy float64) {
 	if !g.ShowWalls || g.currentLevel == nil {
 		return
 	}
-	ts := float64(g.currentLevel.TileSize) * scale
-	halfW := ts / 2
-	quarterH := ts / 4
-	halfH := ts / 2
 	col := color.NRGBA{R: 255, G: 0, B: 0, A: 230}
+	corners := [4][2]float64{{0, 0}, {1, 0}, {1, 1}, {0, 1}}
 
 	for y := 0; y < g.currentLevel.H; y++ {
 		for x := 0; x < g.currentLevel.W; x++ {
@@ -577,24 +585,23 @@ func (g *Game) drawWallDebugOverlay(target *ebiten.Image, scale, cx, cy float64)
 			if tile == nil || tile.IsWalkable {
 				continue
 			}
-			ix, iy := g.cartesianToIso(float64(x), float64(y))
-			sx := (ix-g.camX)*scale + cx
-			sy := (iy+g.camY)*scale + cy
-
-			topX, topY := float32(sx+halfW), float32(sy)
-			rightX, rightY := float32(sx+ts), float32(sy+quarterH)
-			botX, botY := float32(sx+halfW), float32(sy+halfH)
-			leftX, leftY := float32(sx), float32(sy+quarterH)
-
-			vector.StrokeLine(target, topX, topY, rightX, rightY, 1, col, false)
-			vector.StrokeLine(target, rightX, rightY, botX, botY, 1, col, false)
-			vector.StrokeLine(target, botX, botY, leftX, leftY, 1, col, false)
-			vector.StrokeLine(target, leftX, leftY, topX, topY, 1, col, false)
+			var px, py [4]float32
+			for i, c := range corners {
+				sx, sy := g.groundToScreen(float64(x)+c[0], float64(y)+c[1], scale, cx, cy)
+				px[i], py[i] = float32(sx), float32(sy)
+			}
+			for i := 0; i < 4; i++ {
+				j := (i + 1) % 4
+				vector.StrokeLine(target, px[i], py[i], px[j], py[j], 1, col, false)
+			}
 		}
 	}
 }
 
-func (g *Game) drawWorldCircle(target *ebiten.Image, centerX, centerY, r, scale, cx, cy float64, c color.NRGBA, strokeWidth float32, tileCentered bool) {
+// drawWorldCircle draws a circle of radius r (tiles) around a world ground
+// point. With atBodyHeight the whole circle is lifted onto bodies standing
+// there — use it for things that fly at body height.
+func (g *Game) drawWorldCircle(target *ebiten.Image, centerX, centerY, r, scale, cx, cy float64, c color.NRGBA, strokeWidth float32, atBodyHeight bool) {
 	if r <= 0 {
 		return
 	}
@@ -604,7 +611,13 @@ func (g *Game) drawWorldCircle(target *ebiten.Image, centerX, centerY, r, scale,
 		t := 2 * math.Pi * float64(i) / float64(segments)
 		px := centerX + math.Cos(t)*r
 		py := centerY + math.Sin(t)*r
-		sx, sy := g.worldToScreenPoint(px, py, scale, cx, cy, tileCentered)
+		var fx, fy float64
+		if atBodyHeight {
+			fx, fy = g.bodyToScreen(px, py, scale, cx, cy)
+		} else {
+			fx, fy = g.groundToScreen(px, py, scale, cx, cy)
+		}
+		sx, sy := float32(fx), float32(fy)
 		if i > 0 {
 			vector.StrokeLine(target, prevX, prevY, sx, sy, strokeWidth, c, false)
 		}
@@ -626,29 +639,15 @@ func (g *Game) drawScreenEllipse(target *ebiten.Image, centerX, centerY, rx, ry 
 	}
 }
 
-func (g *Game) worldToScreenPoint(x, y, scale, cx, cy float64, tileCentered bool) (float32, float32) {
-	isoX, isoY := g.cartesianToIso(x, y)
-	if tileCentered {
-		ts := float64(g.currentLevel.TileSize)
-		isoX += ts / 2
-		isoY += ts / 4
-	}
-	sx := (isoX-g.camX)*scale + cx
-	sy := (isoY+g.camY)*scale + cy
-	return float32(sx), float32(sy)
-}
-
 func (g *Game) drawGrapple(target *ebiten.Image, scale, cx, cy float64) {
 	if g.player == nil || !g.player.Grapple.Active {
 		return
 	}
-	// Draw the rope from the player's current position so it follows them
-	startX, startY := g.cartesianToIso(g.player.MoveController.InterpX, g.player.MoveController.InterpY)
-	endX, endY := g.cartesianToIso(g.player.Grapple.HookPos.X, g.player.Grapple.HookPos.Y)
-	sx1 := (startX-g.camX+30)*scale + cx
-	sy1 := (startY+g.camY+25)*scale + cy
-	sx2 := (endX-g.camX+30)*scale + cx
-	sy2 := (endY+g.camY+25)*scale + cy
+	// Rope from the player's body to the hook. HookPos is tracked like an
+	// entity position (cell origin), so BodyCenter() gives its world point.
+	hook := coords.WorldPos{X: g.player.Grapple.HookPos.X, Y: g.player.Grapple.HookPos.Y}.BodyCenter()
+	sx1, sy1 := g.bodyToScreen(g.player.BodyX(), g.player.BodyY(), scale, cx, cy)
+	sx2, sy2 := g.bodyToScreen(hook.X, hook.Y, scale, cx, cy)
 	vector.StrokeLine(target, float32(sx1), float32(sy1), float32(sx2), float32(sy2), 2, color.White, false)
 }
 
@@ -658,18 +657,10 @@ func (g *Game) drawBossChainPull(target *ebiten.Image, scale, cx, cy float64) {
 	if g.CurrentBoss == nil || g.CurrentBoss.PullLineTicks <= 0 || g.player == nil {
 		return
 	}
-	bossX := float64(g.CurrentBoss.Monster.TileX)
-	bossY := float64(g.CurrentBoss.Monster.TileY)
-	playerX := g.player.MoveController.InterpX
-	playerY := g.player.MoveController.InterpY
-
-	bsx, bsy := g.cartesianToIso(bossX, bossY)
-	psx, psy := g.cartesianToIso(playerX, playerY)
-
-	x1 := float32((bsx-g.camX+30)*scale + cx)
-	y1 := float32((bsy+g.camY+25)*scale + cy)
-	x2 := float32((psx-g.camX+30)*scale + cx)
-	y2 := float32((psy+g.camY+25)*scale + cy)
+	// Body to body.
+	bx1, by1 := g.bodyToScreen(g.CurrentBoss.Monster.BodyX(), g.CurrentBoss.Monster.BodyY(), scale, cx, cy)
+	bx2, by2 := g.bodyToScreen(g.player.BodyX(), g.player.BodyY(), scale, cx, cy)
+	x1, y1, x2, y2 := float32(bx1), float32(by1), float32(bx2), float32(by2)
 
 	// Fade out over the 14-tick lifetime.
 	alpha := uint8(float32(g.CurrentBoss.PullLineTicks) / 14.0 * 200)

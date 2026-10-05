@@ -90,7 +90,7 @@ func (ls *LightningStorm) Update(level *levels.Level, dt float64) {
 						Cooldown: 0.01,
 						Damage:   ls.Info.Damage,
 					},
-					float64(tile.X), float64(tile.Y), ls.ImpactImg,
+					float64(tile.X)+0.5, float64(tile.Y)+0.5, ls.ImpactImg,
 				)
 				ls.spawned = append(ls.spawned, strike)
 			}
@@ -112,9 +112,8 @@ func (ls *LightningStorm) Draw(screen *ebiten.Image, tileSize int, camX, camY, c
 	for dx := -ls.Radius; dx <= ls.Radius; dx++ {
 		for dy := -ls.Radius; dy <= ls.Radius; dy++ {
 			if abs(dx)+abs(dy) <= ls.Radius {
-				// We use +2 and +1 to align cursor selection to tile centers.
-				tx := centerTileX + dx + 2
-				ty := centerTileY + dy + 1
+				tx := centerTileX + dx
+				ty := centerTileY + dy
 				drawAOETile(screen, tx, ty, tileSize, camX, camY, camScale, cx, cy, aoeColor)
 			}
 		}
@@ -136,28 +135,33 @@ func (ls *LightningStorm) TakeSpawns() []*LightningStrike {
 	ls.spawned = nil
 	return out
 }
+// drawAOETile fills the floor diamond of tile (x, y). The four vertices are
+// the projected world-space corners of the tile, so the highlight always
+// coincides with the tile art at any zoom.
 func drawAOETile(screen *ebiten.Image, x, y int, tileSize int, camX, camY, camScale, cx, cy float64, col color.NRGBA) {
 	if camScale < 0.3 {
 		return // avoid blobs at far zooms
 	}
-	sx, sy := isoToScreenFloat(float64(x), float64(y), tileSize)
-	sx = math.Round((sx-camX)*camScale + cx)
-	sy = math.Round((sy+camY)*camScale + cy)
-
-	halfW := float64(tileSize) / 2
-	quarterH := float64(tileSize) / 4
-
-	// Draw vertices
-	vertices := []ebiten.Vertex{
-		{DstX: float32(sx), DstY: float32(sy - quarterH), ColorR: float32(col.R) / 255, ColorG: float32(col.G) / 255, ColorB: float32(col.B) / 255, ColorA: float32(col.A) / 255},
-		{DstX: float32(sx + halfW), DstY: float32(sy), ColorR: float32(col.R) / 255, ColorG: float32(col.G) / 255, ColorB: float32(col.B) / 255, ColorA: float32(col.A) / 255},
-		{DstX: float32(sx), DstY: float32(sy + quarterH), ColorR: float32(col.R) / 255, ColorG: float32(col.G) / 255, ColorB: float32(col.B) / 255, ColorA: float32(col.A) / 255},
-		{DstX: float32(sx - halfW), DstY: float32(sy), ColorR: float32(col.R) / 255, ColorG: float32(col.G) / 255, ColorB: float32(col.B) / 255, ColorA: float32(col.A) / 255},
+	corners := [4][2]float64{{0, 0}, {1, 0}, {1, 1}, {0, 1}}
+	var vertices [4]ebiten.Vertex
+	for i, c := range corners {
+		sx, sy := screenCoordsFromWorldTile(float64(x)+c[0], float64(y)+c[1], tileSize, camX, camY, camScale, cx, cy)
+		vertices[i] = ebiten.Vertex{
+			DstX: float32(sx), DstY: float32(sy),
+			ColorR: float32(col.R) / 255, ColorG: float32(col.G) / 255, ColorB: float32(col.B) / 255, ColorA: float32(col.A) / 255,
+		}
 	}
 	indices := []uint16{0, 1, 2, 0, 2, 3}
+	screen.DrawTriangles(vertices[:], indices, aoePixel(), nil)
+}
 
-	img := ebiten.NewImage(1, 1)
-	img.Fill(color.White)
+var aoePixelImg *ebiten.Image
 
-	screen.DrawTriangles(vertices, indices, img, nil)
+// aoePixel returns a shared 1×1 white image (allocated once, not per tile per frame).
+func aoePixel() *ebiten.Image {
+	if aoePixelImg == nil {
+		aoePixelImg = ebiten.NewImage(1, 1)
+		aoePixelImg.Fill(color.White)
+	}
+	return aoePixelImg
 }

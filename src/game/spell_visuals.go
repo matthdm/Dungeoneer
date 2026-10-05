@@ -59,24 +59,16 @@ func canonicalArtifactID(id string) string {
 // (EventDamageDealt), so the projectile/field only animates. Returns false when
 // the skill has no bespoke visual (caller falls back to a particle burst).
 //
-// Two different target conventions are in play:
+// All positions are world ground points (package coords):
 //
-//   - groundX/groundY is the raw hovered tile (no offset). Every point-and-click
-//     ground/hover spell (lightning, lightning_storm, fractal_bloom,
-//     fractal_canopy) and every projectile (fireball, chaos_ray, arcane_bolt)
-//     casts here: a hover spell always lands exactly where the cursor is
-//     pointing (no BodyDX/BodyDY nudge needed), and a projectile flies from
-//     the caster's own BodyCenter() (bx/by, already correct) toward the raw
-//     ground point the same way arcane_bolt always has — no offset needed on
-//     either end. If a locked target isn't under the cursor, the projectile's
-//     visual can diverge from where the engine's damage actually lands; that
-//     tradeoff already existed for arcane_bolt and is now consistent across
-//     every projectile and hover spell instead of being case-by-case.
-//   - lockX/lockY is the current target's body center when one is locked, or
-//     groundX/groundY+BodyDX/BodyDY otherwise (see handleSkillFired) — used
-//     only by artifact skills (root, execute, blink-strike, sacrifice lance)
-//     that are meant to visually track the locked target regardless of cursor.
-func (g *Game) spawnSkillVisual(id string, groundX, groundY, lockX, lockY float64, killed bool) bool {
+//   - cursor is the point under the mouse when the skill was pressed.
+//   - target is where the engine applied the skill — the locked monster's
+//     BodyCenter() when hasTarget, otherwise the cursor point.
+//
+// Every damaging visual lands on target, because that is where the damage
+// landed. Only effects whose game logic really is placed by the cursor (the
+// healing canopy) use cursor.
+func (g *Game) spawnSkillVisual(id string, cursor, target coords.WorldPos, hasTarget, killed bool) bool {
 	if g.player == nil || g.currentLevel == nil {
 		return false
 	}
@@ -84,13 +76,24 @@ func (g *Game) spawnSkillVisual(id string, groundX, groundY, lockX, lockY float6
 	by := g.player.BodyY()
 	info := spells.SpellInfo{Name: id, Level: 1, Damage: 0}
 
+	// Ground effects strike the floor at the target. Body-height effects
+	// (projectiles, beams) fly body to body; with no body to hit they are
+	// aimed so that they pass through the cursor.
+	groundX, groundY := target.X, target.Y
+	lockX, lockY := target.X, target.Y
+	flyX, flyY := target.X, target.Y
+	if !hasTarget {
+		aim := cursor.AtBodyHeight()
+		flyX, flyY = aim.X, aim.Y
+	}
+
 	switch id {
 	case "fireball":
-		fb := spells.NewFireball(info, bx, by, groundX, groundY, g.fireballSprites, g.spriteSheet.FireBurst)
+		fb := spells.NewFireball(info, bx, by, flyX, flyY, g.fireballSprites, g.spriteSheet.FireBurst)
 		fb.VisualOnly = true
 		g.ActiveSpells = append(g.ActiveSpells, fb)
 	case "chaos_ray":
-		cr := spells.NewChaosRay(info, bx, by, groundX, groundY)
+		cr := spells.NewChaosRay(info, bx, by, flyX, flyY)
 		g.ActiveSpells = append(g.ActiveSpells, cr)
 	case "lightning":
 		ls := spells.NewLightningStrike(info, groundX, groundY, g.spriteSheet.ArcaneBurst)
@@ -113,13 +116,13 @@ func (g *Game) spawnSkillVisual(id string, groundX, groundY, lockX, lockY float6
 			MaxRadius:   5,
 			HealingMin:  3,
 			HealingMax:  15,
-			X:           groundX,
-			Y:           groundY,
-			Visual:      spells.NewFractalCanopyVisual(groundX, groundY, 10),
+			X:           cursor.X,
+			Y:           cursor.Y,
+			Visual:      spells.NewFractalCanopyVisual(cursor.X, cursor.Y, 10),
 		}
 		g.ActiveSpells = append(g.ActiveSpells, fc)
 	case "arcane_bolt":
-		ab := spells.NewArcaneBolt(info, bx, by, groundX, groundY)
+		ab := spells.NewArcaneBolt(info, bx, by, flyX, flyY)
 		ab.VisualOnly = true
 		g.ActiveSpells = append(g.ActiveSpells, ab)
 
@@ -157,30 +160,49 @@ func (g *Game) blinkBehindTarget(mx, my float64) {
 	if g.player == nil || g.currentLevel == nil {
 		return
 	}
-	px := g.player.MoveController.InterpX
-	py := g.player.MoveController.InterpY
-	dx := mx - px
-	dy := my - py
+	// Everything here is in world space: the player's body, the target's
+	// body (mx, my) and the point 0.9 tiles beyond it.
+	from := g.player.Pos().BodyCenter()
+	dx := mx - from.X
+	dy := my - from.Y
 	dist := math.Hypot(dx, dy)
 	if dist == 0 {
 		return
 	}
 	// Aim ~0.9 tiles past the target so the destination lands on the far
 	// side (or as close as walls allow).
-	aimX := mx + dx/dist*0.9 - coords.BodyDX
-	aimY := my + dy/dist*0.9 - coords.BodyDY
-	destX, destY := spells.FindBlinkTarget(g.currentLevel, px, py, aimX, aimY)
-	if math.Hypot(destX-px, destY-py) < 0.5 {
+	aimX := mx + dx/dist*0.9
+	aimY := my + dy/dist*0.9
+	dest, ok := g.blinkDestination(from, coords.WorldPos{X: aimX, Y: aimY})
+	if !ok {
 		return
 	}
+	g.teleportPlayerBodyTo(dest)
+	g.ActiveSpells = append(g.ActiveSpells, spells.NewShadowStrike(from.X, from.Y, dest.X, dest.Y))
+}
 
+// blinkDestination returns where a blink from one world point toward another
+// ends: the centre of the last walkable tile on the way (never inside or past
+// a wall). ok is false when the blink would not move the player.
+func (g *Game) blinkDestination(from, toward coords.WorldPos) (coords.WorldPos, bool) {
+	x, y := spells.FindBlinkTarget(g.currentLevel, from.X, from.Y, toward.X, toward.Y)
+	reached := coords.WorldPos{X: x, Y: y}
+	dest := coords.TileCenter(reached.TileX(), reached.TileY())
+	if dest.DistTo(from) < 0.5 {
+		return from, false
+	}
+	return dest, true
+}
+
+// teleportPlayerBodyTo moves the player so that their body stands on the
+// given world point.
+func (g *Game) teleportPlayerBodyTo(body coords.WorldPos) {
+	pos := body.EntityPos()
 	g.player.MoveController.Stop()
-	g.player.MoveController.InterpX = destX
-	g.player.MoveController.InterpY = destY
-	g.player.TileX = int(math.Floor(destX))
-	g.player.TileY = int(math.Floor(destY))
-	g.player.CollisionBox.X = destX
-	g.player.CollisionBox.Y = destY - (g.player.CollisionBox.Height / 2)
-
-	g.ActiveSpells = append(g.ActiveSpells, spells.NewShadowStrike(px, py, destX, destY))
+	g.player.MoveController.InterpX = pos.X
+	g.player.MoveController.InterpY = pos.Y
+	g.player.TileX = body.TileX()
+	g.player.TileY = body.TileY()
+	g.player.CollisionBox.X = pos.X
+	g.player.CollisionBox.Y = pos.Y - (g.player.CollisionBox.Height / 2)
 }

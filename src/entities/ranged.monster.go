@@ -59,14 +59,10 @@ func (r *RangedBehavior) Update(m *Monster, p *Player, level *levels.Level) {
 			if dmg == 0 {
 				dmg = m.Damage
 			}
-			// Fire from the monster's continuous position and aim at the
-			// player's continuous position so projectiles originate from where
-			// the sprite is drawn, not from the lagging integer tile.
-			proj := NewMonsterProjectile(
-				m.InterpX, m.InterpY,
-				p.MoveController.InterpX, p.MoveController.InterpY,
-				0.15, dmg,
-			)
+			// Body to body, in world space: the same points HitsPlayer tests
+			// against and the same points the projectile is drawn between.
+			from, to := m.Pos().BodyCenter(), p.Pos().BodyCenter()
+			proj := NewMonsterProjectile(from.X, from.Y, to.X, to.Y, 0.15, dmg)
 			m.PendingProjectiles = append(m.PendingProjectiles, proj)
 		}
 		return

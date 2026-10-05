@@ -1,6 +1,7 @@
 package game
 
 import (
+	"dungeoneer/coords"
 	gaudio "dungeoneer/audio"
 	"dungeoneer/constants"
 	"dungeoneer/controls"
@@ -505,9 +506,8 @@ func NewGame(testLevel, screenshotFile string) (*Game, error) {
 		if g.Particles == nil || g.currentLevel == nil {
 			return
 		}
-		isoX, isoY := g.cartesianToIso(wx, wy)
-		sx := (isoX-g.camX)*g.camScale + float64(g.w/2)
-		sy := (isoY+g.camY)*g.camScale + float64(g.h/2)
+		// wx/wy is a world ground point (a struck body or an impact tile).
+		sx, sy := g.bodyToWindow(wx, wy)
 		r, gf, b := SpellParticleColor(spellType)
 		g.Particles.Emit(sx, sy, 8, r, gf, b)
 	}
@@ -644,16 +644,18 @@ func (g *Game) pickupItemsAt(x, y int) {
 			}
 			// Emit pickup sparkle particles at the item's screen position.
 			if g.Particles != nil {
-				isoX, isoY := g.cartesianToIso(float64(x), float64(y))
-				sx := (isoX-g.camX)*g.camScale + float64(g.w/2)
-				sy := (isoY+g.camY)*g.camScale + float64(g.h/2)
+				c := coords.TileCenter(x, y)
+				sx, sy := g.groundToScreen(c.X, c.Y, g.camScale, float64(g.w/2), float64(g.h/2))
 				g.Particles.Emit(sx, sy, 6, 1.0, 1.0, 0.8)
 			}
 		}
 	}
 }
 
-// cartesianToIso transforms cartesian coordinates into isometric coordinates.
+// cartesianToIso returns the blit origin (top-left) of a tile-sized sprite cell
+// anchored at (x, y). It is for drawing sprites and for camera maths only. To
+// find where a world point is on screen use groundToScreen / bodyToScreen
+// (worldspace.go) — never this plus a constant.
 func (g *Game) cartesianToIso(x, y float64) (float64, float64) {
 	tileSize := g.currentLevel.TileSize
 	ix := (x - y) * float64(tileSize/2)
@@ -805,14 +807,6 @@ func (g *Game) stairPlaced(x, y int, spriteID string) {
 }
 
 //This function might be useful for those who want to modify this example.
-
-// isoToCartesian transforms isometric coordinates into cartesian coordinates.
-func (g *Game) isoToCartesian(x, y float64) (float64, float64) {
-	tileSize := g.currentLevel.TileSize
-	cx := (x/float64(tileSize/2) + y/float64(tileSize/4)) / 2
-	cy := (y/float64(tileSize/4) - (x / float64(tileSize/2))) / 2
-	return cx, cy
-}
 
 func (g *Game) Update() error {
 	if g.hintTimer > 0 {

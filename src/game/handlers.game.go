@@ -187,13 +187,12 @@ func (g *Game) handleClicks() {
 
 	// Handle player attacking monster or opening doors
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-		mx, my := ebiten.CursorPosition()
-		worldX := (float64(mx)-float64(g.w/2))/g.camScale + g.camX
-		worldY := (float64(my)-float64(g.h/2))/g.camScale - g.camY
-		tx, ty := g.isoToCartesian(worldX, worldY)
-
-		cx := int(math.Floor(tx - 1.5))
-		cy := int(math.Floor(ty - 0.5))
+		ground := g.cursorGround()
+		cx, cy := ground.TileX(), ground.TileY()
+		// Attacks and target picks act on bodies, so they aim through the
+		// cursor at body height.
+		aim := g.cursorAim()
+		tx, ty := aim.X, aim.Y
 
 		// Check if clicking on a door first
 		if g.currentLevel != nil && g.isValidTile(cx, cy) {
@@ -225,13 +224,8 @@ func (g *Game) handleClicks() {
 }
 
 func (g *Game) handleHoverTile() {
-	mx, my := ebiten.CursorPosition()
-	cx := (float64(mx)-float64(g.w/2))/g.camScale + g.camX
-	cy := (float64(my)-float64(g.h/2))/g.camScale - g.camY
-	tx, ty := g.isoToCartesian(cx, cy)
-	// These offsets align the hover tile with visual center of diamond tiles
-	g.hoverTileX = int(math.Floor(tx - 1.5))
-	g.hoverTileY = int(math.Floor(ty - 0.5))
+	ground := g.cursorGround()
+	g.hoverTileX, g.hoverTileY = ground.TileX(), ground.TileY()
 
 	// Update path preview
 	if g.player != nil {
@@ -507,7 +501,7 @@ func (g *Game) handleDash() {
 		blinkInfo := spells.SpellInfo{Name: "blink", Cooldown: 2.0}
 		if g.player.Caster.Ready(blinkInfo) {
 			g.player.Caster.PutOnCooldown(blinkInfo)
-			g.handleBlink(px, py, float64(g.hoverTileX), float64(g.hoverTileY))
+			g.handleBlink(g.cursorGround())
 		}
 		return
 	}

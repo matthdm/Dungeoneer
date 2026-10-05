@@ -2,7 +2,6 @@ package game
 
 import (
 	"dungeoneer/combat"
-	"dungeoneer/coords"
 	"dungeoneer/entities"
 	"dungeoneer/images"
 	"dungeoneer/items"
@@ -42,30 +41,6 @@ func (g *Game) buildDevEntries() []ui.DevEntry {
 			Key:      "F10",
 			IsActive: func() bool { return g.ShowHUD },
 			Toggle:   func() { g.ShowHUD = !g.ShowHUD },
-		},
-
-		// ── Body Offset ────────────────────────────────────────────────────
-		{Label: "BODY OFFSET", IsHeader: true},
-		{
-			Label:     "BodyDX",
-			SliderGet: func() float64 { return coords.BodyDX },
-			SliderSet: func(v float64) { coords.BodyDX = v },
-			SliderMin: -1.0,
-			SliderMax: 2.5,
-		},
-		{
-			Label:     "BodyDY",
-			SliderGet: func() float64 { return coords.BodyDY },
-			SliderSet: func(v float64) { coords.BodyDY = v },
-			SliderMin: -1.0,
-			SliderMax: 2.5,
-		},
-		{
-			Label: "Reset Body Offsets",
-			Toggle: func() {
-				coords.BodyDX = coords.DefaultBodyDX
-				coords.BodyDY = coords.DefaultBodyDY
-			},
 		},
 
 		// ── Editor ─────────────────────────────────────────────────────────

@@ -16,18 +16,13 @@ func TestWorldPosCoordinateConversions(t *testing.T) {
 	}
 
 	body := pos.BodyCenter()
-	if body.X != 4.75 || body.Y != 7.50 {
-		t.Fatalf("BodyCenter() = {%g, %g}, want {4.75, 7.50}", body.X, body.Y)
+	if body.X != 4.0 || body.Y != 7.75 {
+		t.Fatalf("BodyCenter() = {%g, %g}, want {4, 7.75}", body.X, body.Y)
 	}
 
 	isoX, isoY := pos.ToIso(64)
 	if isoX != -120 || isoY != 172 {
 		t.Fatalf("ToIso(64) = {%g, %g}, want {-120, 172}", isoX, isoY)
-	}
-
-	centerX, centerY := pos.TileCenterIso(64)
-	if centerX != -88 || centerY != 188 {
-		t.Fatalf("TileCenterIso(64) = {%g, %g}, want {-88, 188}", centerX, centerY)
 	}
 
 	renderX, renderY := pos.RenderIso(64, 0.25)

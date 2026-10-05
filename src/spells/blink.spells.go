@@ -89,8 +89,8 @@ func (b *BlinkEffect) Draw(screen *ebiten.Image, tileSize int, camX, camY, camSc
 	}
 	alpha := float32(1 - b.age/b.Duration)
 
-	// Origin flash: shrinking circle. +1 X offset aligns with player chest.
-	sx1, sy1 := isoToScreenFloat(b.StartX+1, b.StartY, tileSize)
+	// Origin flash: shrinking circle on the body at the start point.
+	sx1, sy1 := bodyIso(b.StartX, b.StartY, tileSize)
 	sx1 = (sx1-camX)*camScale + cx
 	sy1 = (sy1+camY)*camScale + cy
 	originR := float32(8*(1-b.age/b.Duration)) * float32(camScale)
@@ -98,7 +98,7 @@ func (b *BlinkEffect) Draw(screen *ebiten.Image, tileSize int, camX, camY, camSc
 	vector.DrawFilledCircle(screen, float32(sx1), float32(sy1), originR, originCol, true)
 
 	// Destination flash: expanding circle.
-	sx2, sy2 := isoToScreenFloat(b.EndX+1, b.EndY, tileSize)
+	sx2, sy2 := bodyIso(b.EndX, b.EndY, tileSize)
 	sx2 = (sx2-camX)*camScale + cx
 	sy2 = (sy2+camY)*camScale + cy
 	destR := float32(3+5*(b.age/b.Duration)) * float32(camScale)
@@ -114,7 +114,7 @@ func (b *BlinkEffect) Draw(screen *ebiten.Image, tileSize int, camX, camY, camSc
 		t := float64(i) / 4.0
 		mx := b.StartX + (b.EndX-b.StartX)*t
 		my := b.StartY + (b.EndY-b.StartY)*t
-		smx, smy := isoToScreenFloat(mx+1, my, tileSize)
+		smx, smy := bodyIso(mx, my, tileSize)
 		smx = (smx-camX)*camScale + cx
 		smy = (smy+camY)*camScale + cy
 		sparkCol := color.NRGBA{220, 200, 255, uint8(150 * alpha)}

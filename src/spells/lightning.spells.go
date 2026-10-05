@@ -26,7 +26,8 @@ type LightningStrike struct {
 	Finished      bool
 }
 
-// NewLightningStrike creates a new lightning strike spell targeting the given tile.
+// NewLightningStrike creates a lightning strike landing on the given world
+// ground point.
 func NewLightningStrike(info SpellInfo, targetX, targetY float64, impact *ebiten.Image) *LightningStrike {
 	startY := targetY - 5 - rand.Float64()*5
 	segments := 6
@@ -95,9 +96,8 @@ func (l *LightningStrike) Draw(screen *ebiten.Image, tileSize int, camX, camY, c
 	} else {
 		// Draw impact sprite
 		if l.ImpactImg != nil {
-			// Point-and-click ground spell: l.X/l.Y is already the raw
-			// hovered tile — no offset needed.
-			sx, sy := isoToScreenFloat(l.X, l.Y, tileSize)
+			// l.X/l.Y is the world ground point the strike lands on.
+			sx, sy := groundIso(l.X, l.Y, tileSize)
 			op := &ebiten.DrawImageOptions{}
 			// Center the sprite frame on (sx, sy) — see Fireball.Draw for
 			// why an uncentered image blit reads as landing off-target.
@@ -113,10 +113,9 @@ func (l *LightningStrike) Draw(screen *ebiten.Image, tileSize int, camX, camY, c
 }
 
 func (l *LightningStrike) IsFinished() bool { return l.Finished }
-func screenCoordsFromWorldTile(tileX, tileY float64, tileSize int, camX, camY, camScale, cx, cy float64) (float64, float64) {
-	ix := (tileX - tileY) * float64(tileSize/2)
-	iy := (tileX + tileY) * float64(tileSize/4)
-	sx := (ix-camX+30)*camScale + cx
-	sy := (iy+camY+30)*camScale + cy
-	return sx, sy
+// screenCoordsFromWorldTile returns the final screen position (camera applied)
+// of a world ground point.
+func screenCoordsFromWorldTile(worldX, worldY float64, tileSize int, camX, camY, camScale, cx, cy float64) (float64, float64) {
+	ix, iy := groundIso(worldX, worldY, tileSize)
+	return (ix-camX)*camScale + cx, (iy+camY)*camScale + cy
 }

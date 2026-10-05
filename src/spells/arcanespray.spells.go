@@ -163,7 +163,7 @@ func (as *ArcaneSpray) Draw(screen *ebiten.Image, tileSize int, camX, camY, camS
 			A: uint8(220 * fade),
 		}
 
-		sx, sy := isoToScreenFloat(p.X+1, p.Y, tileSize)
+		sx, sy := bodyIso(p.X, p.Y, tileSize)
 		sx = (sx-camX)*camScale + cx
 		sy = (sy+camY)*camScale + cy
 

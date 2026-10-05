@@ -1,7 +1,6 @@
 package spells
 
 import (
-	"dungeoneer/coords"
 	"dungeoneer/levels"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -19,7 +18,7 @@ type VoidRift struct {
 	Finished bool
 }
 
-// NewVoidRift creates a rift centered at the given world (cartesian) position,
+// NewVoidRift creates a rift centered at the given world ground point,
 // which should already be the target's body center (callers pass lockX/lockY
 // per the existing artifact-skill convention in spawnSkillVisual).
 func NewVoidRift(x, y float64) *VoidRift {
@@ -49,15 +48,8 @@ func (v *VoidRift) Draw(screen *ebiten.Image, tileSize int, camX, camY, camScale
 	}
 	radius := float32(6+22*sizeT) * float32(camScale)
 
-	// +coords.BodyDX/BodyDY aligns the rift on the target's visual chest
-	// rather than its raw anchor point — the same chest-alignment nudge every
-	// other bespoke CR1 artifact visual applies in its own project() closure
-	// (GroundSlam, RootBind, ReaperExecute, TauntPulse, ArcaneSurgeNuke,
-	// BloodPriceStrike in artifacts.spells.go; ShadowStrike and the original
-	// BlinkEffect via an older ad hoc "+1"). v.X/v.Y is already the target's
-	// BodyCenter() position (see NewVoidRift), so without this the rift reads
-	// as spawning behind/above the sprite instead of on it.
-	sx, sy := isoToScreenFloat(v.X+coords.BodyDX, v.Y+coords.BodyDY, tileSize)
+	// v.X/v.Y is the target's BodyCenter(); the rift opens on its body.
+	sx, sy := bodyIso(v.X, v.Y, tileSize)
 	ssx := float32((sx-camX)*camScale + cx)
 	ssy := float32((sy+camY)*camScale + cy)
 

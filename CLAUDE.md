@@ -12,7 +12,7 @@ Dungeoneer is a 2D isometric dark-fantasy roguelike in Go on Ebiten v2.8. Real-t
 
 - **Phases 1, 2, 3: complete.** Run loop, combat depth (6 enemy roles, status effects, multi-phase boss), NPCs & dialogue (room-tag placement, branching JSON trees, Varn arc through phase 2 + boss).
 - **Phase 4: complete.** Ability gating, 13 ability items, stat modifiers, gold economy, item quality tiers, loot refinement, chest variants, RunState serialization, mid-run save/load.
-  - **Active stabilization work: the coordinate unification refactor.** See `OFFSET_UNIFICATION_PLAN.md` — phases 0–2 done, 3–5 partial.
+  - **Coordinate unification: root cause fixed 2026-10-05, ⚠️ playtest open.** Attack/spell logic and visuals now share one world frame and one ground projection (`src/coords`); `BodyDX/BodyDY` are gone. See the top section of `plans/OFFSET_UNIFICATION_PLAN.md`. Wall-collision anchor and interaction-prompt anchors are the remaining un-migrated offsets.
 - **Phase 5: complete.** NPC Phase Tracker, Varn arc (4 phases + boss fight with pre/post dialogue), boss selection engine, hub NPC quarter (Varn appears in hub after first meeting).
 - **Phase 6: implemented, ⚠️ UNTESTED.** Code is written and unit-tested (46 tests pass) but manual testing per `design-docs/test-cases.md` T1–T9 has not been done. See manual test plan in session context.
   - 6A: MetaSave v1 (`CompletedRuns`, `TotalDeaths`, `TotalRemnants`, `LoreUnlocked`, `HubState`, `Upgrades`, `Betrayed`), milestone system (4 milestones), toast UI.
@@ -29,7 +29,7 @@ Dungeoneer is a 2D isometric dark-fantasy roguelike in Go on Ebiten v2.8. Real-t
 
 | Task type | Read this first |
 |---|---|
-| Coordinate, hit detection, render offset | `OFFSET_UNIFICATION_PLAN.md`, `src/coords/worldpos.go` |
+| Coordinate, hit detection, render offset | `src/coords/worldpos.go` (package doc), `src/game/worldspace.go`, `plans/OFFSET_UNIFICATION_PLAN.md` |
 | Add or modify an ability/item | `design-docs/ability-items.md`, `src/items/load.go`, `src/entities/player.go` (`RefreshAbilities`, `EquipStarter`) |
 | NPC or dialogue work | `design-docs/dialogue-system.md`, `src/dialogue/`, `src/dialogues/*.json`, `src/game/npc.game.go`, `src/game/npc_data.go` |
 | Boss / Varn arc | `design-docs/boss-system.md`, `src/entities/varn_boss.go`, `src/game/boss.game.go` |
@@ -56,7 +56,13 @@ When the active plan is empty, promote the top-priority queued plan. When a sess
 
 ## Coordinate invariant (do not violate)
 
-Combat checks, hit detection, spell origins, and effect anchoring use `coords.WorldPos.BodyCenter()`. Never raw `TileX/TileY` (lags during interpolation) and never raw `InterpX/InterpY` (skips body-center offset). The "Golden rule" doc comment at the top of `src/coords/worldpos.go` is authoritative; the offset plan exists because parts of the codebase predate it and are still being migrated.
+There is one logical frame — **world space**: tile `(x, y)` covers `[x, x+1) × [y, y+1)` on the ground. All game logic compares world points with each other and never adds an offset.
+
+- An entity's stored position (`InterpX/InterpY`, `Pos()`) is the origin corner of its cell. Its location for combat is `Pos().BodyCenter()` (`+0.5, +0.5`, the middle of the cell). Use that for every distance check, hit test and spell origin. Never raw `TileX/TileY` (lags during interpolation) and never raw `InterpX/InterpY`.
+- Cursor: `g.cursorGround()` for floor targets, `g.cursorAim()` for anything aimed at a body (`src/game/worldspace.go`).
+- Drawing a world point: `coords.GroundToIso` (floor) or the same minus `coords.BodyHeightPx` (on a body). In `spells/` that is `groundIso` / `bodyIso`; in `game/` it is `groundToScreen` / `bodyToScreen`.
+- `ToIso` / `cartesianToIso` are **sprite blit origins**, not point projections. Use them only to blit tile-sized cells.
+- If something does not line up, one side is not in world space. Do not add a constant. The package doc in `src/coords/worldpos.go` is authoritative; `plans/OFFSET_UNIFICATION_PLAN.md` (top section) records why.
 
 ## Build & run
 

@@ -1,7 +1,6 @@
 package game
 
 import (
-	"dungeoneer/coords"
 	"dungeoneer/entities"
 	"image/color"
 
@@ -21,14 +20,10 @@ func (g *Game) handleHitMarkers() {
 }
 
 func (g *Game) drawHitMarkers(target *ebiten.Image, scale, cx, cy float64) {
-	ts := g.currentLevel.TileSize
 	for _, hm := range g.HitMarkers {
-		// TileCenterIso gives the geometric center of the tile diamond, which
-		// is the correct anchor for a hit marker regardless of tile size or zoom.
-		isoX, isoY := coords.WorldPos{X: hm.X, Y: hm.Y}.TileCenterIso(ts)
-
-		x := float32((isoX-g.camX)*scale) + float32(cx)
-		y := float32((isoY+g.camY)*scale) + float32(cy)
+		// hm.X/hm.Y is the struck entity's BodyCenter(); mark its body.
+		bx, by := g.bodyToScreen(hm.X, hm.Y, scale, cx, cy)
+		x, y := float32(bx), float32(by)
 
 		alpha := 1.0 - float64(hm.Ticks)/float64(hm.MaxTicks)
 		a := uint8(255 * alpha)

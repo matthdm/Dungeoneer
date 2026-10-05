@@ -4,7 +4,6 @@ import (
 	"image/color"
 	"math"
 
-	"dungeoneer/coords"
 	"dungeoneer/levels"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -61,7 +60,7 @@ type SlashArc struct {
 }
 
 // NewSlashArc creates a melee slash targeting a direction.
-// originX/Y: player position in tile space.
+// originX/Y: the attacker's BodyCenter() (world ground point).
 // dirAngle: angle toward the cursor in cartesian radians.
 // comboHit: 0, 1, or 2.
 func NewSlashArc(info SpellInfo, originX, originY, dirAngle float64, comboHit int) *SlashArc {
@@ -192,8 +191,8 @@ func (s *SlashArc) Draw(screen *ebiten.Image, tileSize int, camX, camY, camScale
 		p1 := s.ArcPoints[i]
 		p2 := s.ArcPoints[i+1]
 
-		sx1, sy1 := isoToScreenFloat(p1.X+coords.BodyDX, p1.Y, tileSize)
-		sx2, sy2 := isoToScreenFloat(p2.X+coords.BodyDX, p2.Y, tileSize)
+		sx1, sy1 := bodyIso(p1.X, p1.Y, tileSize)
+		sx2, sy2 := bodyIso(p2.X, p2.Y, tileSize)
 		sx1 = (sx1-camX)*camScale + cx
 		sy1 = (sy1+camY)*camScale + cy
 		sx2 = (sx2-camX)*camScale + cx
@@ -210,10 +209,10 @@ func (s *SlashArc) Draw(screen *ebiten.Image, tileSize int, camX, camY, camScale
 	// Draw a connecting line from origin to the start of the arc (the "blade arm").
 	if visibleSegments > 0 {
 		tip := s.ArcPoints[visibleSegments]
-		osx, osy := isoToScreenFloat(s.OriginX+coords.BodyDX, s.OriginY, tileSize)
+		osx, osy := bodyIso(s.OriginX, s.OriginY, tileSize)
 		osx = (osx-camX)*camScale + cx
 		osy = (osy+camY)*camScale + cy
-		tsx, tsy := isoToScreenFloat(tip.X+coords.BodyDX, tip.Y, tileSize)
+		tsx, tsy := bodyIso(tip.X, tip.Y, tileSize)
 		tsx = (tsx-camX)*camScale + cx
 		tsy = (tsy+camY)*camScale + cy
 
@@ -241,8 +240,8 @@ func (s *SlashArc) drawSlamRing(screen *ebiten.Image, tileSize int, camX, camY, 
 		p2x := s.OriginX + math.Cos(t2)*ringRadius
 		p2y := s.OriginY + math.Sin(t2)*ringRadius
 
-		sx1, sy1 := isoToScreenFloat(p1x+coords.BodyDX, p1y, tileSize)
-		sx2, sy2 := isoToScreenFloat(p2x+coords.BodyDX, p2y, tileSize)
+		sx1, sy1 := groundIso(p1x, p1y, tileSize)
+		sx2, sy2 := groundIso(p2x, p2y, tileSize)
 		sx1 = (sx1-camX)*camScale + cx
 		sy1 = (sy1+camY)*camScale + cy
 		sx2 = (sx2-camX)*camScale + cx
@@ -257,7 +256,7 @@ func (s *SlashArc) drawSlamRing(screen *ebiten.Image, tileSize int, camX, camY, 
 	if s.age < s.SweepTime {
 		flash := colors.edge
 		flash.A = uint8(80 * globalAlpha)
-		osx, osy := isoToScreenFloat(s.OriginX+coords.BodyDX, s.OriginY, tileSize)
+		osx, osy := groundIso(s.OriginX, s.OriginY, tileSize)
 		osx = (osx-camX)*camScale + cx
 		osy = (osy+camY)*camScale + cy
 		vector.DrawFilledCircle(screen, float32(osx), float32(osy), float32(ringRadius*camScale*float64(tileSize/4)), flash, true)
