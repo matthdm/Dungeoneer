@@ -95,8 +95,14 @@ func (l *LightningStrike) Draw(screen *ebiten.Image, tileSize int, camX, camY, c
 	} else {
 		// Draw impact sprite
 		if l.ImpactImg != nil {
+			// Point-and-click ground spell: l.X/l.Y is already the raw
+			// hovered tile — no offset needed.
 			sx, sy := isoToScreenFloat(l.X, l.Y, tileSize)
 			op := &ebiten.DrawImageOptions{}
+			// Center the sprite frame on (sx, sy) — see Fireball.Draw for
+			// why an uncentered image blit reads as landing off-target.
+			w, h := l.ImpactImg.Bounds().Dx(), l.ImpactImg.Bounds().Dy()
+			op.GeoM.Translate(-float64(w)/2, -float64(h)/2)
 			op.GeoM.Translate(sx, sy)
 			op.GeoM.Translate(-camX, camY)
 			op.GeoM.Scale(camScale, camScale)

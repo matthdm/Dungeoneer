@@ -44,8 +44,14 @@ func (fn *FractalNode) Draw(screen *ebiten.Image, tileSize int, camX, camY, camS
 	if fn.ImpactImg == nil {
 		return
 	}
+	// Point-and-click ground spell: fn.X/fn.Y is already the raw hovered
+	// tile — no offset needed.
 	sx, sy := isoToScreenFloat(fn.X, fn.Y, tileSize)
 	op := &ebiten.DrawImageOptions{}
+	// Center the sprite frame on (sx, sy) — see Fireball.Draw for why an
+	// uncentered image blit reads as landing off-target.
+	w, h := fn.ImpactImg.Bounds().Dx(), fn.ImpactImg.Bounds().Dy()
+	op.GeoM.Translate(-float64(w)/2, -float64(h)/2)
 	op.GeoM.Translate(sx, sy)
 	op.GeoM.Translate(-camX, camY)
 	op.GeoM.Scale(camScale, camScale)

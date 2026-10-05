@@ -11,15 +11,16 @@ import (
 )
 
 // ArtifactLoadout is the pre-run screen where the player selects which
-// artifacts to bring. Slots 0-5 are regular, slot 6 is the elite slot.
+// artifacts to bring. All 6 slots are equivalent — an elite artifact
+// competes for a slot the same as any other; there is no reserved slot.
 type ArtifactLoadout struct {
 	Visible    bool
-	Loadout    [7]string       // current loadout (artifact IDs, "" = empty)
+	Loadout    [6]string       // current loadout (artifact IDs, "" = empty)
 	Collection []string        // all owned artifact IDs
 	ActiveSlot int             // which slot is being filled (-1 = none)
 	PickerOpen bool            // true when slot picker browser is open
 	PickerIdx  int             // selected index in picker list
-	OnConfirm  func([7]string) // called when player clicks "Begin Run"
+	OnConfirm  func([6]string) // called when player clicks "Begin Run"
 	OnCancel   func()          // called when player cancels
 
 	screenW       int
@@ -46,7 +47,7 @@ func NewArtifactLoadout(w, h int) *ArtifactLoadout {
 func (al *ArtifactLoadout) Resize(w, h int) { al.screenW = w; al.screenH = h }
 
 // Open prepopulates Loadout from the saved loadout and Collection from MetaSave.
-func (al *ArtifactLoadout) Open(savedLoadout [7]string, collection []string) {
+func (al *ArtifactLoadout) Open(savedLoadout [6]string, collection []string) {
 	al.Loadout = savedLoadout
 	al.Collection = collection
 	al.Visible = true
@@ -70,7 +71,6 @@ func (al *ArtifactLoadout) openPicker(slot int) {
 	al.PickerIdx = 0
 	al.pickerScroll = 0
 
-	eliteOnly := slot == 6
 	al.pickerEntries = al.pickerEntries[:0]
 
 	// Build a fast set of already-used IDs (to prevent double-equipping).
@@ -87,12 +87,6 @@ func (al *ArtifactLoadout) openPicker(slot int) {
 			continue
 		}
 		if used[id] {
-			continue
-		}
-		if eliteOnly && !tmpl.IsElite {
-			continue
-		}
-		if !eliteOnly && tmpl.IsElite {
 			continue
 		}
 		al.pickerEntries = append(al.pickerEntries, pickerEntry{tmpl: tmpl})
@@ -190,7 +184,7 @@ func (al *ArtifactLoadout) Update() bool {
 		}
 
 		// Slot clicks.
-		for i := 0; i < 7; i++ {
+		for i := 0; i < 6; i++ {
 			sx, sy, sw, sh := al.slotBounds(i)
 			if mx >= sx && mx <= sx+sw && my >= sy && my <= sy+sh {
 				al.openPicker(i)
@@ -201,7 +195,7 @@ func (al *ArtifactLoadout) Update() bool {
 
 	// Right-click a slot to clear it.
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
-		for i := 0; i < 7; i++ {
+		for i := 0; i < 6; i++ {
 			sx, sy, sw, sh := al.slotBounds(i)
 			if mx >= sx && mx <= sx+sw && my >= sy && my <= sy+sh {
 				al.Loadout[i] = ""
@@ -231,23 +225,16 @@ func (al *ArtifactLoadout) clampPickerScroll() {
 	}
 }
 
-// slotBounds returns the bounding box for slot i (0-5 = regular grid, 6 = elite).
+// slotBounds returns the bounding box for slot i in the 2×3 grid.
 func (al *ArtifactLoadout) slotBounds(slot int) (x, y, w, h int) {
 	const slotW, slotH = 130, 80
-	const eliteW, eliteH = 280, 80
 
 	gridStartX := (al.screenW - (slotW*3 + 20)) / 2
 	gridStartY := al.screenH/2 - 110
 
-	if slot < 6 {
-		col := slot % 3
-		row := slot / 3
-		return gridStartX + col*(slotW+10), gridStartY + row*(slotH+10), slotW, slotH
-	}
-	// Elite slot: centered below the 2×3 grid.
-	eliteX := (al.screenW - eliteW) / 2
-	eliteY := gridStartY + 2*(slotH+10) + 20
-	return eliteX, eliteY, eliteW, eliteH
+	col := slot % 3
+	row := slot / 3
+	return gridStartX + col*(slotW+10), gridStartY + row*(slotH+10), slotW, slotH
 }
 
 func (al *ArtifactLoadout) beginRunButtonBounds() (x, y, w, h int) {
@@ -282,13 +269,10 @@ func (al *ArtifactLoadout) Draw(screen *ebiten.Image) {
 	// Subtitle hint.
 	ebitenutil.DebugPrintAt(screen, "Click a slot to assign an artifact.  Right-click to clear.", al.screenW/2-180, 38)
 
-	// Draw 6 regular slots.
+	// Draw the 6 slots.
 	for i := 0; i < 6; i++ {
 		al.drawSlot(screen, i)
 	}
-
-	// Draw elite slot.
-	al.drawEliteSlot(screen)
 
 	// "Begin Run" button.
 	bx, by, bw, bh := al.beginRunButtonBounds()
@@ -358,54 +342,6 @@ func (al *ArtifactLoadout) drawSlot(screen *ebiten.Image, slot int) {
 	}
 }
 
-func (al *ArtifactLoadout) drawEliteSlot(screen *ebiten.Image) {
-	sx, sy, sw, sh := al.slotBounds(6)
-	id := al.Loadout[6]
-
-	bgClr := color.RGBA{20, 16, 10, 220}
-	borderClr := color.RGBA{180, 140, 40, 220} // gold border for elite
-	if al.ActiveSlot == 6 {
-		borderClr = color.RGBA{255, 220, 80, 255}
-	}
-
-	vector.DrawFilledRect(screen, float32(sx), float32(sy), float32(sw), float32(sh), bgClr, false)
-	vector.StrokeRect(screen, float32(sx), float32(sy), float32(sw), float32(sh), 2, borderClr, false)
-
-	// "Elite Artifact" label.
-	ebitenutil.DebugPrintAt(screen, "ELITE ARTIFACT", sx+4, sy+4)
-
-	if id == "" {
-		ebitenutil.DebugPrintAt(screen, "Empty (Elite only)", sx+sw/2-60, sy+sh/2-6)
-		return
-	}
-
-	tmpl, ok := items.Registry[id]
-	if !ok {
-		ebitenutil.DebugPrintAt(screen, "Unknown", sx+4, sy+20)
-		return
-	}
-
-	if tmpl.Icon != nil {
-		op := &ebiten.DrawImageOptions{}
-		op.GeoM.Translate(float64(sx+4), float64(sy+20))
-		screen.DrawImage(tmpl.Icon, op)
-	}
-
-	ebitenutil.DebugPrintAt(screen, tmpl.Name, sx+4, sy+20)
-
-	dc := domainColor(tmpl.ArtifactDomain)
-	vector.DrawFilledRect(screen, float32(sx+4), float32(sy+34), 8, 8, dc, false)
-	ebitenutil.DebugPrintAt(screen, tmpl.ArtifactDomain, sx+16, sy+32)
-
-	if tmpl.Effect != nil {
-		ef := tmpl.Effect
-		line := formatTrigger(ef.Trigger) + ": " + formatEffectType(ef.Type)
-		ebitenutil.DebugPrintAt(screen, line, sx+4, sy+sh-16)
-	} else if tmpl.GrantsAbility != "" {
-		ebitenutil.DebugPrintAt(screen, "Ability: "+tmpl.GrantsAbility, sx+4, sy+sh-16)
-	}
-}
-
 func (al *ArtifactLoadout) drawPicker(screen *ebiten.Image) {
 	px, py, pw, ph := al.pickerBounds()
 	fpx, fpy, fpw, fph := float32(px), float32(py), float32(pw), float32(ph)
@@ -415,12 +351,7 @@ func (al *ArtifactLoadout) drawPicker(screen *ebiten.Image) {
 	vector.StrokeRect(screen, fpx, fpy, fpw, fph, 2, color.RGBA{160, 140, 60, 255}, false)
 
 	// Title.
-	eliteOnly := al.ActiveSlot == 6
-	title := "Select Artifact"
-	if eliteOnly {
-		title = "Select Elite Artifact"
-	}
-	ebitenutil.DebugPrintAt(screen, title, px+8, py+8)
+	ebitenutil.DebugPrintAt(screen, "Select Artifact", px+8, py+8)
 	ebitenutil.DebugPrintAt(screen, "[Esc] Cancel  [Enter] Select", px+8, py+20)
 
 	// Divider.

@@ -50,9 +50,9 @@ func (g *Game) devLoadBuild(s combat.Scenario) {
 	g.player.Stats.Vitality = s.Stats.Vitality
 	g.player.Stats.Intelligence = s.Stats.Intelligence
 
-	// 3. Clear current equipment, abilities, and elite loadout so a previous
-	// build's items don't linger — ClearAbilities alone leaves Equipment
-	// (and the persistent elite pick) untouched.
+	// 3. Clear current equipment, abilities, and remembered loadout so a
+	// previous build's items don't linger — ClearAbilities alone leaves
+	// Equipment untouched.
 	g.player.Equipment = entities.NewEquipmentSlots()
 	g.player.ClearAbilities()
 	if g.Meta != nil {
@@ -63,13 +63,13 @@ func (g *Game) devLoadBuild(s combat.Scenario) {
 
 	// 4. Equip every scenario artifact as a REAL item in player.Equipment, one
 	// per real named equipment slot (entities.EquipmentSlotOrder) — the same
-	// 7 slots the inventory screen's equipment paperdoll renders, so a
+	// slots the inventory screen's equipment paperdoll renders, so a
 	// dev-loaded build actually shows up there instead of leaving the
 	// inventory looking empty. RefreshAbilities visits equipment in that same
-	// declared order, so the first 6 AbilitySlotSpell items fill the spell
-	// bar exactly as they would from a real loadout, and index 6 (the elite)
-	// grants its ability flag without displacing them, mirroring
-	// equipArtifactLoadout's real-run behavior (hub.go).
+	// declared order and fills the 6-wide spell bar on a first-come basis —
+	// there is no reserved elite slot, so a 7th (elite) scenario artifact
+	// simply competes for a bar slot like everything else and may not fit,
+	// mirroring equipArtifactLoadout's real-run behavior (hub.go).
 	for i, id := range s.Artifacts {
 		if i >= len(entities.EquipmentSlotOrder) {
 			break
@@ -81,8 +81,8 @@ func (g *Game) devLoadBuild(s combat.Scenario) {
 			continue
 		}
 		g.player.Equipment[entities.EquipmentSlotOrder[i]] = items.NewItem(id)
-		if i == 6 && g.Meta != nil {
-			g.Meta.ArtifactLoadout[6] = id
+		if g.Meta != nil && i < len(g.Meta.ArtifactLoadout) {
+			g.Meta.ArtifactLoadout[i] = id
 		}
 	}
 	g.player.RefreshAbilities()

@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 
@@ -14,13 +15,23 @@ import (
 //   - IsHeader=true rows are visual section dividers with no interactivity.
 //   - Toggle=nil rows are informational only.
 //   - IsActive=nil but Toggle!=nil rows are one-shot actions (show RUN button).
+//   - SliderGet/SliderSet both non-nil rows render as a draggable slider
+//     instead of a toggle/action badge; Toggle is ignored for these rows.
 type DevEntry struct {
 	Label    string
-	Key      string       // display shortcut shown next to the label (informational)
-	IsActive func() bool  // nil for headers and action-only rows
-	Toggle   func()       // nil for headers
+	Key      string      // display shortcut shown next to the label (informational)
+	IsActive func() bool // nil for headers and action-only rows
+	Toggle   func()      // nil for headers
 	IsHeader bool
+
+	SliderGet func() float64 // nil unless this row is a slider
+	SliderSet func(float64)  // nil unless this row is a slider
+	SliderMin float64
+	SliderMax float64
 }
+
+// IsSlider reports whether this row renders as a draggable slider.
+func (e DevEntry) IsSlider() bool { return e.SliderGet != nil && e.SliderSet != nil }
 
 // DevOverlay is the F12 developer tools panel. It aggregates all dev-only
 // toggles and overlays in one place so they are never accidentally exposed
@@ -34,6 +45,10 @@ type DevOverlay struct {
 	scrollY     int // pixel scroll offset into the content area
 	contentH    int // total content height (may exceed rect height)
 	screenH     int // last known screen height for clamping
+
+	draggingIdx int     // index of the slider row currently being dragged, -1 if none
+	dragX0      float64 // track pixel bounds captured when the drag started
+	dragX1      float64
 }
 
 const (
@@ -41,6 +56,7 @@ const (
 	devPadV    = 8
 	devItemH   = 20
 	devHeaderH = 22
+	devSliderH = 34
 	devPanelW  = 316
 	devBadgeW  = 36
 	devBadgeH  = 13
@@ -49,23 +65,32 @@ const (
 // NewDevOverlay creates a DevOverlay anchored to the top-right of the screen.
 func NewDevOverlay(w, h int, entries []DevEntry) *DevOverlay {
 	d := &DevOverlay{
-		entries: entries,
-		style:   DefaultMenuStyles(),
+		entries:     entries,
+		style:       DefaultMenuStyles(),
+		draggingIdx: -1,
 	}
 	d.selectedIdx = d.firstSelectable()
 	d.computeRect(w, h)
 	return d
 }
 
+// rowHeight returns the pixel height of a row, matching its render mode.
+func (d *DevOverlay) rowHeight(e DevEntry) int {
+	switch {
+	case e.IsHeader:
+		return devHeaderH
+	case e.IsSlider():
+		return devSliderH
+	default:
+		return devItemH
+	}
+}
+
 func (d *DevOverlay) computeRect(w, h int) {
 	d.screenH = h
 	d.contentH = devTitleH + devPadV
 	for _, e := range d.entries {
-		if e.IsHeader {
-			d.contentH += devHeaderH
-		} else {
-			d.contentH += devItemH
-		}
+		d.contentH += d.rowHeight(e)
 	}
 	d.contentH += devPadV
 
@@ -80,11 +105,11 @@ func (d *DevOverlay) computeRect(w, h int) {
 	d.clampScroll()
 }
 
-func (d *DevOverlay) Resize(w, h int)    { d.computeRect(w, h) }
-func (d *DevOverlay) IsVisible() bool    { return d.visible }
-func (d *DevOverlay) Show()              { d.visible = true }
-func (d *DevOverlay) Hide()              { d.visible = false }
-func (d *DevOverlay) Toggle()            { d.visible = !d.visible }
+func (d *DevOverlay) Resize(w, h int) { d.computeRect(w, h) }
+func (d *DevOverlay) IsVisible() bool { return d.visible }
+func (d *DevOverlay) Show()           { d.visible = true }
+func (d *DevOverlay) Hide()           { d.visible = false }
+func (d *DevOverlay) Toggle()         { d.visible = !d.visible }
 
 func (d *DevOverlay) clampScroll() {
 	visibleH := d.rect.Dy()
@@ -120,6 +145,14 @@ func (d *DevOverlay) Update() {
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		mx, my := ebiten.CursorPosition()
 		d.handleClick(mx, my)
+	}
+	if d.draggingIdx >= 0 {
+		if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+			mx, _ := ebiten.CursorPosition()
+			d.updateSlider(mx)
+		} else {
+			d.draggingIdx = -1
+		}
 	}
 	// Mouse wheel scrolling when cursor is over the panel.
 	_, wheelY := ebiten.Wheel()
@@ -169,14 +202,13 @@ func (d *DevOverlay) handleClick(mx, my int) {
 	contentTop := d.rect.Min.Y + devTitleH + devPadV
 	y := contentTop - d.scrollY
 	for i, e := range d.entries {
-		h := devItemH
-		if e.IsHeader {
-			h = devHeaderH
-		}
+		h := d.rowHeight(e)
 		// Only register clicks within the visible content area.
 		if my >= y && my < y+h && mx >= d.rect.Min.X && mx <= d.rect.Max.X &&
 			my >= contentTop && my <= d.rect.Max.Y {
-			if !e.IsHeader && e.Toggle != nil {
+			if e.IsSlider() {
+				d.startDrag(i, mx)
+			} else if !e.IsHeader && e.Toggle != nil {
 				d.selectedIdx = i
 				e.Toggle()
 			}
@@ -184,6 +216,34 @@ func (d *DevOverlay) handleClick(mx, my int) {
 		}
 		y += h
 	}
+}
+
+// startDrag begins dragging the slider at index i, capturing the track's
+// pixel bounds and immediately jumping the value to the click position.
+func (d *DevOverlay) startDrag(i, mx int) {
+	d.draggingIdx = i
+	d.dragX0 = float64(d.rect.Min.X + 10)
+	d.dragX1 = float64(d.rect.Max.X - 14)
+	d.updateSlider(mx)
+}
+
+// updateSlider sets the currently-dragged slider's value from a cursor X
+// position, clamped to the track bounds captured at drag start.
+func (d *DevOverlay) updateSlider(mx int) {
+	if d.draggingIdx < 0 || d.draggingIdx >= len(d.entries) {
+		return
+	}
+	e := d.entries[d.draggingIdx]
+	if e.SliderSet == nil {
+		return
+	}
+	frac := (float64(mx) - d.dragX0) / (d.dragX1 - d.dragX0)
+	if frac < 0 {
+		frac = 0
+	} else if frac > 1 {
+		frac = 1
+	}
+	e.SliderSet(e.SliderMin + frac*(e.SliderMax-e.SliderMin))
 }
 
 var (
@@ -228,10 +288,7 @@ func (d *DevOverlay) Draw(screen *ebiten.Image) {
 	}
 
 	for i, e := range d.entries {
-		h := devItemH
-		if e.IsHeader {
-			h = devHeaderH
-		}
+		h := d.rowHeight(e)
 		// Skip entries completely outside the visible content area.
 		if y+h <= contentTop || y >= d.rect.Max.Y {
 			y += h
@@ -247,6 +304,34 @@ func (d *DevOverlay) Draw(screen *ebiten.Image) {
 				1, devDivColor, false)
 			ebitenutil.DebugPrintAt(screen, e.Label, lx, y+3)
 			y += devHeaderH
+			continue
+		}
+
+		if e.IsSlider() {
+			val := e.SliderGet()
+			ebitenutil.DebugPrintAt(screen, fmt.Sprintf("%s: %.2f", e.Label, val), lx+4, y+3)
+
+			trackX0 := float32(d.rect.Min.X + 10)
+			trackX1 := float32(d.rect.Max.X - 14)
+			trackY := float32(y + 20)
+			trackW := trackX1 - trackX0
+
+			vector.StrokeRect(screen, trackX0, trackY, trackW, 6, 1, devDivColor, false)
+
+			frac := 0.0
+			if e.SliderMax > e.SliderMin {
+				frac = (val - e.SliderMin) / (e.SliderMax - e.SliderMin)
+				if frac < 0 {
+					frac = 0
+				} else if frac > 1 {
+					frac = 1
+				}
+			}
+			fillW := trackW * float32(frac)
+			vector.DrawFilledRect(screen, trackX0, trackY, fillW, 6, devOnColor, false)
+			vector.DrawFilledRect(screen, trackX0+fillW-3, trackY-3, 6, 12, color.RGBA{230, 230, 240, 255}, false)
+
+			y += devSliderH
 			continue
 		}
 

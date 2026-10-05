@@ -24,14 +24,11 @@ package coords
 import "math"
 
 const (
-	// BodyDX is the horizontal cartesian offset from the tile anchor to the
-	// entity's visual body center. 1.25 units (with BodyDY = 0.25) places it
-	// exactly horizontally centered in the 64px isometric diamond.
-	BodyDX = 1.5
-
-	// BodyDY is the vertical (depth) cartesian offset from the tile anchor
-	// (feet) to the entity's body center.
-	BodyDY = 0.5
+	// DefaultBodyDX and DefaultBodyDY are the original tuned values for
+	// BodyDX/BodyDY below, kept as constants so the dev-menu "reset" action
+	// has a stable target to restore.
+	DefaultBodyDX = 1.5
+	DefaultBodyDY = 0.5
 
 	// SpriteVerticalShift is the number of isometric-space pixels sprites are
 	// shifted upward during rendering. Apply as a negative Y delta in every
@@ -42,6 +39,20 @@ const (
 	// for a melee attack to connect. 1.0 = tiles are touching; 1.5 gives
 	// leeway during movement interpolation and matches the old IsAdjacent feel.
 	MeleeRange = 1.5
+)
+
+var (
+	// BodyDX is the horizontal cartesian offset from the tile anchor to the
+	// entity's visual body center. 1.25 units (with BodyDY = 0.25) places it
+	// exactly horizontally centered in the 64px isometric diamond. A var
+	// (not const) so the dev menu can tune it live at runtime; defaults to
+	// DefaultBodyDX.
+	BodyDX float64 = DefaultBodyDX
+
+	// BodyDY is the vertical (depth) cartesian offset from the tile anchor
+	// (feet) to the entity's body center. A var for the same reason as
+	// BodyDX; defaults to DefaultBodyDY.
+	BodyDY float64 = DefaultBodyDY
 )
 
 // WorldPos is a position in cartesian world space measured in tile units.

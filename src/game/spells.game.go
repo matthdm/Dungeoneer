@@ -5,7 +5,6 @@ import (
 
 	"dungeoneer/audio"
 	"dungeoneer/controls"
-	"dungeoneer/coords"
 	"dungeoneer/entities"
 	"dungeoneer/fov"
 	"dungeoneer/hud"
@@ -21,9 +20,6 @@ func (g *Game) syncHUDSpellSlots() {
 		return
 	}
 	for i := range g.HUD.SkillSlots {
-		if i == 6 {
-			continue // elite slot: populated separately below, not from SpellSlots
-		}
 		if i < len(g.player.SpellSlots) {
 			abilityID := g.player.SpellSlots[i]
 			cost := g.spellManaCost(abilityID)
@@ -43,34 +39,6 @@ func (g *Game) syncHUDSpellSlots() {
 			}
 		} else {
 			g.HUD.SkillSlots[i] = hud.SkillSlot{}
-		}
-	}
-
-	// Elite slot (bar index 6): driven by whatever is actually equipped in
-	// the elite equipment slot (EquipmentSlotOrder[6]), never by
-	// Meta.ArtifactLoadout[6] directly — that field is only the pre-run
-	// loadout screen's remembered pick and can go stale (a run that skips
-	// the loadout screen, or re-equips a different elite mid-run, must not
-	// show a phantom artifact that isn't actually equipped). The elite item
-	// grants its ability flag via RefreshAbilities but deliberately never
-	// displaces one of the 6 regular spell-bar slots (see
-	// equipArtifactLoadout / devLoadBuild).
-	g.HUD.SkillSlots[6] = hud.SkillSlot{}
-	if eliteIt := g.player.Equipment[entities.EquipmentSlotOrder[6]]; eliteIt != nil {
-		if tmpl := eliteIt.ItemTemplate; tmpl != nil && tmpl.GrantsAbility != "" {
-			abilityID := tmpl.GrantsAbility
-			cost := g.spellManaCost(abilityID)
-			g.HUD.SkillSlots[6].Active = true
-			g.HUD.SkillSlots[6].ManaCost = cost
-			g.HUD.SkillSlots[6].Enabled = g.player.Mana >= cost
-			g.HUD.SkillSlots[6].Name = abilityID
-			g.HUD.SkillSlots[6].Icon = g.abilityIcon(abilityID)
-			g.HUD.SkillSlots[6].Locked = g.player.IsAbilityLocked(abilityID)
-			if na, ok := g.CombatAdapt.(*NewCombatAdapter); ok {
-				if cd, mapped := na.BarCooldown(6); mapped {
-					g.HUD.SkillSlots[6].Cooldown = cd
-				}
-			}
 		}
 	}
 }
@@ -704,7 +672,10 @@ func (g *Game) tryCastFireball(casterX, casterY, targetX, targetY float64, c *sp
 		return false
 	}
 	c.PutOnCooldown(info)
-	fb := spells.NewFireball(info, casterX, casterY, targetX+coords.BodyDX, targetY+coords.BodyDY, g.fireballSprites, g.spriteSheet.FireBurst)
+	// Projectile: caster origin is already BodyCenter() (chest); target is
+	// the raw ground point, matching arcane_bolt's convention exactly — no
+	// offset needed for either end of a travelling projectile.
+	fb := spells.NewFireball(info, casterX, casterY, targetX, targetY, g.fireballSprites, g.spriteSheet.FireBurst)
 	g.ActiveSpells = append(g.ActiveSpells, fb)
 	return true
 }
@@ -715,7 +686,8 @@ func (g *Game) tryCastChaosRay(casterX, casterY, targetX, targetY float64, c *sp
 		return false
 	}
 	c.PutOnCooldown(info)
-	cr := spells.NewChaosRay(info, casterX, casterY, targetX+coords.BodyDX, targetY+coords.BodyDY)
+	// Treated as a (very fast) projectile — same convention as fireball.
+	cr := spells.NewChaosRay(info, casterX, casterY, targetX, targetY)
 	g.applyChaosRayDamage(cr)
 	g.ActiveSpells = append(g.ActiveSpells, cr)
 	return true
@@ -727,6 +699,7 @@ func (g *Game) tryCastLightningStrike(targetX, targetY float64, c *spells.Caster
 		return false
 	}
 	c.PutOnCooldown(info)
+	// Point-and-click ground spell: casts exactly on the hovered tile, no offset.
 	ls := spells.NewLightningStrike(info, targetX, targetY, g.spriteSheet.ArcaneBurst)
 	g.ActiveSpells = append(g.ActiveSpells, ls)
 	return true
@@ -738,6 +711,7 @@ func (g *Game) tryCastLightningStorm(centerX, centerY float64, c *spells.Caster)
 		return false
 	}
 	c.PutOnCooldown(info)
+	// Point-and-click ground spell: centered exactly on the hovered tile, no offset.
 	storm := spells.NewLightningStorm(info, centerX, centerY, 3, 0.2, 3.0, c, g.spriteSheet.ArcaneBurst, g.currentLevel)
 	g.ActiveSpells = append(g.ActiveSpells, storm)
 	return true

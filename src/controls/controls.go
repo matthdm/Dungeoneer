@@ -27,7 +27,6 @@ const (
 	ActionSpell4 ActionID = "spell_4"
 	ActionSpell5 ActionID = "spell_5"
 	ActionSpell6 ActionID = "spell_6"
-	ActionSpell7 ActionID = "spell_7" // elite artifact slot — engine slot 6
 
 	// Player abilities
 	ActionDash   ActionID = "dash"
@@ -87,7 +86,6 @@ var defaultBindings = map[ActionID]KeyBinding{
 	ActionSpell4: {Primary: ebiten.Key4},
 	ActionSpell5: {Primary: ebiten.Key5},
 	ActionSpell6: {Primary: ebiten.Key6},
-	ActionSpell7: {Primary: ebiten.Key7},
 
 	// Game
 	ActionInventory:     {Primary: ebiten.KeyTab},
@@ -167,7 +165,6 @@ func GetAllActionIDs() []ActionID {
 		ActionSpell4,
 		ActionSpell5,
 		ActionSpell6,
-		ActionSpell7,
 		ActionInventory,
 		ActionHeroPanel,
 		ActionInteract,
@@ -198,7 +195,6 @@ func GetActionLabel(action ActionID) string {
 		ActionSpell4:        "Spell 4 - Lightning Storm",
 		ActionSpell5:        "Spell 5 - Fractal Bloom",
 		ActionSpell6:        "Spell 6 - Fractal Canopy",
-		ActionSpell7:        "Spell 7 - Elite Artifact",
 		ActionInteract:      "Interact",
 		ActionTargetNearest: "Target Nearest Enemy",
 		ActionMoveToAttack:  "Move to Attack",

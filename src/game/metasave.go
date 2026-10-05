@@ -40,8 +40,8 @@ type MetaSave struct {
 	CurrentMood    int              `json:"current_mood,omitempty"` // DungeonMood as int
 
 	// v3 fields — Artifact library (combat redesign)
-	ArtifactCollection []string `json:"artifact_collection,omitempty"` // all artifact IDs owned across runs
-	ArtifactLoadout    [7]string `json:"artifact_loadout,omitempty"`   // equipped loadout: indices 0-5 regular, 6 = elite slot
+	ArtifactCollection []string  `json:"artifact_collection,omitempty"` // all artifact IDs owned across runs
+	ArtifactLoadout    [6]string `json:"artifact_loadout,omitempty"`    // equipped loadout: 6 picks, no reserved elite slot
 }
 
 const metaSavePath = "meta.json"

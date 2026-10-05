@@ -135,21 +135,36 @@ func (f *Fireball) Draw(screen *ebiten.Image, tileSize int, camX, camY, camScale
 	if f.Finished {
 		return
 	}
+	// f.X/f.Y is drawn as-is, unlike the stationary artifact-skill visuals'
+	// chest-alignment nudge: this is a travelling projectile whose path
+	// starts at the caster's own already-correct BodyCenter() (chest). A
+	// draw-time nudge would apply to every point on the path, including
+	// that origin, dragging it down toward the caster's feet — arcane_bolt
+	// (same caster-to-target shape) draws its own X/Y unmodified for the
+	// same reason.
+	var img *ebiten.Image
+	if f.Impact {
+		img = f.ImpactImg
+	} else {
+		img = FireballSprites[f.dirIndex][f.frame]
+	}
+	if img == nil {
+		return
+	}
+
 	sx, sy := isoToScreenFloat(f.X, f.Y, tileSize)
 	op := &ebiten.DrawImageOptions{}
+	// arcane_bolt draws a vector.DrawFilledCircle, which is inherently
+	// centered on (sx, sy). Fireball blits a rectangular sprite frame
+	// instead, so without this it's the image's top-left corner — not its
+	// center — that lands on the logical point, visibly shifting the art
+	// down-and-right by half its own width/height.
+	w, h := img.Bounds().Dx(), img.Bounds().Dy()
+	op.GeoM.Translate(-float64(w)/2, -float64(h)/2)
 	op.GeoM.Translate(sx, sy)
 	op.GeoM.Translate(-camX, camY)
 	op.GeoM.Scale(camScale, camScale)
 	op.GeoM.Translate(cx, cy)
-
-	if f.Impact {
-		if f.ImpactImg != nil {
-			screen.DrawImage(f.ImpactImg, op)
-		}
-		return
-	}
-
-	img := FireballSprites[f.dirIndex][f.frame]
 	screen.DrawImage(img, op)
 }
 

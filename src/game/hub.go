@@ -994,7 +994,7 @@ func (g *Game) beginRunWithLoadout() {
 		return
 	}
 	g.ArtifactLoadout.Open(g.Meta.ArtifactLoadout, g.Meta.ArtifactCollection)
-	g.ArtifactLoadout.OnConfirm = func(loadout [7]string) {
+	g.ArtifactLoadout.OnConfirm = func(loadout [6]string) {
 		g.Meta.ArtifactLoadout = loadout
 		SaveMeta(g.Meta)
 		g.IsInHub = false
@@ -1008,46 +1008,36 @@ func (g *Game) beginRunWithLoadout() {
 	}
 }
 
-// equipArtifactLoadout reads g.Meta.ArtifactLoadout and equips each chosen
-// artifact as a REAL item in player.Equipment, one per real named equipment
-// slot (entities.EquipmentSlotOrder: Head/Chest/Weapon/Offhand/Feet/Ring1/
-// Ring2 — 7 slots for 7 loadout picks). Abilities are granted exclusively
-// through RefreshAbilities walking player.Equipment — never through a flag
-// set by hand — so a loadout-granted ability is indistinguishable from one
-// earned by picking up and equipping the item mid-run, AND the inventory
-// screen's equipment paperdoll (which reads p.Equipment by these same slot
-// names) actually shows what's equipped instead of appearing empty. Called
-// immediately before startFloor(1) so the HUD reflects the chosen build from
-// floor 1.
+// equipArtifactLoadout reads g.Meta.ArtifactLoadout (6 picks — there is no
+// reserved elite slot; an elite artifact just competes for one of the 6 like
+// any other) and equips each chosen artifact as a REAL item in
+// player.Equipment, one per named equipment slot (the first 6 of
+// entities.EquipmentSlotOrder: Head/Chest/Weapon/Offhand/Feet/Ring1).
+// Abilities are granted exclusively through RefreshAbilities walking
+// player.Equipment — never through a flag set by hand — so a loadout-granted
+// ability is indistinguishable from one earned by picking up and equipping
+// the item mid-run, AND the inventory screen's equipment paperdoll (which
+// reads p.Equipment by these same slot names) actually shows what's equipped
+// instead of appearing empty. Called immediately before startFloor(1) so the
+// HUD reflects the chosen build from floor 1.
 //
-// Slot 6 is the elite artifact; all 7 indices are equipped identically.
-// RefreshAbilities visits equipment in this same declared order, so the first
-// 6 AbilitySlotSpell items fill the spell bar (slots 0-5) exactly as a real
-// build would, and the elite (processed last, in "Ring2") grants its ability
-// flag without displacing them — it has its own dedicated bar position
-// (index 6, key "7"; see buildEquipped / syncHUDSpellSlots, both read
-// straight from player.Equipment["Ring2"], not from Meta.ArtifactLoadout[6]
-// — that field is only remembered for redisplaying picks in the loadout
-// screen and is never trusted as live equipped state).
+// player.Equipment persists across runs (it's only ever freshly allocated
+// once, at player creation), so every slot — including the unused 7th,
+// Ring2 — is explicitly cleared first. Otherwise a leftover item from a
+// previous run could keep granting an ability the current loadout never
+// chose.
 func (g *Game) equipArtifactLoadout() {
 	if g.player == nil || g.Meta == nil {
 		return
 	}
-	if g.player.Equipment == nil {
-		g.player.Equipment = entities.NewEquipmentSlots()
-	}
+	g.player.Equipment = entities.NewEquipmentSlots()
 	for i, artifactID := range g.Meta.ArtifactLoadout {
-		if i >= len(entities.EquipmentSlotOrder) {
-			break
-		}
-		slot := entities.EquipmentSlotOrder[i]
 		if artifactID == "" {
-			g.player.Equipment[slot] = nil
 			continue
 		}
+		slot := entities.EquipmentSlotOrder[i]
 		tmpl, ok := items.Registry[artifactID]
 		if !ok || !tmpl.IsArtifact {
-			g.player.Equipment[slot] = nil
 			continue
 		}
 		g.player.Equipment[slot] = items.NewItem(artifactID)

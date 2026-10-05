@@ -2,6 +2,7 @@ package game
 
 import (
 	"dungeoneer/combat"
+	"dungeoneer/coords"
 	"dungeoneer/entities"
 	"dungeoneer/images"
 	"dungeoneer/items"
@@ -41,6 +42,30 @@ func (g *Game) buildDevEntries() []ui.DevEntry {
 			Key:      "F10",
 			IsActive: func() bool { return g.ShowHUD },
 			Toggle:   func() { g.ShowHUD = !g.ShowHUD },
+		},
+
+		// ── Body Offset ────────────────────────────────────────────────────
+		{Label: "BODY OFFSET", IsHeader: true},
+		{
+			Label:     "BodyDX",
+			SliderGet: func() float64 { return coords.BodyDX },
+			SliderSet: func(v float64) { coords.BodyDX = v },
+			SliderMin: -1.0,
+			SliderMax: 2.5,
+		},
+		{
+			Label:     "BodyDY",
+			SliderGet: func() float64 { return coords.BodyDY },
+			SliderSet: func(v float64) { coords.BodyDY = v },
+			SliderMin: -1.0,
+			SliderMax: 2.5,
+		},
+		{
+			Label: "Reset Body Offsets",
+			Toggle: func() {
+				coords.BodyDX = coords.DefaultBodyDX
+				coords.BodyDY = coords.DefaultBodyDY
+			},
 		},
 
 		// ── Editor ─────────────────────────────────────────────────────────
@@ -350,12 +375,10 @@ func (g *Game) buildDevEntries() []ui.DevEntry {
 // dev-granted ability is indistinguishable from a legitimately-earned one to
 // HasAbility, item stat bonuses, and set-bonus counting. A previous version
 // wrote directly into player.Abilities, which desynced HasAbility from the
-// equipment the inventory screen shows and let elite-only abilities (e.g.
-// chaos_ray, lightning_storm, fractal_canopy) be granted with no backing
-// elite artifact ever placed in the loadout. Elite items are equipped into
-// the elite slot (EquipmentSlotOrder[6]) and mirrored into
-// Meta.ArtifactLoadout[6] so the elite HUD bar position picks them up,
-// matching equipArtifactLoadout/devLoadBuild.
+// equipment the inventory screen shows. There is no reserved elite slot —
+// an elite item (e.g. chaos_ray, lightning_storm, fractal_canopy) is equipped
+// into any free equipment slot exactly like a regular one, and simply won't
+// fit if all slots are already occupied.
 func (g *Game) devToggleAbility(abilityID string) {
 	if g.player == nil {
 		return
@@ -367,12 +390,8 @@ func (g *Game) devToggleAbility(abilityID string) {
 	if g.player.HasAbility(abilityID) {
 		for _, slot := range entities.EquipmentSlotOrder {
 			it := g.player.Equipment[slot]
-			if it == nil || it.GrantsAbility != abilityID {
-				continue
-			}
-			g.player.Equipment[slot] = nil
-			if slot == entities.EquipmentSlotOrder[6] && g.Meta != nil && g.Meta.ArtifactLoadout[6] == it.ID {
-				g.Meta.ArtifactLoadout[6] = ""
+			if it != nil && it.GrantsAbility == abilityID {
+				g.player.Equipment[slot] = nil
 			}
 		}
 	} else {
@@ -380,25 +399,16 @@ func (g *Game) devToggleAbility(abilityID string) {
 		if tmpl == nil {
 			return
 		}
-		if tmpl.IsElite {
-			slot := entities.EquipmentSlotOrder[6]
-			g.player.Equipment[slot] = items.NewItem(id)
-			if g.Meta != nil {
-				g.Meta.ArtifactLoadout[6] = id
+		placed := false
+		for _, slot := range entities.EquipmentSlotOrder {
+			if g.player.Equipment[slot] == nil {
+				g.player.Equipment[slot] = items.NewItem(id)
+				placed = true
+				break
 			}
-		} else {
-			placed := false
-			for i := 0; i < 6; i++ {
-				slot := entities.EquipmentSlotOrder[i]
-				if g.player.Equipment[slot] == nil {
-					g.player.Equipment[slot] = items.NewItem(id)
-					placed = true
-					break
-				}
-			}
-			if !placed {
-				return // no free non-elite slot to equip into
-			}
+		}
+		if !placed {
+			return // no free slot to equip into
 		}
 	}
 

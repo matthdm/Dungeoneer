@@ -92,6 +92,9 @@ func (c *ChaosRay) Draw(screen *ebiten.Image, tileSize int, camX, camY, camScale
 	for i := 0; i < len(c.Path)-1; i++ {
 		p1 := c.Path[i]
 		p2 := c.Path[i+1]
+		// c.Path runs from the caster's own BodyCenter() (chest) to the
+		// target — drawn as-is, same reasoning as Fireball.Draw(): a
+		// draw-time nudge would drag the caster end down toward the feet.
 		sx1, sy1 := isoToScreenFloat(p1.X, p1.Y, tileSize)
 		sx2, sy2 := isoToScreenFloat(p2.X, p2.Y, tileSize)
 		sx1 = (sx1-camX)*camScale + cx
