@@ -68,6 +68,10 @@ type Monster struct {
 
 	IntroFired bool // true after the first-encounter flavor line has fired for this monster's role+biome
 	IsRooted   bool // set by new combat engine (ashbound_chain); blocks movement this frame
+	// TauntTicks > 0 means the monster has been taunted (wardens_medallion): it
+	// drops its own behaviour — kiting, casting from range, patrolling, waiting
+	// in ambush — and closes on the player to attack in melee until it runs out.
+	TauntTicks int
 
 	// Phase 2 additions
 	Role               string               // "melee", "ranged", "elite", "swarm", "caster", "ambush"
@@ -134,7 +138,12 @@ func (m *Monster) Update(player *Player, level *levels.Level) {
 			m.IsDead = true
 		}
 	})
-	if m.Behavior != nil && !m.IsRooted {
+	if m.TauntTicks > 0 {
+		m.TauntTicks--
+		if !m.IsRooted {
+			m.BasicChaseLogic(player, level)
+		}
+	} else if m.Behavior != nil && !m.IsRooted {
 		m.Behavior.Update(m, player, level)
 	}
 	m.UpdateFlashStatus()
@@ -377,4 +386,20 @@ func (m *Monster) TakeDamage(dmg int, markers *[]HitMarker, damageNumbers *[]Dam
 		MaxTicks: 30,
 	})
 	return m.IsDead
+}
+
+// Taunt forces the monster onto the player for the given number of ticks.
+// Bosses keep their scripted kit and echoes are not hostile minds to provoke,
+// so both ignore it. Returns whether the taunt took hold.
+func (m *Monster) Taunt(ticks int) bool {
+	if m.IsDead || m.IsEcho || ticks <= 0 {
+		return false
+	}
+	if _, isBoss := m.Behavior.(*BossBehavior); isBoss {
+		return false
+	}
+	if ticks > m.TauntTicks {
+		m.TauntTicks = ticks
+	}
+	return true
 }

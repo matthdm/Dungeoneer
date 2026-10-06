@@ -115,43 +115,8 @@ func TestManaCostReduction(t *testing.T) {
 
 // ─── Targetless activation ───────────────────────────────────────────────────
 
-// TestTargetlessSpellBurnsCooldownWithoutDamage verifies casting into empty
-// ground consumes cooldown and mana and fires the visual event, but deals no
-// damage and cannot ghost-kill a stale target.
-func TestTargetlessSpellBurnsCooldownWithoutDamage(t *testing.T) {
-	eng := newEngine()
-	state := baseState()
-	state.HasTarget = false
-	state.TargetInRange = false
-	state.IsAutoAttacking = false
-	state.TargetHP = 0 // stale
-	state.PlayerMana = 50
-	state.PlayerMaxMana = 50
-	state.EquippedArtifacts[0] = "fireball"
-
-	state, events := eng.Tick(state, activate())
-
-	fired := false
-	for _, ev := range events {
-		switch ev.Type {
-		case EventSkillFired:
-			fired = true
-		case EventDamageDealt:
-			t.Fatal("damage dealt with no target")
-		case EventTargetDied:
-			t.Fatal("ghost kill recorded with no target")
-		}
-	}
-	if !fired {
-		t.Fatal("targetless cast did not fire (visuals need the event)")
-	}
-	if state.ArtifactCooldowns[0] == 0 {
-		t.Fatal("cooldown not consumed on targetless cast")
-	}
-	if state.PlayerMana != 42 {
-		t.Fatalf("mana not spent on targetless cast: %d", state.PlayerMana)
-	}
-}
+// Targetless casts are covered by TestTargetlessSpellCostsNothing and
+// TestGroundAndSelfCastsNeedNoTarget in fixes_test.go.
 
 // TestMeleeSkillRequiresTargetInRange verifies weapon-multiplier skills
 // (ironbreaker_gauntlets) do not fire out of range now that the engine ticks

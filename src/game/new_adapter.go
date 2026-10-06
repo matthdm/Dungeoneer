@@ -316,10 +316,14 @@ func (a *NewCombatAdapter) ProcessTick(g *Game, dt float64) {
 	py := g.player.BodyY()
 	inRange := false
 	mx, my := 0.0, 0.0
+	targetDist := 0.0
+	targetLOSBlocked := false
 	if m != nil {
 		mx = m.BodyX()
 		my = m.BodyY()
 		dist := math.Sqrt((mx-px)*(mx-px) + (my-py)*(my-py))
+		targetDist = dist
+		targetLOSBlocked = !g.hasLineOfSight(g.player.TileX, g.player.TileY, m.TileX, m.TileY)
 		// Distance alone isn't enough: without a line-of-sight check, a monster
 		// within attackRange but behind a wall was still "in range" — the
 		// engine would auto-attack and deal damage every tick with no
@@ -327,7 +331,7 @@ func (a *NewCombatAdapter) ProcessTick(g *Game, dt float64) {
 		// ArcaneBolt, ...) independently stops itself at the first blocked
 		// tile. hasLineOfSight (spells.game.go) is the same tile-tracing check
 		// already used for AOE/splash LOS gating elsewhere in this package.
-		inRange = dist <= attackRange && g.hasLineOfSight(g.player.TileX, g.player.TileY, m.TileX, m.TileY)
+		inRange = dist <= attackRange && !targetLOSBlocked
 	}
 
 	// 4. Move toward target if out of range and auto-attacking.
@@ -389,6 +393,10 @@ func (a *NewCombatAdapter) ProcessTick(g *Game, dt float64) {
 		a.combatState.TargetX = mx
 		a.combatState.TargetY = my
 		a.combatState.TargetInRange = inRange
+		// Distance and line of sight gate every skill with its own cast range,
+		// so spells cannot reach a locked target across the map or through walls.
+		a.combatState.TargetDist = targetDist
+		a.combatState.TargetLOSBlocked = targetLOSBlocked
 		a.combatState.TargetIsDead = false
 		a.combatState.IsAutoAttacking = g.IsAutoAttacking && !movingIntoRange
 	} else {
@@ -562,6 +570,13 @@ func (a *NewCombatAdapter) ProcessTick(g *Game, dt float64) {
 			}
 		case combat.EventSkillFired:
 			a.handleSkillFired(g, ev, m, mx, my)
+		case combat.EventSkillFailed:
+			// Nothing was spent; tell the player why the key did nothing.
+			if msg := skillFailMessage(ev.Reason); msg != "" {
+				g.ShowHint(msg)
+			}
+		case combat.EventTaunt:
+			a.applyTaunt(g, ev.Radius, ev.Duration)
 		case combat.EventStreakChange:
 			g.KillStreak = ev.Value
 			a.combatState.KillStreak = ev.Value
@@ -600,6 +615,48 @@ func (a *NewCombatAdapter) ProcessTick(g *Game, dt float64) {
 	}
 }
 
+// skillFailMessage turns an engine refusal into a short on-screen hint.
+func skillFailMessage(reason string) string {
+	switch reason {
+	case combat.FailNoTarget:
+		return "No target"
+	case combat.FailOutOfRange:
+		return "Out of range"
+	case combat.FailNoLineOfSight:
+		return "No line of sight"
+	case combat.FailTargetNotLow:
+		return "Target is not weak enough"
+	case combat.FailNothingOnCooldown:
+		return "Nothing on cooldown to surge"
+	}
+	return ""
+}
+
+// applyTaunt is the game-layer half of a taunt: every hostile monster whose
+// body is within radius tiles of the player's, with line of sight, is forced
+// to close on the player and attack for the taunt's duration. (The engine
+// half is the damage reduction.)
+func (a *NewCombatAdapter) applyTaunt(g *Game, radius, seconds float64) {
+	if g.player == nil || radius <= 0 || seconds <= 0 {
+		return
+	}
+	px, py := g.player.BodyX(), g.player.BodyY()
+	ticks := int(seconds * 60)
+	for _, mon := range g.Monsters {
+		if mon == nil || mon.IsDead {
+			continue
+		}
+		dx, dy := mon.BodyX()-px, mon.BodyY()-py
+		if dx*dx+dy*dy > radius*radius {
+			continue
+		}
+		if !g.hasLineOfSight(g.player.TileX, g.player.TileY, mon.TileX, mon.TileY) {
+			continue
+		}
+		mon.Taunt(ticks)
+	}
+}
+
 // handleSkillFired drives all game-layer feedback for a skill activation:
 // HUD slot flash + cooldown, blink-strike teleport, the legacy spell visual
 // (projectiles, arcs, fields — in visual-only mode since the engine owns
@@ -622,7 +679,8 @@ func (a *NewCombatAdapter) handleSkillFired(g *Game, ev combat.Event, m *entitie
 			if tr == engineSlot && barIdx < len(g.HUD.SkillSlots) {
 				g.HUD.SkillSlots[barIdx].FlashTimer = 0.35
 				if hasEffect {
-					g.HUD.SkillSlots[barIdx].MaxCooldown = effect.Cooldown
+					// Same function the engine used, so the sweep matches.
+					g.HUD.SkillSlots[barIdx].MaxCooldown = combat.EffectiveCooldown(effect.Cooldown, a.combatState.CooldownReductionPct)
 				}
 				break
 			}

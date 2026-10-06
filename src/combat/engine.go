@@ -1,6 +1,9 @@
 package combat
 
-import "math/rand/v2"
+import (
+	"math"
+	"math/rand/v2"
+)
 
 // CombatEngine processes one tick of combat logic.
 // Inputs: current state + player actions for this tick.
@@ -17,6 +20,10 @@ type Event struct {
 	X, Y   float64
 	IsCrit bool
 	Tag    string // artifact ID, effect name, etc.
+
+	Reason   string  // EventSkillFailed: one of the Fail* constants
+	Radius   float64 // EventTaunt: reach in tiles
+	Duration float64 // EventTaunt: seconds
 }
 
 // EventType classifies what happened so the game layer knows how to react.
@@ -33,7 +40,27 @@ const (
 	EventHPSpent      EventType = "hp_spent"  // blood_price, hollow_sigil; Value = HP deducted
 	EventLevelUp      EventType = "level_up"  // Value = new level; Tag = stat points e.g. "str str vit"
 	EventManaChanged  EventType = "mana_changed" // Value = mana spent this activation
+	// EventSkillFailed: a skill press was refused because it could not have done
+	// anything. Nothing was spent. Tag = artifact ID, Reason = why.
+	EventSkillFailed EventType = "skill_failed"
+	// EventTaunt: a taunt went off. The game layer forces enemies within Radius
+	// tiles of the player to attack the player for Duration seconds.
+	EventTaunt EventType = "taunt"
 )
+
+// Reasons carried by EventSkillFailed.
+const (
+	FailNoTarget          = "no_target"
+	FailOutOfRange        = "out_of_range"
+	FailNoLineOfSight     = "no_line_of_sight"
+	FailTargetNotLow      = "target_not_low"
+	FailNothingOnCooldown = "nothing_on_cooldown"
+)
+
+// dotTickInterval is how often a damaging DoT lands its damage. Damage accrues
+// continuously and is dealt in whole points at this cadence, so a 5 DPS burn
+// lands as readable 2–3 point ticks rather than rounding to nothing each frame.
+const dotTickInterval = 0.5
 
 // DefaultCombatEngine is the concrete implementation of CombatEngine.
 // It is pure Go — no Ebiten or game-layer dependencies.
@@ -127,6 +154,7 @@ func recordKill(state *CombatState, events *[]Event) {
 	state.TargetHP = 0
 	state.TargetIsDead = true
 	state.IsAutoAttacking = false
+	clearDoTs(state) // lingering effects belong to the target that just died
 	state.KillStreak++
 	state.StreakTimer = streakResetTime
 	*events = append(*events, Event{Type: EventTargetDied, Value: state.KillStreak})
@@ -151,6 +179,181 @@ func passiveDmgBonusMult(state *CombatState) float64 {
 		return true
 	})
 	return 1.0 + float64(bonus)/100.0
+}
+
+// ── Lingering effects (DoTs) ─────────────────────────────────────────────────
+
+// applyDoT puts a lingering effect from source on the target, or refreshes it
+// if that source already has one. dps may be 0 for effects whose damage was
+// dealt up front but which still count as active (AoE fields).
+func applyDoT(state *CombatState, source string, dps int, duration float64) {
+	if duration <= 0 {
+		return
+	}
+	free := -1
+	for i := range state.DoTs {
+		d := &state.DoTs[i]
+		if d.Source == source {
+			d.DPS = dps
+			d.Remaining = duration
+			syncDoTMirrors(state)
+			return
+		}
+		if d.Source == "" && free < 0 {
+			free = i
+		}
+	}
+	if free >= 0 {
+		state.DoTs[free] = DoT{Source: source, DPS: dps, Remaining: duration}
+	}
+	syncDoTMirrors(state)
+}
+
+func clearDoTs(state *CombatState) {
+	state.DoTs = [MaxDoTs]DoT{}
+	syncDoTMirrors(state)
+}
+
+// syncDoTMirrors refreshes the legacy summary fields from the DoT list.
+func syncDoTMirrors(state *CombatState) {
+	state.ActiveDoTCount = 0
+	state.BurnActive = false
+	state.BurnDPS = 0
+	state.BurnTimer = 0
+	for i := range state.DoTs {
+		d := &state.DoTs[i]
+		if d.Source == "" {
+			continue
+		}
+		state.ActiveDoTCount++
+		if d.DPS > 0 && !state.BurnActive {
+			state.BurnActive = true
+			state.BurnDPS = d.DPS
+			state.BurnTimer = d.Remaining
+		}
+	}
+}
+
+// tickDoTs advances every lingering effect by dt and lands any damage due.
+func tickDoTs(state *CombatState, events *[]Event, dt float64) {
+	for i := range state.DoTs {
+		d := &state.DoTs[i]
+		if d.Source == "" {
+			continue
+		}
+		d.Remaining -= dt
+		expired := d.Remaining <= 0
+		if d.DPS > 0 {
+			d.accum += float64(d.DPS) * dt
+			d.tickTimer += dt
+			if expired || d.tickTimer >= dotTickInterval-1e-9 {
+				d.tickTimer = 0
+				dmg := int(d.accum + 1e-9)
+				if expired {
+					dmg = int(math.Round(d.accum)) // settle the remainder
+				}
+				d.accum -= float64(dmg)
+				if dmg > 0 {
+					source := d.Source
+					*events = append(*events, Event{Type: EventDamageDealt, Value: dmg, X: state.TargetX, Y: state.TargetY, Tag: source})
+					state.TargetHP -= dmg
+					if state.TargetHP <= 0 && !state.TargetIsDead {
+						recordKill(state, events) // clears every DoT
+						return
+					}
+				}
+			}
+		}
+		if expired {
+			*d = DoT{}
+		}
+	}
+}
+
+// ── Cast validation ──────────────────────────────────────────────────────────
+
+// actsOnTarget reports whether a skill does something to the enemy target.
+func actsOnTarget(eff ArtifactEffect) bool {
+	return eff.DamageMultiplier > 0 || eff.IsExecute || eff.IsRoot || eff.IsBlinkStrike ||
+		eff.SurgeDmgPerCooldown > 0 || eff.DamageFlat > 0 ||
+		eff.SpellDamageBase > 0 || eff.SpellDamagePerINT > 0 || eff.SpellDamagePerSTR > 0
+}
+
+// targetBlockReason returns why the skill cannot reach the current target, or
+// "" if it can: there must be a live target, in line of sight, within the
+// skill's CastRange (or within basic attack reach when CastRange is 0).
+func targetBlockReason(state *CombatState, eff ArtifactEffect) string {
+	if !state.HasTarget || state.TargetIsDead {
+		return FailNoTarget
+	}
+	if state.TargetLOSBlocked {
+		return FailNoLineOfSight
+	}
+	if eff.CastRange > 0 {
+		if state.TargetDist > eff.CastRange {
+			return FailOutOfRange
+		}
+	} else if !state.TargetInRange {
+		return FailOutOfRange
+	}
+	return ""
+}
+
+// surgeCount is how many OTHER artifact slots are on cooldown (arcane_surge).
+func surgeCount(state *CombatState, selfID string) int {
+	n := 0
+	for i, cd := range state.ArtifactCooldowns {
+		if cd > 0 && state.EquippedArtifacts[i] != selfID {
+			n++
+		}
+	}
+	return n
+}
+
+// executeThreshold is the target HP at or below which an execute kills.
+func executeThreshold(state *CombatState, eff ArtifactEffect) int {
+	return int(float64(state.TargetMaxHP) * float64(eff.ExecuteThresholdPct) / 100.0)
+}
+
+// checkCast decides whether pressing a skill should do anything. A cast that
+// could have no effect is refused before any mana, HP or cooldown is spent.
+// targetOK reports whether the target can be acted on (always true for a skill
+// that needs one and was not refused; may be false for ground/self casts).
+func checkCast(state *CombatState, id string, eff ArtifactEffect) (targetOK bool, failReason string) {
+	block := targetBlockReason(state, eff)
+	if block != "" && actsOnTarget(eff) && !eff.CastsWithoutTarget {
+		return false, block
+	}
+	targetOK = block == ""
+	if eff.IsExecute && state.TargetHP > executeThreshold(state, eff) {
+		return targetOK, FailTargetNotLow
+	}
+	if eff.SurgeDmgPerCooldown > 0 && surgeCount(state, id) == 0 {
+		return targetOK, FailNothingOnCooldown
+	}
+	return targetOK, ""
+}
+
+// strike lands one hit of skill damage on the target. Every damaging skill
+// goes through here, so they all share the same rules: passive damage bonuses
+// apply, the hit can crit, and a kill is recorded once.
+func (e *DefaultCombatEngine) strike(state *CombatState, events *[]Event, base float64, guaranteedCrit bool, tag string) {
+	if !state.HasTarget || state.TargetIsDead {
+		return
+	}
+	dmg, isCrit := e.calcDamage(int(base*passiveDmgBonusMult(state)), guaranteedCrit)
+	*events = append(*events, Event{
+		Type:   EventDamageDealt,
+		Value:  dmg,
+		X:      state.TargetX,
+		Y:      state.TargetY,
+		IsCrit: isCrit,
+		Tag:    tag,
+	})
+	state.TargetHP -= dmg
+	if state.TargetHP <= 0 {
+		recordKill(state, events)
+	}
 }
 
 // Tick advances combat by one step (state.DeltaTime seconds).
@@ -211,14 +414,18 @@ func (e *DefaultCombatEngine) Tick(state CombatState, actions []Action) (CombatS
 				}
 			}
 			effect, hasEffect := ArtifactEffects[artifactID]
-			hasLiveTarget := state.HasTarget && !state.TargetIsDead
 
-			// Melee-reach skills (weapon-multiplier strikes and executes) need a
-			// live target in attack range; ranged spells and self-buffs do not.
-			if hasEffect && (effect.DamageMultiplier > 0 || effect.IsExecute) &&
-				!effect.IsBlinkStrike && // blink is a gap-closer: usable from range
-				(!hasLiveTarget || !state.TargetInRange) {
-				break
+			// Refuse a press that could not do anything — no target, target out
+			// of reach or behind a wall, execute on a healthy enemy, surge with
+			// nothing on cooldown — before spending mana, HP or the cooldown.
+			targetOK := false
+			if hasEffect {
+				var failReason string
+				targetOK, failReason = checkCast(&state, artifactID, effect)
+				if failReason != "" {
+					events = append(events, Event{Type: EventSkillFailed, Tag: artifactID, Reason: failReason})
+					break
+				}
 			}
 
 			// Mana: enforced only when the state models mana (PlayerMaxMana > 0),
@@ -253,12 +460,13 @@ func (e *DefaultCombatEngine) Tick(state CombatState, actions []Action) (CombatS
 				}
 			}
 
-			// Determine cooldown from registry; fall back to stub.
+			// Cooldown from the registry (fall back to the stub), shortened by
+			// cooldown reduction.
 			cd := skillStubCooldown
 			if hasEffect {
 				cd = effect.Cooldown
 			}
-			state.ArtifactCooldowns[idx] = cd
+			state.ArtifactCooldowns[idx] = EffectiveCooldown(cd, state.CooldownReductionPct)
 			events = append(events, Event{
 				Type: EventSkillFired,
 				Tag:  artifactID,
@@ -280,38 +488,25 @@ func (e *DefaultCombatEngine) Tick(state CombatState, actions []Action) (CombatS
 				if effect.IsTaunt {
 					state.DamageReductionPct = effect.DamageReductionPct
 					state.TauntTimer = effect.DurationSec * durationMult
+					events = append(events, Event{
+						Type:     EventTaunt,
+						Tag:      artifactID,
+						Radius:   effect.TauntRadius,
+						Duration: state.TauntTimer,
+					})
 				}
 				if effect.IsRoot {
 					state.TargetRooted = true
 					state.RootTimer = effect.DurationSec * durationMult
 				}
 				if effect.IsExecute {
-					// Execute: instakill if target is below threshold
-					threshold := int(float64(state.TargetMaxHP) * float64(effect.ExecuteThresholdPct) / 100.0)
-					if state.TargetHP <= threshold && state.TargetHP > 0 {
-						execDmg := state.TargetHP
-						events = append(events, Event{Type: EventDamageDealt, Value: execDmg, X: state.TargetX, Y: state.TargetY})
-						if !state.TargetIsDead {
-							recordKill(&state, &events)
-						}
-					}
+					// checkCast guaranteed the target is at or below the threshold.
+					events = append(events, Event{Type: EventDamageDealt, Value: state.TargetHP, X: state.TargetX, Y: state.TargetY, Tag: artifactID})
+					recordKill(&state, &events)
 				}
-				if effect.SurgeDmgPerCooldown > 0 && hasLiveTarget {
-					// Count how many artifact slots are currently on cooldown (excluding self)
-					cdCount := 0
-					for i, cd := range state.ArtifactCooldowns {
-						if cd > 0 && state.EquippedArtifacts[i] != artifactID {
-							cdCount++
-						}
-					}
-					surgeDmg := effect.SurgeDmgPerCooldown * cdCount
-					if surgeDmg > 0 {
-						events = append(events, Event{Type: EventDamageDealt, Value: surgeDmg, X: state.TargetX, Y: state.TargetY})
-						state.TargetHP -= surgeDmg
-						if state.TargetHP <= 0 && !state.TargetIsDead {
-							recordKill(&state, &events)
-						}
-					}
+				if effect.SurgeDmgPerCooldown > 0 {
+					// surgeCount excludes this slot, whose cooldown was just set.
+					e.strike(&state, &events, float64(effect.SurgeDmgPerCooldown*surgeCount(&state, artifactID)), false, artifactID)
 				}
 				if effect.HPCostPct > 0 && effect.DamageFlat > 0 {
 					// Blood price: spend % of current HP, deal flat damage
@@ -324,57 +519,30 @@ func (e *DefaultCombatEngine) Tick(state CombatState, actions []Action) (CombatS
 						state.PlayerHP = 1 // don't let it kill you
 					}
 					events = append(events, Event{Type: EventHPSpent, Value: hpCost})
-					if hasLiveTarget {
-						dmg := effect.DamageFlat
-						events = append(events, Event{Type: EventDamageDealt, Value: dmg, X: state.TargetX, Y: state.TargetY})
-						state.TargetHP -= dmg
-						if state.TargetHP <= 0 && !state.TargetIsDead {
-							recordKill(&state, &events)
-						}
-					}
+					e.strike(&state, &events, float64(effect.DamageFlat), false, artifactID)
 				}
 				// Spell damage: registered game spells with INT/STR scaling.
 				// AoE fields use DurationSec as a time multiplier (total = DPS × secs).
-				if (effect.SpellDamageBase > 0 || effect.SpellDamagePerINT > 0 || effect.SpellDamagePerSTR > 0) && hasLiveTarget {
+				// targetOK is only ever false here for ground casts (fractal_canopy).
+				if (effect.SpellDamageBase > 0 || effect.SpellDamagePerINT > 0 || effect.SpellDamagePerSTR > 0) && targetOK {
 					spellDmg := effect.SpellDamageBase
 					spellDmg += int(float64(state.PlayerIntelligence) * effect.SpellDamagePerINT)
 					spellDmg += int(float64(state.PlayerStrength) * effect.SpellDamagePerSTR)
 					if effect.IsAOEField && effect.DurationSec > 0 {
 						spellDmg = int(float64(spellDmg) * effect.DurationSec)
 					}
-					spellDmg = int(float64(spellDmg) * passiveDmgBonusMult(&state))
-					finalDmg, isCrit := e.calcDamage(spellDmg, false)
-					events = append(events, Event{
-						Type:   EventDamageDealt,
-						Value:  finalDmg,
-						X:      state.TargetX,
-						Y:      state.TargetY,
-						IsCrit: isCrit,
-						Tag:    artifactID,
-					})
-					state.TargetHP -= finalDmg
-					if state.TargetHP <= 0 && !state.TargetIsDead {
-						recordKill(&state, &events)
+					e.strike(&state, &events, float64(spellDmg), false, artifactID)
+					// The field lingers on the target as an active effect for its
+					// duration (its damage was dealt above, so DPS is 0).
+					if effect.IsAOEField && state.HasTarget && !state.TargetIsDead {
+						applyDoT(&state, artifactID, 0, effect.DurationSec*durationMult)
 					}
 				}
 				// DamageMultiplier: melee/physical skills that strike for N× base weapon damage.
 				// IsBlinkStrike sets NextCritGuaranteed before this runs, so the blink strike crits.
 				if effect.DamageMultiplier > 0 {
-					skillDmg := int(float64(state.PlayerDamage) * effect.DamageMultiplier * passiveDmgBonusMult(&state))
-					finalDmg, isCrit := e.calcDamage(skillDmg, state.NextCritGuaranteed)
+					e.strike(&state, &events, float64(state.PlayerDamage)*effect.DamageMultiplier, state.NextCritGuaranteed, artifactID)
 					state.NextCritGuaranteed = false
-					events = append(events, Event{
-						Type:   EventDamageDealt,
-						Value:  finalDmg,
-						X:      state.TargetX,
-						Y:      state.TargetY,
-						IsCrit: isCrit,
-						Tag:    artifactID,
-					})
-					state.TargetHP -= finalDmg
-					if state.TargetHP <= 0 && !state.TargetIsDead {
-						recordKill(&state, &events)
-					}
 				}
 
 				// hollow_sigil: void-domain skills cost HP instead of mana.
@@ -398,11 +566,11 @@ func (e *DefaultCombatEngine) Tick(state CombatState, actions []Action) (CombatS
 		}
 	}
 
-	// 2. Tick down artifact cooldowns (CDR makes time pass faster).
-	cdMultiplier := 1.0 + float64(state.CooldownReductionPct)/100.0
+	// 2. Tick down artifact cooldowns. Cooldown reduction was already applied
+	// when each cooldown started (EffectiveCooldown).
 	for i := range state.ArtifactCooldowns {
 		if state.ArtifactCooldowns[i] > 0 {
-			state.ArtifactCooldowns[i] -= dt * cdMultiplier
+			state.ArtifactCooldowns[i] -= dt
 			if state.ArtifactCooldowns[i] < 0 {
 				state.ArtifactCooldowns[i] = 0
 			}
@@ -453,15 +621,10 @@ func (e *DefaultCombatEngine) Tick(state CombatState, actions []Action) (CombatS
 			state.AutoAttackTimer = effectiveInterval
 
 			// Check for passive burn from equipped artifacts (ember_mantle).
-			scanArtifacts(&state, func(_ string, eff ArtifactEffect) bool {
+			scanArtifacts(&state, func(id string, eff ArtifactEffect) bool {
 				if eff.IsPassive && eff.BurnDPS > 0 {
 					durationMult := 1.0 + float64(state.SkillDurationPct)/100.0
-					if !state.BurnActive {
-						state.ActiveDoTCount++ // new DoT stack started
-					}
-					state.BurnActive = true
-					state.BurnDPS = eff.BurnDPS
-					state.BurnTimer = eff.BurnDurationSec * durationMult
+					applyDoT(&state, id, eff.BurnDPS, eff.BurnDurationSec*durationMult)
 					return false
 				}
 				return true
@@ -573,35 +736,14 @@ func (e *DefaultCombatEngine) Tick(state CombatState, actions []Action) (CombatS
 		return true
 	})
 
-	// 9. Tick burn DoT and emit damage. A burn cannot outlive its target: if the
-	// target is gone (cleared or dead), drop the DoT so a future target doesn't
-	// inherit it.
-	if state.BurnActive && !state.HasTarget {
-		state.BurnActive = false
-		state.BurnDPS = 0
-		state.BurnTimer = 0
-		if state.ActiveDoTCount > 0 {
-			state.ActiveDoTCount--
-		}
+	// 9. Lingering effects (burn, AoE fields). They cannot outlive their target:
+	// if the target is gone, drop them so a future target doesn't inherit them.
+	if !state.HasTarget {
+		clearDoTs(&state)
+	} else if !state.TargetIsDead {
+		tickDoTs(&state, &events, dt)
 	}
-	if state.BurnActive && state.BurnTimer > 0 && !state.TargetIsDead {
-		state.BurnTimer -= dt
-		burnThisTick := int(float64(state.BurnDPS) * dt)
-		if burnThisTick > 0 {
-			events = append(events, Event{Type: EventDamageDealt, Value: burnThisTick, X: state.TargetX, Y: state.TargetY})
-			state.TargetHP -= burnThisTick
-			if state.TargetHP <= 0 && !state.TargetIsDead {
-				recordKill(&state, &events)
-			}
-		}
-		if state.BurnTimer <= 0 {
-			state.BurnActive = false
-			state.BurnDPS = 0
-			if state.ActiveDoTCount > 0 {
-				state.ActiveDoTCount--
-			}
-		}
-	}
+	syncDoTMirrors(&state)
 
 	return state, events
 }

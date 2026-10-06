@@ -50,6 +50,18 @@ type ArtifactEffect struct {
 	// so benchmark results stay comparable.
 	ManaCost int
 
+	// CastRange is how far away (tiles) the target may be. 0 means the skill
+	// uses the player's basic attack reach (CombatState.TargetInRange). Every
+	// skill that acts on the target also needs line of sight to it.
+	CastRange float64
+	// CastsWithoutTarget marks a skill that is placed on the ground rather
+	// than on an enemy (fractal_canopy): it always fires, and only damages a
+	// target that happens to be valid.
+	CastsWithoutTarget bool
+	// TauntRadius is how far (tiles) an IsTaunt skill reaches. Enemies inside
+	// it are forced onto the player by the game layer for the taunt's duration.
+	TauntRadius float64
+
 	// Spell-type fields — registered game spells (fireball, lightning, etc.).
 	// Visuals stay in spells.game.go; the engine owns damage calculation.
 	IsProjectile      bool    // single-target projectile (fireball, arcane_bolt)
@@ -78,12 +90,14 @@ var ArtifactEffects = map[string]ArtifactEffect{
 		Domain:           "shadow",
 		DamageMultiplier: 2.0,
 		IsBlinkStrike:    true,
+		CastRange:        5.0, // gap-closer: a 4-tile blink plus reach
 		DurationSec:      3.0, // shadow window; shadows_return resets CD mid-window for perma-shadow
 	},
 	"wardens_medallion": {
 		Cooldown:           10.0,
 		Domain:             "nature",
 		IsTaunt:            true,
+		TauntRadius:        4.0,
 		DurationSec:        4.0,
 		DamageReductionPct: 30,
 		MaxHPBonus:         8,
@@ -92,6 +106,7 @@ var ArtifactEffects = map[string]ArtifactEffect{
 		Cooldown:    10.0,
 		Domain:      "void",
 		IsRoot:      true,
+		CastRange:   6.0,
 		DurationSec: 2.0,
 	},
 	"grave_reaper": {
@@ -151,6 +166,7 @@ var ArtifactEffects = map[string]ArtifactEffect{
 		Cooldown:            8.0,
 		Domain:              "arcane",
 		SurgeDmgPerCooldown: 12,
+		CastRange:           8.0,
 	},
 	// CDR ring: passive -10% to all active cooldowns
 	"arcane_tempo_ring": {
@@ -165,6 +181,7 @@ var ArtifactEffects = map[string]ArtifactEffect{
 		Domain:     "void",
 		HPCostPct:  25,
 		DamageFlat: 200,
+		CastRange:  6.0,
 	},
 	// Sacrifice sustain: passive on-kill heal (20% max HP)
 	"soul_harvest": {
@@ -179,38 +196,41 @@ var ArtifactEffects = map[string]ArtifactEffect{
 	// stays truthful whichever combat path is live.
 	"fireball": {
 		Cooldown: 3.0, Domain: "flame", IsProjectile: true, AOERadius: 2.0,
-		SpellDamageBase: 25, SpellDamagePerINT: 2.0, ManaCost: 8,
+		SpellDamageBase: 25, SpellDamagePerINT: 2.0, ManaCost: 8, CastRange: 8.0,
 	},
 	"arcane_bolt": {
 		Cooldown: 0.8, Domain: "arcane", IsProjectile: true,
-		SpellDamageBase: 12, SpellDamagePerINT: 1.5, ManaCost: 2,
+		SpellDamageBase: 12, SpellDamagePerINT: 1.5, ManaCost: 2, CastRange: 8.0,
 	},
 	"arcane_spray": {
 		Cooldown: 1.5, Domain: "arcane", AOERadius: 2.0,
-		SpellDamageBase: 8, SpellDamagePerINT: 1.0, ManaCost: 5,
+		SpellDamageBase: 8, SpellDamagePerINT: 1.0, ManaCost: 5, CastRange: 5.0,
 	},
 	"lightning": {
 		Cooldown: 2.0, Domain: "arcane", IsChain: true, ChainCount: 3,
-		SpellDamageBase: 20, SpellDamagePerINT: 1.5, ManaCost: 6,
+		SpellDamageBase: 20, SpellDamagePerINT: 1.5, ManaCost: 6, CastRange: 8.0,
 	},
-	// AoE fields: SpellDamageBase is DPS; engine applies DPS × DurationSec as one hit.
+	// AoE fields: SpellDamageBase is DPS; engine applies DPS × DurationSec as one
+	// hit, and the field then counts as an active DoT on the target for
+	// DurationSec (resonance_crystal).
 	"lightning_storm": {
 		Cooldown: 6.0, Domain: "arcane", IsAOEField: true, DurationSec: 3.0,
-		SpellDamageBase: 15, SpellDamagePerINT: 1.0, ManaCost: 25,
+		SpellDamageBase: 15, SpellDamagePerINT: 1.0, ManaCost: 25, CastRange: 8.0,
 	},
 	"fractal_bloom": {
 		Cooldown: 3.0, Domain: "nature", AOERadius: 2.0,
-		SpellDamageBase: 18, SpellDamagePerINT: 1.0, ManaCost: 20,
+		SpellDamageBase: 18, SpellDamagePerINT: 1.0, ManaCost: 20, CastRange: 8.0,
 	},
 	// fractal_canopy: nature AoE field, 4s; total dmg = DPS × duration
 	"fractal_canopy": {
 		Cooldown: 8.0, Domain: "nature", IsAOEField: true, DurationSec: 4.0,
-		SpellDamageBase: 10, SpellDamagePerINT: 0.8, ManaCost: 15,
+		SpellDamageBase: 10, SpellDamagePerINT: 0.8, ManaCost: 15, CastRange: 8.0,
+		CastsWithoutTarget: true, // a healing field placed by the cursor
 	},
 	// chaos_ray: high-damage void beam (elite-tier)
 	"chaos_ray": {
 		Cooldown: 5.0, Domain: "void",
-		SpellDamageBase: 40, SpellDamagePerINT: 2.5, ManaCost: 12,
+		SpellDamageBase: 40, SpellDamagePerINT: 2.5, ManaCost: 12, CastRange: 10.0,
 	},
 	// slash_combo: rapid melee strikes — knight's active skill, STR-scaling
 	"slash_combo": {
@@ -246,6 +266,23 @@ var ArtifactEffects = map[string]ArtifactEffect{
 // uses real cooldown values rather than the stub fallback.
 func RegisterArtifact(id string, effect ArtifactEffect) {
 	ArtifactEffects[id] = effect
+}
+
+// MaxCooldownReductionPct caps total cooldown reduction, matching the cap the
+// legacy spell path has always used.
+const MaxCooldownReductionPct = 80
+
+// EffectiveCooldown returns a skill's cooldown after cooldown reduction: N%
+// reduction makes the cooldown N% shorter. The HUD uses the same function so
+// its sweep matches the engine.
+func EffectiveCooldown(base float64, reductionPct int) float64 {
+	if reductionPct <= 0 {
+		return base
+	}
+	if reductionPct > MaxCooldownReductionPct {
+		reductionPct = MaxCooldownReductionPct
+	}
+	return base * (1.0 - float64(reductionPct)/100.0)
 }
 
 // calcDamage returns the final damage value and whether the hit was a crit.

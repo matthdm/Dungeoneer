@@ -176,8 +176,10 @@ func (g *Game) devResetPlayerState() {
 		na.combatState.TargetRooted = false
 		na.combatState.RootTimer = 0
 		na.combatState.TauntTimer = 0
+		na.combatState.DoTs = [combat.MaxDoTs]combat.DoT{} // burn and fields; mirrors resync next tick
 		na.combatState.BurnActive = false
 		na.combatState.BurnTimer = 0
+		na.combatState.ActiveDoTCount = 0
 		na.combatState.HPDrainAccum = 0
 		na.combatState.PlayerHP = g.player.MaxHP
 	}

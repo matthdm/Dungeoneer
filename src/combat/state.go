@@ -21,8 +21,16 @@ type CombatState struct {
 	TargetX, TargetY float64
 	TargetLevel      int
 	TargetName       string
-	TargetInRange    bool
+	TargetInRange    bool // within the player's basic attack reach, with line of sight
 	TargetIsDead     bool
+
+	// TargetDist is the distance from player to target in tiles and
+	// TargetLOSBlocked is true when a wall stands between them. The game layer
+	// fills both every tick; skills with their own CastRange are gated on them.
+	// The zero values mean "adjacent and visible", so states that do not model
+	// positions (simulations, most tests) are unaffected.
+	TargetDist       float64
+	TargetLOSBlocked bool
 
 	// Auto-attack
 	AutoAttackTimer float64 // countdown to next auto-attack (seconds)
@@ -88,5 +96,24 @@ type CombatState struct {
 	BurnDPS              int     // damage per second of active burn
 	BurnTimer            float64 // remaining burn duration
 	NextCritGuaranteed   bool    // shroud_cloak blink guarantees next auto-attack is a crit
-	ActiveDoTCount       int     // number of distinct DoTs currently ticking on target (for resonance_crystal)
+	ActiveDoTCount       int     // number of distinct DoTs currently active on target (for resonance_crystal); derived from DoTs each tick
+
+	// DoTs is the list of lingering effects on the current target: the burn and
+	// any persistent AoE field. It is the source of truth; BurnActive, BurnDPS,
+	// BurnTimer and ActiveDoTCount above are mirrors refreshed every tick for
+	// the HUD and for callers that predate this list.
+	DoTs [MaxDoTs]DoT
+}
+
+// MaxDoTs is how many distinct lingering effects one target can carry.
+const MaxDoTs = 4
+
+// DoT is one lingering effect on the target. Each source occupies at most one
+// entry; re-applying it refreshes the duration instead of adding a stack.
+type DoT struct {
+	Source    string  // artifact ID that applied it; "" = empty slot
+	DPS       int     // damage per second; 0 for effects whose damage was dealt up front
+	Remaining float64 // seconds left
+	accum     float64 // damage earned but not yet dealt
+	tickTimer float64 // time since the last damage tick
 }
