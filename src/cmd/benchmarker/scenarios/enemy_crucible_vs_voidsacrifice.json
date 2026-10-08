@@ -1,6 +1,6 @@
 {
   "name": "Enemy Test: Crucible vs Void Sacrifice (blood_price feeds the enemy)",
-  "class": "any",
+  "class": "knight",
   "artifacts": ["blood_price", "soul_harvest", "ashbound_chain", "marrow_ring", "blood_vow_amulet", "hollow_sigil", "grave_reaper"],
   "stats": { "Strength": 8, "Dexterity": 6, "Vitality": 4, "Intelligence": 4, "Luck": 8 },
   "floor": 7,

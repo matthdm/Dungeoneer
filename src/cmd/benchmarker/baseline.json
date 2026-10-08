@@ -1,0 +1,980 @@
+{
+  "seed": 0,
+  "duration_sec": 120,
+  "results": [
+    {
+      "scenario": "Arcane Farmer — Floor 3",
+      "floor": 3,
+      "pack": 1,
+      "iterations": 1000,
+      "seed": 0,
+      "duration_sec": 120,
+      "survival_rate": 0,
+      "avg_time_alive_sec": 15.792666666666799,
+      "median_death_sec": 16.01666666666704,
+      "first_death_iteration": 0,
+      "dps": 114.30995398708166,
+      "dps_p10": 109.26118626430548,
+      "dps_p50": 115.00520291362896,
+      "dps_p90": 119.28656361474201,
+      "raw_dps": 126.745092659039,
+      "overkill_pct": 0.09811140148368115,
+      "kills_per_min": 53.5235763434501,
+      "avg_clear_time_sec": 1.1210013250047415,
+      "avg_damage_taken": 149.888,
+      "damage_taken_per_sec": 9.490987378107903,
+      "healing_per_sec": 0,
+      "min_hp_pct_avg": 0,
+      "min_hp_pct_p05": 0,
+      "streak_avg": 2.007,
+      "avg_final_level": 1,
+      "skills": {
+        "arcane_bolt": {
+          "casts_per_min": 93.70425091814688,
+          "damage_share": 0.5105555490929556,
+          "blocked_sec": {
+            "no_mana": 0.006
+          }
+        },
+        "arcane_spray": {
+          "casts_per_min": 48.96449829034532,
+          "damage_share": 0.17756454890960244,
+          "blocked_sec": {
+            "no_mana": 0.36319999999999997
+          }
+        },
+        "auto_attack": {
+          "casts_per_min": 0,
+          "damage_share": 0.12569387550484445
+        },
+        "lightning": {
+          "casts_per_min": 34.19308539828584,
+          "damage_share": 0.18618602649259747,
+          "blocked_sec": {
+            "no_mana": 0.6476000000000001
+          }
+        }
+      }
+    },
+    {
+      "scenario": "Arcane Surge Build — Floor 8",
+      "floor": 4,
+      "pack": 1,
+      "iterations": 1000,
+      "seed": 0,
+      "duration_sec": 120,
+      "survival_rate": 0,
+      "avg_time_alive_sec": 47.6186666666648,
+      "median_death_sec": 50.01666666666511,
+      "first_death_iteration": 0,
+      "dps": 25.215573724590783,
+      "dps_p10": 24.80878455130701,
+      "dps_p50": 24.977156678313182,
+      "dps_p90": 25.895546299263888,
+      "raw_dps": 27.148471187770564,
+      "overkill_pct": 0.07119728583650352,
+      "kills_per_min": 9.360614884919446,
+      "avg_clear_time_sec": 6.409835330012761,
+      "avg_damage_taken": 352.672,
+      "damage_taken_per_sec": 7.406171249370285,
+      "healing_per_sec": 4.524297194377732,
+      "min_hp_pct_avg": 0,
+      "min_hp_pct_p05": 0,
+      "streak_avg": 1,
+      "avg_final_level": 1,
+      "skills": {
+        "arcane_surge": {
+          "casts_per_min": 8.224085792686664,
+          "damage_share": 0.18333150111765156
+        },
+        "ashbound_chain": {
+          "casts_per_min": 6.952735621885247,
+          "damage_share": 0
+        },
+        "auto_attack": {
+          "casts_per_min": 0,
+          "damage_share": 0.5475709817011623
+        },
+        "ironbreaker_gauntlets": {
+          "casts_per_min": 20.73850590804808,
+          "damage_share": 0.26909751718118613
+        },
+        "wardens_medallion": {
+          "casts_per_min": 6.952735621885247,
+          "damage_share": 0
+        }
+      }
+    },
+    {
+      "scenario": "Burn DoT — Floor 4",
+      "floor": 4,
+      "pack": 1,
+      "iterations": 1000,
+      "seed": 0,
+      "duration_sec": 120,
+      "survival_rate": 0,
+      "avg_time_alive_sec": 39.04666666666563,
+      "median_death_sec": 38.01666666666579,
+      "first_death_iteration": 0,
+      "dps": 38.580527573844286,
+      "dps_p10": 37.38992463308309,
+      "dps_p50": 38.686918177364774,
+      "dps_p90": 39.48354852145037,
+      "raw_dps": 42.08443742530417,
+      "overkill_pct": 0.08325903982152517,
+      "kills_per_min": 14.362813727164458,
+      "avg_clear_time_sec": 4.177454441710242,
+      "avg_damage_taken": 429.498,
+      "damage_taken_per_sec": 10.999607307495596,
+      "healing_per_sec": 7.181406863582229,
+      "min_hp_pct_avg": 0,
+      "min_hp_pct_p05": 0,
+      "streak_avg": 1,
+      "avg_final_level": 1,
+      "skills": {
+        "auto_attack": {
+          "casts_per_min": 0,
+          "damage_share": 0.5767753267469486
+        },
+        "ember_mantle": {
+          "casts_per_min": 0,
+          "damage_share": 0.09920600939565506
+        },
+        "ironbreaker_gauntlets": {
+          "casts_per_min": 28.33839849752508,
+          "damage_share": 0.32401866385739636
+        }
+      }
+    },
+    {
+      "scenario": "CC Chain — Floor 7",
+      "floor": 7,
+      "pack": 1,
+      "iterations": 1000,
+      "seed": 0,
+      "duration_sec": 120,
+      "survival_rate": 1,
+      "avg_time_alive_sec": 119.99999999999628,
+      "median_death_sec": 0,
+      "first_death_iteration": -1,
+      "dps": 86.55572500000268,
+      "dps_p10": 86.25000000000398,
+      "dps_p50": 86.25000000000398,
+      "dps_p90": 86.95000000000401,
+      "raw_dps": 94.04440000000292,
+      "overkill_pct": 0.07962914325573878,
+      "kills_per_min": 22.997500000000713,
+      "avg_clear_time_sec": 2.608979236873492,
+      "avg_damage_taken": 0,
+      "damage_taken_per_sec": 0,
+      "healing_per_sec": 0,
+      "min_hp_pct_avg": 1,
+      "min_hp_pct_p05": 1,
+      "streak_avg": 45.995,
+      "avg_final_level": 1,
+      "skills": {
+        "ashbound_chain": {
+          "casts_per_min": 6.000000000000186,
+          "damage_share": 0
+        },
+        "auto_attack": {
+          "casts_per_min": 0,
+          "damage_share": 0.4515417668790828
+        },
+        "grave_reaper": {
+          "casts_per_min": 3.000000000000093,
+          "damage_share": 0.022824602301003197,
+          "blocked_sec": {
+            "target_not_low": 6.557066666666667
+          }
+        },
+        "ironbreaker_gauntlets": {
+          "casts_per_min": 20.00000000000062,
+          "damage_share": 0.14102764432970782
+        },
+        "shroud_cloak": {
+          "casts_per_min": 33.00000000000102,
+          "damage_share": 0.38460598649020616
+        }
+      }
+    },
+    {
+      "scenario": "Chaos Knight — Floor 7",
+      "floor": 7,
+      "pack": 1,
+      "iterations": 1000,
+      "seed": 0,
+      "duration_sec": 120,
+      "survival_rate": 1,
+      "avg_time_alive_sec": 119.99999999999628,
+      "median_death_sec": 0,
+      "first_death_iteration": -1,
+      "dps": 57.08672500000177,
+      "dps_p10": 56.97500000000262,
+      "dps_p50": 56.97500000000262,
+      "dps_p90": 57.33333333333597,
+      "raw_dps": 71.12192500000221,
+      "overkill_pct": 0.19733999044598413,
+      "kills_per_min": 15.000000000000465,
+      "avg_clear_time_sec": 3.9999999999998757,
+      "avg_damage_taken": 672,
+      "damage_taken_per_sec": 5.600000000000174,
+      "healing_per_sec": 6.0000000000001865,
+      "min_hp_pct_avg": 0.161170731707314,
+      "min_hp_pct_p05": 0.16260162601626016,
+      "streak_avg": 1.052,
+      "avg_final_level": 1,
+      "skills": {
+        "ashbound_chain": {
+          "casts_per_min": 6.000000000000186,
+          "damage_share": 0
+        },
+        "auto_attack": {
+          "casts_per_min": 0,
+          "damage_share": 0.6304257542654035
+        },
+        "blood_price": {
+          "casts_per_min": 5.000000000000155,
+          "damage_share": 0.13965024267901163
+        },
+        "ironbreaker_gauntlets": {
+          "casts_per_min": 19.500000000000608,
+          "damage_share": 0.22992400305558489
+        }
+      }
+    },
+    {
+      "scenario": "Enemy Test: Crucible vs Void Sacrifice (blood_price feeds the enemy)",
+      "floor": 7,
+      "enemy_build": "the_crucible",
+      "pack": 1,
+      "iterations": 1000,
+      "seed": 0,
+      "duration_sec": 120,
+      "survival_rate": 0,
+      "avg_time_alive_sec": 6.640666666666494,
+      "median_death_sec": 6.016666666666651,
+      "first_death_iteration": 0,
+      "dps": 61.45919084429434,
+      "dps_p10": 59.002079002079164,
+      "dps_p50": 61.66204986149601,
+      "dps_p90": 63.49030470914144,
+      "raw_dps": 65.01756851721883,
+      "overkill_pct": 0.05472947934037428,
+      "kills_per_min": 11.854231502861467,
+      "avg_clear_time_sec": 5.061483739837267,
+      "avg_damage_taken": 71.61,
+      "damage_taken_per_sec": 10.783555867885031,
+      "healing_per_sec": 4.148981026001513,
+      "min_hp_pct_avg": 0,
+      "min_hp_pct_p05": 0,
+      "streak_avg": 1,
+      "avg_final_level": 1,
+      "skills": {
+        "ashbound_chain": {
+          "casts_per_min": 9.035237425961483,
+          "damage_share": 0
+        },
+        "auto_attack": {
+          "casts_per_min": 0,
+          "damage_share": 0.4266312204444662
+        },
+        "blood_price": {
+          "casts_per_min": 9.035237425961483,
+          "damage_share": 0.5489549898316712
+        },
+        "grave_reaper": {
+          "casts_per_min": 2.818994076899983,
+          "damage_share": 0.024413789723862496,
+          "blocked_sec": {
+            "target_not_low": 6.2623999999999995
+          }
+        }
+      }
+    },
+    {
+      "scenario": "Enemy Test: Judge vs The 55 (should destroy low-HP build)",
+      "floor": 6,
+      "enemy_build": "the_judge",
+      "pack": 1,
+      "iterations": 1000,
+      "seed": 0,
+      "duration_sec": 120,
+      "survival_rate": 0,
+      "avg_time_alive_sec": 18.016666666666737,
+      "median_death_sec": 18.016666666666925,
+      "first_death_iteration": 0,
+      "dps": 24.780777058279273,
+      "dps_p10": 24.199814986123613,
+      "dps_p50": 24.699352451433505,
+      "dps_p90": 25.198889916743394,
+      "raw_dps": 25.50449583718769,
+      "overkill_pct": 0.028376125665388482,
+      "kills_per_min": 6.660499537465284,
+      "avg_clear_time_sec": 9.008333333333368,
+      "avg_damage_taken": 63,
+      "damage_taken_per_sec": 3.4967622571692742,
+      "healing_per_sec": 0,
+      "min_hp_pct_avg": 0,
+      "min_hp_pct_p05": 0,
+      "streak_avg": 1,
+      "avg_final_level": 1,
+      "skills": {
+        "ashbound_chain": {
+          "casts_per_min": 6.660499537465284,
+          "damage_share": 0
+        },
+        "auto_attack": {
+          "casts_per_min": 0,
+          "damage_share": 0.9212371799035539
+        },
+        "grave_reaper": {
+          "casts_per_min": 3.330249768732642,
+          "damage_share": 0.0787628200964461,
+          "blocked_sec": {
+            "target_not_low": 6.418666666666667
+          }
+        }
+      }
+    },
+    {
+      "scenario": "Enemy Test: Regenerator vs Arcane Farmer (regen outraces slow DPS)",
+      "floor": 5,
+      "enemy_build": "the_regenerator",
+      "pack": 1,
+      "iterations": 1000,
+      "seed": 0,
+      "duration_sec": 120,
+      "survival_rate": 0,
+      "avg_time_alive_sec": 12.182666666666607,
+      "median_death_sec": 12.016666666666843,
+      "first_death_iteration": 0,
+      "dps": 123.31109773448675,
+      "dps_p10": 119.91678224687757,
+      "dps_p50": 123.24549237170415,
+      "dps_p90": 128.23855755894402,
+      "raw_dps": 131.65631498303665,
+      "overkill_pct": 0.06338638028586124,
+      "kills_per_min": 29.963883112619165,
+      "avg_clear_time_sec": 2.0024106947183773,
+      "avg_damage_taken": 151.417,
+      "damage_taken_per_sec": 12.428888037649179,
+      "healing_per_sec": 0,
+      "min_hp_pct_avg": 0,
+      "min_hp_pct_p05": 0,
+      "streak_avg": 1.002,
+      "avg_final_level": 1,
+      "skills": {
+        "arcane_bolt": {
+          "casts_per_min": 94.80190434497145,
+          "damage_share": 0.47343399069933395
+        },
+        "arcane_spray": {
+          "casts_per_min": 50.12203130130264,
+          "damage_share": 0.17492135172520298
+        },
+        "auto_attack": {
+          "casts_per_min": 0,
+          "damage_share": 0.11498224672459724
+        },
+        "lightning": {
+          "casts_per_min": 39.75484294626264,
+          "damage_share": 0.23666241085086584
+        }
+      }
+    },
+    {
+      "scenario": "Enemy Test: Veilbane vs Perma Shadow (breaks shadow uptime)",
+      "floor": 8,
+      "enemy_build": "the_veilbane",
+      "pack": 1,
+      "iterations": 1000,
+      "seed": 0,
+      "duration_sec": 120,
+      "survival_rate": 0,
+      "avg_time_alive_sec": 10.964666666666655,
+      "median_death_sec": 10.016666666666744,
+      "first_death_iteration": 0,
+      "dps": 35.96424879917314,
+      "dps_p10": 35.671819262781696,
+      "dps_p50": 35.74043261231254,
+      "dps_p90": 36.63893510815279,
+      "raw_dps": 36.08171703046152,
+      "overkill_pct": 0.0032556164438962247,
+      "kills_per_min": 6.769015625950028,
+      "avg_clear_time_sec": 8.863918081379673,
+      "avg_damage_taken": 143.627,
+      "damage_taken_per_sec": 13.099075819298365,
+      "healing_per_sec": 0,
+      "min_hp_pct_avg": 0,
+      "min_hp_pct_p05": 0,
+      "streak_avg": 1,
+      "avg_final_level": 1,
+      "skills": {
+        "ashbound_chain": {
+          "casts_per_min": 6.769015625950028,
+          "damage_share": 0
+        },
+        "auto_attack": {
+          "casts_per_min": 0,
+          "damage_share": 0.6609262152073359
+        },
+        "grave_reaper": {
+          "casts_per_min": 5.313431020854873,
+          "damage_share": 0.03318996997484379,
+          "blocked_sec": {
+            "target_not_low": 5.3212
+          }
+        },
+        "shroud_cloak": {
+          "casts_per_min": 12.241138201495726,
+          "damage_share": 0.30588381481782034
+        }
+      }
+    },
+    {
+      "scenario": "Grapple Momentum — Floor 5",
+      "floor": 5,
+      "pack": 1,
+      "iterations": 1000,
+      "seed": 0,
+      "duration_sec": 120,
+      "survival_rate": 0.878,
+      "avg_time_alive_sec": 118.39603333332956,
+      "median_death_sec": 106.01666666666193,
+      "first_death_iteration": 3,
+      "dps": 54.80678547507819,
+      "dps_p10": 53.958333333335815,
+      "dps_p50": 54.70000000000252,
+      "dps_p90": 55.66666666666923,
+      "raw_dps": 59.355975045337026,
+      "overkill_pct": 0.07664248741233028,
+      "kills_per_min": 18.56818964374147,
+      "avg_clear_time_sec": 3.2313327874817017,
+      "avg_damage_taken": 1457.767,
+      "damage_taken_per_sec": 12.312633784747122,
+      "healing_per_sec": 11.759853441036265,
+      "min_hp_pct_avg": 0.17986249999999993,
+      "min_hp_pct_p05": 0,
+      "streak_avg": 1,
+      "avg_final_level": 1,
+      "skills": {
+        "auto_attack": {
+          "casts_per_min": 0,
+          "damage_share": 0.6916674397810664
+        },
+        "ember_mantle": {
+          "casts_per_min": 0,
+          "damage_share": 0.06536063243942816
+        },
+        "grave_reaper": {
+          "casts_per_min": 2.9818566556707102,
+          "damage_share": 0.011936372633537919,
+          "blocked_sec": {
+            "target_not_low": 10.8446
+          }
+        },
+        "ironbreaker_gauntlets": {
+          "casts_per_min": 19.007562471828916,
+          "damage_share": 0.2310355551459676
+        }
+      }
+    },
+    {
+      "scenario": "Iron Flurry — Floor 4",
+      "floor": 4,
+      "pack": 1,
+      "iterations": 1000,
+      "seed": 0,
+      "duration_sec": 120,
+      "survival_rate": 1,
+      "avg_time_alive_sec": 119.99999999999628,
+      "median_death_sec": 0,
+      "first_death_iteration": -1,
+      "dps": 55.893541666668405,
+      "dps_p10": 55.23333333333588,
+      "dps_p50": 55.858333333335906,
+      "dps_p90": 56.5000000000026,
+      "raw_dps": 59.802941666668524,
+      "overkill_pct": 0.06537136620787745,
+      "kills_per_min": 22.13000000000069,
+      "avg_clear_time_sec": 2.711251694532225,
+      "avg_damage_taken": 1297.934,
+      "damage_taken_per_sec": 10.816116666667002,
+      "healing_per_sec": 15.859833333333826,
+      "min_hp_pct_avg": 0.7285081081081057,
+      "min_hp_pct_p05": 0.7189189189189189,
+      "streak_avg": 1.069,
+      "avg_final_level": 1,
+      "skills": {
+        "auto_attack": {
+          "casts_per_min": 0,
+          "damage_share": 0.6937241556679551
+        },
+        "ember_mantle": {
+          "casts_per_min": 0,
+          "damage_share": 0.0651804583862924
+        },
+        "grave_reaper": {
+          "casts_per_min": 3.000000000000093,
+          "damage_share": 0.01636041731118309,
+          "blocked_sec": {
+            "target_not_low": 8.926133333333333
+          }
+        },
+        "ironbreaker_gauntlets": {
+          "casts_per_min": 19.00000000000059,
+          "damage_share": 0.22473496863456943
+        }
+      }
+    },
+    {
+      "scenario": "Knight Slash Build — Floor 5",
+      "floor": 5,
+      "pack": 1,
+      "iterations": 1000,
+      "seed": 0,
+      "duration_sec": 120,
+      "survival_rate": 0,
+      "avg_time_alive_sec": 20.496666666666506,
+      "median_death_sec": 20.01666666666681,
+      "first_death_iteration": 0,
+      "dps": 57.7936412424789,
+      "dps_p10": 55.63966691900068,
+      "dps_p50": 57.25228975853414,
+      "dps_p90": 60.849292256452514,
+      "raw_dps": 63.85087006017288,
+      "overkill_pct": 0.09486525104490613,
+      "kills_per_min": 18.488859977232217,
+      "avg_clear_time_sec": 3.2451973823094535,
+      "avg_damage_taken": 180.863,
+      "damage_taken_per_sec": 8.8240201658807,
+      "healing_per_sec": 0,
+      "min_hp_pct_avg": 0,
+      "min_hp_pct_p05": 0,
+      "streak_avg": 2,
+      "avg_final_level": 1,
+      "skills": {
+        "auto_attack": {
+          "casts_per_min": 0,
+          "damage_share": 0.5628228473117408
+        },
+        "ember_mantle": {
+          "casts_per_min": 0,
+          "damage_share": 0.0644289058457154
+        },
+        "ironbreaker_gauntlets": {
+          "casts_per_min": 21.19954464140527,
+          "damage_share": 0.2245814328659091
+        },
+        "shroud_cloak": {
+          "casts_per_min": 8.77606114815424,
+          "damage_share": 0.1481668139766347
+        }
+      }
+    },
+    {
+      "scenario": "Mage Nuker — Floor 7",
+      "floor": 7,
+      "pack": 1,
+      "iterations": 1000,
+      "seed": 0,
+      "duration_sec": 120,
+      "survival_rate": 0,
+      "avg_time_alive_sec": 10.036666666666573,
+      "median_death_sec": 10.016666666666744,
+      "first_death_iteration": 0,
+      "dps": 68.31899701096044,
+      "dps_p10": 67.38768718801944,
+      "dps_p50": 68.78535773710429,
+      "dps_p90": 68.78535773710429,
+      "raw_dps": 75.23842577216942,
+      "overkill_pct": 0.0919666871042968,
+      "kills_per_min": 17.84456991032896,
+      "avg_clear_time_sec": 3.362367392518115,
+      "avg_damage_taken": 155.524,
+      "damage_taken_per_sec": 15.495582862836411,
+      "healing_per_sec": 0,
+      "min_hp_pct_avg": 0,
+      "min_hp_pct_p05": 0,
+      "streak_avg": 1,
+      "avg_final_level": 1,
+      "skills": {
+        "auto_attack": {
+          "casts_per_min": 0,
+          "damage_share": 0.2149366700938464
+        },
+        "chaos_ray": {
+          "casts_per_min": 12.10561275323824,
+          "damage_share": 0.24720611933877307
+        },
+        "fractal_bloom": {
+          "casts_per_min": 23.82265028229846,
+          "damage_share": 0.21698714443010375
+        },
+        "lightning": {
+          "casts_per_min": 29.9501826635672,
+          "damage_share": 0.32087006613727675
+        }
+      }
+    },
+    {
+      "scenario": "Nature Bloom Farm — Floor 6",
+      "floor": 6,
+      "pack": 1,
+      "iterations": 1000,
+      "seed": 0,
+      "duration_sec": 120,
+      "survival_rate": 0,
+      "avg_time_alive_sec": 39.376666666665635,
+      "median_death_sec": 40.01666666666568,
+      "first_death_iteration": 0,
+      "dps": 37.99049352408463,
+      "dps_p10": 36.83465222823914,
+      "dps_p50": 38.284048313203776,
+      "dps_p90": 39.24594476107061,
+      "raw_dps": 42.09597054093059,
+      "overkill_pct": 0.09752660323757435,
+      "kills_per_min": 10.524506899179146,
+      "avg_clear_time_sec": 5.70097968244761,
+      "avg_damage_taken": 334.56,
+      "damage_taken_per_sec": 8.496402268687262,
+      "healing_per_sec": 5.0868450012699205,
+      "min_hp_pct_avg": 0,
+      "min_hp_pct_p05": 0,
+      "streak_avg": 1,
+      "avg_final_level": 1,
+      "skills": {
+        "auto_attack": {
+          "casts_per_min": 0,
+          "damage_share": 0.4078421646871965
+        },
+        "ember_mantle": {
+          "casts_per_min": 0,
+          "damage_share": 0.11032936503426945
+        },
+        "fractal_bloom": {
+          "casts_per_min": 13.570473207483635,
+          "damage_share": 0.18584113389650248,
+          "blocked_sec": {
+            "no_mana": 17.293266666666668
+          }
+        },
+        "fractal_canopy": {
+          "casts_per_min": 7.620248878354554,
+          "damage_share": 0.2959873363820316,
+          "blocked_sec": {
+            "no_mana": 6.5346
+          }
+        }
+      }
+    },
+    {
+      "scenario": "Nature Sustain — Floor 4",
+      "floor": 4,
+      "pack": 1,
+      "iterations": 1000,
+      "seed": 0,
+      "duration_sec": 120,
+      "survival_rate": 0.609,
+      "avg_time_alive_sec": 115.7585166666628,
+      "median_death_sec": 108.01666666666182,
+      "first_death_iteration": 0,
+      "dps": 19.65932240262877,
+      "dps_p10": 19.343649039279878,
+      "dps_p50": 19.68133313843095,
+      "dps_p90": 20.00000000000092,
+      "raw_dps": 20.63544064648444,
+      "overkill_pct": 0.04730299975551842,
+      "kills_per_min": 7.491284658537253,
+      "avg_clear_time_sec": 8.009307179593359,
+      "avg_damage_taken": 1020.271,
+      "damage_taken_per_sec": 8.813787783217396,
+      "healing_per_sec": 6.867010936992482,
+      "min_hp_pct_avg": 0.04245121951219509,
+      "min_hp_pct_p05": 0,
+      "streak_avg": 1,
+      "avg_final_level": 1,
+      "skills": {
+        "auto_attack": {
+          "casts_per_min": 0,
+          "damage_share": 1
+        },
+        "wardens_medallion": {
+          "casts_per_min": 6.097002797922488,
+          "damage_share": 0
+        }
+      }
+    },
+    {
+      "scenario": "Perma Shadow — Floor 8",
+      "floor": 8,
+      "pack": 1,
+      "iterations": 1000,
+      "seed": 0,
+      "duration_sec": 120,
+      "survival_rate": 1,
+      "avg_time_alive_sec": 119.99999999999628,
+      "median_death_sec": 0,
+      "first_death_iteration": -1,
+      "dps": 63.95191666666865,
+      "dps_p10": 62.50000000000288,
+      "dps_p50": 63.6666666666696,
+      "dps_p90": 65.6666666666697,
+      "raw_dps": 66.81483333333541,
+      "overkill_pct": 0.042848519166153225,
+      "kills_per_min": 15.14850000000047,
+      "avg_clear_time_sec": 3.9607881968510505,
+      "avg_damage_taken": 0,
+      "damage_taken_per_sec": 0,
+      "healing_per_sec": 0,
+      "min_hp_pct_avg": 1,
+      "min_hp_pct_p05": 1,
+      "streak_avg": 28.482,
+      "avg_final_level": 1,
+      "skills": {
+        "ashbound_chain": {
+          "casts_per_min": 6.000000000000186,
+          "damage_share": 0
+        },
+        "auto_attack": {
+          "casts_per_min": 0,
+          "damage_share": 0.4917939649971398
+        },
+        "grave_reaper": {
+          "casts_per_min": 2.925000000000091,
+          "damage_share": 0.02212860443327865,
+          "blocked_sec": {
+            "target_not_low": 14.567666666666666
+          }
+        },
+        "shroud_cloak": {
+          "casts_per_min": 32.732000000001015,
+          "damage_share": 0.4860774305695816
+        }
+      }
+    },
+    {
+      "scenario": "Shadow Burst — Floor 5",
+      "floor": 5,
+      "pack": 1,
+      "iterations": 1000,
+      "seed": 0,
+      "duration_sec": 120,
+      "survival_rate": 1,
+      "avg_time_alive_sec": 119.99999999999628,
+      "median_death_sec": 0,
+      "first_death_iteration": -1,
+      "dps": 41.27110833333462,
+      "dps_p10": 40.83333333333521,
+      "dps_p50": 41.108333333335224,
+      "dps_p90": 41.841666666668594,
+      "raw_dps": 42.61120833333466,
+      "overkill_pct": 0.03144947192102234,
+      "kills_per_min": 14.001500000000435,
+      "avg_clear_time_sec": 4.285255151233663,
+      "avg_damage_taken": 724.607,
+      "damage_taken_per_sec": 6.038391666666854,
+      "healing_per_sec": 8.867616666666942,
+      "min_hp_pct_avg": 0.6369499999999996,
+      "min_hp_pct_p05": 0.56875,
+      "streak_avg": 2.008,
+      "avg_final_level": 1,
+      "skills": {
+        "ashbound_chain": {
+          "casts_per_min": 6.000000000000186,
+          "damage_share": 0
+        },
+        "auto_attack": {
+          "casts_per_min": 0,
+          "damage_share": 0.7904950860499061
+        },
+        "grave_reaper": {
+          "casts_per_min": 3.000000000000093,
+          "damage_share": 0.02664313392762855,
+          "blocked_sec": {
+            "target_not_low": 10.939733333333333
+          }
+        },
+        "shroud_cloak": {
+          "casts_per_min": 7.500000000000233,
+          "damage_share": 0.18286178002246528
+        }
+      }
+    },
+    {
+      "scenario": "Tank Mage — Floor 5",
+      "floor": 3,
+      "pack": 1,
+      "iterations": 1000,
+      "seed": 0,
+      "duration_sec": 120,
+      "survival_rate": 1,
+      "avg_time_alive_sec": 119.99999999999628,
+      "median_death_sec": 0,
+      "first_death_iteration": -1,
+      "dps": 33.689141666667716,
+      "dps_p10": 33.20833333333486,
+      "dps_p50": 33.79166666666822,
+      "dps_p90": 34.36666666666825,
+      "raw_dps": 37.61559166666783,
+      "overkill_pct": 0.10438357675706728,
+      "kills_per_min": 15.966500000000497,
+      "avg_clear_time_sec": 3.7578680362006787,
+      "avg_damage_taken": 919.01,
+      "damage_taken_per_sec": 7.658416666666905,
+      "healing_per_sec": 11.44265833333369,
+      "min_hp_pct_avg": 0.80761926605505,
+      "min_hp_pct_p05": 0.7935779816513762,
+      "streak_avg": 1,
+      "avg_final_level": 1,
+      "skills": {
+        "auto_attack": {
+          "casts_per_min": 0,
+          "damage_share": 0.3727741653653489
+        },
+        "lightning": {
+          "casts_per_min": 33.00000000000102,
+          "damage_share": 0.6272258346346511
+        },
+        "wardens_medallion": {
+          "casts_per_min": 7.000000000000218,
+          "damage_share": 0
+        }
+      }
+    },
+    {
+      "scenario": "The 55 — Floor 6",
+      "floor": 6,
+      "pack": 1,
+      "iterations": 1000,
+      "seed": 0,
+      "duration_sec": 120,
+      "survival_rate": 0,
+      "avg_time_alive_sec": 75.21466666666296,
+      "median_death_sec": 76.01666666666364,
+      "first_death_iteration": 0,
+      "dps": 38.879677722431936,
+      "dps_p10": 38.39389030317206,
+      "dps_p50": 38.85211756537989,
+      "dps_p90": 39.294014470512415,
+      "raw_dps": 41.08302458740519,
+      "overkill_pct": 0.053631564060858644,
+      "kills_per_min": 10.988548332772519,
+      "avg_clear_time_sec": 5.460229885057203,
+      "avg_damage_taken": 413.589,
+      "damage_taken_per_sec": 5.4987812660654,
+      "healing_per_sec": 4.3954193331090075,
+      "min_hp_pct_avg": 0,
+      "min_hp_pct_p05": 0,
+      "streak_avg": 1,
+      "avg_final_level": 1,
+      "skills": {
+        "auto_attack": {
+          "casts_per_min": 0,
+          "damage_share": 0.6906346154766815
+        },
+        "grave_reaper": {
+          "casts_per_min": 3.2243711332897655,
+          "damage_share": 0.03668098109578904,
+          "blocked_sec": {
+            "target_not_low": 6.4608
+          }
+        },
+        "ironbreaker_gauntlets": {
+          "casts_per_min": 19.847192923366986,
+          "damage_share": 0.27268440342752953
+        },
+        "wardens_medallion": {
+          "casts_per_min": 6.428799347645279,
+          "damage_share": 0
+        }
+      }
+    },
+    {
+      "scenario": "Void Rift VFX Test",
+      "floor": 3,
+      "pack": 1,
+      "iterations": 1,
+      "seed": 0,
+      "duration_sec": 120,
+      "survival_rate": 0,
+      "avg_time_alive_sec": 22.016666666666698,
+      "median_death_sec": 22.016666666666698,
+      "first_death_iteration": 0,
+      "dps": 30.386071158213433,
+      "dps_p10": 30.386071158213433,
+      "dps_p50": 30.386071158213433,
+      "dps_p90": 30.386071158213433,
+      "raw_dps": 33.565480696442044,
+      "overkill_pct": 0.09472259810554803,
+      "kills_per_min": 13.626040878122614,
+      "avg_clear_time_sec": 4.4033333333333395,
+      "avg_damage_taken": 173,
+      "damage_taken_per_sec": 7.857683573050708,
+      "healing_per_sec": 0,
+      "min_hp_pct_avg": 0,
+      "min_hp_pct_p05": 0,
+      "streak_avg": 1,
+      "avg_final_level": 1,
+      "skills": {
+        "auto_attack": {
+          "casts_per_min": 0,
+          "damage_share": 0.8654708520179372
+        },
+        "void_rift_catalyst": {
+          "casts_per_min": 8.175624526873568,
+          "damage_share": 0.13452914798206278
+        }
+      }
+    },
+    {
+      "scenario": "Void Sacrifice — Floor 7",
+      "floor": 4,
+      "pack": 1,
+      "iterations": 1000,
+      "seed": 0,
+      "duration_sec": 120,
+      "survival_rate": 0,
+      "avg_time_alive_sec": 40.53266666666541,
+      "median_death_sec": 46.01666666666534,
+      "first_death_iteration": 0,
+      "dps": 36.81697067386091,
+      "dps_p10": 34.42850532161109,
+      "dps_p50": 38.029699384282154,
+      "dps_p90": 38.46432452010252,
+      "raw_dps": 47.65163900722199,
+      "overkill_pct": 0.22737241696385302,
+      "kills_per_min": 13.66009309363683,
+      "avg_clear_time_sec": 4.392356595867513,
+      "avg_damage_taken": 284.58,
+      "damage_taken_per_sec": 7.021003634928423,
+      "healing_per_sec": 6.374710110363854,
+      "min_hp_pct_avg": 0,
+      "min_hp_pct_p05": 0,
+      "streak_avg": 1,
+      "avg_final_level": 1,
+      "skills": {
+        "ashbound_chain": {
+          "casts_per_min": 6.687938946364456,
+          "damage_share": 0
+        },
+        "auto_attack": {
+          "casts_per_min": 0,
+          "damage_share": 0.6982825054111467
+        },
+        "blood_price": {
+          "casts_per_min": 5.207651441635715,
+          "damage_share": 0.26511602972612563
+        },
+        "grave_reaper": {
+          "casts_per_min": 2.960575009457484,
+          "damage_share": 0.03660146486272775,
+          "blocked_sec": {
+            "target_not_low": 8.445200000000002
+          }
+        }
+      }
+    }
+  ]
+}

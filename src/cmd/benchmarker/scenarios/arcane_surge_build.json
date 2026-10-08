@@ -7,6 +7,6 @@
   "biome": "arcane_halls",
   "enemy_pool": ["melee", "ranged", "elite"],
   "iterations": 1000,
-  "skill_rotation": ["slot_2", "slot_3", "slot_4", "slot_5", "slot_7", "auto", "auto", "auto", "auto", "auto", "auto", "auto", "auto", "auto", "auto", "auto"],
+  "skill_rotation": ["slot_2", "slot_3", "slot_4", "auto", "slot_7", "auto", "auto", "auto", "auto", "auto", "auto", "auto", "auto", "auto", "auto", "auto"],
   "stat_priority": ["int", "int", "vit"]
 }

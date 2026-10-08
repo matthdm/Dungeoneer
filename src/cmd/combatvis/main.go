@@ -1,16 +1,25 @@
-// combatvis — visual replay of a single combat scenario.
+// combatvis — watch, edit and benchmark combat scenarios in a window.
 //
 // Usage:
 //
 //	go run ./cmd/combatvis --scenario cmd/benchmarker/scenarios/iron_flurry.json
 //	go run ./cmd/combatvis --scenario cmd/benchmarker/scenarios/the_55.json
 //
+// It runs the same simulation as cmd/benchmarker (combat.Sim), so a fight
+// shown here is one of the iterations behind a benchmark number.
+//
 // Controls:
 //
 //	Space      pause / unpause
-//	+/-        speed up / slow down (0.1× to 8×)
-//	R          restart current scenario
-//	←/→        previous / next scenario (when no --scenario flag)
+//	+/-        speed up / slow down (0.125x to 64x)
+//	R          restart the fight
+//	N          next seed: a different fight of the same scenario
+//	Left/Right previous / next scenario (when no --scenario flag)
+//	Tab        pick a scenario from a list
+//	E          setup screen: edit the build (class, stats, artifacts) and the
+//	           fight (floor, wave size, ramp, enemy archetype), then watch it or
+//	           run benchmarks without leaving the window
+//	V          reopen the last benchmark report
 package main
 
 import (
