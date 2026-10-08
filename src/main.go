@@ -2,6 +2,7 @@ package main
 
 import (
 	"dungeoneer/game"
+	"dungeoneer/gamedata"
 	"dungeoneer/images"
 	"flag"
 	"log"
@@ -18,6 +19,7 @@ func main() {
 	ebiten.SetWindowSize(640, 480)
 	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 	images.SetDefaultWindowIcon()
+	gamedata.Register(dataFS)
 
 	g, err := game.NewGame(*testLevel, *screenshotFile)
 	if err != nil {

@@ -1,8 +1,8 @@
 package game
 
 import (
+	"dungeoneer/gamedata"
 	"encoding/json"
-	"os"
 )
 
 // LoreCategory classifies a lore entry for the library UI tabs.
@@ -28,7 +28,7 @@ var LoreRegistry []LoreDef
 
 // LoadLoreRegistry reads lore entries from path and caches them in LoreRegistry.
 func LoadLoreRegistry(path string) ([]LoreDef, error) {
-	data, err := os.ReadFile(path)
+	data, err := gamedata.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}

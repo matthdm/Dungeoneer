@@ -1,21 +1,21 @@
-name: Build and Upload Go Binary (Windows Only)
+name: Build Windows and Web
 
 on:
   workflow_dispatch:
     inputs:
       build_name:
-        description: 'Name of the build binary'
+        description: 'Name prefix for the build artifacts'
         required: true
         default: 'Dungeoneer-Stable-v1'
 
+# The Go module lives in src/, not the repo root.
+defaults:
+  run:
+    working-directory: src
+
 jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    env:
-      GOOS: windows
-      GOARCH: amd64
-
+  test:
+    runs-on: windows-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -23,18 +23,67 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.21'
+          go-version-file: src/go.mod
+          cache-dependency-path: src/go.sum
+
+      - name: Build all packages
+        run: go build ./...
+
+      - name: Run tests
+        run: go test ./...
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: src/go.mod
+          cache-dependency-path: src/go.sum
 
       - name: Build Windows binary
-        run: |
-          go mod tidy
-          OUTPUT_NAME="${{ inputs.build_name }}-${GOOS}-${GOARCH}.exe"
-          go build -o $OUTPUT_NAME .
-          echo "Built $OUTPUT_NAME"
-        shell: bash
+        run: go build -ldflags -H=windowsgui -o "${{ inputs.build_name }}-windows-amd64.exe" .
 
       - name: Upload Windows binary artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.build_name }}-${{ env.GOOS }}-${{ env.GOARCH }}
-          path: ${{ inputs.build_name }}-${{ env.GOOS }}-${{ env.GOARCH }}.exe
+          name: ${{ inputs.build_name }}-windows-amd64
+          path: src/${{ inputs.build_name }}-windows-amd64.exe
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: src/go.mod
+          cache-dependency-path: src/go.sum
+
+      - name: Build web bundle
+        env:
+          GOOS: js
+          GOARCH: wasm
+        run: |
+          mkdir -p ../dist/web
+          go build -o ../dist/web/dungeoneer.wasm .
+          cp web/index.html ../dist/web/index.html
+          # wasm_exec.js must match the Go that built the wasm. It moved from
+          # misc/wasm to lib/wasm in Go 1.24.
+          GOROOT_DIR="$(go env GOROOT)"
+          if [ -f "$GOROOT_DIR/lib/wasm/wasm_exec.js" ]; then
+            cp "$GOROOT_DIR/lib/wasm/wasm_exec.js" ../dist/web/wasm_exec.js
+          else
+            cp "$GOROOT_DIR/misc/wasm/wasm_exec.js" ../dist/web/wasm_exec.js
+          fi
+
+      - name: Upload web bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.build_name }}-web
+          path: dist/web

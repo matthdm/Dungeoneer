@@ -9,6 +9,7 @@ import (
 	"dungeoneer/pathing"
 	"dungeoneer/spells"
 	"dungeoneer/tiles"
+	"dungeoneer/ui"
 	"math"
 	"os"
 	"strings"
@@ -56,7 +57,7 @@ func (g *Game) handleMainMenuInput() {
 				case "Options":
 					g.openOptions()
 				case "Exit Game":
-					os.Exit(2)
+					quitGame(2)
 				}
 				return
 			}
@@ -84,7 +85,7 @@ func (g *Game) handleMainMenuInput() {
 		case "Options":
 			g.openOptions()
 		case "Exit Game":
-			os.Exit(2)
+			quitGame(2)
 		}
 	}
 }
@@ -553,4 +554,12 @@ func (g *Game) handleCombatAdapterInput() {
 
 func (g *Game) handleInputGameOver() {
 	g.handleLevelHotkeys()
+}
+
+// quitGame closes the game. In a browser there is nothing to close, and
+// exiting would only freeze the page, so it does nothing there.
+func quitGame(code int) {
+	if ui.CanQuit {
+		os.Exit(code)
+	}
 }

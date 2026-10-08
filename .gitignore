@@ -4,3 +4,5 @@ src/*.exe
 src/meta.json
 src/runsave.json
 src/controls.json
+dist/
+dungeoneer-web.zip

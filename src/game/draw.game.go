@@ -164,13 +164,7 @@ func (g *Game) drawMainMenuLabels(screen *ebiten.Image, cx, cy float64) {
 		bgOp.GeoM.Scale(scaleX, scaleY)
 		screen.DrawImage(g.Menu.Background, bgOp)
 	}
-	labels := []*ebiten.Image{
-		g.Menu.ContinueGameLabel,
-		g.Menu.NewGameLabel,
-		g.Menu.LoadGameLabel,
-		g.Menu.OptionsLabel,
-		g.Menu.ExitGameLabel,
-	}
+	labels := g.Menu.Labels()
 	if len(g.Menu.EntryRects) != len(labels) {
 		g.Menu.EntryRects = make([]image.Rectangle, len(labels))
 	}

@@ -10,10 +10,10 @@ import (
 	"dungeoneer/leveleditor"
 	"dungeoneer/levels"
 	"dungeoneer/spells"
+	"dungeoneer/storage"
 	"dungeoneer/ui"
 	"fmt"
 	"math/rand/v2"
-	"os"
 	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -957,7 +957,7 @@ func (g *Game) openEchoShrine() {
 		})
 	}
 	g.EchoShrine.OnBanish = func(path string) {
-		_ = os.Remove(path)
+		_ = storage.Remove(path)
 		for i, f := range g.Meta.EchoFiles {
 			if f == path {
 				g.Meta.EchoFiles = append(g.Meta.EchoFiles[:i], g.Meta.EchoFiles[i+1:]...)

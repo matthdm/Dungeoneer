@@ -1,9 +1,9 @@
 package game
 
 import (
+	"dungeoneer/storage"
 	"encoding/json"
 	"fmt"
-	"os"
 )
 
 const (
@@ -81,16 +81,12 @@ func (r *EchoRecorder) Finalize(cause string, floor int, x, y float64, equippedI
 	r.record.DeathY = y
 	r.record.EquippedItems = equippedIDs
 
-	if err := os.MkdirAll(echoDir, 0755); err != nil {
-		fmt.Printf("echo: could not create echoes dir: %v\n", err)
-		return
-	}
 	path := fmt.Sprintf("%s/run_%d.json", echoDir, r.record.RunIndex)
 	data, err := marshalEchoRecord(&r.record)
 	if err != nil {
 		return
 	}
-	if err := os.WriteFile(path, data, 0644); err != nil {
+	if err := storage.WriteFile(path, data); err != nil {
 		fmt.Printf("echo: write failed: %v\n", err)
 		return
 	}
@@ -100,7 +96,7 @@ func (r *EchoRecorder) Finalize(cause string, floor int, x, y float64, equippedI
 	if len(meta.EchoFiles) > echoMaxRuns {
 		oldest := meta.EchoFiles[0]
 		meta.EchoFiles = meta.EchoFiles[1:]
-		_ = os.Remove(oldest)
+		_ = storage.Remove(oldest)
 	}
 }
 
@@ -111,7 +107,7 @@ func marshalEchoRecord(rec *EchoRecord) ([]byte, error) {
 
 // LoadEchoRecord reads a single echo record from disk.
 func LoadEchoRecord(path string) (*EchoRecord, error) {
-	data, err := os.ReadFile(path)
+	data, err := storage.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}

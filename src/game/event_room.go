@@ -1,12 +1,12 @@
 package game
 
 import (
+	"dungeoneer/gamedata"
 	"dungeoneer/items"
 	"dungeoneer/levels"
 	"encoding/json"
 	"image/color"
 	"math/rand/v2"
-	"os"
 	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -51,7 +51,7 @@ var EventDefs []EventDef
 
 // LoadEventDefs reads and parses events.json into EventDefs.
 func LoadEventDefs(path string) error {
-	data, err := os.ReadFile(path)
+	data, err := gamedata.ReadFile(path)
 	if err != nil {
 		return err
 	}

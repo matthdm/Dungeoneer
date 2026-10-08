@@ -152,6 +152,18 @@ go build ./...
 .
 ```
 
+Build and run the browser version (Chrome):
+
+```powershell
+.\build_web.ps1            # from the repo root; writes dist\web and dungeoneer-web.zip
+cd src
+go run ./cmd/webserve      # then open http://localhost:8080
+```
+
+The same source builds both. Game data is embedded in the binary, and saves go to
+the working directory on desktop and to the browser's local storage on web, so the
+two do not share progress. `dungeoneer-web.zip` can be uploaded as an HTML5 game.
+
 Run tests and linters:
 
 ```powershell

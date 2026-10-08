@@ -1,8 +1,8 @@
 package game
 
 import (
+	"dungeoneer/gamedata"
 	"encoding/json"
-	"os"
 )
 
 // EnemyFlavors maps "role_biome" or "role" → a first-encounter flavor line.
@@ -12,7 +12,7 @@ var EnemyFlavors map[string]string
 // LoadEnemyFlavor reads the enemy flavor JSON from path and populates EnemyFlavors.
 // Non-fatal on error — the caller decides whether to log and continue.
 func LoadEnemyFlavor(path string) error {
-	data, err := os.ReadFile(path)
+	data, err := gamedata.ReadFile(path)
 	if err != nil {
 		return err
 	}

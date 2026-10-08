@@ -3,7 +3,6 @@ package controls
 import (
 	"os"
 	"path/filepath"
-	"runtime"
 	"testing"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -18,56 +17,9 @@ func TestInitKeys(t *testing.T) {
 	}
 }
 
-func TestGetConfigPath(t *testing.T) {
-	path, err := GetConfigPath()
-	if err != nil {
-		t.Fatalf("expected no error from GetConfigPath, got %v", err)
-	}
-	if filepath.Base(path) != configFileName {
-		t.Errorf("expected filename %q, got %q", configFileName, filepath.Base(path))
-	}
-}
-
-func TestGetConfigPath_Error(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("Skipping working directory deletion test on Windows due to file locking")
-	}
-
-	tmpDir := t.TempDir()
-	origWd, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("failed to get working directory: %v", err)
-	}
-	if err := os.Chdir(tmpDir); err != nil {
-		t.Fatalf("failed to change directory: %v", err)
-	}
-	defer func() {
-		_ = os.Chdir(origWd)
-	}()
-
-	// Delete tmpDir so os.Getwd() fails
-	if err := os.RemoveAll(tmpDir); err != nil {
-		t.Fatalf("failed to remove tmpDir: %v", err)
-	}
-
-	_, err = GetConfigPath()
-	if err == nil {
-		t.Error("expected error from GetConfigPath when working directory is deleted, got nil")
-	}
-
-	// Test SaveBindings/LoadBindings handling GetConfigPath error
-	c := New()
-	if err := c.SaveBindings(); err == nil {
-		t.Error("expected SaveBindings to fail when GetConfigPath fails, got nil")
-	}
-	if err := c.LoadBindings(); err == nil {
-		t.Error("expected LoadBindings to fail when GetConfigPath fails, got nil")
-	}
-}
-
 func TestSaveAndLoadBindings(t *testing.T) {
 	// Create temporary directory and change current working directory to it
-	// so GetConfigPath() returns a path in the temp dir.
+	// so the bindings are saved in the temp dir.
 	tmpDir := t.TempDir()
 	origWd, err := os.Getwd()
 	if err != nil {
@@ -114,10 +66,7 @@ func TestSaveAndLoadBindings(t *testing.T) {
 	}
 
 	// 3. Test loading invalid JSON content
-	configPath, err := GetConfigPath()
-	if err != nil {
-		t.Fatalf("failed to get config path: %v", err)
-	}
+	configPath := filepath.Join(tmpDir, configFileName)
 	err = os.WriteFile(configPath, []byte("{invalid json"), 0644)
 	if err != nil {
 		t.Fatalf("failed to write invalid config file: %v", err)

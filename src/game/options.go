@@ -1,8 +1,8 @@
 package game
 
 import (
+	"dungeoneer/storage"
 	"encoding/json"
-	"os"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -26,7 +26,7 @@ func DefaultOptions() *OptionsData {
 // LoadOptions reads options.json and returns the stored settings.
 // Returns defaults on missing or corrupt file — never returns an error to callers.
 func LoadOptions() *OptionsData {
-	data, err := os.ReadFile(optionsSavePath)
+	data, err := storage.ReadFile(optionsSavePath)
 	if err != nil {
 		return DefaultOptions()
 	}
@@ -50,7 +50,7 @@ func (o *OptionsData) Save() {
 	if err != nil {
 		return
 	}
-	_ = os.WriteFile(optionsSavePath, data, 0644)
+	_ = storage.WriteFile(optionsSavePath, data)
 }
 
 // Apply pushes options values into the Ebiten runtime.

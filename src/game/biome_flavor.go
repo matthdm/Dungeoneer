@@ -1,8 +1,8 @@
 package game
 
 import (
+	"dungeoneer/gamedata"
 	"encoding/json"
-	"os"
 )
 
 // BiomeFlavors maps biome key → slice of flavor lines (3 per biome).
@@ -12,7 +12,7 @@ var BiomeFlavors map[string][]string
 // LoadBiomeFlavor reads the biome flavor JSON from path and populates BiomeFlavors.
 // Non-fatal on error — the caller decides whether to log and continue.
 func LoadBiomeFlavor(path string) error {
-	data, err := os.ReadFile(path)
+	data, err := gamedata.ReadFile(path)
 	if err != nil {
 		return err
 	}

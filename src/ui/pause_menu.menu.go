@@ -64,8 +64,8 @@ func NewPauseMenu(w, h int, ctrl *controls.Controls, cb PauseMenuCallbacks) *Pau
 				cb.OnShowSettings()
 			}
 		}},
-		{Text: "Exit Game", Action: cb.OnExit},
 	}
+	mainOptions = appendExitOption(mainOptions, cb.OnExit, CanQuit)
 	pm.MainMenu = NewMenu(menuRect, "PAUSED", mainOptions, menuStyle)
 	pm.MainMenu.SetInstructions(menuInstructions)
 
@@ -171,4 +171,12 @@ func (pm *PauseMenu) Hide() {
 
 func (pm *PauseMenu) IsVisible() bool {
 	return pm.MainMenu.IsVisible() || pm.SettingsMenu.IsVisible() || pm.ControlsMenu.IsVisible()
+}
+
+// appendExitOption adds the "Exit Game" entry when the platform can quit.
+func appendExitOption(opts []MenuOption, onExit func(), canQuit bool) []MenuOption {
+	if !canQuit {
+		return opts
+	}
+	return append(opts, MenuOption{Text: "Exit Game", Action: onExit})
 }

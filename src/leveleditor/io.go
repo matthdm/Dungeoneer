@@ -1,6 +1,7 @@
 package leveleditor
 
 import (
+	"dungeoneer/gamedata"
 	"dungeoneer/levels"
 	"dungeoneer/sprites"
 	"dungeoneer/tiles"
@@ -916,7 +917,7 @@ func SaveLevelToFile(level *levels.Level, path string) error {
 }
 
 func LoadLevelFromFile(path string) (*levels.Level, error) {
-	raw, err := os.ReadFile(path)
+	raw, err := gamedata.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}

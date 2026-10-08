@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -65,5 +66,74 @@ func TestEchoRecorder_Tick_SnapshotsAtInterval(t *testing.T) {
 	r.Tick(1.1, 5.0, 5.0, 100, 1) // 2.1s total — should snapshot
 	if len(r.record.Snapshots) != 1 {
 		t.Errorf("should have 1 snapshot at 2s, got %d", len(r.record.Snapshots))
+	}
+}
+
+// chdirTemp moves the test into an empty temp directory so save files land there.
+func chdirTemp(t *testing.T) {
+	t.Helper()
+	dir := t.TempDir()
+	orig, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd: %v", err)
+	}
+	if err := os.Chdir(dir); err != nil {
+		t.Fatalf("chdir: %v", err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(orig) })
+}
+
+func TestFinalize_WritesEchoAndEvictsOldest(t *testing.T) {
+	chdirTemp(t)
+
+	// A full roster of earlier echoes; the oldest one exists on disk.
+	meta := &MetaSave{}
+	for i := 0; i < echoMaxRuns; i++ {
+		meta.EchoFiles = append(meta.EchoFiles, fmt.Sprintf("%s/run_%d.json", echoDir, i))
+	}
+	oldest := meta.EchoFiles[0]
+	if err := os.MkdirAll(echoDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(oldest, []byte("{}"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	var r EchoRecorder
+	r.Start(99)
+	r.Finalize("melee", 3, 4.5, 6.5, []string{"item_a"}, meta)
+
+	newest := fmt.Sprintf("%s/run_99.json", echoDir)
+	rec, err := LoadEchoRecord(newest)
+	if err != nil {
+		t.Fatalf("LoadEchoRecord(%s): %v", newest, err)
+	}
+	if rec.RunIndex != 99 || rec.DeathCause != "melee" || rec.DeathFloor != 3 {
+		t.Errorf("loaded record = %+v", rec)
+	}
+	if len(meta.EchoFiles) != echoMaxRuns {
+		t.Errorf("len(EchoFiles) = %d, want %d", len(meta.EchoFiles), echoMaxRuns)
+	}
+	if got := meta.EchoFiles[len(meta.EchoFiles)-1]; got != newest {
+		t.Errorf("last EchoFiles entry = %q, want %q", got, newest)
+	}
+	if _, err := os.Stat(oldest); !os.IsNotExist(err) {
+		t.Errorf("oldest echo %s still exists (err = %v)", oldest, err)
+	}
+}
+
+func TestFinalize_CreatesEchoDirWhenMissing(t *testing.T) {
+	chdirTemp(t)
+
+	meta := &MetaSave{}
+	var r EchoRecorder
+	r.Start(1)
+	r.Finalize("fall", 1, 0, 0, nil, meta)
+
+	if len(meta.EchoFiles) != 1 {
+		t.Fatalf("EchoFiles = %v, want one entry", meta.EchoFiles)
+	}
+	if _, err := LoadEchoRecord(meta.EchoFiles[0]); err != nil {
+		t.Errorf("LoadEchoRecord: %v", err)
 	}
 }

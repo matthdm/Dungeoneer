@@ -1,10 +1,11 @@
 package controls
 
 import (
+	"dungeoneer/storage"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
+	"io/fs"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -97,23 +98,8 @@ type SavedConfig struct {
 	Bindings map[string]SavedBinding `json:"bindings"`
 }
 
-// GetConfigPath returns the full path to the config file
-func GetConfigPath() (string, error) {
-	// Save to current working directory
-	cwd, err := os.Getwd()
-	if err != nil {
-		return "", fmt.Errorf("failed to get working directory: %w", err)
-	}
-	return filepath.Join(cwd, configFileName), nil
-}
-
 // SaveBindings saves the current control bindings to a config file
 func (c *Controls) SaveBindings() error {
-	configPath, err := GetConfigPath()
-	if err != nil {
-		return err
-	}
-
 	// Convert bindings to saveable format
 	saved := SavedConfig{
 		Version:  1,
@@ -136,7 +122,7 @@ func (c *Controls) SaveBindings() error {
 	}
 
 	// Write to file
-	err = os.WriteFile(configPath, data, 0644)
+	err = storage.WriteFile(configFileName, data)
 	if err != nil {
 		return fmt.Errorf("failed to write config file: %w", err)
 	}
@@ -146,23 +132,12 @@ func (c *Controls) SaveBindings() error {
 
 // LoadBindings loads control bindings from a config file
 func (c *Controls) LoadBindings() error {
-	configPath, err := GetConfigPath()
-	if err != nil {
-		return err
-	}
-
-	// Check if file exists
-	_, err = os.Stat(configPath)
-	if os.IsNotExist(err) {
+	// Read file
+	data, err := storage.ReadFile(configFileName)
+	if errors.Is(err, fs.ErrNotExist) {
 		// Config doesn't exist yet - use defaults
 		return nil
 	}
-	if err != nil {
-		return fmt.Errorf("failed to stat config file: %w", err)
-	}
-
-	// Read file
-	data, err := os.ReadFile(configPath)
 	if err != nil {
 		return fmt.Errorf("failed to read config file: %w", err)
 	}

@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"image"
 	"math"
-	"os"
 	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -408,7 +407,7 @@ func NewGame(testLevel, screenshotFile string) (*Game, error) {
 	// on the first tick. We must not use l.W/l.H here (those are tile counts, not pixels).
 	pm := ui.NewPauseMenu(640, 480, g.Controls, ui.PauseMenuCallbacks{
 		OnResume:     func() { g.resumeGame() },
-		OnExit:       func() { os.Exit(0) },
+		OnExit:       func() { quitGame(0) },
 		OnOptions:    func() { g.openOptions() },
 		OnLoadLevel:  func() { menumanager.Manager().Open(g.LoadLevelMenu) },
 		OnLoadPlayer: func() { menumanager.Manager().Open(g.LoadPlayerMenu) },

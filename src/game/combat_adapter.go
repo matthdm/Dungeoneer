@@ -1,8 +1,8 @@
 package game
 
 import (
+	"dungeoneer/gamedata"
 	"encoding/json"
-	"os"
 )
 
 // CombatAdapter abstracts combat logic so legacy and new engine implementations
@@ -32,7 +32,7 @@ type DevSettings struct {
 // LoadDevSettings reads dev_settings.json next to the binary; returns safe defaults on any error.
 func LoadDevSettings() DevSettings {
 	defaults := DevSettings{UseLegacyCombat: true} // legacy on until new engine is wired
-	data, err := os.ReadFile("dev_settings.json")
+	data, err := gamedata.ReadFile("dev_settings.json")
 	if err != nil {
 		return defaults
 	}

@@ -22,16 +22,17 @@ Plans ready to be picked up next. Top of list = next active. When the active pla
 
 | # | Plan | Size | Depends On | Notes |
 |---|------|------|------------|-------|
-| 1 | `8A-item-sets.md` | Large | — | Set registry, set bonuses (2-piece and 3-piece), tooltip + HUD UI. 3 starter sets: Stormcaller, Fractalist, Chainbreaker. Not yet started (drafted 2026-04-30 only) — was incorrectly marked Active while unstarted; demoted here until Void Rift pilot completes. |
-| 2 | `8B-hub-shop-upgrades.md` | Large | `8A` | Shop NPC, upgrade station, 8 starter upgrades. |
-| 3 | `9A-polish-transitions-camera.md` | Small | `8B` | Fade transitions, screen shake, boss intro pan. |
-| 4 | `9B-polish-visual-effects.md` | Medium | `9A` | Particle system, damage numbers, death fades. |
-| 5 | `9C-polish-audio.md` | Medium | `9B` | Audio engine, SFX hookups, music, volume wiring. |
-| 6 | `9D-polish-hud-navigation.md` | Small | `9A` | Minimap, floor indicator, status effect icons. |
-| 7 | `10A-additional-npcs.md` | XL | `9D`, `9C` | Seris, Mira, Kael — full arcs + boss fights. |
-| 8 | `10B-abaddon-meta-narrative.md` | Large | `10A` | Abaddon, alignment system, endgame dialogue. |
-| 9 | `10C-world-expansion.md` | Large | `10B` | 4 new biomes, hub evolution, cross-NPC dialogue. |
-| 10 | `11A-glyph-language.md` | Large | `10C`, `10B` | NG+ glyph cipher system — inscription stones, fragment items, codex UI, 25–30 authored shrine messages. |
+| 1 | `W1-web-desktop-deploy.md` | Medium | — | Chrome (WASM) build alongside the Windows build from one codebase: embed read-only data (`src/gamedata`), build-tagged save storage with a `localStorage` backend (`src/storage`), web bundle + CI. **In progress since 2026-10-08 at Matthew's request, alongside the Active plan above:** Phases 1–3 and 5 code-complete and uncommitted (embedding, storage, web bundle, CI workflow); boots and saves in headless Chrome. Open: manual Chrome playtest (Phase 4), itch.io upload, first CI run, main-menu Exit entry on web (see the plan's Open questions). |
+| 2 | `8A-item-sets.md` | Large | — | Set registry, set bonuses (2-piece and 3-piece), tooltip + HUD UI. 3 starter sets: Stormcaller, Fractalist, Chainbreaker. Not yet started (drafted 2026-04-30 only) — was incorrectly marked Active while unstarted; demoted here until Void Rift pilot completes. |
+| 3 | `8B-hub-shop-upgrades.md` | Large | `8A` | Shop NPC, upgrade station, 8 starter upgrades. |
+| 4 | `9A-polish-transitions-camera.md` | Small | `8B` | Fade transitions, screen shake, boss intro pan. |
+| 5 | `9B-polish-visual-effects.md` | Medium | `9A` | Particle system, damage numbers, death fades. |
+| 6 | `9C-polish-audio.md` | Medium | `9B` | Audio engine, SFX hookups, music, volume wiring. |
+| 7 | `9D-polish-hud-navigation.md` | Small | `9A` | Minimap, floor indicator, status effect icons. |
+| 8 | `10A-additional-npcs.md` | XL | `9D`, `9C` | Seris, Mira, Kael — full arcs + boss fights. |
+| 9 | `10B-abaddon-meta-narrative.md` | Large | `10A` | Abaddon, alignment system, endgame dialogue. |
+| 10 | `10C-world-expansion.md` | Large | `10B` | 4 new biomes, hub evolution, cross-NPC dialogue. |
+| 11 | `11A-glyph-language.md` | Large | `10C`, `10B` | NG+ glyph cipher system — inscription stones, fragment items, codex UI, 25–30 authored shrine messages. |
 
 ### Backlog (schedule when triggered)
 

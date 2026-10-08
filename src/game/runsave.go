@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"dungeoneer/entities"
+	"dungeoneer/storage"
 )
 
 const runSavePath = "runsave.json"
@@ -33,13 +34,13 @@ func SaveRunSave(rs *RunSave) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(runSavePath, data, 0644)
+	return storage.WriteFile(runSavePath, data)
 }
 
 // LoadRunSave reads runsave.json. Returns nil, nil if the file is absent.
 // Returns nil, err if the file is present but unreadable or corrupt.
 func LoadRunSave() (*RunSave, error) {
-	data, err := os.ReadFile(runSavePath)
+	data, err := storage.ReadFile(runSavePath)
 	if os.IsNotExist(err) {
 		return nil, nil
 	}
@@ -58,5 +59,5 @@ func LoadRunSave() (*RunSave, error) {
 
 // ClearRunSave deletes runsave.json. Ignores "not found" errors.
 func ClearRunSave() {
-	_ = os.Remove(runSavePath)
+	_ = storage.Remove(runSavePath)
 }

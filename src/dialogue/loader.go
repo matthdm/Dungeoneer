@@ -1,9 +1,9 @@
 package dialogue
 
 import (
+	"dungeoneer/gamedata"
 	"encoding/json"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 )
@@ -13,7 +13,7 @@ var Registry = map[string]*DialogueTree{}
 
 // LoadTree reads a single DialogueTree from a JSON file and adds it to the Registry.
 func LoadTree(path string) (*DialogueTree, error) {
-	data, err := os.ReadFile(path)
+	data, err := gamedata.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("dialogue: read %s: %w", path, err)
 	}
@@ -33,7 +33,7 @@ func LoadTree(path string) (*DialogueTree, error) {
 
 // LoadSimple reads a SimpleDialogue JSON file and converts it to a DialogueTree.
 func LoadSimple(path string) (*DialogueTree, error) {
-	data, err := os.ReadFile(path)
+	data, err := gamedata.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("dialogue: read %s: %w", path, err)
 	}
@@ -53,7 +53,7 @@ func LoadSimple(path string) (*DialogueTree, error) {
 // Files with a "root" field are treated as DialogueTrees; those with "lines"
 // are treated as SimpleDialogues.
 func LoadAll(dir string) error {
-	entries, err := os.ReadDir(dir)
+	entries, err := gamedata.ReadDir(dir)
 	if err != nil {
 		return fmt.Errorf("dialogue: readdir %s: %w", dir, err)
 	}
@@ -62,7 +62,7 @@ func LoadAll(dir string) error {
 			continue
 		}
 		path := filepath.Join(dir, e.Name())
-		data, err := os.ReadFile(path)
+		data, err := gamedata.ReadFile(path)
 		if err != nil {
 			fmt.Printf("dialogue: skip %s: %v\n", path, err)
 			continue

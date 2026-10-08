@@ -1,8 +1,8 @@
 package items
 
 import (
+	"dungeoneer/gamedata"
 	"encoding/json"
-	"os"
 )
 
 // ItemFlavorEntry is one entry in items_flavor.json.
@@ -15,7 +15,7 @@ type ItemFlavorEntry struct {
 // LoadItemFlavor reads items_flavor.json from path and patches matching
 // entries in the registry with FlavorText and FlavorLine.
 func LoadItemFlavor(path string) error {
-	data, err := os.ReadFile(path)
+	data, err := gamedata.ReadFile(path)
 	if err != nil {
 		return err
 	}
